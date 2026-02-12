@@ -26,18 +26,36 @@ export function useAnalytics(sectionId: string) {
   }, [sectionId])
 }
 
+function getAnalyticsData() {
+  try {
+    const stored = localStorage.getItem('zardonic-analytics')
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {
+    pageViews: 0,
+    sectionViews: {},
+    clicks: {},
+    visitors: []
+  }
+}
+
+function saveAnalyticsData(analytics: any) {
+  try {
+    localStorage.setItem('zardonic-analytics', JSON.stringify(analytics))
+  } catch {
+    // ignore storage errors
+  }
+}
+
 async function trackSectionView(section: string) {
   try {
-    const analytics = await window.spark.kv.get<any>('zardonic-analytics') || {
-      pageViews: 0,
-      sectionViews: {},
-      clicks: {},
-      visitors: []
-    }
-
+    const analytics = getAnalyticsData()
     analytics.sectionViews[section] = (analytics.sectionViews[section] || 0) + 1
-    
-    await window.spark.kv.set('zardonic-analytics', analytics)
+    saveAnalyticsData(analytics)
   } catch (e) {
     console.error('Analytics error:', e)
   }
@@ -45,16 +63,9 @@ async function trackSectionView(section: string) {
 
 export async function trackClick(element: string) {
   try {
-    const analytics = await window.spark.kv.get<any>('zardonic-analytics') || {
-      pageViews: 0,
-      sectionViews: {},
-      clicks: {},
-      visitors: []
-    }
-
+    const analytics = getAnalyticsData()
     analytics.clicks[element] = (analytics.clicks[element] || 0) + 1
-    
-    await window.spark.kv.set('zardonic-analytics', analytics)
+    saveAnalyticsData(analytics)
   } catch (e) {
     console.error('Analytics error:', e)
   }
