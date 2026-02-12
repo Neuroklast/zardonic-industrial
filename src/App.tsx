@@ -54,6 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SwipeableGallery } from '@/components/SwipeableGallery'
 import { Terminal } from '@/components/Terminal'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
+import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
 interface Track {
   id: string
@@ -336,16 +337,17 @@ function App() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <div className="full-page-noise" />
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
 
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border"
+        className="fixed top-0 left-0 right-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border scanline-effect"
       >
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <motion.h1
+          <motion.div
             className="text-2xl md:text-3xl font-bold tracking-tighter text-foreground uppercase"
             whileHover={{ scale: 1.02 }}
           >
@@ -356,16 +358,20 @@ function App() {
                 className="w-48 bg-transparent border-border text-foreground"
               />
             ) : (
-              siteData.artistName
+              <img 
+                src={logoImage} 
+                alt={siteData.artistName} 
+                className="h-10 md:h-12 w-auto object-contain logo-glitch brightness-110"
+              />
             )}
-          </motion.h1>
+          </motion.div>
 
           <div className="hidden md:flex items-center gap-6">
             {['bio', 'music', 'gigs', 'releases', 'gallery', 'connect'].map((section) => (
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
-                className="text-sm uppercase tracking-wide hover:text-primary transition-colors font-mono"
+                className="text-sm uppercase tracking-wide hover:text-primary transition-colors font-mono chromatic-aberration"
               >
                 {section}
               </button>
@@ -416,14 +422,14 @@ function App() {
         </AnimatePresence>
       </motion.nav>
 
-      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect">
+      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect crt-effect">
         {siteData.heroImage && (
           <div className="absolute inset-0">
-            <img src={siteData.heroImage} alt="Hero" className="w-full h-full object-cover opacity-20" />
+            <img src={siteData.heroImage} alt="Hero" className="w-full h-full object-cover opacity-20 glitch-image" />
           </div>
         )}
         
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/90 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/90 to-background noise-effect" />
         
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -431,11 +437,13 @@ function App() {
           transition={{ duration: 0.6 }}
           className="relative z-10 text-center px-4"
         >
-          <h1 className="text-6xl md:text-9xl font-bold tracking-tighter mb-8 uppercase" data-text={siteData.artistName}>
-            <span className="text-foreground">
-              {siteData.artistName}
-            </span>
-          </h1>
+          <div className="mb-8">
+            <img 
+              src={logoImage} 
+              alt={siteData.artistName} 
+              className="w-full max-w-2xl mx-auto logo-glitch brightness-110"
+            />
+          </div>
           
           {editMode && (
             <div className="flex justify-center mb-4">
@@ -482,7 +490,7 @@ function App() {
             viewport={{ once: true }}
             className="relative"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono" data-text="BIOGRAPHY">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="BIOGRAPHY">
               BIOGRAPHY
             </h2>
             
@@ -512,19 +520,19 @@ function App() {
 
       <Separator className="bg-border" />
 
-      <section id="music" className="py-24 px-4 bg-card/50">
+      <section id="music" className="py-24 px-4 bg-card/50 scanline-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono" data-text="MUSIC PLAYER">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="MUSIC PLAYER">
               MUSIC PLAYER
             </h2>
 
             {siteData.tracks.length > 0 && (
-              <Card className="p-8 bg-card border-border relative">
+              <Card className="p-8 bg-card border-border relative scanline-glitch cyberpunk-border-glow">
                 <div className="grid md:grid-cols-[200px_1fr] gap-8">
                   <div className="aspect-square bg-muted flex items-center justify-center text-6xl">
                     {currentTrack?.artwork ? (
@@ -586,7 +594,7 @@ function App() {
 
       <Separator className="bg-border" />
 
-      <section id="gigs" className="py-24 px-4">
+      <section id="gigs" className="py-24 px-4 noise-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -594,7 +602,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono" data-text="UPCOMING GIGS">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="UPCOMING GIGS">
                 UPCOMING GIGS
               </h2>
               {editMode && (
@@ -620,7 +628,7 @@ function App() {
                     transition={{ duration: 0.2 }}
                   >
                     <Card 
-                      className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer"
+                      className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer random-glitch"
                       onClick={() => !editMode && setCyberpunkOverlay({ type: 'gig', data: gig })}
                     >
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -678,7 +686,7 @@ function App() {
 
       <Separator className="bg-border" />
 
-      <section id="releases" className="py-24 px-4 bg-card/50">
+      <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -686,7 +694,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono" data-text="RELEASES">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="RELEASES">
                 RELEASES
               </h2>
               {editMode && (
@@ -712,7 +720,7 @@ function App() {
                     transition={{ duration: 0.2 }}
                   >
                     <Card 
-                      className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer"
+                      className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer random-glitch"
                       onClick={() => !editMode && setCyberpunkOverlay({ type: 'release', data: release })}
                     >
                       <div className="aspect-square bg-muted relative">
@@ -760,7 +768,7 @@ function App() {
 
       <Separator className="bg-border" />
 
-      <section id="gallery" className="py-24 px-4">
+      <section id="gallery" className="py-24 px-4 crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -768,7 +776,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono" data-text="GALLERY">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="GALLERY">
                 GALLERY
               </h2>
               {editMode && (
@@ -801,7 +809,7 @@ function App() {
                   <motion.div
                     key={index}
                     whileHover={{ scale: 1.03 }}
-                    className="aspect-square bg-muted overflow-hidden cursor-pointer relative group"
+                    className="aspect-square bg-muted overflow-hidden cursor-pointer relative group glitch-image"
                     onClick={() => setGalleryIndex(index)}
                   >
                     <img src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
@@ -831,7 +839,7 @@ function App() {
 
       <Separator className="bg-border" />
 
-      <section id="connect" className="py-24 px-4 bg-card/50">
+      <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect">
         <div className="container mx-auto max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -839,7 +847,7 @@ function App() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono" data-text="CONNECT">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="CONNECT">
               CONNECT
             </h2>
 
@@ -930,9 +938,9 @@ function App() {
         </div>
       </section>
 
-      <footer className="py-12 px-4 border-t border-border">
+      <footer className="py-12 px-4 border-t border-border noise-effect">
         <div className="container mx-auto text-center">
-          <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono chromatic-aberration">
             © {new Date().getFullYear()} {siteData.artistName}
           </p>
         </div>
