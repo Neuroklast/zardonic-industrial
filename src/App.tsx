@@ -55,6 +55,7 @@ import { SwipeableGallery } from '@/components/SwipeableGallery'
 import { Terminal } from '@/components/Terminal'
 import { LoadingScreen } from '@/components/LoadingScreen'
 import { CircuitBackground } from '@/components/CircuitBackground'
+import { Logo3D } from '@/components/Logo3D'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -632,11 +633,7 @@ In the end, Zardonic will unite listeners with Superstars.
             animate={contentLoaded ? { opacity: 1, clipPath: 'inset(0 0 0 0)' } : { opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
             transition={{ duration: 1.2, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <img 
-              src={logoImage} 
-              alt={siteData.artistName} 
-              className="w-full max-w-2xl mx-auto logo-glitch brightness-110 dot-matrix-logo crt-effect"
-            />
+            <Logo3D />
           </motion.div>
           
           {editMode && (

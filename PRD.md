@@ -16,6 +16,13 @@ A dark, industrial single-page application showcasing the hard techno/industrial
 
 ## Essential Features
 
+### 3D Logo with Parallax Scrolling
+- **Functionality**: Interactive 3D model (zardonictext.glb) displayed as hero logo with smooth parallax effect tied to scroll position
+- **Purpose**: Create a striking, modern first impression that reflects the artist's cutting-edge electronic/metal sound
+- **Trigger**: Page loads with 3D canvas, user scrolls page
+- **Progression**: Logo loads in 3D space → User scrolls → Model rotates and translates smoothly based on scroll position → Cyberpunk lighting effects illuminate the model
+- **Success criteria**: 3D model loads without blocking page, parallax is smooth at 60fps, fallback displays if GLB missing
+
 ### Music Player
 - **Functionality**: Play ZARDONIC tracks with full playback controls (play/pause, next/previous, volume, progress bar)
 - **Purpose**: Let visitors experience the music directly without leaving the site
