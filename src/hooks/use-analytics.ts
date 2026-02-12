@@ -1,5 +1,12 @@
 import { useEffect } from 'react'
 
+interface AnalyticsData {
+  pageViews: number
+  sectionViews: Record<string, number>
+  clicks: Record<string, number>
+  visitors: string[]
+}
+
 export function useAnalytics(sectionId: string) {
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -26,7 +33,7 @@ export function useAnalytics(sectionId: string) {
   }, [sectionId])
 }
 
-function getAnalyticsData() {
+function getAnalyticsData(): AnalyticsData {
   try {
     const stored = localStorage.getItem('zardonic-analytics')
     if (stored) {
@@ -43,7 +50,7 @@ function getAnalyticsData() {
   }
 }
 
-function saveAnalyticsData(analytics: any) {
+function saveAnalyticsData(analytics: AnalyticsData) {
   try {
     localStorage.setItem('zardonic-analytics', JSON.stringify(analytics))
   } catch {
