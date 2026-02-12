@@ -53,6 +53,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SwipeableGallery } from '@/components/SwipeableGallery'
 import { Terminal } from '@/components/Terminal'
+import { LoadingScreen } from '@/components/LoadingScreen'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -135,6 +136,7 @@ interface AnalyticsData {
 function App() {
   const konamiActivated = useKonami()
   const [terminalOpen, setTerminalOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
     if (konamiActivated) {
@@ -354,7 +356,14 @@ In the end, Zardonic will unite listeners with Superstars.
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground relative">
+    <>
+      <AnimatePresence>
+        {loading && (
+          <LoadingScreen onLoadComplete={() => setLoading(false)} />
+        )}
+      </AnimatePresence>
+
+      <div className="min-h-screen bg-background text-foreground relative">
       <div className="full-page-noise" />
       
       {[...Array(8)].map((_, i) => (
@@ -1318,6 +1327,7 @@ In the end, Zardonic will unite listeners with Superstars.
         </motion.div>
       )}
     </div>
+    </>
   )
 }
 

@@ -323,19 +323,6 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.1s ease;
 }
 
-.hover-glitch:hover {
-  animation: hover-glitch-effect 0.3s ease;
-}
-
-@keyframes hover-glitch-effect {
-  0%, 100% { transform: translate(0); }
-  10% { transform: translate(-2px, 2px); }
-  20% { transform: translate(2px, -2px); }
-  30% { transform: translate(-2px, -2px); }
-  40% { transform: translate(2px, 2px); }
-  50% { transform: translate(0); }
-}
-
 .hover-chromatic {
   position: relative;
   transition: all 0.3s ease;
@@ -490,66 +477,12 @@ h1, h2, h3, h4, h5, h6 {
   position: relative;
 }
 
-.glitch-image:hover {
-  animation: image-glitch-hover 0.4s ease;
-}
-
-@keyframes image-glitch-hover {
-  0%, 100% {
-    transform: translate(0);
-    filter: none;
-  }
-  10% {
-    transform: translate(-3px, 2px);
-    filter: hue-rotate(20deg);
-  }
-  20% {
-    transform: translate(3px, -2px);
-    filter: hue-rotate(-20deg);
-  }
-  30% {
-    transform: translate(-2px, -2px);
-    filter: hue-rotate(10deg);
-  }
-  40% {
-    transform: translate(2px, 2px);
-    filter: hue-rotate(-10deg);
-  }
-  50% {
-    transform: translate(0);
-    filter: none;
-  }
-}
-
 .scanline-glitch {
   position: relative;
 }
 
 .logo-glitch {
   position: relative;
-}
-
-.logo-glitch:hover {
-  animation: logo-glitch-hover 0.3s ease;
-}
-
-@keyframes logo-glitch-hover {
-  0%, 100% {
-    transform: translate(0) scale(1);
-    filter: none;
-  }
-  25% {
-    transform: translate(-2px, 2px) scale(1.02);
-    filter: hue-rotate(90deg) saturate(1.5);
-  }
-  50% {
-    transform: translate(2px, -2px) scale(0.98);
-    filter: hue-rotate(-90deg) saturate(1.5);
-  }
-  75% {
-    transform: translate(-1px, -1px) scale(1.01);
-    filter: hue-rotate(45deg);
-  }
 }
 
 .text-chromatic {
