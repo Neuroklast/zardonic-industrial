@@ -704,25 +704,70 @@ h1, h2, h3, h4, h5, h6 {
   mix-blend-mode: multiply;
 }
 
-.chromatic-glow {
-  filter: 
-    drop-shadow(0 0 20px rgba(255, 0, 100, 0.5))
-    drop-shadow(0 0 40px rgba(0, 255, 255, 0.3))
-    drop-shadow(0 0 60px rgba(180, 50, 50, 0.4));
-  animation: glow-pulse 3s ease-in-out infinite;
+.circuit-bg {
+  position: absolute;
+  inset: 0;
+  opacity: 0.15;
+  background-image: 
+    linear-gradient(90deg, transparent 95%, oklch(0.55 0.25 25 / 0.3) 95%),
+    linear-gradient(0deg, transparent 95%, oklch(0.55 0.25 25 / 0.3) 95%),
+    radial-gradient(circle at 10% 20%, oklch(0.55 0.25 25 / 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 80% 40%, oklch(0.55 0.25 25 / 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 30% 70%, oklch(0.55 0.25 25 / 0.1) 1px, transparent 1px),
+    radial-gradient(circle at 90% 80%, oklch(0.55 0.25 25 / 0.1) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  pointer-events: none;
 }
 
-@keyframes glow-pulse {
-  0%, 100% {
-    filter: 
-      drop-shadow(0 0 20px rgba(255, 0, 100, 0.5))
-      drop-shadow(0 0 40px rgba(0, 255, 255, 0.3))
-      drop-shadow(0 0 60px rgba(180, 50, 50, 0.4));
+.circuit-line {
+  position: absolute;
+  background: oklch(0.55 0.25 25 / 0.2);
+  pointer-events: none;
+}
+
+.circuit-node {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: oklch(0.55 0.25 25 / 0.4);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.circuit-node::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border: 1px solid oklch(0.55 0.25 25 / 0.2);
+  border-radius: 50%;
+}
+
+.periodic-noise-glitch {
+  animation: periodic-noise 12s ease-in-out infinite;
+}
+
+@keyframes periodic-noise {
+  0%, 94%, 100% {
+    opacity: 0.4;
   }
-  50% {
-    filter: 
-      drop-shadow(0 0 30px rgba(255, 0, 100, 0.7))
-      drop-shadow(0 0 50px rgba(0, 255, 255, 0.5))
-      drop-shadow(0 0 80px rgba(180, 50, 50, 0.6));
+  95% {
+    opacity: 0.8;
+    filter: contrast(1.2) saturate(1.5);
+  }
+  96% {
+    opacity: 0.6;
+    filter: contrast(1.1) saturate(1.2);
+  }
+  97% {
+    opacity: 0.7;
+    filter: contrast(1.3) saturate(1.4);
+  }
+  98% {
+    opacity: 0.4;
+    filter: contrast(1) saturate(1);
   }
 }

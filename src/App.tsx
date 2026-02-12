@@ -54,6 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SwipeableGallery } from '@/components/SwipeableGallery'
 import { Terminal } from '@/components/Terminal'
 import { LoadingScreen } from '@/components/LoadingScreen'
+import { CircuitBackground } from '@/components/CircuitBackground'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -481,19 +482,8 @@ In the end, Zardonic will unite listeners with Superstars.
       </AnimatePresence>
 
       <div className="min-h-screen bg-background text-foreground relative">
-      <div className="full-page-noise" />
-      
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="data-stream"
-          style={{
-            left: `${15 + i * 18}%`,
-            animationDelay: `${i * 0.8}s`,
-            opacity: 0.15,
-          }}
-        />
-      ))}
+      <div className="full-page-noise periodic-noise-glitch" />
+      <CircuitBackground />
       
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
@@ -584,21 +574,6 @@ In the end, Zardonic will unite listeners with Superstars.
         
         <div className="absolute inset-0 noise-effect" />
         
-        <div className="data-stream-container">
-          {[...Array(16)].map((_, i) => (
-            <div
-              key={i}
-              className="data-stream"
-              style={{
-                left: `${5 + i * 6}%`,
-                animationDelay: `${i * 0.3}s`,
-                animationDuration: `${3 + (i % 3)}s`,
-                opacity: 0.3 + (i % 3) * 0.1,
-              }}
-            />
-          ))}
-        </div>
-        
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -609,7 +584,7 @@ In the end, Zardonic will unite listeners with Superstars.
             <img 
               src={logoImage} 
               alt={siteData.artistName} 
-              className="w-full max-w-2xl mx-auto logo-glitch brightness-110 dot-matrix-logo chromatic-glow"
+              className="w-full max-w-2xl mx-auto logo-glitch brightness-110 dot-matrix-logo crt-effect"
             />
           </div>
           
