@@ -1,6 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useKV } from '@github/spark/hooks'
+import { useKonami } from '@/hooks/use-konami'
+import { useAnalytics, trackClick } from '@/hooks/use-analytics'
 import {
   Play,
   Pause,
@@ -23,6 +25,18 @@ import {
   Upload,
   Trash,
   Plus,
+  CaretLeft,
+  CaretRight,
+  GearSix,
+  ChartLine,
+  Download,
+  FolderOpen,
+  Terminal as TerminalIcon,
+  Check,
+  User,
+  SoundcloudLogo,
+  TiktokLogo,
+  ApplePodcastsLogo,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -34,6 +48,11 @@ import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SwipeableGallery } from '@/components/SwipeableGallery'
+import { Terminal } from '@/components/Terminal'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
 interface Track {
@@ -62,6 +81,24 @@ interface Release {
   soundcloud?: string
   youtube?: string
   bandcamp?: string
+  appleMusic?: string
+}
+
+interface Member {
+  id: string
+  name: string
+  role: string
+  bio: string
+  image?: string
+  instagram?: string
+}
+
+interface MediaFile {
+  id: string
+  name: string
+  type: 'image' | 'pdf' | 'zip'
+  url: string
+  size: string
 }
 
 interface SiteData {
@@ -72,6 +109,9 @@ interface SiteData {
   gigs: Gig[]
   releases: Release[]
   gallery: string[]
+  instagramFeed: string[]
+  members: Member[]
+  mediaFiles: MediaFile[]
   social: {
     instagram?: string
     facebook?: string
@@ -80,10 +120,28 @@ interface SiteData {
     soundcloud?: string
     bandcamp?: string
     tiktok?: string
+    appleMusic?: string
   }
 }
 
+interface AnalyticsData {
+  pageViews: number
+  sectionViews: { [key: string]: number }
+  clicks: { [key: string]: number }
+  visitors: { date: string; count: number }[]
+}
+
 function App() {
+  const konamiActivated = useKonami()
+  const [terminalOpen, setTerminalOpen] = useState(false)
+  
+  useEffect(() => {
+    if (konamiActivated) {
+      setTerminalOpen(true)
+      toast.success('Terminal activated!')
+    }
+  }, [konamiActivated])
+
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
     artistName: 'ZARDONIC',
     heroImage: heroImage,
@@ -100,6 +158,9 @@ function App() {
     gigs: [],
     releases: [],
     gallery: [],
+    instagramFeed: [],
+    members: [],
+    mediaFiles: [],
     social: {
       instagram: 'https://instagram.com/zardonic',
       facebook: 'https://facebook.com/zardonic',
@@ -116,10 +177,10 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const [editingGig, setEditingGig] = useState<Gig | null>(null)
   const [editingRelease, setEditingRelease] = useState<Release | null>(null)
-  const [cyberpunkOverlay, setCyberpunkOverlay] = useState<{type: 'gig' | 'release' | 'image', data: any} | null>(null)
+  const [cyberpunkOverlay, setCyberpunkOverlay] = useState<{type: 'gig' | 'release' | 'member', data: any} | null>(null)
   
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -751,7 +812,7 @@ function App() {
                     key={index}
                     whileHover={{ scale: 1.05 }}
                     className="aspect-square bg-muted overflow-hidden cursor-pointer relative group image-glitch"
-                    onClick={() => setCyberpunkOverlay({ type: 'image', data: image })}
+                    onClick={() => setGalleryIndex(index)}
                   >
                     <img src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -887,16 +948,17 @@ function App() {
         </div>
       </footer>
 
-      <Dialog open={selectedImage !== null} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl bg-background border-foreground/30">
-          <DialogHeader>
-            <DialogTitle className="uppercase tracking-wide font-mono">Gallery</DialogTitle>
-          </DialogHeader>
-          {selectedImage && (
-            <img src={selectedImage} alt="Gallery" className="w-full h-auto" />
-          )}
-        </DialogContent>
-      </Dialog>
+      <AnimatePresence>
+        {galleryIndex !== null && siteData && (
+          <SwipeableGallery
+            images={siteData.gallery}
+            initialIndex={galleryIndex}
+            onClose={() => setGalleryIndex(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      <Terminal isOpen={terminalOpen} onClose={() => setTerminalOpen(false)} />
 
       <AnimatePresence>
         {cyberpunkOverlay && (
@@ -935,13 +997,35 @@ function App() {
                     <X className="w-6 h-6" />
                   </Button>
 
-                  {cyberpunkOverlay.type === 'image' && (
-                    <div className="mt-8">
-                      <img 
-                        src={cyberpunkOverlay.data} 
-                        alt="Gallery" 
-                        className="w-full h-auto max-h-[70vh] object-contain image-glitch" 
-                      />
+                  {cyberpunkOverlay.type === 'member' && (
+                    <div className="mt-8 space-y-6">
+                      <div className="flex flex-col md:flex-row gap-6">
+                        {cyberpunkOverlay.data.image && (
+                          <div className="w-48 h-48 bg-muted relative image-glitch">
+                            <img
+                              src={cyberpunkOverlay.data.image}
+                              alt={cyberpunkOverlay.data.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <div className="text-xs text-accent uppercase tracking-widest font-mono mb-2">// MEMBER.PROFILE</div>
+                          <h2 className="text-4xl font-bold uppercase font-mono mb-2 glitch-text chromatic-aberration" data-text={cyberpunkOverlay.data.name}>
+                            {cyberpunkOverlay.data.name}
+                          </h2>
+                          <p className="text-xl text-muted-foreground font-mono mb-4">{cyberpunkOverlay.data.role}</p>
+                          <p className="text-foreground/90 leading-relaxed">{cyberpunkOverlay.data.bio}</p>
+                          {cyberpunkOverlay.data.instagram && (
+                            <Button asChild variant="outline" className="mt-4 font-mono">
+                              <a href={cyberpunkOverlay.data.instagram} target="_blank" rel="noopener noreferrer">
+                                <InstagramLogo className="w-5 h-5 mr-2" weight="fill" />
+                                Follow
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
 
