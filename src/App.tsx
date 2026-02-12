@@ -482,6 +482,8 @@ In the end, Zardonic will unite listeners with Superstars.
       </AnimatePresence>
 
       <div className="min-h-screen bg-background text-foreground relative">
+      <div className="crt-overlay" />
+      <div className="crt-vignette" />
       <div className="full-page-noise periodic-noise-glitch" />
       <CircuitBackground />
       
@@ -628,9 +630,10 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="bio" className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="relative"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="BIOGRAPHY">
@@ -653,9 +656,15 @@ In the end, Zardonic will unite listeners with Superstars.
                 </Button>
               </div>
             ) : (
-              <p className="text-lg leading-relaxed text-muted-foreground font-light">
+              <motion.p 
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="text-lg leading-relaxed text-muted-foreground font-light"
+              >
                 {siteData.bio}
-              </p>
+              </motion.p>
             )}
           </motion.div>
         </div>
@@ -663,12 +672,13 @@ In the end, Zardonic will unite listeners with Superstars.
 
       <Separator className="bg-border" />
 
-      <section id="music" className="py-24 px-4 bg-card/50 scanline-effect">
+      <section id="music" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="MUSIC PLAYER">
               MUSIC PLAYER
@@ -739,12 +749,13 @@ In the end, Zardonic will unite listeners with Superstars.
 
       <Separator className="bg-border" />
 
-      <section id="gigs" className="py-24 px-4 noise-effect">
+      <section id="gigs" className="py-24 px-4 noise-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="UPCOMING GIGS">
@@ -833,12 +844,13 @@ In the end, Zardonic will unite listeners with Superstars.
 
       <Separator className="bg-border" />
 
-      <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect">
+      <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="RELEASES">
@@ -919,9 +931,10 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="gallery" className="py-24 px-4 crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="GALLERY">
@@ -987,12 +1000,13 @@ In the end, Zardonic will unite listeners with Superstars.
 
       <Separator className="bg-border" />
 
-      <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect">
+      <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-4xl">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
             viewport={{ once: true }}
+            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="text-center"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="CONNECT">

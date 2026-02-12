@@ -134,7 +134,7 @@ export function CircuitBackground() {
         className="fixed inset-0 overflow-hidden pointer-events-none z-0"
         style={{ y: layer3Y }}
       >
-        <div className="absolute inset-0 opacity-[0.08]">
+        <div className="absolute inset-0 opacity-[0.15]">
           {lines.filter(l => l.depth === 3).map((line) => (
             <div
               key={line.id}
@@ -142,8 +142,8 @@ export function CircuitBackground() {
               style={{
                 left: line.x,
                 top: line.y,
-                width: line.horizontal ? line.width : '1px',
-                height: line.horizontal ? '1px' : line.height,
+                width: line.horizontal ? line.width : '2px',
+                height: line.horizontal ? '2px' : line.height,
               }}
             />
           ))}
@@ -154,6 +154,7 @@ export function CircuitBackground() {
               style={{
                 left: node.x,
                 top: node.y,
+                animationDelay: `${node.id * 0.15}s`
               }}
             />
           ))}
@@ -164,7 +165,7 @@ export function CircuitBackground() {
         className="fixed inset-0 overflow-hidden pointer-events-none z-0"
         style={{ y: layer2Y }}
       >
-        <div className="absolute inset-0 opacity-[0.12]">
+        <div className="absolute inset-0 opacity-[0.25]">
           {lines.filter(l => l.depth === 2).map((line) => (
             <div
               key={line.id}
@@ -172,8 +173,8 @@ export function CircuitBackground() {
               style={{
                 left: line.x,
                 top: line.y,
-                width: line.horizontal ? line.width : '1px',
-                height: line.horizontal ? '1px' : line.height,
+                width: line.horizontal ? line.width : '2px',
+                height: line.horizontal ? '2px' : line.height,
               }}
             />
           ))}
@@ -184,6 +185,7 @@ export function CircuitBackground() {
               style={{
                 left: node.x,
                 top: node.y,
+                animationDelay: `${node.id * 0.1}s`
               }}
             />
           ))}
@@ -194,7 +196,7 @@ export function CircuitBackground() {
         className="fixed inset-0 overflow-hidden pointer-events-none z-0"
         style={{ y: layer1Y }}
       >
-        <div className="absolute inset-0 opacity-[0.15]">
+        <div className="absolute inset-0 opacity-[0.35]">
           {lines.filter(l => l.depth === 1).map((line) => (
             <div
               key={line.id}
@@ -202,8 +204,8 @@ export function CircuitBackground() {
               style={{
                 left: line.x,
                 top: line.y,
-                width: line.horizontal ? line.width : '1px',
-                height: line.horizontal ? '1px' : line.height,
+                width: line.horizontal ? line.width : '2px',
+                height: line.horizontal ? '2px' : line.height,
               }}
             />
           ))}
@@ -214,6 +216,7 @@ export function CircuitBackground() {
               style={{
                 left: node.x,
                 top: node.y,
+                animationDelay: `${node.id * 0.08}s`
               }}
             />
           ))}
