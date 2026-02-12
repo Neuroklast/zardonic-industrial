@@ -16,24 +16,24 @@ import {
   YoutubeLogo,
   Pencil,
   FloppyDisk,
-  ChartLine,
   MagnifyingGlassPlus,
-  Download,
   MapPin,
   CalendarBlank,
   Ticket,
+  Upload,
+  Trash,
+  Plus,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
-import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
+import { Label } from '@/components/ui/label'
 
 interface Track {
   id: string
@@ -64,6 +64,8 @@ interface Release {
 }
 
 interface SiteData {
+  artistName: string
+  heroImage: string
   bio: string
   tracks: Track[]
   gigs: Gig[]
@@ -82,6 +84,8 @@ interface SiteData {
 
 function App() {
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
+    artistName: 'ZARDONIC',
+    heroImage: '',
     bio: `THE CLASH OF DISPARATE ELEMENTS ACTIVATES INNOVATION, AND EVERY GENERATION BRINGS US TIMELESS FIGURES WHO ACCIDENTALLY SPARK A NEW REVOLUTIONARY SOUND WITHIN THE MUSIC WORLD. CHUCK BERRY MIXED JAZZ, BLUES, GOSPEL AND COUNTRY MUSIC TO CREATE ROCK N ROLL. A FEW DECADES LATER, OZZY OSBOURNE TURNED UP THE GAIN TO CREATE HEAVY METAL. AND SINCE THE EARLY 2000S, FEDERICO AGREDA ALVAREZ, THE MASKED PERFORMER KNOWN TO THE WORLD AS DJ AND PRODUCER ZARDONIC, HAS HARNESSED THE POWER OF THE NEXUS BETWEEN DRUM & BASS AND HEAVY METAL TO CREATE THE SOUND THAT IS NOW KNOWN AS METAL & BASS.`,
     tracks: [
       {
@@ -112,7 +116,8 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
-  const [showAnalytics, setShowAnalytics] = useState(false)
+  const [editingGig, setEditingGig] = useState<Gig | null>(null)
+  const [editingRelease, setEditingRelease] = useState<Release | null>(null)
   
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -162,30 +167,134 @@ function App() {
     toast.success('Changes saved successfully')
   }
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'gallery') => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string
+        if (type === 'hero') {
+          setSiteData((data) => data ? { ...data, heroImage: imageUrl } : data!)
+          toast.success('Hero image updated')
+        } else {
+          setSiteData((data) => data ? { ...data, gallery: [...data.gallery, imageUrl] } : data!)
+          toast.success('Image added to gallery')
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const addGig = () => {
+    const newGig: Gig = {
+      id: Date.now().toString(),
+      venue: 'New Venue',
+      location: 'City, Country',
+      date: new Date().toISOString().split('T')[0],
+      ticketUrl: '',
+      support: ''
+    }
+    setSiteData((data) => data ? { ...data, gigs: [...data.gigs, newGig] } : data!)
+    setEditingGig(newGig)
+  }
+
+  const saveGig = (gig: Gig) => {
+    setSiteData((data) => {
+      if (!data) return data!
+      const gigIndex = data.gigs.findIndex(g => g.id === gig.id)
+      if (gigIndex >= 0) {
+        const newGigs = [...data.gigs]
+        newGigs[gigIndex] = gig
+        return { ...data, gigs: newGigs }
+      }
+      return data
+    })
+    setEditingGig(null)
+    toast.success('Gig saved')
+  }
+
+  const deleteGig = (id: string) => {
+    setSiteData((data) => data ? { ...data, gigs: data.gigs.filter(g => g.id !== id) } : data!)
+    toast.success('Gig deleted')
+  }
+
+  const addRelease = () => {
+    const newRelease: Release = {
+      id: Date.now().toString(),
+      title: 'New Release',
+      artwork: '',
+      year: new Date().getFullYear().toString(),
+      spotify: '',
+      soundcloud: '',
+      youtube: '',
+      bandcamp: ''
+    }
+    setSiteData((data) => data ? { ...data, releases: [...data.releases, newRelease] } : data!)
+    setEditingRelease(newRelease)
+  }
+
+  const saveRelease = (release: Release) => {
+    setSiteData((data) => {
+      if (!data) return data!
+      const releaseIndex = data.releases.findIndex(r => r.id === release.id)
+      if (releaseIndex >= 0) {
+        const newReleases = [...data.releases]
+        newReleases[releaseIndex] = release
+        return { ...data, releases: newReleases }
+      }
+      return data
+    })
+    setEditingRelease(null)
+    toast.success('Release saved')
+  }
+
+  const deleteRelease = (id: string) => {
+    setSiteData((data) => data ? { ...data, releases: data.releases.filter(r => r.id !== id) } : data!)
+    toast.success('Release deleted')
+  }
+
+  const deleteGalleryImage = (index: number) => {
+    setSiteData((data) => {
+      if (!data) return data!
+      const newGallery = [...data.gallery]
+      newGallery.splice(index, 1)
+      return { ...data, gallery: newGallery }
+    })
+    toast.success('Image removed')
+  }
+
   const currentTrack = siteData?.tracks[currentTrackIndex]
 
   if (!siteData) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
-      <p className="text-foreground">Loading...</p>
+    return <div className="min-h-screen bg-background flex items-center justify-center crt-effect">
+      <p className="text-foreground glitch-text text-2xl" data-text="LOADING...">LOADING...</p>
     </div>
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground crt-effect noise-effect">
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
 
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-sm border-b border-primary"
+        className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-foreground/20"
       >
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <motion.h1
-            className="text-2xl md:text-3xl font-bold tracking-tighter text-primary uppercase"
+            className="text-2xl md:text-3xl font-bold tracking-tighter text-foreground uppercase chromatic-aberration"
             whileHover={{ scale: 1.05 }}
           >
-            ZARDONIC
+            {editMode ? (
+              <Input
+                value={siteData.artistName}
+                onChange={(e) => setSiteData((data) => data ? { ...data, artistName: e.target.value } : data!)}
+                className="w-48 bg-transparent border-foreground/30 text-foreground"
+              />
+            ) : (
+              siteData.artistName
+            )}
           </motion.h1>
 
           <div className="hidden md:flex items-center gap-6">
@@ -193,7 +302,7 @@ function App() {
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
-                className="text-sm uppercase tracking-wide hover:text-primary transition-colors"
+                className="text-sm uppercase tracking-wide hover:text-accent transition-colors font-mono"
               >
                 {section}
               </button>
@@ -212,7 +321,7 @@ function App() {
             )}
             
             <button
-              className="md:hidden text-primary"
+              className="md:hidden text-foreground"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <List className="w-6 h-6" />}
@@ -226,14 +335,14 @@ function App() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden bg-card border-t border-primary overflow-hidden"
+              className="md:hidden bg-card border-t border-foreground/20 overflow-hidden"
             >
               <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
                 {['bio', 'music', 'gigs', 'releases', 'gallery', 'connect'].map((section) => (
                   <button
                     key={section}
                     onClick={() => scrollToSection(section)}
-                    className="text-left text-sm uppercase tracking-wide hover:text-primary transition-colors"
+                    className="text-left text-sm uppercase tracking-wide hover:text-accent transition-colors font-mono"
                   >
                     {section}
                   </button>
@@ -244,8 +353,14 @@ function App() {
         </AnimatePresence>
       </motion.nav>
 
-      <section className="relative min-h-screen flex items-center justify-center pt-20 scanline-effect">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-background to-card opacity-50" />
+      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden">
+        {siteData.heroImage && (
+          <div className="absolute inset-0 image-glitch">
+            <img src={siteData.heroImage} alt="Hero" className="w-full h-full object-cover opacity-30" />
+          </div>
+        )}
+        
+        <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/80 to-background" />
         
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
@@ -253,30 +368,41 @@ function App() {
           transition={{ duration: 0.8 }}
           className="relative z-10 text-center px-4"
         >
-          <h1 className="text-6xl md:text-9xl font-bold tracking-tighter mb-8 uppercase glitch-text">
-            <span className="text-foreground drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
-              ZARDONIC
+          <h1 className="text-6xl md:text-9xl font-bold tracking-tighter mb-8 uppercase glitch-text" data-text={siteData.artistName}>
+            <span className="text-foreground drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
+              {siteData.artistName}
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-4 uppercase tracking-widest">
-            Metal & Bass
-          </p>
-          
-          <Badge variant="outline" className="text-sm border-primary text-primary">
-            Darktunes Music Group
-          </Badge>
+          {editMode && (
+            <div className="flex justify-center mb-4">
+              <label className="cursor-pointer">
+                <Button variant="outline" className="gap-2" asChild>
+                  <span>
+                    <Upload className="w-4 h-4" />
+                    Upload Hero Image
+                  </span>
+                </Button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleImageUpload(e, 'hero')}
+                />
+              </label>
+            </div>
+          )}
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-12 flex gap-4 justify-center"
+            className="mt-12 flex gap-4 justify-center flex-wrap"
           >
-            <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase">
+            <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase font-mono">
               Listen Now
             </Button>
-            <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase">
+            <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase font-mono">
               Tour Dates
             </Button>
           </motion.div>
@@ -288,7 +414,7 @@ function App() {
         <div className="hud-corner bottom-right" />
       </section>
 
-      <Separator className="bg-primary" />
+      <Separator className="bg-foreground/20" />
 
       <section id="bio" className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
@@ -298,8 +424,8 @@ function App() {
             viewport={{ once: true }}
             className="relative"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Biography
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="BIOGRAPHY">
+              BIOGRAPHY
             </h2>
             
             {editMode ? (
@@ -308,19 +434,9 @@ function App() {
                   value={siteData.bio}
                   onChange={(e) => {
                     const newBio = e.target.value
-                    setSiteData((data) => {
-                      if (!data) return {
-                        bio: newBio,
-                        tracks: [],
-                        gigs: [],
-                        releases: [],
-                        gallery: [],
-                        social: {}
-                      }
-                      return { ...data, bio: newBio }
-                    })
+                    setSiteData((data) => data ? { ...data, bio: newBio } : data!)
                   }}
-                  className="min-h-[300px] font-mono"
+                  className="min-h-[300px] font-mono bg-card border-foreground/30 text-foreground"
                 />
                 <Button onClick={saveChanges}>
                   <FloppyDisk className="w-4 h-4 mr-2" />
@@ -328,7 +444,7 @@ function App() {
                 </Button>
               </div>
             ) : (
-              <p className="text-lg leading-relaxed text-muted-foreground font-light">
+              <p className="text-lg leading-relaxed text-muted-foreground font-light scanline-effect">
                 {siteData.bio}
               </p>
             )}
@@ -336,7 +452,7 @@ function App() {
         </div>
       </section>
 
-      <Separator className="bg-primary" />
+      <Separator className="bg-foreground/20" />
 
       <section id="music" className="py-24 px-4 bg-card/30">
         <div className="container mx-auto max-w-6xl">
@@ -345,25 +461,25 @@ function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Music Player
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="MUSIC PLAYER">
+              MUSIC PLAYER
             </h2>
 
             {siteData.tracks.length > 0 && (
-              <Card className="p-8 bg-card border-primary/50 relative scanline-effect">
+              <Card className="p-8 bg-card border-foreground/30 relative scanline-effect">
                 <div className="grid md:grid-cols-[200px_1fr] gap-8">
-                  <div className="aspect-square bg-muted rounded flex items-center justify-center text-6xl">
+                  <div className="aspect-square bg-muted flex items-center justify-center text-6xl image-glitch">
                     {currentTrack?.artwork ? (
-                      <img src={currentTrack.artwork} alt={currentTrack.title} className="w-full h-full object-cover rounded" />
+                      <img src={currentTrack.artwork} alt={currentTrack.title} className="w-full h-full object-cover" />
                     ) : (
-                      '▶'
+                      <div className="text-foreground/20 font-mono">▶</div>
                     )}
                   </div>
 
                   <div className="flex flex-col justify-between">
                     <div>
-                      <h3 className="text-2xl font-bold mb-2 uppercase">{currentTrack?.title}</h3>
-                      <p className="text-muted-foreground mb-4">{currentTrack?.artist}</p>
+                      <h3 className="text-2xl font-bold mb-2 uppercase font-mono chromatic-aberration">{currentTrack?.title}</h3>
+                      <p className="text-muted-foreground mb-4 font-mono">{currentTrack?.artist}</p>
                     </div>
 
                     <div className="space-y-4">
@@ -415,7 +531,7 @@ function App() {
         </div>
       </section>
 
-      <Separator className="bg-primary" />
+      <Separator className="bg-foreground/20" />
 
       <section id="gigs" className="py-24 px-4">
         <div className="container mx-auto max-w-6xl">
@@ -424,13 +540,21 @@ function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Upcoming Gigs
-            </h2>
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="UPCOMING GIGS">
+                UPCOMING GIGS
+              </h2>
+              {editMode && (
+                <Button onClick={addGig} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Gig
+                </Button>
+              )}
+            </div>
 
             {siteData.gigs.length === 0 ? (
-              <Card className="p-12 text-center bg-card/50 border-primary/30">
-                <p className="text-xl text-muted-foreground uppercase tracking-wide">
+              <Card className="p-12 text-center bg-card/50 border-foreground/30 scanline-effect">
+                <p className="text-xl text-muted-foreground uppercase tracking-wide font-mono">
                   No upcoming shows - Check back soon
                 </p>
               </Card>
@@ -439,14 +563,14 @@ function App() {
                 {siteData.gigs.map((gig) => (
                   <motion.div
                     key={gig.id}
-                    whileHover={{ scale: 1.02, borderColor: 'oklch(0.55 0.25 25)' }}
+                    whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <Card className="p-6 bg-card border-primary/30 hover:border-primary transition-colors">
+                    <Card className="p-6 bg-card border-foreground/30 hover:border-foreground/60 transition-colors">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-2">
-                          <h3 className="text-xl font-bold uppercase">{gig.venue}</h3>
-                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                          <h3 className="text-xl font-bold uppercase font-mono">{gig.venue}</h3>
+                          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground font-mono">
                             <span className="flex items-center gap-2">
                               <MapPin className="w-4 h-4" />
                               {gig.location}
@@ -462,18 +586,115 @@ function App() {
                             </span>
                           </div>
                           {gig.support && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm text-muted-foreground font-mono">
                               Support: {gig.support}
                             </p>
                           )}
                         </div>
 
-                        {gig.ticketUrl && (
-                          <Button asChild>
-                            <a href={gig.ticketUrl} target="_blank" rel="noopener noreferrer">
-                              <Ticket className="w-4 h-4 mr-2" />
-                              Tickets
+                        <div className="flex gap-2">
+                          {gig.ticketUrl && (
+                            <Button asChild>
+                              <a href={gig.ticketUrl} target="_blank" rel="noopener noreferrer" className="font-mono">
+                                <Ticket className="w-4 h-4 mr-2" />
+                                Tickets
+                              </a>
+                            </Button>
+                          )}
+                          {editMode && (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => setEditingGig(gig)}>
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button variant="destructive" size="sm" onClick={() => deleteGig(gig.id)}>
+                                <Trash className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </section>
+
+      <Separator className="bg-foreground/20" />
+
+      <section id="releases" className="py-24 px-4 bg-card/30">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="RELEASES">
+                RELEASES
+              </h2>
+              {editMode && (
+                <Button onClick={addRelease} className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Add Release
+                </Button>
+              )}
+            </div>
+
+            {siteData.releases.length === 0 ? (
+              <Card className="p-12 text-center bg-card/50 border-foreground/30 scanline-effect">
+                <p className="text-xl text-muted-foreground uppercase tracking-wide font-mono">
+                  Releases coming soon
+                </p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {siteData.releases.map((release) => (
+                  <motion.div
+                    key={release.id}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Card className="overflow-hidden bg-card border-foreground/30 hover:border-foreground/60 transition-all scanline-effect">
+                      <div className="aspect-square bg-muted relative image-glitch">
+                        {release.artwork && (
+                          <img src={release.artwork} alt={release.title} className="w-full h-full object-cover" />
+                        )}
+                        {editMode && (
+                          <div className="absolute top-2 right-2 flex gap-1">
+                            <Button variant="destructive" size="sm" onClick={() => deleteRelease(release.id)}>
+                              <Trash className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-bold uppercase text-sm mb-1 truncate font-mono">{release.title}</h3>
+                        <p className="text-xs text-muted-foreground mb-3 font-mono">{release.year}</p>
+                        
+                        <div className="flex flex-wrap gap-2">
+                          {release.spotify && (
+                            <a href={release.spotify} target="_blank" rel="noopener noreferrer">
+                              <SpotifyLogo className="w-5 h-5 hover:text-accent transition-colors" />
                             </a>
+                          )}
+                          {release.youtube && (
+                            <a href={release.youtube} target="_blank" rel="noopener noreferrer">
+                              <YoutubeLogo className="w-5 h-5 hover:text-accent transition-colors" />
+                            </a>
+                          )}
+                        </div>
+                        {editMode && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-3"
+                            onClick={() => setEditingRelease(release)}
+                          >
+                            <Pencil className="w-3 h-3 mr-2" />
+                            Edit
                           </Button>
                         )}
                       </div>
@@ -486,66 +707,7 @@ function App() {
         </div>
       </section>
 
-      <Separator className="bg-primary" />
-
-      <section id="releases" className="py-24 px-4 bg-card/30">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Releases
-            </h2>
-
-            {siteData.releases.length === 0 ? (
-              <Card className="p-12 text-center bg-card/50 border-primary/30">
-                <p className="text-xl text-muted-foreground uppercase tracking-wide">
-                  Releases coming soon
-                </p>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {siteData.releases.map((release) => (
-                  <motion.div
-                    key={release.id}
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Card className="overflow-hidden bg-card border-primary/30 hover:border-primary transition-all scanline-effect">
-                      <div className="aspect-square bg-muted relative">
-                        {release.artwork && (
-                          <img src={release.artwork} alt={release.title} className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-bold uppercase text-sm mb-1 truncate">{release.title}</h3>
-                        <p className="text-xs text-muted-foreground mb-3">{release.year}</p>
-                        
-                        <div className="flex flex-wrap gap-2">
-                          {release.spotify && (
-                            <a href={release.spotify} target="_blank" rel="noopener noreferrer">
-                              <SpotifyLogo className="w-5 h-5 hover:text-primary transition-colors" />
-                            </a>
-                          )}
-                          {release.youtube && (
-                            <a href={release.youtube} target="_blank" rel="noopener noreferrer">
-                              <YoutubeLogo className="w-5 h-5 hover:text-primary transition-colors" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </section>
-
-      <Separator className="bg-primary" />
+      <Separator className="bg-foreground/20" />
 
       <section id="gallery" className="py-24 px-4">
         <div className="container mx-auto max-w-6xl">
@@ -554,13 +716,31 @@ function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Gallery
-            </h2>
+            <div className="flex items-center justify-between mb-12">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="GALLERY">
+                GALLERY
+              </h2>
+              {editMode && (
+                <label className="cursor-pointer">
+                  <Button className="gap-2" asChild>
+                    <span>
+                      <Upload className="w-4 h-4" />
+                      Add Image
+                    </span>
+                  </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, 'gallery')}
+                  />
+                </label>
+              )}
+            </div>
 
             {siteData.gallery.length === 0 ? (
-              <Card className="p-12 text-center bg-card/50 border-primary/30">
-                <p className="text-xl text-muted-foreground uppercase tracking-wide">
+              <Card className="p-12 text-center bg-card/50 border-foreground/30 scanline-effect">
+                <p className="text-xl text-muted-foreground uppercase tracking-wide font-mono">
                   Gallery coming soon
                 </p>
               </Card>
@@ -570,13 +750,26 @@ function App() {
                   <motion.div
                     key={index}
                     whileHover={{ scale: 1.05 }}
-                    className="aspect-square bg-muted rounded overflow-hidden cursor-pointer relative group"
+                    className="aspect-square bg-muted overflow-hidden cursor-pointer relative group image-glitch"
                     onClick={() => setSelectedImage(image)}
                   >
                     <img src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <MagnifyingGlassPlus className="w-8 h-8 text-primary" />
+                      <MagnifyingGlassPlus className="w-8 h-8 text-foreground" />
                     </div>
+                    {editMode && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteGalleryImage(index)
+                        }}
+                      >
+                        <Trash className="w-3 h-3" />
+                      </Button>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -585,7 +778,7 @@ function App() {
         </div>
       </section>
 
-      <Separator className="bg-primary" />
+      <Separator className="bg-foreground/20" />
 
       <section id="connect" className="py-24 px-4 bg-card/30">
         <div className="container mx-auto max-w-4xl">
@@ -595,9 +788,46 @@ function App() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-primary">
-              Connect
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground glitch-text font-mono" data-text="CONNECT">
+              CONNECT
             </h2>
+
+            {editMode && (
+              <div className="mb-8 space-y-4 max-w-md mx-auto text-left">
+                <div>
+                  <Label className="font-mono">Instagram</Label>
+                  <Input
+                    value={siteData.social.instagram || ''}
+                    onChange={(e) => setSiteData((data) => data ? { ...data, social: { ...data.social, instagram: e.target.value } } : data!)}
+                    className="bg-card border-foreground/30"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono">Facebook</Label>
+                  <Input
+                    value={siteData.social.facebook || ''}
+                    onChange={(e) => setSiteData((data) => data ? { ...data, social: { ...data.social, facebook: e.target.value } } : data!)}
+                    className="bg-card border-foreground/30"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono">Spotify</Label>
+                  <Input
+                    value={siteData.social.spotify || ''}
+                    onChange={(e) => setSiteData((data) => data ? { ...data, social: { ...data.social, spotify: e.target.value } } : data!)}
+                    className="bg-card border-foreground/30"
+                  />
+                </div>
+                <div>
+                  <Label className="font-mono">YouTube</Label>
+                  <Input
+                    value={siteData.social.youtube || ''}
+                    onChange={(e) => setSiteData((data) => data ? { ...data, social: { ...data.social, youtube: e.target.value } } : data!)}
+                    className="bg-card border-foreground/30"
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap justify-center gap-6">
               {siteData.social.instagram && (
@@ -606,7 +836,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2, rotate: 5 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-accent transition-colors"
                 >
                   <InstagramLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -617,7 +847,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2, rotate: 5 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-accent transition-colors"
                 >
                   <FacebookLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -628,7 +858,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2, rotate: 5 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-accent transition-colors"
                 >
                   <SpotifyLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -639,7 +869,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.2, rotate: 5 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-accent transition-colors"
                 >
                   <YoutubeLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -649,21 +879,134 @@ function App() {
         </div>
       </section>
 
-      <footer className="py-12 px-4 border-t border-primary">
+      <footer className="py-12 px-4 border-t border-foreground/20">
         <div className="container mx-auto text-center">
-          <p className="text-sm text-muted-foreground uppercase tracking-wide">
-            © {new Date().getFullYear()} ZARDONIC • Darktunes Music Group
+          <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono">
+            © {new Date().getFullYear()} {siteData.artistName}
           </p>
         </div>
       </footer>
 
       <Dialog open={selectedImage !== null} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl bg-background border-primary">
+        <DialogContent className="max-w-4xl bg-background border-foreground/30">
           <DialogHeader>
-            <DialogTitle className="uppercase tracking-wide">Gallery</DialogTitle>
+            <DialogTitle className="uppercase tracking-wide font-mono">Gallery</DialogTitle>
           </DialogHeader>
           {selectedImage && (
-            <img src={selectedImage} alt="Gallery" className="w-full h-auto rounded" />
+            <img src={selectedImage} alt="Gallery" className="w-full h-auto" />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingGig !== null} onOpenChange={() => setEditingGig(null)}>
+        <DialogContent className="bg-background border-foreground/30">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-wide font-mono">Edit Gig</DialogTitle>
+          </DialogHeader>
+          {editingGig && (
+            <div className="space-y-4">
+              <div>
+                <Label className="font-mono">Venue</Label>
+                <Input
+                  value={editingGig.venue}
+                  onChange={(e) => setEditingGig({ ...editingGig, venue: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Location</Label>
+                <Input
+                  value={editingGig.location}
+                  onChange={(e) => setEditingGig({ ...editingGig, location: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Date</Label>
+                <Input
+                  type="date"
+                  value={editingGig.date}
+                  onChange={(e) => setEditingGig({ ...editingGig, date: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Support</Label>
+                <Input
+                  value={editingGig.support || ''}
+                  onChange={(e) => setEditingGig({ ...editingGig, support: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Ticket URL</Label>
+                <Input
+                  value={editingGig.ticketUrl || ''}
+                  onChange={(e) => setEditingGig({ ...editingGig, ticketUrl: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <Button onClick={() => saveGig(editingGig)} className="w-full">
+                <FloppyDisk className="w-4 h-4 mr-2" />
+                Save Gig
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editingRelease !== null} onOpenChange={() => setEditingRelease(null)}>
+        <DialogContent className="bg-background border-foreground/30">
+          <DialogHeader>
+            <DialogTitle className="uppercase tracking-wide font-mono">Edit Release</DialogTitle>
+          </DialogHeader>
+          {editingRelease && (
+            <div className="space-y-4">
+              <div>
+                <Label className="font-mono">Title</Label>
+                <Input
+                  value={editingRelease.title}
+                  onChange={(e) => setEditingRelease({ ...editingRelease, title: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Year</Label>
+                <Input
+                  value={editingRelease.year}
+                  onChange={(e) => setEditingRelease({ ...editingRelease, year: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Artwork URL</Label>
+                <Input
+                  value={editingRelease.artwork}
+                  onChange={(e) => setEditingRelease({ ...editingRelease, artwork: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">Spotify URL</Label>
+                <Input
+                  value={editingRelease.spotify || ''}
+                  onChange={(e) => setEditingRelease({ ...editingRelease, spotify: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <div>
+                <Label className="font-mono">YouTube URL</Label>
+                <Input
+                  value={editingRelease.youtube || ''}
+                  onChange={(e) => setEditingRelease({ ...editingRelease, youtube: e.target.value })}
+                  className="bg-card border-foreground/30"
+                />
+              </div>
+              <Button onClick={() => saveRelease(editingRelease)} className="w-full">
+                <FloppyDisk className="w-4 h-4 mr-2" />
+                Save Release
+              </Button>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -672,9 +1015,9 @@ function App() {
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          className="fixed bottom-8 right-8 bg-primary text-primary-foreground p-4 rounded-lg shadow-lg"
+          className="fixed bottom-8 right-8 bg-foreground text-background p-4 shadow-lg scanline-effect"
         >
-          <p className="text-sm uppercase font-bold">Edit Mode Active</p>
+          <p className="text-sm uppercase font-bold font-mono">Edit Mode Active</p>
         </motion.div>
       )}
     </div>
