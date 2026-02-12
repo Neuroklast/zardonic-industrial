@@ -35,7 +35,7 @@ export interface OdesliResult {
 export async function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
   try {
     const response = await fetch(
-      `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(streamingUrl)}&userCountry=DE`
+      `/api/odesli?url=${encodeURIComponent(streamingUrl)}&userCountry=DE`
     )
 
     if (!response.ok) {
