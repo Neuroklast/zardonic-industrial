@@ -320,6 +320,9 @@ In the end, Zardonic will unite listeners with Superstars.
   const [editingRelease, setEditingRelease] = useState<Release | null>(null)
   const [cyberpunkOverlay, setCyberpunkOverlay] = useState<{type: 'gig' | 'release' | 'member' | 'impressum' | 'privacy', data?: any} | null>(null)
   const [language, setLanguage] = useState<'en' | 'de'>('en')
+  const [overlayLoading, setOverlayLoading] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [contentReady, setContentReady] = useState(false)
   
   const audioRef = useRef<HTMLAudioElement>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
@@ -327,6 +330,39 @@ In the end, Zardonic will unite listeners with Superstars.
   useEffect(() => {
     window.spark.user().then(setCurrentUser)
   }, [])
+
+  useEffect(() => {
+    if (cyberpunkOverlay) {
+      setOverlayLoading(true)
+      setContentReady(false)
+      setLoadingProgress(0)
+
+      const progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval)
+            return 100
+          }
+          return prev + Math.random() * 30
+        })
+      }, 50)
+
+      const contentTimer = setTimeout(() => {
+        setContentReady(true)
+      }, 400)
+
+      const loadingTimer = setTimeout(() => {
+        setOverlayLoading(false)
+        clearInterval(progressInterval)
+      }, 600)
+
+      return () => {
+        clearInterval(progressInterval)
+        clearTimeout(contentTimer)
+        clearTimeout(loadingTimer)
+      }
+    }
+  }, [cyberpunkOverlay])
 
   useEffect(() => {
     if (audioRef.current) {
@@ -1147,7 +1183,7 @@ In the end, Zardonic will unite listeners with Superstars.
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2 }}
               className="fixed inset-0 bg-black/90 z-[100] backdrop-blur-sm cyberpunk-overlay-bg"
               onClick={() => setCyberpunkOverlay(null)}
             />
@@ -1167,15 +1203,15 @@ In the end, Zardonic will unite listeners with Superstars.
               }}
               exit={{ 
                 opacity: 0, 
-                y: -50,
-                rotateX: 20,
-                scale: 0.9
+                y: -30,
+                rotateX: 10,
+                scale: 0.95
               }}
               transition={{ 
                 type: "spring", 
-                damping: 20, 
-                stiffness: 200,
-                opacity: { duration: 0.3 }
+                damping: 25, 
+                stiffness: 300,
+                opacity: { duration: 0.2 }
               }}
               className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none"
               style={{ perspective: '1000px' }}
@@ -1194,39 +1230,39 @@ In the end, Zardonic will unite listeners with Superstars.
                   repeat: Infinity,
                   ease: "easeInOut"
                 }}
-                className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-y-auto max-h-[90vh] scanline-effect cyber-card"
+                className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[90vh] scanline-effect cyber-card"
                 onClick={(e) => e.stopPropagation()}
               >
                 <motion.div 
                   className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary"
                   initial={{ opacity: 0, x: -10, y: -10 }}
                   animate={{ opacity: 1, x: 0, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.15, duration: 0.3 }}
                 />
                 <motion.div 
                   className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary"
                   initial={{ opacity: 0, x: 10, y: -10 }}
                   animate={{ opacity: 1, x: 0, y: 0 }}
-                  transition={{ delay: 0.25 }}
+                  transition={{ delay: 0.2, duration: 0.3 }}
                 />
                 <motion.div 
                   className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary"
                   initial={{ opacity: 0, x: -10, y: 10 }}
                   animate={{ opacity: 1, x: 0, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ delay: 0.25, duration: 0.3 }}
                 />
                 <motion.div 
                   className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary"
                   initial={{ opacity: 0, x: 10, y: 10 }}
                   animate={{ opacity: 1, x: 0, y: 0 }}
-                  transition={{ delay: 0.35 }}
+                  transition={{ delay: 0.3, duration: 0.3 }}
                 />
                 
                 <motion.div 
                   className="absolute top-2 left-1/2 -translate-x-1/2"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.35, duration: 0.3 }}
                 >
                   <div className="data-label">// SYSTEM.INTERFACE.v2.0</div>
                 </motion.div>
@@ -1235,394 +1271,650 @@ In the end, Zardonic will unite listeners with Superstars.
                   className="absolute top-0 left-0 right-0 h-1 bg-primary/20"
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.5, delay: 0.1 }}
+                  transition={{ duration: 0.4, delay: 0.1 }}
                   style={{ transformOrigin: 'left' }}
                 />
                 <motion.div 
                   className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20"
                   initial={{ scaleX: 0 }}
                   animate={{ scaleX: 1 }}
-                  transition={{ duration: 0.5, delay: 0.15 }}
+                  transition={{ duration: 0.4, delay: 0.15 }}
                   style={{ transformOrigin: 'right' }}
                 />
 
-                <div className="relative p-8 md:p-12 pt-12">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-4 right-4 text-foreground hover:text-primary hover:bg-primary/10 z-10"
-                    onClick={() => setCyberpunkOverlay(null)}
-                  >
-                    <X className="w-6 h-6" />
-                  </Button>
-
-                  {cyberpunkOverlay.type === 'impressum' && (
-                    <motion.div 
-                      className="mt-8 space-y-6"
+                <AnimatePresence mode="wait">
+                  {overlayLoading && (
+                    <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 bg-background/95 z-50 flex flex-col items-center justify-center p-8"
                     >
-                      <div>
-                        <div className="data-label mb-2">// LEGAL.INFORMATION.STREAM</div>
-                        <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text="IMPRESSUM">
-                          IMPRESSUM
-                        </h2>
-                      </div>
-
-                      <div className="space-y-6 text-foreground/90">
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Information according to § 5 TMG</div>
-                          <div className="space-y-2 font-mono text-sm">
-                            <p>Federico Ágreda Álvarez (ZARDONIC)</p>
-                            <p>Professional Artist & Music Producer</p>
-                          </div>
-                        </div>
-
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Contact</div>
-                          <div className="space-y-2 font-mono text-sm">
-                            <p>Email: info@zardonic.com</p>
-                            <p>Website: www.zardonic.com</p>
-                          </div>
-                        </div>
-
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Responsible for content according to § 55 Abs. 2 RStV</div>
-                          <div className="space-y-2 font-mono text-sm">
-                            <p>Federico Ágreda Álvarez</p>
-                          </div>
-                        </div>
-
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Disclaimer / Haftungsausschluss</div>
-                          <div className="space-y-3 font-mono text-sm leading-relaxed">
-                            <p className="font-bold text-primary">Liability for content:</p>
-                            <p>The contents of our pages were created with the greatest care. However, we cannot guarantee the accuracy, completeness and timeliness of the content. As a service provider, we are responsible for our own content on these pages in accordance with general laws. However, we are not obligated to monitor transmitted or stored third-party information or to investigate circumstances that indicate illegal activity.</p>
-                            
-                            <p className="font-bold text-primary mt-4">Liability for links:</p>
-                            <p>Our offer contains links to external websites of third parties, on whose contents we have no influence. Therefore, we cannot assume any liability for these external contents. The respective provider or operator of the pages is always responsible for the contents of the linked pages.</p>
-                            
-                            <p className="font-bold text-primary mt-4">Copyright:</p>
-                            <p>The content and works created by the site operators on these pages are subject to copyright law. All content and works on this website are protected by copyright. Duplication, processing, distribution and any kind of exploitation outside the limits of copyright require the written consent of the respective author or creator.</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-6 border-t border-border">
-                        <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {cyberpunkOverlay.type === 'privacy' && (
-                    <motion.div 
-                      className="mt-8 space-y-6"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <div>
-                          <div className="data-label mb-2">// PRIVACY.POLICY.STREAM</div>
-                          <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text="PRIVACY POLICY">
-                            PRIVACY POLICY
-                          </h2>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant={language === 'en' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setLanguage('en')}
-                            className="font-mono"
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                        className="mb-8"
+                      >
+                        <div className="w-16 h-16 border-2 border-primary/30 border-t-primary relative">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            className="absolute inset-0"
                           >
-                            EN
-                          </Button>
-                          <Button
-                            variant={language === 'de' ? 'default' : 'outline'}
-                            size="sm"
-                            onClick={() => setLanguage('de')}
-                            className="font-mono"
+                            <div className="w-full h-full border-2 border-transparent border-t-primary/60" />
+                          </motion.div>
+                          <motion.div
+                            animate={{ rotate: -360 }}
+                            transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                            className="absolute inset-2"
                           >
-                            DE
-                          </Button>
+                            <div className="w-full h-full border-2 border-transparent border-t-primary/40" />
+                          </motion.div>
                         </div>
-                      </div>
+                      </motion.div>
 
-                      {language === 'en' ? (
-                        <div className="space-y-6 text-foreground/90">
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">1. Data Protection at a Glance</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">General Information</p>
-                              <p>The following information provides a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to identify you personally.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">2. Data Collection on this Website</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Who is responsible for data collection on this website?</p>
-                              <p>Data processing on this website is carried out by the website operator. You can find their contact details in the section "Information about the responsible party" in this privacy policy.</p>
-                              
-                              <p className="font-bold text-primary mt-4">How do we collect your data?</p>
-                              <p>Your data is collected when you provide it to us. This can be data that you enter in a contact form, for example. Other data is collected automatically or with your consent when you visit the website by our IT systems. This is mainly technical data (e.g. internet browser, operating system or time of page view).</p>
-                              
-                              <p className="font-bold text-primary mt-4">What do we use your data for?</p>
-                              <p>Some of the data is collected to ensure error-free provision of the website. Other data may be used to analyze your user behavior.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">3. General Information and Mandatory Information</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Data Protection</p>
-                              <p>The operators of these pages take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the statutory data protection regulations and this privacy policy.</p>
-                              <p>When you use this website, various personal data is collected. Personal data is data with which you can be personally identified. This privacy policy explains what data we collect and what we use it for. It also explains how and for what purpose this is done.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">4. Data Recording on this Website</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Cookies</p>
-                              <p>Our website uses cookies. Cookies are small text files that are stored on your device and that store certain settings and data for exchange with our system via your browser. Some cookies remain stored on your device until you delete them. They enable us to recognize your browser on your next visit.</p>
-                              <p>You can set your browser so that you are informed about the setting of cookies and only allow cookies in individual cases, exclude the acceptance of cookies for certain cases or in general, and activate the automatic deletion of cookies when closing the browser.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">5. Your Rights</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p>You have the right to receive information about the origin, recipient and purpose of your stored personal data free of charge at any time. You also have the right to request the correction or deletion of this data. If you have given your consent to data processing, you can revoke this consent at any time for the future. You also have the right to request the restriction of the processing of your personal data under certain circumstances.</p>
-                            </div>
-                          </div>
+                      <motion.div 
+                        className="w-full max-w-md space-y-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <div className="flex justify-between items-center mb-2">
+                          <motion.span 
+                            className="data-label"
+                            animate={{ opacity: [0.5, 1, 0.5] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          >
+                            // LOADING.DATA.STREAM
+                          </motion.span>
+                          <motion.span 
+                            className="font-mono text-sm text-primary"
+                            key={Math.floor(loadingProgress)}
+                          >
+                            {Math.floor(loadingProgress)}%
+                          </motion.span>
                         </div>
-                      ) : (
-                        <div className="space-y-6 text-foreground/90">
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">1. Datenschutz auf einen Blick</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Allgemeine Hinweise</p>
-                              <p>Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">2. Datenerfassung auf dieser Website</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Wer ist verantwortlich für die Datenerfassung auf dieser Website?</p>
-                              <p>Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Abschnitt „Hinweis zur verantwortlichen Stelle" in dieser Datenschutzerklärung entnehmen.</p>
-                              
-                              <p className="font-bold text-primary mt-4">Wie erfassen wir Ihre Daten?</p>
-                              <p>Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z.B. um Daten handeln, die Sie in ein Kontaktformular eingeben. Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z.B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs).</p>
-                              
-                              <p className="font-bold text-primary mt-4">Wofür nutzen wir Ihre Daten?</p>
-                              <p>Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website zu gewährleisten. Andere Daten können zur Analyse Ihres Nutzerverhaltens verwendet werden.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">3. Allgemeine Hinweise und Pflichtinformationen</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Datenschutz</p>
-                              <p>Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.</p>
-                              <p>Wenn Sie diese Website benutzen, werden verschiedene personenbezogene Daten erhoben. Personenbezogene Daten sind Daten, mit denen Sie persönlich identifiziert werden können. Die vorliegende Datenschutzerklärung erläutert, welche Daten wir erheben und wofür wir sie nutzen. Sie erläutert auch, wie und zu welchem Zweck das geschieht.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">4. Datenerfassung auf dieser Website</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p className="font-bold text-primary">Cookies</p>
-                              <p>Unsere Internetseiten verwenden Cookies. Cookies sind kleine Textdateien, die auf Ihrem Endgerät abgelegt werden und die bestimmte Einstellungen und Daten zum Austausch mit unserem System über Ihren Browser speichern. Einige Cookies bleiben auf Ihrem Endgerät gespeichert, bis Sie diese löschen. Sie ermöglichen es uns, Ihren Browser beim nächsten Besuch wiederzuerkennen.</p>
-                              <p>Sie können Ihren Browser so einstellen, dass Sie über das Setzen von Cookies informiert werden und Cookies nur im Einzelfall erlauben, die Annahme von Cookies für bestimmte Fälle oder generell ausschließen sowie das automatische Löschen der Cookies beim Schließen des Browsers aktivieren.</p>
-                            </div>
-                          </div>
-
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-2">5. Ihre Rechte</div>
-                            <div className="space-y-3 font-mono text-sm leading-relaxed">
-                              <p>Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Wenn Sie eine Einwilligung zur Datenverarbeitung erteilt haben, können Sie diese Einwilligung jederzeit für die Zukunft widerrufen. Außerdem haben Sie das Recht, unter bestimmten Umständen die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</p>
-                            </div>
-                          </div>
+                        
+                        <div className="h-1 bg-border/30 relative overflow-hidden">
+                          <motion.div
+                            className="absolute inset-0 bg-primary"
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: loadingProgress / 100 }}
+                            style={{ transformOrigin: 'left' }}
+                            transition={{ duration: 0.1 }}
+                          />
+                          <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent"
+                            animate={{ x: ['-100%', '200%'] }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          />
                         </div>
-                      )}
 
-                      <div className="pt-6 border-t border-border">
-                        <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
-                      </div>
+                        <motion.div 
+                          className="flex gap-2 font-mono text-xs text-muted-foreground"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3 }}
+                        >
+                          <motion.span
+                            animate={{ opacity: [0, 1, 0] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
+                          >
+                            ▸
+                          </motion.span>
+                          <motion.span
+                            animate={{ opacity: [0, 1, 0] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
+                          >
+                            ▸
+                          </motion.span>
+                          <motion.span
+                            animate={{ opacity: [0, 1, 0] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
+                          >
+                            ▸
+                          </motion.span>
+                          <span className="ml-2">INITIALIZING INTERFACE</span>
+                        </motion.div>
+                      </motion.div>
                     </motion.div>
                   )}
+                </AnimatePresence>
 
-                  {cyberpunkOverlay.type === 'member' && cyberpunkOverlay.data && (
-                    <motion.div 
-                      className="mt-8 space-y-6"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
+                <div className="relative overflow-y-auto max-h-[90vh]">
+                  <div className="p-8 md:p-12 pt-12">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-4 right-4 text-foreground hover:text-primary hover:bg-primary/10 z-10"
+                      onClick={() => setCyberpunkOverlay(null)}
                     >
-                      <div className="flex flex-col md:flex-row gap-6">
-                        {cyberpunkOverlay.data.image && (
-                          <div className="w-48 h-48 bg-muted relative">
-                            <img
-                              src={cyberpunkOverlay.data.image}
-                              alt={cyberpunkOverlay.data.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1">
-                          <div className="text-xs text-primary uppercase tracking-widest font-mono mb-2">// MEMBER.PROFILE</div>
-                          <h2 className="text-4xl font-bold uppercase font-mono mb-2" data-text={cyberpunkOverlay.data.name}>
-                            {cyberpunkOverlay.data.name}
-                          </h2>
-                          <p className="text-xl text-muted-foreground font-mono mb-4">{cyberpunkOverlay.data.role}</p>
-                          <p className="text-foreground/90 leading-relaxed">{cyberpunkOverlay.data.bio}</p>
-                          {cyberpunkOverlay.data.instagram && (
-                            <Button asChild variant="outline" className="mt-4 font-mono">
-                              <a href={cyberpunkOverlay.data.instagram} target="_blank" rel="noopener noreferrer">
-                                <InstagramLogo className="w-5 h-5 mr-2" weight="fill" />
-                                Follow
-                              </a>
-                            </Button>
+                      <X className="w-6 h-6" />
+                    </Button>
+
+                    <AnimatePresence mode="wait">
+                      {contentReady && (
+                        <>
+                          {cyberpunkOverlay.type === 'impressum' && (
+                            <motion.div 
+                              className="mt-8 space-y-6"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3, staggerChildren: 0.05 }}
+                            >
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                              >
+                                <div className="data-label mb-2">// LEGAL.INFORMATION.STREAM</div>
+                                <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text="IMPRESSUM">
+                                  IMPRESSUM
+                                </h2>
+                              </motion.div>
+
+                              <div className="space-y-6 text-foreground/90">
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.2 }}
+                                >
+                                  <div className="data-label mb-2">Information according to § 5 TMG</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>Federico Ágreda Álvarez (ZARDONIC)</p>
+                                    <p>Professional Artist & Music Producer</p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.3 }}
+                                >
+                                  <div className="data-label mb-2">Contact</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>Email: info@zardonic.com</p>
+                                    <p>Website: www.zardonic.com</p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.4 }}
+                                >
+                                  <div className="data-label mb-2">Responsible for content according to § 55 Abs. 2 RStV</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>Federico Ágreda Álvarez</p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.5 }}
+                                >
+                                  <div className="data-label mb-2">Disclaimer / Haftungsausschluss</div>
+                                  <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                    <p className="font-bold text-primary">Liability for content:</p>
+                                    <p>The contents of our pages were created with the greatest care. However, we cannot guarantee the accuracy, completeness and timeliness of the content. As a service provider, we are responsible for our own content on these pages in accordance with general laws. However, we are not obligated to monitor transmitted or stored third-party information or to investigate circumstances that indicate illegal activity.</p>
+                                    
+                                    <p className="font-bold text-primary mt-4">Liability for links:</p>
+                                    <p>Our offer contains links to external websites of third parties, on whose contents we have no influence. Therefore, we cannot assume any liability for these external contents. The respective provider or operator of the pages is always responsible for the contents of the linked pages.</p>
+                                    
+                                    <p className="font-bold text-primary mt-4">Copyright:</p>
+                                    <p>The content and works created by the site operators on these pages are subject to copyright law. All content and works on this website are protected by copyright. Duplication, processing, distribution and any kind of exploitation outside the limits of copyright require the written consent of the respective author or creator.</p>
+                                  </div>
+                                </motion.div>
+                              </div>
+
+                              <motion.div 
+                                className="pt-6 border-t border-border"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                              >
+                                <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
+                              </motion.div>
+                            </motion.div>
                           )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
 
-                  {cyberpunkOverlay.type === 'gig' && cyberpunkOverlay.data && (
-                    <motion.div 
-                      className="mt-8 space-y-6"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div>
-                        <div className="data-label mb-2">// EVENT.DATA.STREAM</div>
-                        <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text={cyberpunkOverlay.data.venue}>
-                          {cyberpunkOverlay.data.venue}
-                        </h2>
-                      </div>
+                          {cyberpunkOverlay.type === 'privacy' && (
+                            <motion.div 
+                              className="mt-8 space-y-6"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <motion.div 
+                                className="flex items-center justify-between mb-6"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                              >
+                                <div>
+                                  <div className="data-label mb-2">// PRIVACY.POLICY.STREAM</div>
+                                  <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text="PRIVACY POLICY">
+                                    PRIVACY POLICY
+                                  </h2>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant={language === 'en' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setLanguage('en')}
+                                    className="font-mono"
+                                  >
+                                    EN
+                                  </Button>
+                                  <Button
+                                    variant={language === 'de' ? 'default' : 'outline'}
+                                    size="sm"
+                                    onClick={() => setLanguage('de')}
+                                    className="font-mono"
+                                  >
+                                    DE
+                                  </Button>
+                                </div>
+                              </motion.div>
 
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Location</div>
-                          <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
-                            <MapPin className="w-5 h-5 text-primary" />
-                            {cyberpunkOverlay.data.location}
-                          </div>
-                        </div>
+                              {language === 'en' ? (
+                                <div className="space-y-6 text-foreground/90">
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                  >
+                                    <div className="data-label mb-2">1. Data Protection at a Glance</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">General Information</p>
+                                      <p>The following information provides a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to identify you personally.</p>
+                                    </div>
+                                  </motion.div>
 
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Date & Time</div>
-                          <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
-                            <CalendarBlank className="w-5 h-5 text-primary" />
-                            {new Date(cyberpunkOverlay.data.date).toLocaleDateString('en-US', { 
-                              weekday: 'long', 
-                              year: 'numeric', 
-                              month: 'long', 
-                              day: 'numeric' 
-                            })}
-                          </div>
-                        </div>
-                      </div>
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                  >
+                                    <div className="data-label mb-2">2. Data Collection on this Website</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Who is responsible for data collection on this website?</p>
+                                      <p>Data processing on this website is carried out by the website operator. You can find their contact details in the section "Information about the responsible party" in this privacy policy.</p>
+                                      
+                                      <p className="font-bold text-primary mt-4">How do we collect your data?</p>
+                                      <p>Your data is collected when you provide it to us. This can be data that you enter in a contact form, for example. Other data is collected automatically or with your consent when you visit the website by our IT systems. This is mainly technical data (e.g. internet browser, operating system or time of page view).</p>
+                                      
+                                      <p className="font-bold text-primary mt-4">What do we use your data for?</p>
+                                      <p>Some of the data is collected to ensure error-free provision of the website. Other data may be used to analyze your user behavior.</p>
+                                    </div>
+                                  </motion.div>
 
-                      {cyberpunkOverlay.data.support && (
-                        <div className="cyber-grid p-4">
-                          <div className="data-label mb-2">Support Acts</div>
-                          <p className="text-lg font-mono text-foreground/90 hover-chromatic">{cyberpunkOverlay.data.support}</p>
-                        </div>
-                      )}
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                  >
+                                    <div className="data-label mb-2">3. General Information and Mandatory Information</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Data Protection</p>
+                                      <p>The operators of these pages take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the statutory data protection regulations and this privacy policy.</p>
+                                      <p>When you use this website, various personal data is collected. Personal data is data with which you can be personally identified. This privacy policy explains what data we collect and what we use it for. It also explains how and for what purpose this is done.</p>
+                                    </div>
+                                  </motion.div>
 
-                      {cyberpunkOverlay.data.ticketUrl && (
-                        <div className="pt-4">
-                          <Button asChild size="lg" className="w-full md:w-auto font-mono uppercase tracking-wider hover-noise cyber-border">
-                            <a href={cyberpunkOverlay.data.ticketUrl} target="_blank" rel="noopener noreferrer">
-                              <Ticket className="w-5 h-5 mr-2" />
-                              <span className="hover-chromatic">Get Tickets</span>
-                            </a>
-                          </Button>
-                        </div>
-                      )}
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                  >
+                                    <div className="data-label mb-2">4. Data Recording on this Website</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Cookies</p>
+                                      <p>Our website uses cookies. Cookies are small text files that are stored on your device and that store certain settings and data for exchange with our system via your browser. Some cookies remain stored on your device until you delete them. They enable us to recognize your browser on your next visit.</p>
+                                      <p>You can set your browser so that you are informed about the setting of cookies and only allow cookies in individual cases, exclude the acceptance of cookies for certain cases or in general, and activate the automatic deletion of cookies when closing the browser.</p>
+                                    </div>
+                                  </motion.div>
 
-                      <div className="pt-6 border-t border-border">
-                        <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
-                      </div>
-                    </motion.div>
-                  )}
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                  >
+                                    <div className="data-label mb-2">5. Your Rights</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p>You have the right to receive information about the origin, recipient and purpose of your stored personal data free of charge at any time. You also have the right to request the correction or deletion of this data. If you have given your consent to data processing, you can revoke this consent at any time for the future. You also have the right to request the restriction of the processing of your personal data under certain circumstances.</p>
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              ) : (
+                                <div className="space-y-6 text-foreground/90">
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                  >
+                                    <div className="data-label mb-2">1. Datenschutz auf einen Blick</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Allgemeine Hinweise</p>
+                                      <p>Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.</p>
+                                    </div>
+                                  </motion.div>
 
-                  {cyberpunkOverlay.type === 'release' && cyberpunkOverlay.data && (
-                    <motion.div 
-                      className="mt-8"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div className="grid md:grid-cols-[300px_1fr] gap-8">
-                        <div className="aspect-square bg-muted relative cyber-card">
-                          {cyberpunkOverlay.data.artwork && (
-                            <img 
-                              src={cyberpunkOverlay.data.artwork} 
-                              alt={cyberpunkOverlay.data.title} 
-                              className="w-full h-full object-cover glitch-image" 
-                            />
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                  >
+                                    <div className="data-label mb-2">2. Datenerfassung auf dieser Website</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Wer ist verantwortlich für die Datenerfassung auf dieser Website?</p>
+                                      <p>Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Abschnitt „Hinweis zur verantwortlichen Stelle" in dieser Datenschutzerklärung entnehmen.</p>
+                                      
+                                      <p className="font-bold text-primary mt-4">Wie erfassen wir Ihre Daten?</p>
+                                      <p>Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen. Hierbei kann es sich z.B. um Daten handeln, die Sie in ein Kontaktformular eingeben. Andere Daten werden automatisch oder nach Ihrer Einwilligung beim Besuch der Website durch unsere IT-Systeme erfasst. Das sind vor allem technische Daten (z.B. Internetbrowser, Betriebssystem oder Uhrzeit des Seitenaufrufs).</p>
+                                      
+                                      <p className="font-bold text-primary mt-4">Wofür nutzen wir Ihre Daten?</p>
+                                      <p>Ein Teil der Daten wird erhoben, um eine fehlerfreie Bereitstellung der Website zu gewährleisten. Andere Daten können zur Analyse Ihres Nutzerverhaltens verwendet werden.</p>
+                                    </div>
+                                  </motion.div>
+
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.4 }}
+                                  >
+                                    <div className="data-label mb-2">3. Allgemeine Hinweise und Pflichtinformationen</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Datenschutz</p>
+                                      <p>Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.</p>
+                                      <p>Wenn Sie diese Website benutzen, werden verschiedene personenbezogene Daten erhoben. Personenbezogene Daten sind Daten, mit denen Sie persönlich identifiziert werden können. Die vorliegende Datenschutzerklärung erläutert, welche Daten wir erheben und wofür wir sie nutzen. Sie erläutert auch, wie und zu welchem Zweck das geschieht.</p>
+                                    </div>
+                                  </motion.div>
+
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.5 }}
+                                  >
+                                    <div className="data-label mb-2">4. Datenerfassung auf dieser Website</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p className="font-bold text-primary">Cookies</p>
+                                      <p>Unsere Internetseiten verwenden Cookies. Cookies sind kleine Textdateien, die auf Ihrem Endgerät abgelegt werden und die bestimmte Einstellungen und Daten zum Austausch mit unserem System über Ihren Browser speichern. Einige Cookies bleiben auf Ihrem Endgerät gespeichert, bis Sie diese löschen. Sie ermöglichen es uns, Ihren Browser beim nächsten Besuch wiederzuerkennen.</p>
+                                      <p>Sie können Ihren Browser so einstellen, dass Sie über das Setzen von Cookies informiert werden und Cookies nur im Einzelfall erlauben, die Annahme von Cookies für bestimmte Fälle oder generell ausschließen sowie das automatische Löschen der Cookies beim Schließen des Browsers aktivieren.</p>
+                                    </div>
+                                  </motion.div>
+
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.6 }}
+                                  >
+                                    <div className="data-label mb-2">5. Ihre Rechte</div>
+                                    <div className="space-y-3 font-mono text-sm leading-relaxed">
+                                      <p>Sie haben jederzeit das Recht, unentgeltlich Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten zu erhalten. Sie haben außerdem ein Recht, die Berichtigung oder Löschung dieser Daten zu verlangen. Wenn Sie eine Einwilligung zur Datenverarbeitung erteilt haben, können Sie diese Einwilligung jederzeit für die Zukunft widerrufen. Außerdem haben Sie das Recht, unter bestimmten Umständen die Einschränkung der Verarbeitung Ihrer personenbezogenen Daten zu verlangen.</p>
+                                    </div>
+                                  </motion.div>
+                                </div>
+                              )}
+
+                              <motion.div 
+                                className="pt-6 border-t border-border"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.7 }}
+                              >
+                                <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
+                              </motion.div>
+                            </motion.div>
                           )}
-                        </div>
 
-                        <div className="space-y-6">
-                          <div>
-                            <div className="data-label mb-2">// RELEASE.INFO.STREAM</div>
-                            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic" data-text={cyberpunkOverlay.data.title}>
-                              {cyberpunkOverlay.data.title}
-                            </h2>
-                            <p className="text-xl text-muted-foreground font-mono">{cyberpunkOverlay.data.year}</p>
-                          </div>
+                          {cyberpunkOverlay.type === 'member' && cyberpunkOverlay.data && (
+                            <motion.div 
+                              className="mt-8 space-y-6"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <motion.div 
+                                className="flex flex-col md:flex-row gap-6"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                              >
+                                {cyberpunkOverlay.data.image && (
+                                  <div className="w-48 h-48 bg-muted relative">
+                                    <img
+                                      src={cyberpunkOverlay.data.image}
+                                      alt={cyberpunkOverlay.data.name}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                )}
+                                <div className="flex-1">
+                                  <div className="text-xs text-primary uppercase tracking-widest font-mono mb-2">// MEMBER.PROFILE</div>
+                                  <h2 className="text-4xl font-bold uppercase font-mono mb-2" data-text={cyberpunkOverlay.data.name}>
+                                    {cyberpunkOverlay.data.name}
+                                  </h2>
+                                  <p className="text-xl text-muted-foreground font-mono mb-4">{cyberpunkOverlay.data.role}</p>
+                                  <p className="text-foreground/90 leading-relaxed">{cyberpunkOverlay.data.bio}</p>
+                                  {cyberpunkOverlay.data.instagram && (
+                                    <Button asChild variant="outline" className="mt-4 font-mono">
+                                      <a href={cyberpunkOverlay.data.instagram} target="_blank" rel="noopener noreferrer">
+                                        <InstagramLogo className="w-5 h-5 mr-2" weight="fill" />
+                                        Follow
+                                      </a>
+                                    </Button>
+                                  )}
+                                </div>
+                              </motion.div>
+                            </motion.div>
+                          )}
 
-                          <div className="cyber-grid p-4">
-                            <div className="data-label mb-3">Stream & Download</div>
-                            <div className="flex flex-wrap gap-4">
-                              {cyberpunkOverlay.data.spotify && (
-                                <Button asChild variant="outline" className="font-mono">
-                                  <a href={cyberpunkOverlay.data.spotify} target="_blank" rel="noopener noreferrer">
-                                    <SpotifyLogo className="w-5 h-5 mr-2" weight="fill" />
-                                    <span className="hover-chromatic">Spotify</span>
-                                  </a>
-                                </Button>
-                              )}
-                              {cyberpunkOverlay.data.youtube && (
-                                <Button asChild variant="outline" className="font-mono">
-                                  <a href={cyberpunkOverlay.data.youtube} target="_blank" rel="noopener noreferrer">
-                                    <YoutubeLogo className="w-5 h-5 mr-2" weight="fill" />
-                                    <span className="hover-chromatic">YouTube</span>
-                                  </a>
-                                </Button>
-                              )}
-                              {cyberpunkOverlay.data.soundcloud && (
-                                <Button asChild variant="outline" className="font-mono">
-                                  <a href={cyberpunkOverlay.data.soundcloud} target="_blank" rel="noopener noreferrer">
-                                    <span className="hover-chromatic">SoundCloud</span>
-                                  </a>
-                                </Button>
-                              )}
-                              {cyberpunkOverlay.data.bandcamp && (
-                                <Button asChild variant="outline" className="font-mono">
-                                  <a href={cyberpunkOverlay.data.bandcamp} target="_blank" rel="noopener noreferrer">
-                                    <span className="hover-chromatic">Bandcamp</span>
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
+                          {cyberpunkOverlay.type === 'gig' && cyberpunkOverlay.data && (
+                            <motion.div 
+                              className="mt-8 space-y-6"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                              >
+                                <div className="data-label mb-2">// EVENT.DATA.STREAM</div>
+                                <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text={cyberpunkOverlay.data.venue}>
+                                  {cyberpunkOverlay.data.venue}
+                                </h2>
+                              </motion.div>
 
-                          <div className="pt-4 border-t border-border">
-                            <div className="data-label">// MEDIA.STATUS: [AVAILABLE]</div>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
+                              <div className="grid md:grid-cols-2 gap-6">
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.2 }}
+                                >
+                                  <div className="data-label mb-2">Location</div>
+                                  <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
+                                    <MapPin className="w-5 h-5 text-primary" />
+                                    {cyberpunkOverlay.data.location}
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.3 }}
+                                >
+                                  <div className="data-label mb-2">Date & Time</div>
+                                  <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
+                                    <CalendarBlank className="w-5 h-5 text-primary" />
+                                    {new Date(cyberpunkOverlay.data.date).toLocaleDateString('en-US', { 
+                                      weekday: 'long', 
+                                      year: 'numeric', 
+                                      month: 'long', 
+                                      day: 'numeric' 
+                                    })}
+                                  </div>
+                                </motion.div>
+                              </div>
+
+                              {cyberpunkOverlay.data.support && (
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.4 }}
+                                >
+                                  <div className="data-label mb-2">Support Acts</div>
+                                  <p className="text-lg font-mono text-foreground/90 hover-chromatic">{cyberpunkOverlay.data.support}</p>
+                                </motion.div>
+                              )}
+
+                              {cyberpunkOverlay.data.ticketUrl && (
+                                <motion.div 
+                                  className="pt-4"
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.5 }}
+                                >
+                                  <Button asChild size="lg" className="w-full md:w-auto font-mono uppercase tracking-wider hover-noise cyber-border">
+                                    <a href={cyberpunkOverlay.data.ticketUrl} target="_blank" rel="noopener noreferrer">
+                                      <Ticket className="w-5 h-5 mr-2" />
+                                      <span className="hover-chromatic">Get Tickets</span>
+                                    </a>
+                                  </Button>
+                                </motion.div>
+                              )}
+
+                              <motion.div 
+                                className="pt-6 border-t border-border"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                              >
+                                <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
+                              </motion.div>
+                            </motion.div>
+                          )}
+
+                          {cyberpunkOverlay.type === 'release' && cyberpunkOverlay.data && (
+                            <motion.div 
+                              className="mt-8"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <div className="grid md:grid-cols-[300px_1fr] gap-8">
+                                <motion.div 
+                                  className="aspect-square bg-muted relative cyber-card"
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{ delay: 0.1 }}
+                                >
+                                  {cyberpunkOverlay.data.artwork && (
+                                    <img 
+                                      src={cyberpunkOverlay.data.artwork} 
+                                      alt={cyberpunkOverlay.data.title} 
+                                      className="w-full h-full object-cover glitch-image" 
+                                    />
+                                  )}
+                                </motion.div>
+
+                                <div className="space-y-6">
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                  >
+                                    <div className="data-label mb-2">// RELEASE.INFO.STREAM</div>
+                                    <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic" data-text={cyberpunkOverlay.data.title}>
+                                      {cyberpunkOverlay.data.title}
+                                    </h2>
+                                    <p className="text-xl text-muted-foreground font-mono">{cyberpunkOverlay.data.year}</p>
+                                  </motion.div>
+
+                                  <motion.div 
+                                    className="cyber-grid p-4"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.3 }}
+                                  >
+                                    <div className="data-label mb-3">Stream & Download</div>
+                                    <div className="flex flex-wrap gap-4">
+                                      {cyberpunkOverlay.data.spotify && (
+                                        <Button asChild variant="outline" className="font-mono">
+                                          <a href={cyberpunkOverlay.data.spotify} target="_blank" rel="noopener noreferrer">
+                                            <SpotifyLogo className="w-5 h-5 mr-2" weight="fill" />
+                                            <span className="hover-chromatic">Spotify</span>
+                                          </a>
+                                        </Button>
+                                      )}
+                                      {cyberpunkOverlay.data.youtube && (
+                                        <Button asChild variant="outline" className="font-mono">
+                                          <a href={cyberpunkOverlay.data.youtube} target="_blank" rel="noopener noreferrer">
+                                            <YoutubeLogo className="w-5 h-5 mr-2" weight="fill" />
+                                            <span className="hover-chromatic">YouTube</span>
+                                          </a>
+                                        </Button>
+                                      )}
+                                      {cyberpunkOverlay.data.soundcloud && (
+                                        <Button asChild variant="outline" className="font-mono">
+                                          <a href={cyberpunkOverlay.data.soundcloud} target="_blank" rel="noopener noreferrer">
+                                            <span className="hover-chromatic">SoundCloud</span>
+                                          </a>
+                                        </Button>
+                                      )}
+                                      {cyberpunkOverlay.data.bandcamp && (
+                                        <Button asChild variant="outline" className="font-mono">
+                                          <a href={cyberpunkOverlay.data.bandcamp} target="_blank" rel="noopener noreferrer">
+                                            <span className="hover-chromatic">Bandcamp</span>
+                                          </a>
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </motion.div>
+
+                                  <motion.div 
+                                    className="pt-4 border-t border-border"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 0.4 }}
+                                  >
+                                    <div className="data-label">// MEDIA.STATUS: [AVAILABLE]</div>
+                                  </motion.div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
