@@ -138,6 +138,7 @@ function App() {
   const konamiActivated = useKonami()
   const [terminalOpen, setTerminalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [contentLoaded, setContentLoaded] = useState(false)
   
   useEffect(() => {
     if (konamiActivated) {
@@ -145,6 +146,12 @@ function App() {
       toast.success('Terminal activated!')
     }
   }, [konamiActivated])
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => setContentLoaded(true), 100)
+    }
+  }, [loading])
 
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
     artistName: 'ZARDONIC',
@@ -527,8 +534,9 @@ In the end, Zardonic will unite listeners with Superstars.
       <audio ref={audioRef} src={currentTrack?.url} />
 
       <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
+        initial={{ y: -100, opacity: 0 }}
+        animate={contentLoaded ? { y: 0, opacity: 1 } : { y: -100, opacity: 0 }}
+        transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="fixed top-0 left-0 right-0 z-50 bg-background/98 backdrop-blur-sm border-b border-border scanline-effect"
       >
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -613,18 +621,23 @@ In the end, Zardonic will unite listeners with Superstars.
         <div className="absolute inset-0 noise-effect" />
         
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, scale: 0.95, y: 30 }}
+          animate={contentLoaded ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.95, y: 30 }}
+          transition={{ duration: 1, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="relative z-10 text-center px-4"
         >
-          <div className="mb-8 relative">
+          <motion.div 
+            className="mb-8 relative"
+            initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
+            animate={contentLoaded ? { opacity: 1, clipPath: 'inset(0 0 0 0)' } : { opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
+            transition={{ duration: 1.2, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
             <img 
               src={logoImage} 
               alt={siteData.artistName} 
               className="w-full max-w-2xl mx-auto logo-glitch brightness-110 dot-matrix-logo crt-effect"
             />
-          </div>
+          </motion.div>
           
           {editMode && (
             <div className="flex justify-center mb-4">
@@ -646,9 +659,9 @@ In the end, Zardonic will unite listeners with Superstars.
           )}
 
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 1.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="mt-12 flex gap-4 justify-center flex-wrap"
           >
             <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
@@ -666,13 +679,13 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="bio" className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="relative"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="BIOGRAPHY">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="BIOGRAPHY">
               BIOGRAPHY
             </h2>
             
@@ -711,12 +724,12 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="music" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="MUSIC PLAYER">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="MUSIC PLAYER">
               MUSIC PLAYER
             </h2>
 
@@ -788,13 +801,13 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="gigs" className="py-24 px-4 noise-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="UPCOMING GIGS">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="UPCOMING GIGS">
                 UPCOMING GIGS
               </h2>
               {editMode && (
@@ -813,11 +826,18 @@ In the end, Zardonic will unite listeners with Superstars.
               </Card>
             ) : (
               <div className="space-y-4">
-                {siteData.gigs.map((gig) => (
+                {siteData.gigs.map((gig, index) => (
                   <motion.div
                     key={gig.id}
+                    initial={{ opacity: 0, x: -50, clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+                    whileInView={{ opacity: 1, x: 0, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+                    viewport={{ once: true }}
+                    transition={{ 
+                      duration: 0.8, 
+                      delay: index * 0.1,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
                     whileHover={{ scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
                   >
                     <Card 
                       className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer cyber-card hover-scan hover-noise relative"
@@ -883,13 +903,13 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="RELEASES">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="RELEASES">
                 RELEASES
               </h2>
               {editMode && (
@@ -908,11 +928,18 @@ In the end, Zardonic will unite listeners with Superstars.
               </Card>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {siteData.releases.map((release) => (
+                {siteData.releases.map((release, index) => (
                   <motion.div
                     key={release.id}
+                    initial={{ opacity: 0, scale: 0.8, rotateX: -20 }}
+                    whileInView={{ opacity: 1, scale: 1, rotateX: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ 
+                      duration: 0.6,
+                      delay: index * 0.08,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
                     whileHover={{ scale: 1.03 }}
-                    transition={{ duration: 0.2 }}
                   >
                     <Card 
                       className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer cyber-card hover-noise relative"
@@ -967,13 +994,13 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="gallery" className="py-24 px-4 crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="GALLERY">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="GALLERY">
                 GALLERY
               </h2>
               {editMode && (
@@ -1005,6 +1032,14 @@ In the end, Zardonic will unite listeners with Superstars.
                 {siteData.gallery.map((image, index) => (
                   <motion.div
                     key={index}
+                    initial={{ opacity: 0, scale: 0.8, rotateY: -20 }}
+                    whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ 
+                      duration: 0.6,
+                      delay: index * 0.08,
+                      ease: [0.25, 0.46, 0.45, 0.94]
+                    }}
                     whileHover={{ scale: 1.03 }}
                     className="aspect-square bg-muted overflow-hidden cursor-pointer relative group glitch-image"
                     onClick={() => setGalleryIndex(index)}
@@ -1039,13 +1074,13 @@ In the end, Zardonic will unite listeners with Superstars.
       <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-4xl">
           <motion.div
-            initial={{ opacity: 0, x: -30, filter: 'blur(10px)' }}
-            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)' }}
+            initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
-            transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+            transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
             className="text-center"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="CONNECT">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build" data-text="CONNECT">
               CONNECT
             </h2>
 
@@ -1092,6 +1127,10 @@ In the end, Zardonic will unite listeners with Superstars.
                   href={siteData.social.instagram}
                   target="_blank"
                   rel="noopener noreferrer"
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ scale: 1.1 }}
                   className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
@@ -1103,6 +1142,10 @@ In the end, Zardonic will unite listeners with Superstars.
                   href={siteData.social.facebook}
                   target="_blank"
                   rel="noopener noreferrer"
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ scale: 1.1 }}
                   className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
@@ -1114,6 +1157,10 @@ In the end, Zardonic will unite listeners with Superstars.
                   href={siteData.social.spotify}
                   target="_blank"
                   rel="noopener noreferrer"
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ scale: 1.1 }}
                   className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
@@ -1125,6 +1172,10 @@ In the end, Zardonic will unite listeners with Superstars.
                   href={siteData.social.youtube}
                   target="_blank"
                   rel="noopener noreferrer"
+                  initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                  whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
                   whileHover={{ scale: 1.1 }}
                   className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
