@@ -579,14 +579,10 @@ In the end, Zardonic will unite listeners with Superstars.
         </AnimatePresence>
       </motion.nav>
 
-      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect crt-effect">
-        {siteData.heroImage && (
-          <div className="absolute inset-0">
-            <img src={siteData.heroImage} alt="Hero" className="w-full h-full object-cover opacity-20 glitch-image" />
-          </div>
-        )}
+      <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect">
+        <div className="absolute inset-0 bg-black" />
         
-        <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/90 to-background noise-effect" />
+        <div className="absolute inset-0 noise-effect" />
         
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -594,11 +590,11 @@ In the end, Zardonic will unite listeners with Superstars.
           transition={{ duration: 0.6 }}
           className="relative z-10 text-center px-4"
         >
-          <div className="mb-8">
+          <div className="mb-8 relative">
             <img 
               src={logoImage} 
               alt={siteData.artistName} 
-              className="w-full max-w-2xl mx-auto logo-glitch brightness-110"
+              className="w-full max-w-2xl mx-auto logo-glitch brightness-110 dot-matrix-logo chromatic-glow"
             />
           </div>
           
