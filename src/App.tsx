@@ -630,21 +630,15 @@ In the end, Zardonic will unite listeners with Superstars.
             className="mb-8 relative"
             initial={{ opacity: 0, scale: 0.8, y: 30 }}
             animate={contentLoaded ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.8, y: 30 }}
-            transition={{ duration: 1.2, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
+            initial={{ opacity: 0, scale: 0.8, y: 30 }}
+            animate={contentLoaded ? { opacity: 1, scale: 1, y: 0 } : { opacity: 0, scale: 0.8, y: 30 }}
             <img 
               src={logoImage} 
+            <img 
+              src={logoImage} bject-contain logo-glitch brightness-110 mx-auto"
               alt={siteData.artistName} 
               className="h-32 md:h-48 lg:h-64 w-auto object-contain logo-glitch brightness-110 mx-auto"
             />
-          </motion.div>
-          
-          {editMode && (
-            <div className="flex justify-center mb-4">
-              <label className="cursor-pointer">
-                <Button variant="outline" className="gap-2" asChild>
-                  <span>
-                    <Upload className="w-4 h-4" />
                     Upload Hero Image
                   </span>
                 </Button>
