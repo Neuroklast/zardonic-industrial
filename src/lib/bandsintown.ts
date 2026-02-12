@@ -13,7 +13,7 @@ const APP_ID = 'zardonic-industrial-website'
 export async function fetchBandsintownEvents(): Promise<BandsintownEvent[]> {
   try {
     const response = await fetch(
-      `https://rest.bandsintown.com/artists/${encodeURIComponent(ARTIST_NAME)}/events?app_id=${APP_ID}`
+      `/api/bandsintown?artist=${encodeURIComponent(ARTIST_NAME)}&app_id=${APP_ID}`
     )
 
     if (!response.ok) {

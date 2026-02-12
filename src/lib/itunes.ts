@@ -16,10 +16,10 @@ export async function fetchITunesReleases(): Promise<ITunesRelease[]> {
   try {
     const [songsRes, albumsRes] = await Promise.all([
       fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST_NAME)}&entity=song&limit=200`
+        `/api/itunes?term=${encodeURIComponent(ARTIST_NAME)}&entity=song&limit=200`
       ),
       fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST_NAME)}&entity=album&limit=200`
+        `/api/itunes?term=${encodeURIComponent(ARTIST_NAME)}&entity=album&limit=200`
       ),
     ])
 

@@ -23,4 +23,37 @@ export default defineConfig({
     }
   },
   assetsInclude: ['**/*.glb', '**/*.gltf'],
+  server: {
+    proxy: {
+      '/api/odesli': {
+        target: 'https://api.song.link',
+        changeOrigin: true,
+        rewrite: (path: string) => {
+          const url = new URL(path, 'http://localhost')
+          const params = url.searchParams
+          return `/v1-alpha.1/links?${params.toString()}`
+        },
+      },
+      '/api/itunes': {
+        target: 'https://itunes.apple.com',
+        changeOrigin: true,
+        rewrite: (path: string) => {
+          const url = new URL(path, 'http://localhost')
+          const params = url.searchParams
+          return `/search?${params.toString()}`
+        },
+      },
+      '/api/bandsintown': {
+        target: 'https://rest.bandsintown.com',
+        changeOrigin: true,
+        rewrite: (path: string) => {
+          const url = new URL(path, 'http://localhost')
+          const params = url.searchParams
+          const artist = params.get('artist') || 'Zardonic'
+          params.delete('artist')
+          return `/artists/${encodeURIComponent(artist)}/events?${params.toString()}`
+        },
+      },
+    },
+  },
 });
