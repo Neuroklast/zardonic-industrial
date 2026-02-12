@@ -146,7 +146,25 @@ function App() {
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
     artistName: 'ZARDONIC',
     heroImage: heroImage,
-    bio: `THE CLASH OF DISPARATE ELEMENTS ACTIVATES INNOVATION, AND EVERY GENERATION BRINGS US TIMELESS FIGURES WHO ACCIDENTALLY SPARK A NEW REVOLUTIONARY SOUND WITHIN THE MUSIC WORLD. CHUCK BERRY MIXED JAZZ, BLUES, GOSPEL AND COUNTRY MUSIC TO CREATE ROCK N ROLL. A FEW DECADES LATER, OZZY OSBOURNE TURNED UP THE GAIN TO CREATE HEAVY METAL. AND SINCE THE EARLY 2000S, FEDERICO AGREDA ALVAREZ, THE MASKED PERFORMER KNOWN TO THE WORLD AS DJ AND PRODUCER ZARDONIC, HAS HARNESSED THE POWER OF THE NEXUS BETWEEN DRUM & BASS AND HEAVY METAL TO CREATE THE SOUND THAT IS NOW KNOWN AS METAL & BASS.`,
+    bio: `The clash of disparate elements activates innovation, and every generation brings us timeless figures who accidentally spark a new revolutionary sound within the music world. Chuck Berry mixed jazz, blues, gospel and country music to create Rock N Roll. A few decades later, Ozzy Osbourne turned up the gain to create Heavy Metal. And since the early 2000s, Federico Ágreda Álvarez, the masked performer known to the world as DJ and producer Zardonic, has harnessed the power of the nexus between Drum & Bass and Heavy Metal to create the sound that is now known as Metal & Bass.
+
+Born and raised in Venezuela, inspired by America, and based in Germany with a passport book stamped into oblivion, he also represents a union of cultures. In his music, these elements charge forward on a collision course towards a future without creative or spiritual borders. Instead, the award-winning artist draws an inimitable energy from this confluence. Following a prolific string of releases, high-profile remixes and video game collaborations, packed shows on multiple continents, and 100 million-plus streams, he realizes the power and potential of his vision like never before on his 2023 full-length offering Superstars [MNRK HEAVY].
+
+"It's been a long road trying to find the perfect flashpoint between the metal and electronic worlds," he states about his third MNRK studio album, which follows Antihero (2015) and Become (2018). "To me, music is a direct translation of human emotion. I'm all about bringing sounds and people together with no boundaries at all. I don't like limits, so my approach is to be limitless."
+
+Boundlessness has defined his output since day one. Zardonic has cultivated an expansive catalogue of original tracks and remixes for platinum icons, leaving his imprint on Pop Evil, Fear Factory, Bullet For My Valentine and Sonic Syndicate, among others. He has also contributed music to soundtracks for videogames such as Superhot: Mind Control Delete and Redout 2, plus features on All Elite Wrestling, TNT and NBC Sports.
+
+He's the rare force of nature who can earn praise from both YourEDM and Metal Injection. Renowned as "Venezuela's Top DJ Act," he has impressively toppled Beatport's Drum & Bass Releases of the Week and Amazon's Hard Rock Bestsellers at #1. Not to mention, he even appeared in Warlocks Vs Shadows, standing out as "the first Latin American musician to ever be featured as a playable character in a video game.", and if you're a music producer yourself, chances are you've already used a few of his hundreds of factory presets and artist packs he's created for Arturia, Brainworx, Slate Digital, BABY Audio, GForce Software, and many more.
+
+As if reflecting progression in palpable form, Zardonic's signature mask has evolved with him.
+
+"To some extent, every mask marks the end of an era in my life and my way of approaching music," he notes. "The mask from the Become album and recent tours received a lot of battle damage. I had to constantly glue it back together. The paint scraped off. It wore a lot of scars with pride, yet it was a huge weight on my shoulders because no longer want to these scars to rule my decisions. Hence, the new mask is the exact opposite: shiny, sparkly and full of life. You could say I'm constantly resurrecting the Zardonic character, so to speak."
+
+The new album features an assortment of international talents from the Drum & Bass and Hard Rock worlds, including UK singer/songwriter Reebz, featured on the single "Bitter", as well as Nazareth singer Carl Sentance, Toronto Is Broken, Daedric, Hevy, Bruno Balanta from The Qemists, Rage guitarist Jean Bormann, Blitz Union, Norwegian Blackjazz virtuosos SHINING, The Surgery & MC Reptile, Mechanical Vein, Camo MC, and Omnimar. "I am humbled to have such a strong relationship with a group of amazing people. I could spend hours writing about them, but they know that if we're working together, it's because they mean a great deal to me. My most important thing is being able to genuinely connect with the people I work with. If I can't have fun with an artist, there's simply no point in it, and I am glad to call these amazing Superstars my friends."
+
+In the end, Zardonic will unite listeners with Superstars.
+
+"At the core of everything, I try to breathe life into people," he leaves off. "I'm blessed enough to be able to do what I love the most, and that is Music. Music is my own form of self-healing. It allows me to float above the darkness. Maybe, it will do the same for you."`,
     tracks: [
       {
         id: '1',
@@ -336,8 +354,21 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative">
       <div className="full-page-noise" />
+      
+      {[...Array(8)].map((_, i) => (
+        <div
+          key={i}
+          className="data-stream"
+          style={{
+            left: `${10 + i * 12}%`,
+            animationDelay: `${i * 0.5}s`,
+            opacity: 0.3,
+          }}
+        />
+      ))}
+      
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
 
@@ -371,7 +402,7 @@ function App() {
               <button
                 key={section}
                 onClick={() => scrollToSection(section)}
-                className="text-sm uppercase tracking-wide hover:text-primary transition-colors font-mono chromatic-aberration"
+                className="text-sm uppercase tracking-wide hover:text-primary transition-colors font-mono hover-chromatic hover-glitch"
               >
                 {section}
               </button>
@@ -470,11 +501,11 @@ function App() {
             transition={{ delay: 0.8 }}
             className="mt-12 flex gap-4 justify-center flex-wrap"
           >
-            <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase font-mono">
-              Listen Now
+            <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
+              <span className="hover-chromatic">Listen Now</span>
             </Button>
-            <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase font-mono">
-              Tour Dates
+            <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
+              <span className="hover-chromatic">Tour Dates</span>
             </Button>
           </motion.div>
         </motion.div>
@@ -490,7 +521,7 @@ function App() {
             viewport={{ once: true }}
             className="relative"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="BIOGRAPHY">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="BIOGRAPHY">
               BIOGRAPHY
             </h2>
             
@@ -527,12 +558,14 @@ function App() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="MUSIC PLAYER">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="MUSIC PLAYER">
               MUSIC PLAYER
             </h2>
 
             {siteData.tracks.length > 0 && (
-              <Card className="p-8 bg-card border-border relative scanline-glitch cyberpunk-border-glow">
+              <Card className="p-8 bg-card border-border relative cyber-card hover-noise">
+                <div className="scan-line"></div>
+                <div className="data-label mb-2">// PLAYER.INTERFACE</div>
                 <div className="grid md:grid-cols-[200px_1fr] gap-8">
                   <div className="aspect-square bg-muted flex items-center justify-center text-6xl">
                     {currentTrack?.artwork ? (
@@ -602,7 +635,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="UPCOMING GIGS">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="UPCOMING GIGS">
                 UPCOMING GIGS
               </h2>
               {editMode && (
@@ -628,12 +661,14 @@ function App() {
                     transition={{ duration: 0.2 }}
                   >
                     <Card 
-                      className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer random-glitch"
+                      className="p-6 bg-card border-border hover:border-primary/50 transition-colors cursor-pointer cyber-card hover-scan hover-noise relative"
                       onClick={() => !editMode && setCyberpunkOverlay({ type: 'gig', data: gig })}
                     >
+                      <div className="scan-line"></div>
+                      <div className="data-label mb-2">// EVENT.{gig.id}</div>
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-2">
-                          <h3 className="text-xl font-bold uppercase font-mono">{gig.venue}</h3>
+                          <h3 className="text-xl font-bold uppercase font-mono hover-chromatic">{gig.venue}</h3>
                           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground font-mono">
                             <span className="flex items-center gap-2">
                               <MapPin className="w-4 h-4" />
@@ -694,7 +729,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="RELEASES">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="RELEASES">
                 RELEASES
               </h2>
               {editMode && (
@@ -720,12 +755,13 @@ function App() {
                     transition={{ duration: 0.2 }}
                   >
                     <Card 
-                      className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer random-glitch"
+                      className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer cyber-card hover-noise relative"
                       onClick={() => !editMode && setCyberpunkOverlay({ type: 'release', data: release })}
                     >
+                      <div className="data-label absolute top-2 left-2 z-10">// REL.{release.year}</div>
                       <div className="aspect-square bg-muted relative">
                         {release.artwork && (
-                          <img src={release.artwork} alt={release.title} className="w-full h-full object-cover" />
+                          <img src={release.artwork} alt={release.title} className="w-full h-full object-cover glitch-image" />
                         )}
                         {editMode && (
                           <div className="absolute top-2 right-2 flex gap-1">
@@ -739,7 +775,7 @@ function App() {
                         )}
                       </div>
                       <div className="p-4">
-                        <h3 className="font-bold uppercase text-sm mb-1 truncate font-mono">{release.title}</h3>
+                        <h3 className="font-bold uppercase text-sm mb-1 truncate font-mono hover-chromatic">{release.title}</h3>
                         <p className="text-xs text-muted-foreground mb-3 font-mono">{release.year}</p>
                         
                         {editMode && (
@@ -776,7 +812,7 @@ function App() {
             viewport={{ once: true }}
           >
             <div className="flex items-center justify-between mb-12">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="GALLERY">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="GALLERY">
                 GALLERY
               </h2>
               {editMode && (
@@ -847,7 +883,7 @@ function App() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono text-chromatic" data-text="CONNECT">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch" data-text="CONNECT">
               CONNECT
             </h2>
 
@@ -895,7 +931,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
                   <InstagramLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -906,7 +942,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
                   <FacebookLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -917,7 +953,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
                   <SpotifyLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -928,7 +964,7 @@ function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.1 }}
-                  className="text-foreground hover:text-primary transition-colors"
+                  className="text-foreground hover:text-primary transition-colors hover-glitch relative"
                 >
                   <YoutubeLogo className="w-12 h-12" weight="fill" />
                 </motion.a>
@@ -940,7 +976,7 @@ function App() {
 
       <footer className="py-12 px-4 border-t border-border noise-effect">
         <div className="container mx-auto text-center">
-          <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono chromatic-aberration">
+          <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono hover-chromatic">
             © {new Date().getFullYear()} {siteData.artistName}
           </p>
         </div>
@@ -977,19 +1013,23 @@ function App() {
               className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none"
             >
               <div 
-                className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-y-auto max-h-[90vh] scanline-effect"
+                className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-y-auto max-h-[90vh] scanline-effect cyber-card"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-primary/50" />
-                <div className="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-primary/50" />
-                <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 border-primary/50" />
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 border-primary/50" />
+                <div className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-primary" />
+                <div className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-primary" />
+                <div className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-primary" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-primary" />
+                
+                <div className="absolute top-2 left-1/2 -translate-x-1/2">
+                  <div className="data-label">// SYSTEM.INTERFACE.v2.0</div>
+                </div>
 
-                <div className="relative p-8 md:p-12">
+                <div className="relative p-8 md:p-12 pt-12">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute top-4 right-4 text-foreground hover:text-primary hover:bg-primary/10 z-10"
+                    className="absolute top-4 right-4 text-foreground hover:text-primary hover:bg-primary/10 z-10 hover-glitch"
                     onClick={() => setCyberpunkOverlay(null)}
                   >
                     <X className="w-6 h-6" />
@@ -1030,24 +1070,24 @@ function App() {
                   {cyberpunkOverlay.type === 'gig' && (
                     <div className="mt-8 space-y-6">
                       <div>
-                        <div className="text-xs text-primary uppercase tracking-widest font-mono mb-2">// EVENT.DATA</div>
-                        <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4" data-text={cyberpunkOverlay.data.venue}>
+                        <div className="data-label mb-2">// EVENT.DATA.STREAM</div>
+                        <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic hover-glitch" data-text={cyberpunkOverlay.data.venue}>
                           {cyberpunkOverlay.data.venue}
                         </h2>
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide font-mono mb-1">Location</div>
-                          <div className="flex items-center gap-2 text-xl font-mono">
+                        <div className="cyber-grid p-4">
+                          <div className="data-label mb-2">Location</div>
+                          <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
                             <MapPin className="w-5 h-5 text-primary" />
                             {cyberpunkOverlay.data.location}
                           </div>
                         </div>
 
-                        <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide font-mono mb-1">Date & Time</div>
-                          <div className="flex items-center gap-2 text-xl font-mono">
+                        <div className="cyber-grid p-4">
+                          <div className="data-label mb-2">Date & Time</div>
+                          <div className="flex items-center gap-2 text-xl font-mono hover-chromatic">
                             <CalendarBlank className="w-5 h-5 text-primary" />
                             {new Date(cyberpunkOverlay.data.date).toLocaleDateString('en-US', { 
                               weekday: 'long', 
@@ -1060,25 +1100,25 @@ function App() {
                       </div>
 
                       {cyberpunkOverlay.data.support && (
-                        <div>
-                          <div className="text-xs text-muted-foreground uppercase tracking-wide font-mono mb-1">Support Acts</div>
-                          <p className="text-lg font-mono text-foreground/90">{cyberpunkOverlay.data.support}</p>
+                        <div className="cyber-grid p-4">
+                          <div className="data-label mb-2">Support Acts</div>
+                          <p className="text-lg font-mono text-foreground/90 hover-chromatic">{cyberpunkOverlay.data.support}</p>
                         </div>
                       )}
 
                       {cyberpunkOverlay.data.ticketUrl && (
                         <div className="pt-4">
-                          <Button asChild size="lg" className="w-full md:w-auto font-mono uppercase tracking-wider">
+                          <Button asChild size="lg" className="w-full md:w-auto font-mono uppercase tracking-wider hover-glitch hover-noise cyber-border">
                             <a href={cyberpunkOverlay.data.ticketUrl} target="_blank" rel="noopener noreferrer">
                               <Ticket className="w-5 h-5 mr-2" />
-                              Get Tickets
+                              <span className="hover-chromatic">Get Tickets</span>
                             </a>
                           </Button>
                         </div>
                       )}
 
                       <div className="pt-6 border-t border-border">
-                        <div className="text-xs text-primary font-mono">// SYSTEM.STATUS: ACTIVE</div>
+                        <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
                       </div>
                     </div>
                   )}
@@ -1086,55 +1126,55 @@ function App() {
                   {cyberpunkOverlay.type === 'release' && (
                     <div className="mt-8">
                       <div className="grid md:grid-cols-[300px_1fr] gap-8">
-                        <div className="aspect-square bg-muted relative">
+                        <div className="aspect-square bg-muted relative cyber-card">
                           {cyberpunkOverlay.data.artwork && (
                             <img 
                               src={cyberpunkOverlay.data.artwork} 
                               alt={cyberpunkOverlay.data.title} 
-                              className="w-full h-full object-cover" 
+                              className="w-full h-full object-cover glitch-image" 
                             />
                           )}
                         </div>
 
                         <div className="space-y-6">
                           <div>
-                            <div className="text-xs text-primary uppercase tracking-widest font-mono mb-2">// RELEASE.INFO</div>
-                            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2" data-text={cyberpunkOverlay.data.title}>
+                            <div className="data-label mb-2">// RELEASE.INFO.STREAM</div>
+                            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic hover-glitch" data-text={cyberpunkOverlay.data.title}>
                               {cyberpunkOverlay.data.title}
                             </h2>
                             <p className="text-xl text-muted-foreground font-mono">{cyberpunkOverlay.data.year}</p>
                           </div>
 
-                          <div>
-                            <div className="text-xs text-muted-foreground uppercase tracking-wide font-mono mb-3">Stream & Download</div>
+                          <div className="cyber-grid p-4">
+                            <div className="data-label mb-3">Stream & Download</div>
                             <div className="flex flex-wrap gap-4">
                               {cyberpunkOverlay.data.spotify && (
-                                <Button asChild variant="outline" className="font-mono">
+                                <Button asChild variant="outline" className="font-mono hover-glitch">
                                   <a href={cyberpunkOverlay.data.spotify} target="_blank" rel="noopener noreferrer">
                                     <SpotifyLogo className="w-5 h-5 mr-2" weight="fill" />
-                                    Spotify
+                                    <span className="hover-chromatic">Spotify</span>
                                   </a>
                                 </Button>
                               )}
                               {cyberpunkOverlay.data.youtube && (
-                                <Button asChild variant="outline" className="font-mono">
+                                <Button asChild variant="outline" className="font-mono hover-glitch">
                                   <a href={cyberpunkOverlay.data.youtube} target="_blank" rel="noopener noreferrer">
                                     <YoutubeLogo className="w-5 h-5 mr-2" weight="fill" />
-                                    YouTube
+                                    <span className="hover-chromatic">YouTube</span>
                                   </a>
                                 </Button>
                               )}
                               {cyberpunkOverlay.data.soundcloud && (
-                                <Button asChild variant="outline" className="font-mono">
+                                <Button asChild variant="outline" className="font-mono hover-glitch">
                                   <a href={cyberpunkOverlay.data.soundcloud} target="_blank" rel="noopener noreferrer">
-                                    SoundCloud
+                                    <span className="hover-chromatic">SoundCloud</span>
                                   </a>
                                 </Button>
                               )}
                               {cyberpunkOverlay.data.bandcamp && (
-                                <Button asChild variant="outline" className="font-mono">
+                                <Button asChild variant="outline" className="font-mono hover-glitch">
                                   <a href={cyberpunkOverlay.data.bandcamp} target="_blank" rel="noopener noreferrer">
-                                    Bandcamp
+                                    <span className="hover-chromatic">Bandcamp</span>
                                   </a>
                                 </Button>
                               )}
@@ -1142,7 +1182,7 @@ function App() {
                           </div>
 
                           <div className="pt-4 border-t border-border">
-                            <div className="text-xs text-primary font-mono">// MEDIA.STATUS: AVAILABLE</div>
+                            <div className="data-label">// MEDIA.STATUS: [AVAILABLE]</div>
                           </div>
                         </div>
                       </div>
