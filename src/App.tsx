@@ -46,6 +46,9 @@ import {
   MusicNote,
   CaretDown,
   CaretUp,
+  Envelope,
+  Storefront,
+  PaperPlaneTilt,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -300,7 +303,7 @@ In the end, Zardonic will unite listeners with Superstars.
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const [editingGig, setEditingGig] = useState<Gig | null>(null)
   const [editingRelease, setEditingRelease] = useState<Release | null>(null)
-  const [cyberpunkOverlay, setCyberpunkOverlay] = useState<{type: 'gig' | 'release' | 'member' | 'impressum' | 'privacy', data?: any} | null>(null)
+  const [cyberpunkOverlay, setCyberpunkOverlay] = useState<{type: 'gig' | 'release' | 'member' | 'impressum' | 'privacy' | 'contact', data?: any} | null>(null)
   const [language, setLanguage] = useState<'en' | 'de'>('en')
   const [overlayLoading, setOverlayLoading] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -804,6 +807,12 @@ In the end, Zardonic will unite listeners with Superstars.
             <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
               <span className="hover-chromatic">Tour Dates</span>
             </Button>
+            <Button asChild size="lg" variant="outline" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
+              <a href="https://zardonic.channl.co/merch" target="_blank" rel="noopener noreferrer">
+                <Storefront className="w-5 h-5 mr-2" />
+                <span className="hover-chromatic">Merch</span>
+              </a>
+            </Button>
           </motion.div>
         </motion.div>
       </section>
@@ -882,6 +891,43 @@ In the end, Zardonic will unite listeners with Superstars.
                 </motion.div>
               </div>
             )}
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="py-16 px-4 bg-card/50 noise-effect overflow-hidden">
+        <div className="container mx-auto max-w-6xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            <div className="data-label mb-6">// CREDIT.HIGHLIGHTS</div>
+            <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 hover:opacity-90 transition-opacity duration-500">
+              {[
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/0f55903209332a56b6137578b492e543373fdc6c/original/sega-logo.png/!!/b%3AW1sicmVzaXplIiw2NjBdLFsibWF4Il0sWyJ3ZSJdXQ%3D%3D/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'SEGA' },
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/4b65d0d33e1113b5511272580e87828768cfc2d1/original/7fdd8d8997a41afbdd8381c287d9a984.png/!!/b%3AW1sicmVzaXplIiw2NjBdLFsibWF4Il0sWyJ3ZSJdXQ%3D%3D/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'Sonic Syndicate' },
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/6eb32362aa0c4fdcce4fa319b7fa721d1fab0989/original/fearfactory-logo-svg.png/!!/b%3AW1sicmVzaXplIiw2NjBdLFsibWF4Il0sWyJ3ZSJdXQ%3D%3D/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'Fear Factory' },
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/5021ea146b63ef5ffaa3fa82ca588a2abacc85db/original/citypng-com-white-aew-all-elite-wrestling-logo-4000x4000.png/!!/b%3AW1siZXh0cmFjdCIseyJsZWZ0IjoyOSwidG9wIjo4NjIsIndpZHRoIjozOTcxLCJoZWlnaHQiOjIyMzN9XSxbInJlc2l6ZSIsNjYwXSxbIm1heCJdLFsid2UiXV0%3D/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'AEW' },
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/682412f8e4ef237f862a19771c88a5a24db05ef0/original/pop-evil-5c8c4556e6b4f.png/!!/b%3AW1siZXh0cmFjdCIseyJsZWZ0IjoxOTIsInRvcCI6MCwid2lkdGgiOjQxMywiaGVpZ2h0IjozMTB9XSxbInJlc2l6ZSIsNjYwXSxbIm1heCJdLFsid2UiXV0%3D/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'Pop Evil' },
+                { src: 'https://images.zoogletools.com/s:bzglfiles/u/154437/e43afa6931b42622a32c143ea820b45b4bf22772/original/bfmv.png/!!/b%3AW1siZXh0cmFjdCIseyJsZWZ0IjoxMTksInRvcCI6MjUsIndpZHRoIjo4NjcsImhlaWdodCI6NjgyfV0sWyJyZXNpemUiLDY2MF0sWyJtYXgiXSxbIndlIl1d/meta%3AeyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ%3D%3D.png', alt: 'Bullet For My Valentine' },
+              ].map((logo, index) => (
+                <motion.img
+                  key={logo.alt}
+                  src={logo.src}
+                  alt={logo.alt}
+                  className="h-10 md:h-14 w-auto object-contain brightness-0 invert opacity-70 hover:opacity-100 transition-opacity duration-300"
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 0.7, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ opacity: 1, scale: 1.05 }}
+                  loading="lazy"
+                />
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
@@ -1508,6 +1554,30 @@ In the end, Zardonic will unite listeners with Superstars.
                 </motion.a>
               )}
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="mt-12 flex flex-wrap justify-center gap-4"
+            >
+              <Button asChild size="lg" variant="outline" className="uppercase font-mono hover-glitch cyber-border">
+                <a href="https://zardonic.channl.co/merch" target="_blank" rel="noopener noreferrer">
+                  <Storefront className="w-5 h-5 mr-2" />
+                  <span className="hover-chromatic">Merch Shop</span>
+                </a>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="uppercase font-mono hover-glitch cyber-border"
+                onClick={() => setCyberpunkOverlay({ type: 'contact' })}
+              >
+                <Envelope className="w-5 h-5 mr-2" />
+                <span className="hover-chromatic">Contact</span>
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -1532,6 +1602,12 @@ In the end, Zardonic will unite listeners with Superstars.
               className="text-sm text-muted-foreground hover:text-primary transition-colors uppercase tracking-wide font-mono hover-chromatic cursor-pointer"
             >
               Privacy Policy / Datenschutzerklärung
+            </button>
+            <button
+              onClick={() => setCyberpunkOverlay({ type: 'contact' })}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors uppercase tracking-wide font-mono hover-chromatic cursor-pointer"
+            >
+              Contact
             </button>
           </div>
           <p className="text-sm text-muted-foreground uppercase tracking-wide font-mono hover-chromatic">
@@ -1801,8 +1877,11 @@ In the end, Zardonic will unite listeners with Superstars.
                                 >
                                   <div className="data-label mb-2">Angaben gemäß § 5 DDG</div>
                                   <div className="space-y-2 font-mono text-sm">
-                                    <p>Federico Ágreda Álvarez (ZARDONIC)</p>
-                                    <p>Professional Artist &amp; Music Producer</p>
+                                    <p>Federico Augusto Ágreda Álvarez</p>
+                                    <p>c/o Online-Impressum.de #6397</p>
+                                    <p>Europaring 90</p>
+                                    <p>53757 Sankt Augustin</p>
+                                    <p>Deutschland</p>
                                   </div>
                                 </motion.div>
 
@@ -1814,8 +1893,21 @@ In the end, Zardonic will unite listeners with Superstars.
                                 >
                                   <div className="data-label mb-2">Kontakt / Contact</div>
                                   <div className="space-y-2 font-mono text-sm">
-                                    <p>E-Mail: info@zardonic.com</p>
-                                    <p>Website: www.zardonic.com</p>
+                                    <p>E-Mail: info@zardonic.net</p>
+                                    <p>Website: www.zardonic.net</p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.35 }}
+                                >
+                                  <div className="data-label mb-2">Umsatzsteuer-Identifikationsnummer</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG:</p>
+                                    <p>DE325982176</p>
                                   </div>
                                 </motion.div>
 
@@ -1827,7 +1919,7 @@ In the end, Zardonic will unite listeners with Superstars.
                                 >
                                   <div className="data-label mb-2">Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</div>
                                   <div className="space-y-2 font-mono text-sm">
-                                    <p>Federico Ágreda Álvarez</p>
+                                    <p>Federico Augusto Ágreda Álvarez</p>
                                   </div>
                                 </motion.div>
 
@@ -2116,6 +2208,139 @@ In the end, Zardonic will unite listeners with Superstars.
                                   </motion.div>
                                 </div>
                               )}
+
+                              <motion.div 
+                                className="pt-6 border-t border-border"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.7 }}
+                              >
+                                <div className="data-label">// SYSTEM.STATUS: [ACTIVE]</div>
+                              </motion.div>
+                            </motion.div>
+                          )}
+
+                          {cyberpunkOverlay.type === 'contact' && (
+                            <motion.div 
+                              className="mt-8 space-y-6"
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              exit={{ opacity: 0, x: 20 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                              >
+                                <div className="data-label mb-2">// CONTACT.INTERFACE.STREAM</div>
+                                <h2 className="text-4xl md:text-5xl font-bold uppercase font-mono mb-4 hover-chromatic" data-text="CONTACT">
+                                  CONTACT
+                                </h2>
+                              </motion.div>
+
+                              <div className="space-y-6 text-foreground/90">
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.2 }}
+                                >
+                                  <div className="data-label mb-3">Management</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>Federico Ágreda Álvarez</p>
+                                    <p>E-Mail: <a href="mailto:info@zardonic.net" className="text-primary hover:underline">info@zardonic.net</a></p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.3 }}
+                                >
+                                  <div className="data-label mb-3">Booking</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>E-Mail: <a href="mailto:booking@zardonic.net" className="text-primary hover:underline">booking@zardonic.net</a></p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.35 }}
+                                >
+                                  <div className="data-label mb-3">Press / Media</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    <p>E-Mail: <a href="mailto:press@zardonic.net" className="text-primary hover:underline">press@zardonic.net</a></p>
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-4"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.4 }}
+                                >
+                                  <div className="data-label mb-3">Social Links</div>
+                                  <div className="space-y-2 font-mono text-sm">
+                                    {siteData.social.instagram && <p><a href={siteData.social.instagram} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Instagram</a></p>}
+                                    {siteData.social.facebook && <p><a href={siteData.social.facebook} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Facebook</a></p>}
+                                    {siteData.social.spotify && <p><a href={siteData.social.spotify} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Spotify</a></p>}
+                                    {siteData.social.youtube && <p><a href={siteData.social.youtube} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">YouTube</a></p>}
+                                    {siteData.social.soundcloud && <p><a href={siteData.social.soundcloud} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">SoundCloud</a></p>}
+                                    {siteData.social.tiktok && <p><a href={siteData.social.tiktok} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">TikTok</a></p>}
+                                    {siteData.social.appleMusic && <p><a href={siteData.social.appleMusic} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Apple Music</a></p>}
+                                    {siteData.social.bandcamp && <p><a href={siteData.social.bandcamp} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Bandcamp</a></p>}
+                                  </div>
+                                </motion.div>
+
+                                <motion.div 
+                                  className="cyber-grid p-6"
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: 0.45 }}
+                                >
+                                  <div className="data-label mb-4">// CONTACT.FORM</div>
+                                  <form
+                                    onSubmit={(e) => {
+                                      e.preventDefault()
+                                      const formData = new FormData(e.currentTarget)
+                                      const name = formData.get('name') as string
+                                      const email = formData.get('email') as string
+                                      const subject = formData.get('subject') as string
+                                      const message = formData.get('message') as string
+                                      window.location.href = `mailto:info@zardonic.net?subject=${encodeURIComponent(subject || 'Contact from Website')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\n${message}`)}`
+                                      toast.success('Opening email client...')
+                                    }}
+                                    className="space-y-4"
+                                  >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                        <Label className="font-mono text-xs uppercase tracking-wide">Name</Label>
+                                        <Input name="name" required placeholder="Your name" className="bg-card border-border font-mono mt-1" />
+                                      </div>
+                                      <div>
+                                        <Label className="font-mono text-xs uppercase tracking-wide">Email</Label>
+                                        <Input name="email" type="email" required placeholder="your@email.com" className="bg-card border-border font-mono mt-1" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <Label className="font-mono text-xs uppercase tracking-wide">Subject</Label>
+                                      <Input name="subject" required placeholder="Subject" className="bg-card border-border font-mono mt-1" />
+                                    </div>
+                                    <div>
+                                      <Label className="font-mono text-xs uppercase tracking-wide">Message</Label>
+                                      <Textarea name="message" required placeholder="Your message..." className="bg-card border-border font-mono mt-1 min-h-[120px]" />
+                                    </div>
+                                    <Button type="submit" className="w-full uppercase font-mono hover-glitch cyber-border">
+                                      <PaperPlaneTilt className="w-5 h-5 mr-2" />
+                                      <span className="hover-chromatic">Send Message</span>
+                                    </Button>
+                                  </form>
+                                </motion.div>
+                              </div>
 
                               <motion.div 
                                 className="pt-6 border-t border-border"
