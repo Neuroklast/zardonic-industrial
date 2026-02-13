@@ -2488,7 +2488,7 @@ In the end, Zardonic will unite listeners with Superstars.
                                         email: formData.get('email') as string,
                                         subject: formData.get('subject') as string,
                                         message: formData.get('message') as string,
-                                        _hp: formData.get('_hp') as string || '',
+                                        _hp: formData.get('_hp') ?? '',
                                       }
 
                                       const validation = contactFormSchema.safeParse(data)

@@ -109,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await redis.expire(listKey, 90 * 24 * 60 * 60)
     } else {
       // Log to server console when Redis is not configured (development)
-      console.log('Contact form submission (Redis not configured):', { name, email, subject, message: message.substring(0, 100) })
+      console.log('Contact form submission (Redis not configured):', { name, subject })
     }
 
     return res.status(200).json({ success: true })

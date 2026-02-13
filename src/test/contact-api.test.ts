@@ -201,8 +201,8 @@ describe('Contact API handler', () => {
       mockLtrim.mockResolvedValue('OK')
       mockExpire.mockResolvedValue(1)
 
-      // Use a unique IP per test run to avoid interference
-      const ip = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+      // Use a unique IP for this test to avoid interference with other tests
+      const ip = uniqueIp()
 
       for (let i = 0; i < 5; i++) {
         const res = mockRes()
