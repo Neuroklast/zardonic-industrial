@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // ---------------------------------------------------------------------------
-// Mock @vercel/kv — must be declared before importing the handler
+// Mock @upstash/redis — must be declared before importing the handler
 // ---------------------------------------------------------------------------
 const mockKvGet = vi.fn()
 const mockKvSet = vi.fn()
 
-vi.mock('@vercel/kv', () => ({
-  kv: { get: mockKvGet, set: mockKvSet },
+vi.mock('@upstash/redis', () => ({
+  Redis: class {
+    get = mockKvGet
+    set = mockKvSet
+  },
 }))
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,8 +35,8 @@ const { default: handler, timingSafeEqual } = await import('../../api/kv.js')
 describe('KV API handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    process.env.KV_REST_API_URL = 'https://fake-kv.vercel.test'
-    process.env.KV_REST_API_TOKEN = 'fake-token'
+    process.env.UPSTASH_REDIS_REST_URL = 'https://fake-redis.upstash.io'
+    process.env.UPSTASH_REDIS_REST_TOKEN = 'fake-token'
   })
 
   it('OPTIONS returns 200', async () => {

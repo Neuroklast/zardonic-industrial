@@ -1,8 +1,20 @@
-import { kv } from '@vercel/kv'
+import { Redis } from '@upstash/redis'
 
 // Check if KV is properly configured
 const isKVConfigured = () => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+}
+
+// Lazily create the Redis client so we only instantiate when env vars are set
+let _redis
+function getRedis() {
+  if (!_redis) {
+    _redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    })
+  }
+  return _redis
 }
 
 // Constant-time string comparison to prevent timing attacks on hash comparison
@@ -22,12 +34,14 @@ export default async function handler(req, res) {
 
   // Check if KV is configured
   if (!isKVConfigured()) {
-    console.error('KV not configured: Missing KV_REST_API_URL or KV_REST_API_TOKEN environment variables')
+    console.error('KV not configured: Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN environment variables')
     return res.status(503).json({ 
       error: 'Service unavailable',
-      message: 'KV storage is not configured. Please set KV_REST_API_URL and KV_REST_API_TOKEN environment variables.'
+      message: 'KV storage is not configured. Please set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN environment variables.'
     })
   }
+
+  const kv = getRedis()
 
   try {
     if (req.method === 'GET') {
@@ -80,9 +94,9 @@ export default async function handler(req, res) {
     })
     
     const isKVConfigError = error instanceof Error && (
-      errorMessage.toLowerCase().includes('kv_rest_api_url') ||
-      errorMessage.toLowerCase().includes('kv_rest_api_token') ||
-      errorMessage.toLowerCase().includes('vercel kv') ||
+      errorMessage.toLowerCase().includes('upstash_redis_rest_url') ||
+      errorMessage.toLowerCase().includes('upstash_redis_rest_token') ||
+      errorMessage.toLowerCase().includes('upstash') ||
       errorMessage.toLowerCase().includes('missing credentials')
     )
     
