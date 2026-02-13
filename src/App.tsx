@@ -7,6 +7,7 @@ import { useAnalytics, trackClick } from '@/hooks/use-analytics'
 import { fetchITunesReleases, type ITunesRelease } from '@/lib/itunes'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { fetchBandsintownEvents } from '@/lib/bandsintown'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import {
   Play,
   Pause,
@@ -48,7 +49,7 @@ import {
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -1223,20 +1224,59 @@ In the end, Zardonic will unite listeners with Superstars.
                 GALLERY
               </h2>
               {editMode && (
-                <label className="cursor-pointer">
-                  <Button className="gap-2" asChild>
-                    <span>
-                      <Upload className="w-4 h-4" />
-                      Add Image
-                    </span>
-                  </Button>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageUpload(e, 'gallery')}
-                  />
-                </label>
+                <div className="flex gap-2">
+                  <label className="cursor-pointer">
+                    <Button className="gap-2" asChild>
+                      <span>
+                        <Upload className="w-4 h-4" />
+                        Add Image
+                      </span>
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, 'gallery')}
+                    />
+                  </label>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2" variant="outline">
+                        <Plus className="w-4 h-4" />
+                        Add URL
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Add Image from URL</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={(e) => {
+                        e.preventDefault()
+                        const formData = new FormData(e.currentTarget)
+                        const url = formData.get('imageUrl') as string
+                        if (url) {
+                          setSiteData((data) => data ? { ...data, gallery: [...data.gallery, url] } : data!)
+                          toast.success('Image URL added to gallery')
+                          e.currentTarget.reset()
+                        }
+                      }}>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="imageUrl">Image URL (supports Google Drive links)</Label>
+                            <Input
+                              id="imageUrl"
+                              name="imageUrl"
+                              type="url"
+                              placeholder="https://drive.google.com/file/d/..."
+                              className="mt-2"
+                            />
+                          </div>
+                          <Button type="submit">Add Image</Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               )}
             </div>
 
@@ -1263,7 +1303,12 @@ In the end, Zardonic will unite listeners with Superstars.
                     className="aspect-square bg-muted overflow-hidden cursor-pointer relative group glitch-image"
                     onClick={() => setGalleryIndex(index)}
                   >
-                    <img src={image} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
+                    <img 
+                      src={toDirectImageUrl(image) || image} 
+                      alt={`Gallery ${index + 1}`} 
+                      className="w-full h-full object-cover" 
+                      crossOrigin="anonymous"
+                    />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <MagnifyingGlassPlus className="w-8 h-8 text-foreground" />
                     </div>
