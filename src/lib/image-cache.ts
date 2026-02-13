@@ -156,10 +156,12 @@ export async function cacheImage(url: string): Promise<string> {
 }
 
 /**
- * Hook to load and cache an image URL.
- * Returns the data URL (from cache or freshly loaded).
+ * Prepares an image URL for use, triggering background caching if needed.
+ * For Google Drive URLs, returns the wsrv.nl proxy URL.
+ * For data URLs, returns them directly.
+ * For external URLs, triggers background caching and returns the direct URL.
  */
-export function useCachedImage(url: string | null | undefined): string {
+export function prepareImageUrl(url: string | null | undefined): string {
   if (!url) return ''
   
   // If it's already a data URL, return it directly

@@ -1254,8 +1254,8 @@ In the end, Zardonic will unite listeners with Superstars.
                         e.preventDefault()
                         const formData = new FormData(e.currentTarget)
                         const url = formData.get('imageUrl') as string
-                        if (url) {
-                          setSiteData((data) => data ? { ...data, gallery: [...data.gallery, url] } : data!)
+                        if (url && siteData) {
+                          setSiteData({ ...siteData, gallery: [...siteData.gallery, url] })
                           toast.success('Image URL added to gallery')
                           e.currentTarget.reset()
                         }

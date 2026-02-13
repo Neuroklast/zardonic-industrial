@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 /**
- * Custom KV hook backed by localStorage with admin token support.
- * Uses localStorage for persistence with admin authentication for write operations.
- * The admin token from localStorage is checked on updates.
+ * Custom KV hook backed by localStorage.
+ * Uses localStorage for persistence with simple JSON serialization.
  *
  * Returns [value, updateValue, loaded] — `loaded` is true once the initial
  * localStorage/default fetch has completed so consumers can avoid acting on

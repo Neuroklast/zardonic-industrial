@@ -35,10 +35,15 @@ export default function AdminLoginDialog({ open, onOpenChange, mode, onLogin, on
     e.preventDefault()
     if (!password.trim()) return
 
+    if (!onLogin) {
+      setError('Login handler not provided')
+      return
+    }
+
     setIsLoading(true)
     setError('')
     try {
-      const success = await onLogin!(password)
+      const success = await onLogin(password)
       if (success) {
         toast.success('ADMIN ACCESS GRANTED', {
           description: 'Edit mode is now available'
