@@ -75,26 +75,7 @@ export function SpotifyEmbed({
       return
     }
 
-    // Check if the script is already in the document
-    const existingScript = document.querySelector(
-      'script[src="https://open.spotify.com/embed/iframe-api/v1"]',
-    )
-
-    if (!existingScript) {
-      // Set up the callback before loading the script
-      const previousCallback = window.onSpotifyIframeApiReady
-      window.onSpotifyIframeApiReady = (IFrameAPI) => {
-        window.SpotifyIframeApi = IFrameAPI
-        if (previousCallback) previousCallback(IFrameAPI)
-        createPlayer(IFrameAPI)
-      }
-
-      const script = document.createElement('script')
-      script.src = 'https://open.spotify.com/embed/iframe-api/v1'
-      script.async = true
-      document.body.appendChild(script)
-    } else {
-      // Script exists but API not ready yet — wait for callback
+    const setupCallback = () => {
       const previousCallback = window.onSpotifyIframeApiReady
       window.onSpotifyIframeApiReady = (IFrameAPI) => {
         window.SpotifyIframeApi = IFrameAPI
@@ -103,12 +84,27 @@ export function SpotifyEmbed({
       }
     }
 
+    // Check if the script is already in the document
+    const existingScript = document.querySelector(
+      'script[src="https://open.spotify.com/embed/iframe-api/v1"]',
+    )
+
+    if (!existingScript) {
+      setupCallback()
+      const script = document.createElement('script')
+      script.src = 'https://open.spotify.com/embed/iframe-api/v1'
+      script.async = true
+      document.body.appendChild(script)
+    } else {
+      // Script exists but API not ready yet — wait for callback
+      setupCallback()
+    }
+
     return () => {
       if (controllerRef.current) {
         controllerRef.current.destroy()
         controllerRef.current = null
       }
-      initializedRef.current = false
     }
   }, [createPlayer])
 
