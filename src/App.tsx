@@ -308,6 +308,7 @@ In the end, Zardonic will unite listeners with Superstars.
   const [bandsintownFetching, setBandsintownFetching] = useState(false)
   const [hasAutoLoaded, setHasAutoLoaded] = useState(false)
   const [showAllReleases, setShowAllReleases] = useState(false)
+  const [bioExpanded, setBioExpanded] = useState(false)
   
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -837,15 +838,48 @@ In the end, Zardonic will unite listeners with Superstars.
                 </Button>
               </div>
             ) : (
-              <motion.p 
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="text-lg leading-relaxed text-muted-foreground font-light"
-              >
-                {siteData.bio}
-              </motion.p>
+              <div>
+                <motion.div
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className={`text-lg leading-relaxed text-muted-foreground font-light overflow-hidden transition-all duration-500 ${
+                    !bioExpanded ? 'max-h-[280px]' : 'max-h-none'
+                  }`}
+                  style={{
+                    maskImage: !bioExpanded ? 'linear-gradient(to bottom, black 60%, transparent 100%)' : 'none',
+                    WebkitMaskImage: !bioExpanded ? 'linear-gradient(to bottom, black 60%, transparent 100%)' : 'none',
+                  }}
+                >
+                  {siteData.bio}
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="mt-6"
+                >
+                  <Button
+                    onClick={() => setBioExpanded(!bioExpanded)}
+                    variant="outline"
+                    className="font-mono hover-glitch"
+                  >
+                    {bioExpanded ? (
+                      <>
+                        <CaretUp className="w-4 h-4 mr-2" />
+                        Show Less
+                      </>
+                    ) : (
+                      <>
+                        <CaretDown className="w-4 h-4 mr-2" />
+                        Read More
+                      </>
+                    )}
+                  </Button>
+                </motion.div>
+              </div>
             )}
           </motion.div>
         </div>
@@ -880,6 +914,7 @@ In the end, Zardonic will unite listeners with Superstars.
                   width="100%"
                   height="352"
                   frameBorder="0"
+                  allowTransparency={true}
                   allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                   loading="lazy"
                   title="Spotify Player - ZARDONIC"
