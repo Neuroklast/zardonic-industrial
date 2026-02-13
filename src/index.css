@@ -88,24 +88,52 @@ body {
   will-change: transform;
   transform: translateZ(0);
   backface-visibility: hidden;
+  /* Force GPU layer but prevent over-layering */
+  isolation: isolate;
+}
+
+/* Optimize specific animated elements */
+.hero-logo-glitch,
+.cyber2077-scan-build,
+.hover-chromatic,
+.hover-glitch {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Remove will-change after animation completes */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-logo-glitch {
+    animation: hero-entrance-jitter 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
+               remove-will-change 0.01s 0.4s forwards;
+  }
+}
+
+@keyframes remove-will-change {
+  to {
+    will-change: auto;
+  }
 }
 
 /* Mobile scroll performance optimizations */
 section {
   /* CSS containment for better paint performance */
-  contain: layout style;
+  contain: layout style paint;
+  /* Hint browser about content visibility */
+  content-visibility: auto;
 }
 
-/* Optimize scroll-triggered elements */
-[class*="whileInView"] {
-  content-visibility: auto;
-  contain-intrinsic-size: auto 500px;
+/* Optimize scroll-triggered motion divs */
+section > div > div[style*="transform"] {
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* Reduce paint complexity on mobile */
 @media (max-width: 768px) {
+  /* Optimize compositing on mobile */
   * {
-    /* Optimize compositing on mobile */
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
@@ -115,6 +143,16 @@ section {
     text-shadow: 
       0.3px 0 0 rgba(255, 100, 100, 0.15),
       -0.3px 0 0 rgba(100, 255, 255, 0.15);
+  }
+  
+  /* Disable expensive effects on mobile */
+  .scanline-effect::before {
+    display: none;
+  }
+  
+  /* Simplify blend modes on mobile */
+  [class*="mix-blend"] {
+    mix-blend-mode: normal;
   }
 }
 

@@ -593,7 +593,7 @@ In the end, Zardonic will unite listeners with Superstars.
     }
   }
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!audioRef.current) return
     
     if (isPlaying) {
@@ -602,31 +602,31 @@ In the end, Zardonic will unite listeners with Superstars.
       audioRef.current.play()
     }
     setIsPlaying(!isPlaying)
-  }
+  }, [isPlaying])
 
-  const playNext = () => {
+  const playNext = useCallback(() => {
     if (!siteData) return
     setCurrentTrackIndex((prev) => (prev + 1) % siteData.tracks.length)
     setIsPlaying(true)
-  }
+  }, [siteData])
 
-  const playPrevious = () => {
+  const playPrevious = useCallback(() => {
     if (!siteData) return
     setCurrentTrackIndex((prev) => (prev - 1 + siteData.tracks.length) % siteData.tracks.length)
     setIsPlaying(true)
-  }
+  }, [siteData])
 
-  const scrollToSection = (id: string) => {
+  const scrollToSection = useCallback((id: string) => {
     const element = document.getElementById(id)
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
       setMobileMenuOpen(false)
     }
-  }
+  }, [])
 
-  const saveChanges = () => {
+  const saveChanges = useCallback(() => {
     toast.success('Changes saved successfully')
-  }
+  }, [])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'hero' | 'gallery') => {
     const file = e.target.files?.[0]
@@ -646,7 +646,7 @@ In the end, Zardonic will unite listeners with Superstars.
     }
   }
 
-  const addGig = () => {
+  const addGig = useCallback(() => {
     const newGig: Gig = {
       id: Date.now().toString(),
       venue: 'New Venue',
@@ -657,9 +657,9 @@ In the end, Zardonic will unite listeners with Superstars.
     }
     setSiteData((data) => data ? { ...data, gigs: [...data.gigs, newGig] } : data!)
     setEditingGig(newGig)
-  }
+  }, [])
 
-  const saveGig = (gig: Gig) => {
+  const saveGig = useCallback((gig: Gig) => {
     setSiteData((data) => {
       if (!data) return data!
       const gigIndex = data.gigs.findIndex(g => g.id === gig.id)
@@ -672,14 +672,14 @@ In the end, Zardonic will unite listeners with Superstars.
     })
     setEditingGig(null)
     toast.success('Gig saved')
-  }
+  }, [])
 
-  const deleteGig = (id: string) => {
+  const deleteGig = useCallback((id: string) => {
     setSiteData((data) => data ? { ...data, gigs: data.gigs.filter(g => g.id !== id) } : data!)
     toast.success('Gig deleted')
-  }
+  }, [])
 
-  const addRelease = () => {
+  const addRelease = useCallback(() => {
     const newRelease: Release = {
       id: Date.now().toString(),
       title: 'New Release',
@@ -692,9 +692,9 @@ In the end, Zardonic will unite listeners with Superstars.
     }
     setSiteData((data) => data ? { ...data, releases: [...data.releases, newRelease] } : data!)
     setEditingRelease(newRelease)
-  }
+  }, [])
 
-  const saveRelease = (release: Release) => {
+  const saveRelease = useCallback((release: Release) => {
     setSiteData((data) => {
       if (!data) return data!
       const releaseIndex = data.releases.findIndex(r => r.id === release.id)
@@ -707,12 +707,12 @@ In the end, Zardonic will unite listeners with Superstars.
     })
     setEditingRelease(null)
     toast.success('Release saved')
-  }
+  }, [])
 
-  const deleteRelease = (id: string) => {
+  const deleteRelease = useCallback((id: string) => {
     setSiteData((data) => data ? { ...data, releases: data.releases.filter(r => r.id !== id) } : data!)
     toast.success('Release deleted')
-  }
+  }, [])
 
   const deleteGalleryImage = (index: number) => {
     setSiteData((data) => {
@@ -724,7 +724,25 @@ In the end, Zardonic will unite listeners with Superstars.
     toast.success('Image removed')
   }
 
-  const currentTrack = siteData?.tracks[currentTrackIndex]
+  const currentTrack = useMemo(() => 
+    siteData?.tracks[currentTrackIndex],
+    [siteData?.tracks, currentTrackIndex]
+  )
+  
+  // Memoize sorted and filtered releases
+  const sortedReleases = useMemo(() => {
+    if (!siteData) return []
+    return [...siteData.releases].sort((a, b) => {
+      const yearA = a.releaseDate ? new Date(a.releaseDate).getTime() : parseInt(a.year) || 0
+      const yearB = b.releaseDate ? new Date(b.releaseDate).getTime() : parseInt(b.year) || 0
+      return yearB - yearA
+    })
+  }, [siteData?.releases])
+  
+  const visibleReleases = useMemo(() => 
+    showAllReleases ? sortedReleases : sortedReleases.slice(0, 6),
+    [sortedReleases, showAllReleases]
+  )
 
   if (!siteData) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
@@ -1349,14 +1367,7 @@ In the end, Zardonic will unite listeners with Superstars.
             ) : (
               <>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {(() => {
-                    const sorted = [...siteData.releases].sort((a, b) => {
-                      const yearA = a.releaseDate ? new Date(a.releaseDate).getTime() : parseInt(a.year) || 0
-                      const yearB = b.releaseDate ? new Date(b.releaseDate).getTime() : parseInt(b.year) || 0
-                      return yearB - yearA
-                    })
-                    const visible = showAllReleases ? sorted : sorted.slice(0, 6)
-                    return visible.map((release, index) => (
+                  {visibleReleases.map((release, index) => (
                       <motion.div
                         key={release.id}
                         initial={{ opacity: 0, scale: 0.8, rotateX: -20 }}
@@ -1376,7 +1387,7 @@ In the end, Zardonic will unite listeners with Superstars.
                           <div className="data-label absolute top-2 left-2 z-10">// REL.{release.year}</div>
                           <div className="aspect-square bg-muted relative">
                             {release.artwork && (
-                              <img src={release.artwork} alt={release.title} className="w-full h-full object-cover glitch-image hover-chromatic-image" />
+                              <img src={release.artwork} alt={release.title} className="w-full h-full object-cover glitch-image hover-chromatic-image" loading="lazy" decoding="async" />
                             )}
                             {editMode && (
                               <div className="absolute top-2 right-2 flex gap-1">
@@ -1410,8 +1421,7 @@ In the end, Zardonic will unite listeners with Superstars.
                           </div>
                         </Card>
                       </motion.div>
-                    ))
-                  })()}
+                    ))}
                 </div>
                 {siteData.releases.length > 6 && (
                   <motion.div 
@@ -1547,6 +1557,8 @@ In the end, Zardonic will unite listeners with Superstars.
                       alt={`Gallery ${index + 1}`} 
                       className="w-full h-full object-cover hover-chromatic-image" 
                       crossOrigin="anonymous"
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <MagnifyingGlassPlus className="w-8 h-8 text-foreground" />
