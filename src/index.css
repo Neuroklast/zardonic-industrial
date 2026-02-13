@@ -106,7 +106,7 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .hero-logo-glitch {
     animation: hero-entrance-jitter 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards,
-               remove-will-change 0.01s 0.4s forwards;
+               remove-will-change 0.01s 0.36s forwards;  /* Delay matches animation duration */
   }
 }
 
@@ -133,10 +133,15 @@ section > div > div[style*="transform"] {
 /* Reduce paint complexity on mobile */
 @media (max-width: 768px) {
   /* Optimize compositing only for animated elements on mobile */
+  /* Target framer-motion elements and Cyberpunk effects */
   [class*="motion-"],
   [class*="animate-"],
-  [class*="hero-"],
-  [class*="cyber2077-"] {
+  .hero-logo-glitch,
+  .cyber2077-scan-build,
+  .cyber2077-glitch,
+  .cyber2077-border-animate,
+  .hover-chromatic,
+  .hover-glitch {
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }

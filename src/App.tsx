@@ -944,6 +944,7 @@ In the end, Zardonic will unite listeners with Superstars.
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+            // Trigger animation 50px before element enters viewport for smoother user experience
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5, ease: [0.68, -0.55, 0.265, 1.55] }}
             className="relative"
