@@ -2248,7 +2248,7 @@ In the end, Zardonic will unite listeners with Superstars.
                                 >
                                   <div className="data-label mb-3">Management</div>
                                   <div className="space-y-2 font-mono text-sm">
-                                    <p>Federico Ágreda Álvarez</p>
+                                    <p>Federico Augusto Ágreda Álvarez</p>
                                     <p>E-Mail: <a href="mailto:info@zardonic.net" className="text-primary hover:underline">info@zardonic.net</a></p>
                                   </div>
                                 </motion.div>
