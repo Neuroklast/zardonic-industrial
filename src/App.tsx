@@ -10,9 +10,9 @@ import { fetchBandsintownEvents } from '@/lib/bandsintown'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { 
   applyConfigOverrides,
-  PROFILE_LOADING_TEXT_INTERVAL_MS,
-  PROFILE_GLITCH_PHASE_DELAY_MS,
-  PROFILE_REVEAL_PHASE_DELAY_MS,
+  OVERLAY_LOADING_TEXT_INTERVAL_MS,
+  OVERLAY_GLITCH_PHASE_DELAY_MS,
+  OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
 import { submitContactForm, contactFormSchema } from '@/lib/contact'
 import type { AdminSettings } from '@/lib/types'
@@ -166,7 +166,7 @@ interface AnalyticsData {
   visitors: { date: string; count: number }[]
 }
 
-const PROFILE_LOADING_TEXTS = [
+const OVERLAY_LOADING_TEXTS = [
   '> ACCESSING PROFILE...',
   '> DECRYPTING DATA...',
   '> IDENTITY VERIFIED',
@@ -403,30 +403,30 @@ In the end, Zardonic will unite listeners with Superstars.
 
   // 3-phase overlay loading state
   const [overlayPhase, setOverlayPhase] = useState<'loading' | 'glitch' | 'revealed'>('loading')
-  const [loadingText, setLoadingText] = useState(PROFILE_LOADING_TEXTS[0])
+  const [loadingText, setLoadingText] = useState(OVERLAY_LOADING_TEXTS[0])
 
   useEffect(() => {
     if (!cyberpunkOverlay) return
     
     setOverlayPhase('loading')
-    setLoadingText(PROFILE_LOADING_TEXTS[0])
+    setLoadingText(OVERLAY_LOADING_TEXTS[0])
     
     let idx = 0
     const txtInterval = setInterval(() => {
       idx += 1
-      if (idx <= PROFILE_LOADING_TEXTS.length - 1) {
-        setLoadingText(PROFILE_LOADING_TEXTS[idx])
+      if (idx <= OVERLAY_LOADING_TEXTS.length - 1) {
+        setLoadingText(OVERLAY_LOADING_TEXTS[idx])
       }
-    }, PROFILE_LOADING_TEXT_INTERVAL_MS)
+    }, OVERLAY_LOADING_TEXT_INTERVAL_MS)
 
     const glitchTimer = setTimeout(() => {
       clearInterval(txtInterval)
       setOverlayPhase('glitch')
-    }, PROFILE_GLITCH_PHASE_DELAY_MS)
+    }, OVERLAY_GLITCH_PHASE_DELAY_MS)
 
     const revealTimer = setTimeout(() => {
       setOverlayPhase('revealed')
-    }, PROFILE_REVEAL_PHASE_DELAY_MS)
+    }, OVERLAY_REVEAL_PHASE_DELAY_MS)
 
     return () => {
       clearInterval(txtInterval)

@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { X, Terminal as TerminalIcon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import {
-  PROFILE_LOADING_TEXT_INTERVAL_MS,
-  PROFILE_GLITCH_PHASE_DELAY_MS,
-  PROFILE_REVEAL_PHASE_DELAY_MS,
+  OVERLAY_LOADING_TEXT_INTERVAL_MS,
+  OVERLAY_GLITCH_PHASE_DELAY_MS,
+  OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
 
 const TERMINAL_LOADING_TEXTS = [
@@ -43,16 +43,16 @@ export function Terminal({ isOpen, onClose }: TerminalProps) {
       if (idx <= TERMINAL_LOADING_TEXTS.length - 1) {
         setLoadingText(TERMINAL_LOADING_TEXTS[idx])
       }
-    }, PROFILE_LOADING_TEXT_INTERVAL_MS)
+    }, OVERLAY_LOADING_TEXT_INTERVAL_MS)
 
     const glitchTimer = setTimeout(() => {
       clearInterval(txtInterval)
       setPhase('glitch')
-    }, PROFILE_GLITCH_PHASE_DELAY_MS)
+    }, OVERLAY_GLITCH_PHASE_DELAY_MS)
 
     const revealTimer = setTimeout(() => {
       setPhase('revealed')
-    }, PROFILE_REVEAL_PHASE_DELAY_MS)
+    }, OVERLAY_REVEAL_PHASE_DELAY_MS)
 
     return () => {
       clearInterval(txtInterval)

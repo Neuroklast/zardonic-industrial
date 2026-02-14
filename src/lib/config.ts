@@ -25,10 +25,10 @@ const DEFAULTS = {
   SECTION_REVEAL_DURATION_S: 1.0,
   OVERLAY_TRANSITION_DURATION_S: 0.3,
 
-  // Profile/Overlay Loading Sequence
-  PROFILE_LOADING_TEXT_INTERVAL_MS: 600,
-  PROFILE_GLITCH_PHASE_DELAY_MS: 1800,
-  PROFILE_REVEAL_PHASE_DELAY_MS: 2200,
+  // Overlay Loading Sequence
+  OVERLAY_LOADING_TEXT_INTERVAL_MS: 600,
+  OVERLAY_GLITCH_PHASE_DELAY_MS: 1800,
+  OVERLAY_REVEAL_PHASE_DELAY_MS: 2200,
 } as const
 
 export type ConfigKey = keyof typeof DEFAULTS
@@ -133,22 +133,22 @@ export const CONFIG_META: Record<
     group: 'Animation Durations',
     type: 'number',
   },
-  PROFILE_LOADING_TEXT_INTERVAL_MS: {
-    label: 'Profile Loading Text Interval (ms)',
+  OVERLAY_LOADING_TEXT_INTERVAL_MS: {
+    label: 'Overlay Loading Text Interval (ms)',
     description: 'Interval between loading text changes in overlay sequence',
-    group: 'Profile/Overlay Loading Sequence',
+    group: 'Overlay Loading Sequence',
     type: 'number',
   },
-  PROFILE_GLITCH_PHASE_DELAY_MS: {
-    label: 'Profile Glitch Phase Delay (ms)',
+  OVERLAY_GLITCH_PHASE_DELAY_MS: {
+    label: 'Overlay Glitch Phase Delay (ms)',
     description: 'Delay before entering glitch phase in overlay sequence',
-    group: 'Profile/Overlay Loading Sequence',
+    group: 'Overlay Loading Sequence',
     type: 'number',
   },
-  PROFILE_REVEAL_PHASE_DELAY_MS: {
-    label: 'Profile Reveal Phase Delay (ms)',
+  OVERLAY_REVEAL_PHASE_DELAY_MS: {
+    label: 'Overlay Reveal Phase Delay (ms)',
     description: 'Delay before entering reveal phase in overlay sequence',
-    group: 'Profile/Overlay Loading Sequence',
+    group: 'Overlay Loading Sequence',
     type: 'number',
   },
 }
@@ -188,6 +188,6 @@ export const SYNC_INTERVAL_MS = DEFAULTS.SYNC_INTERVAL_MS
 export const FADE_IN_DURATION_S = DEFAULTS.FADE_IN_DURATION_S
 export const SECTION_REVEAL_DURATION_S = DEFAULTS.SECTION_REVEAL_DURATION_S
 export const OVERLAY_TRANSITION_DURATION_S = DEFAULTS.OVERLAY_TRANSITION_DURATION_S
-export const PROFILE_LOADING_TEXT_INTERVAL_MS = DEFAULTS.PROFILE_LOADING_TEXT_INTERVAL_MS
-export const PROFILE_GLITCH_PHASE_DELAY_MS = DEFAULTS.PROFILE_GLITCH_PHASE_DELAY_MS
-export const PROFILE_REVEAL_PHASE_DELAY_MS = DEFAULTS.PROFILE_REVEAL_PHASE_DELAY_MS
+export const OVERLAY_LOADING_TEXT_INTERVAL_MS = DEFAULTS.OVERLAY_LOADING_TEXT_INTERVAL_MS
+export const OVERLAY_GLITCH_PHASE_DELAY_MS = DEFAULTS.OVERLAY_GLITCH_PHASE_DELAY_MS
+export const OVERLAY_REVEAL_PHASE_DELAY_MS = DEFAULTS.OVERLAY_REVEAL_PHASE_DELAY_MS
