@@ -8,7 +8,12 @@ import { fetchITunesReleases, type ITunesRelease } from '@/lib/itunes'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { fetchBandsintownEvents } from '@/lib/bandsintown'
 import { toDirectImageUrl } from '@/lib/image-cache'
-import { applyConfigOverrides } from '@/lib/config'
+import { 
+  applyConfigOverrides,
+  PROFILE_LOADING_TEXT_INTERVAL_MS,
+  PROFILE_GLITCH_PHASE_DELAY_MS,
+  PROFILE_REVEAL_PHASE_DELAY_MS,
+} from '@/lib/config'
 import { submitContactForm, contactFormSchema } from '@/lib/contact'
 import type { AdminSettings } from '@/lib/types'
 import {
@@ -412,16 +417,16 @@ In the end, Zardonic will unite listeners with Superstars.
       if (idx < PROFILE_LOADING_TEXTS.length) {
         setLoadingText(PROFILE_LOADING_TEXTS[idx])
       }
-    }, 600)
+    }, PROFILE_LOADING_TEXT_INTERVAL_MS)
 
     const glitchTimer = setTimeout(() => {
       clearInterval(txtInterval)
       setOverlayPhase('glitch')
-    }, 1800)
+    }, PROFILE_GLITCH_PHASE_DELAY_MS)
 
     const revealTimer = setTimeout(() => {
       setOverlayPhase('revealed')
-    }, 2200)
+    }, PROFILE_REVEAL_PHASE_DELAY_MS)
 
     return () => {
       clearInterval(txtInterval)

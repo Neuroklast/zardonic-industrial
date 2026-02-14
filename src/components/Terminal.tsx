@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Terminal as TerminalIcon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import {
+  PROFILE_LOADING_TEXT_INTERVAL_MS,
+  PROFILE_GLITCH_PHASE_DELAY_MS,
+  PROFILE_REVEAL_PHASE_DELAY_MS,
+} from '@/lib/config'
 
 const TERMINAL_LOADING_TEXTS = [
   '> ACCESSING TERMINAL...',
@@ -38,16 +43,16 @@ export function Terminal({ isOpen, onClose }: TerminalProps) {
       if (idx < TERMINAL_LOADING_TEXTS.length) {
         setLoadingText(TERMINAL_LOADING_TEXTS[idx])
       }
-    }, 600)
+    }, PROFILE_LOADING_TEXT_INTERVAL_MS)
 
     const glitchTimer = setTimeout(() => {
       clearInterval(txtInterval)
       setPhase('glitch')
-    }, 1800)
+    }, PROFILE_GLITCH_PHASE_DELAY_MS)
 
     const revealTimer = setTimeout(() => {
       setPhase('revealed')
-    }, 2200)
+    }, PROFILE_REVEAL_PHASE_DELAY_MS)
 
     return () => {
       clearInterval(txtInterval)
