@@ -809,12 +809,12 @@ In the end, Zardonic will unite listeners with Superstars.
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen bg-background text-foreground relative">
-      <div className="crt-overlay" />
-      <div className="crt-vignette" />
-      <div className="crt-scanline-bg" />
-      <div className="full-page-noise periodic-noise-glitch" />
-      <CircuitBackground />
+      <div className={`min-h-screen bg-background text-foreground relative${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}>
+      {anim.crtEnabled !== false && <div className="crt-overlay" />}
+      {anim.crtEnabled !== false && <div className="crt-vignette" />}
+      {anim.scanlineEnabled !== false && <div className="crt-scanline-bg" />}
+      {anim.noiseEnabled !== false && <div className="full-page-noise periodic-noise-glitch" />}
+      {anim.circuitBackgroundEnabled !== false && <CircuitBackground />}
       
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
