@@ -273,10 +273,11 @@ h1, h2, h3, h4, h5, h6 {
     repeating-linear-gradient(
       0deg,
       rgba(0, 0, 0, 0) 0px,
-      rgba(0, 0, 0, 0.05) 1px,
+      rgba(0, 0, 0, 0.03) 1px,
       rgba(0, 0, 0, 0) 2px,
       rgba(0, 0, 0, 0) 3px
     );
+  opacity: var(--crt-overlay-opacity, 0.6);
   animation: crt-flicker 4s ease-in-out infinite;
   will-change: opacity;
   transform: translateZ(0);
@@ -288,16 +289,54 @@ h1, h2, h3, h4, h5, h6 {
   inset: 0;
   pointer-events: none;
   z-index: 9997;
-  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.6) 100%);
-  box-shadow: inset 0 0 200px rgba(0, 0, 0, 0.9);
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, var(--crt-vignette-opacity, 0.3)) 100%);
+  box-shadow: inset 0 0 150px rgba(0, 0, 0, var(--crt-vignette-opacity, 0.3));
   transform: translateZ(0);
   contain: strict;
 }
 
+/* Background CRT scanline with animated scan line moving down */
+.crt-scanline-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+  transform: translateZ(0);
+}
+
+.crt-scanline-bg::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+  animation: crt-scan-down 6s linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+@keyframes crt-scan-down {
+  0% { top: -6px; }
+  100% { top: 100%; }
+}
+
 @keyframes crt-flicker {
-  0% { opacity: 0.95; }
-  50% { opacity: 1; }
-  100% { opacity: 0.98; }
+  0% { opacity: var(--crt-overlay-opacity, 0.6); }
+  50% { opacity: calc(var(--crt-overlay-opacity, 0.6) + 0.05); }
+  100% { opacity: calc(var(--crt-overlay-opacity, 0.6) - 0.02); }
 }
 
 .noise-effect {

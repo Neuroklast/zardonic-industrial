@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRef, useState, useCallback } from 'react'
 import AdminLoginDialog from '@/components/AdminLoginDialog'
@@ -119,6 +120,20 @@ export default function EditControls({
 
   const updateAnimation = useCallback(
     (key: keyof AnimationSettings, value: boolean) => {
+      if (!onAdminSettingsChange) return
+      onAdminSettingsChange({
+        ...adminSettings,
+        animations: {
+          ...adminSettings?.animations,
+          [key]: value,
+        },
+      })
+    },
+    [adminSettings, onAdminSettingsChange],
+  )
+
+  const updateAnimationNumber = useCallback(
+    (key: keyof AnimationSettings, value: number) => {
       if (!onAdminSettingsChange) return
       onAdminSettingsChange({
         ...adminSettings,
@@ -341,6 +356,34 @@ export default function EditControls({
                     />
                   </div>
                 ))}
+              </div>
+              <div className="space-y-3 pt-2 border-t border-border">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs">CRT Overlay Opacity</Label>
+                    <span className="font-mono text-xs text-muted-foreground">{Math.round((typeof anim.crtOverlayOpacity === 'number' ? anim.crtOverlayOpacity : 0.6) * 100)}%</span>
+                  </div>
+                  <Slider
+                    value={[typeof anim.crtOverlayOpacity === 'number' ? anim.crtOverlayOpacity * 100 : 60]}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onValueChange={([v]) => updateAnimationNumber('crtOverlayOpacity', v / 100)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs">CRT Vignette Opacity</Label>
+                    <span className="font-mono text-xs text-muted-foreground">{Math.round((typeof anim.crtVignetteOpacity === 'number' ? anim.crtVignetteOpacity : 0.3) * 100)}%</span>
+                  </div>
+                  <Slider
+                    value={[typeof anim.crtVignetteOpacity === 'number' ? anim.crtVignetteOpacity * 100 : 30]}
+                    min={0}
+                    max={100}
+                    step={5}
+                    onValueChange={([v]) => updateAnimationNumber('crtVignetteOpacity', v / 100)}
+                  />
+                </div>
               </div>
               {onOpenConfigEditor && (
                 <Button

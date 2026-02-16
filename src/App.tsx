@@ -361,6 +361,22 @@ In the end, Zardonic will unite listeners with Superstars.
     }
   }, [adminSettings?.theme])
 
+  // Apply CRT overlay/vignette opacity
+  useEffect(() => {
+    const a = adminSettings?.animations
+    const root = document.documentElement
+    if (typeof a?.crtOverlayOpacity === 'number') {
+      root.style.setProperty('--crt-overlay-opacity', String(a.crtOverlayOpacity))
+    }
+    if (typeof a?.crtVignetteOpacity === 'number') {
+      root.style.setProperty('--crt-vignette-opacity', String(a.crtVignetteOpacity))
+    }
+    return () => {
+      root.style.removeProperty('--crt-overlay-opacity')
+      root.style.removeProperty('--crt-vignette-opacity')
+    }
+  }, [adminSettings?.animations?.crtOverlayOpacity, adminSettings?.animations?.crtVignetteOpacity])
+
   // Apply config overrides
   useEffect(() => {
     if (adminSettings?.configOverrides) {
@@ -746,6 +762,7 @@ In the end, Zardonic will unite listeners with Superstars.
       <div className="min-h-screen bg-background text-foreground relative">
       <div className="crt-overlay" />
       <div className="crt-vignette" />
+      <div className="crt-scanline-bg" />
       <div className="full-page-noise periodic-noise-glitch" />
       <CircuitBackground />
       

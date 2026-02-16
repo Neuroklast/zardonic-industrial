@@ -25,6 +25,8 @@ export interface AnimationSettings {
   crtEnabled?: boolean
   noiseEnabled?: boolean
   circuitBackgroundEnabled?: boolean
+  crtOverlayOpacity?: number
+  crtVignetteOpacity?: number
 }
 
 export interface ProgressiveOverlayModes {
