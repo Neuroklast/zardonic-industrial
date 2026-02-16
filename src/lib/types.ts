@@ -16,6 +16,7 @@ export interface ThemeCustomization {
   fontHeading?: string
   fontBody?: string
   fontMono?: string
+  fontSizes?: Record<string, string>
 }
 
 export interface AnimationSettings {
@@ -25,6 +26,8 @@ export interface AnimationSettings {
   crtEnabled?: boolean
   noiseEnabled?: boolean
   circuitBackgroundEnabled?: boolean
+  crtOverlayOpacity?: number
+  crtVignetteOpacity?: number
 }
 
 export interface ProgressiveOverlayModes {
@@ -34,6 +37,33 @@ export interface ProgressiveOverlayModes {
   holographicMaterialization?: boolean
 }
 
+export interface SectionLabels {
+  biography?: string
+  musicPlayer?: string
+  upcomingGigs?: string
+  releases?: string
+  gallery?: string
+  connect?: string
+  creditHighlights?: string
+  media?: string
+  tourDates?: string
+}
+
+export interface TerminalCommand {
+  name: string
+  description: string
+  output: string[]
+}
+
+export interface MediaFile {
+  id: string
+  name: string
+  url: string
+  folder?: string
+  type?: 'audio' | 'youtube' | 'download'
+  description?: string
+}
+
 export interface AdminSettings {
   sectionVisibility?: SectionVisibility
   theme?: ThemeCustomization
@@ -41,4 +71,7 @@ export interface AdminSettings {
   progressiveOverlayModes?: ProgressiveOverlayModes
   configOverrides?: Record<string, unknown>
   faviconUrl?: string
+  sectionLabels?: SectionLabels
+  terminalCommands?: TerminalCommand[]
+  sectionOrder?: string[]
 }

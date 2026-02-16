@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 import { useKV } from '@/hooks/use-kv'
 import { useKonami } from '@/hooks/use-konami'
-import { useAnalytics, trackClick } from '@/hooks/use-analytics'
+import { useAnalytics, trackClick, trackPageView, trackHeatmapClick, trackRedirect } from '@/hooks/use-analytics'
 import { fetchITunesReleases, type ITunesRelease } from '@/lib/itunes'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { fetchBandsintownEvents } from '@/lib/bandsintown'
@@ -80,6 +80,10 @@ import AdminLoginDialog, { hashPassword } from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
 import ConfigEditorDialog from '@/components/ConfigEditorDialog'
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
+import StatsDashboard from '@/components/StatsDashboard'
+import { MediaBrowser } from '@/components/MediaBrowser'
+import EditableHeading from '@/components/EditableHeading'
+import type { TerminalCommand, SectionLabels } from '@/lib/types'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -227,6 +231,24 @@ function App() {
     }
   }, [loading])
 
+  // Track page view on mount
+  useEffect(() => {
+    trackPageView()
+  }, [])
+
+  // Track heatmap clicks globally
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const x = e.clientX / window.innerWidth
+      const y = (e.clientY + window.scrollY) / document.documentElement.scrollHeight
+      const target = e.target as HTMLElement
+      const el = target.tagName.toLowerCase() + (target.className ? '.' + String(target.className).split(' ')[0].slice(0, 20) : '')
+      trackHeatmapClick(x, y, el)
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [])
+
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
     artistName: 'ZARDONIC',
     heroImage: heroImage,
@@ -332,11 +354,39 @@ In the end, Zardonic will unite listeners with Superstars.
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [showConfigEditor, setShowConfigEditor] = useState(false)
+  const [showStats, setShowStats] = useState(false)
 
   // Admin settings (persisted in Redis)
   const [adminSettings, setAdminSettings] = useKV<AdminSettings>('zardonic-admin-settings', {})
   const vis = adminSettings?.sectionVisibility ?? {}
   const anim = adminSettings?.animations ?? {}
+  const sectionLabels = adminSettings?.sectionLabels ?? {}
+  const terminalCommands = adminSettings?.terminalCommands ?? []
+
+  const DEFAULT_SECTION_ORDER = ['bio', 'creditHighlights', 'music', 'gigs', 'releases', 'gallery', 'media', 'connect']
+  const sectionOrder = adminSettings?.sectionOrder ?? DEFAULT_SECTION_ORDER
+  const getSectionOrder = useCallback((section: string) => {
+    const idx = sectionOrder.indexOf(section)
+    return idx >= 0 ? idx : DEFAULT_SECTION_ORDER.indexOf(section)
+  }, [sectionOrder])
+
+  const updateSectionLabel = useCallback((key: keyof SectionLabels, value: string) => {
+    setAdminSettings((prev) => ({
+      ...(prev || {}),
+      sectionLabels: {
+        ...(prev?.sectionLabels || {}),
+        [key]: value,
+      },
+    }))
+  }, [setAdminSettings])
+
+  const handleSaveTerminalCommands = useCallback((commands: TerminalCommand[]) => {
+    setAdminSettings((prev) => ({
+      ...(prev || {}),
+      terminalCommands: commands,
+    }))
+    toast.success('Terminal commands saved')
+  }, [setAdminSettings])
 
   // Apply theme customizations to CSS variables
   useEffect(() => {
@@ -360,6 +410,22 @@ In the end, Zardonic will unite listeners with Superstars.
       root.style.removeProperty('--font-mono')
     }
   }, [adminSettings?.theme])
+
+  // Apply CRT overlay/vignette opacity
+  useEffect(() => {
+    const a = adminSettings?.animations
+    const root = document.documentElement
+    if (typeof a?.crtOverlayOpacity === 'number') {
+      root.style.setProperty('--crt-overlay-opacity', String(a.crtOverlayOpacity))
+    }
+    if (typeof a?.crtVignetteOpacity === 'number') {
+      root.style.setProperty('--crt-vignette-opacity', String(a.crtVignetteOpacity))
+    }
+    return () => {
+      root.style.removeProperty('--crt-overlay-opacity')
+      root.style.removeProperty('--crt-vignette-opacity')
+    }
+  }, [adminSettings?.animations?.crtOverlayOpacity, adminSettings?.animations?.crtVignetteOpacity])
 
   // Apply config overrides
   useEffect(() => {
@@ -743,11 +809,12 @@ In the end, Zardonic will unite listeners with Superstars.
         )}
       </AnimatePresence>
 
-      <div className="min-h-screen bg-background text-foreground relative">
-      <div className="crt-overlay" />
-      <div className="crt-vignette" />
-      <div className="full-page-noise periodic-noise-glitch" />
-      <CircuitBackground />
+      <div className={`min-h-screen bg-background text-foreground relative${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}>
+      {anim.crtEnabled !== false && <div className="crt-overlay" />}
+      {anim.crtEnabled !== false && <div className="crt-vignette" />}
+      {anim.scanlineEnabled !== false && <div className="crt-scanline-bg" />}
+      {anim.noiseEnabled !== false && <div className="full-page-noise periodic-noise-glitch" />}
+      {anim.circuitBackgroundEnabled !== false && <CircuitBackground />}
       
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
@@ -921,9 +988,12 @@ In the end, Zardonic will unite listeners with Superstars.
         </motion.div>
       </section>
 
-      <Separator className="bg-border" />
+      <div className="flex flex-col">
 
+      <div style={{ order: getSectionOrder('bio') }}>
       {vis.bio !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="bio" className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
           <motion.div
@@ -934,7 +1004,12 @@ In the end, Zardonic will unite listeners with Superstars.
             className="relative"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="BIOGRAPHY">
-              BIOGRAPHY
+              <EditableHeading
+                text={sectionLabels.biography || ''}
+                defaultText="BIOGRAPHY"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('biography', v)}
+              />
             </h2>
             
             {editMode ? (
@@ -1000,9 +1075,13 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
+      <div style={{ order: getSectionOrder('creditHighlights') }}>
       {vis.creditHighlights !== false && (
+      <>
       <section className="py-16 px-4 bg-card/50 noise-effect overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1012,7 +1091,18 @@ In the end, Zardonic will unite listeners with Superstars.
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <div className="data-label mb-6">// CREDIT.HIGHLIGHTS</div>
+            <div className="data-label mb-6">
+              {editMode ? (
+                <Input
+                  value={sectionLabels.creditHighlights || ''}
+                  onChange={(e) => updateSectionLabel('creditHighlights', e.target.value)}
+                  placeholder="// CREDIT.HIGHLIGHTS"
+                  className="bg-transparent border-border font-mono text-xs text-center max-w-xs mx-auto"
+                />
+              ) : (
+                <>// {sectionLabels.creditHighlights || 'CREDIT.HIGHLIGHTS'}</>
+              )}
+            </div>
 
             {editMode && (
               <div className="mb-8 space-y-3 max-w-xl mx-auto text-left">
@@ -1089,11 +1179,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('music') }}>
       {vis.music !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="music" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1103,7 +1196,12 @@ In the end, Zardonic will unite listeners with Superstars.
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="MUSIC PLAYER">
-              MUSIC PLAYER
+              <EditableHeading
+                text={sectionLabels.musicPlayer || ''}
+                defaultText="MUSIC PLAYER"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('musicPlayer', v)}
+              />
             </h2>
 
             <Card className="p-0 bg-card border-border relative cyber-card hover-noise overflow-hidden">
@@ -1129,11 +1227,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('gigs') }}>
       {vis.gigs !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="gigs" className="py-24 px-4 noise-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1144,7 +1245,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="UPCOMING GIGS">
-                UPCOMING GIGS
+                <EditableHeading
+                  text={sectionLabels.upcomingGigs || ''}
+                  defaultText="UPCOMING GIGS"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('upcomingGigs', v)}
+                />
               </h2>
               {editMode && (
                 <Button onClick={addGig} className="gap-2">
@@ -1275,11 +1381,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('releases') }}>
       {vis.releases !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1290,7 +1399,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="RELEASES">
-                RELEASES
+                <EditableHeading
+                  text={sectionLabels.releases || ''}
+                  defaultText="RELEASES"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('releases', v)}
+                />
               </h2>
               {editMode && (
                 <Button onClick={addRelease} className="gap-2">
@@ -1447,11 +1561,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('gallery') }}>
       {vis.gallery !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="gallery" className="py-24 px-4 crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1462,7 +1579,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="GALLERY">
-                GALLERY
+                <EditableHeading
+                  text={sectionLabels.gallery || ''}
+                  defaultText="GALLERY"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('gallery', v)}
+                />
               </h2>
               {editMode && (
                 <div className="flex gap-2">
@@ -1572,11 +1694,41 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
+      <div style={{ order: getSectionOrder('media') }}>
       <Separator className="bg-border" />
 
+      <MediaBrowser
+        mediaFiles={siteData.mediaFiles?.map(f => ({
+          id: f.id,
+          name: f.name,
+          url: f.url,
+          type: f.type === 'image' || f.type === 'pdf' || f.type === 'zip' ? 'download' as const : (f.type as 'audio' | 'youtube' | 'download' | undefined),
+          description: f.size,
+        })) || []}
+        editMode={editMode}
+        onUpdate={(files) => {
+          setSiteData((data) => data ? {
+            ...data,
+            mediaFiles: files.map(f => ({
+              id: f.id,
+              name: f.name,
+              url: f.url,
+              type: (f.type === 'download' ? 'zip' : f.type || 'zip') as 'image' | 'pdf' | 'zip',
+              size: f.description || '',
+            })),
+          } : data!)
+        }}
+      />
+      </div>
+
+      <div style={{ order: getSectionOrder('connect') }}>
       {vis.connect !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-4xl">
           <motion.div
@@ -1587,7 +1739,12 @@ In the end, Zardonic will unite listeners with Superstars.
             className="text-center"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="CONNECT">
-              CONNECT
+              <EditableHeading
+                text={sectionLabels.connect || ''}
+                defaultText="CONNECT"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('connect', v)}
+              />
             </h2>
 
             {editMode && (
@@ -1740,7 +1897,11 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
+
+      </div>{/* end flex container for reorderable sections */}
 
       <footer className="py-12 px-4 border-t border-border noise-effect">
         <div className="container mx-auto text-center space-y-4">
@@ -1798,7 +1959,12 @@ In the end, Zardonic will unite listeners with Superstars.
       <Terminal 
         isOpen={terminalOpen} 
         onClose={() => setTerminalOpen(false)}
+        customCommands={terminalCommands}
+        editMode={editMode}
+        onSaveCommands={handleSaveTerminalCommands}
       />
+
+      <StatsDashboard open={showStats} onClose={() => setShowStats(false)} />
 
       <AnimatePresence>
         {cyberpunkOverlay && (
@@ -2812,6 +2978,7 @@ In the end, Zardonic will unite listeners with Superstars.
           adminSettings={adminSettings}
           onAdminSettingsChange={(settings) => setAdminSettings(settings)}
           onOpenConfigEditor={() => setShowConfigEditor(true)}
+          onOpenStats={() => setShowStats(true)}
         />
       )}
 
