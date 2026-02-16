@@ -15,16 +15,15 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 export const SKIP_UPDATE = Symbol('SKIP_UPDATE')
 
 /**
- * Custom KV hook backed by Vercel KV API routes, with localStorage fallback for local dev.
- * Uses /api/kv (Vercel KV) for persistence, with localStorage fallback for local dev.
- * The admin token from localStorage is sent with write requests for auth.
- *
+ * Custom KV hook backed ONLY by Vercel KV API - NO localStorage!
+ * 
+ * Uses /api/kv (Vercel KV) for persistence.
+ * All data is stored server-side in Vercel KV (Redis).
+ * 
  * Returns [value, updateValue, loaded] — `loaded` is true once the initial
- * KV/localStorage/default fetch has completed so consumers can avoid acting on
- * stale default data.
+ * KV fetch has completed.
  * 
  * The updater function can return SKIP_UPDATE to abort the update without changing state.
- * For backwards compatibility, returning undefined when prev was defined also skips the update.
  */
 export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater: T | ((current: T | undefined) => T | undefined | typeof SKIP_UPDATE)) => void, boolean] {
   const [value, setValue] = useState<T | undefined>(undefined)
@@ -42,32 +41,14 @@ export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater
       .then(data => {
         if (data && data.value !== null && data.value !== undefined) {
           setValue(data.value as T)
-          // Keep localStorage in sync as backup
-          try { localStorage.setItem(`kv:${key}`, JSON.stringify(data.value)) } catch { /* ignore */ }
         } else {
-          // API returned null — try localStorage before falling back to default
-          try {
-            const stored = localStorage.getItem(`kv:${key}`)
-            if (stored !== null) {
-              setValue(JSON.parse(stored) as T)
-              return
-            }
-          } catch { /* ignore */ }
+          // API returned null, use default value
           setValue(defaultRef.current)
         }
       })
       .catch(() => {
-        // API not available (local dev), try localStorage as last resort
-        try {
-          const stored = localStorage.getItem(`kv:${key}`)
-          if (stored !== null) {
-            setValue(JSON.parse(stored) as T)
-          } else {
-            setValue(defaultRef.current)
-          }
-        } catch {
-          setValue(defaultRef.current)
-        }
+        // API not available, use default value
+        setValue(defaultRef.current)
       })
       .finally(() => {
         loadedRef.current = true
@@ -87,18 +68,8 @@ export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater
         return prev
       }
 
-      const adminToken = localStorage.getItem('admin-token') || ''
-
-      const persistLocally = () => {
-        try {
-          localStorage.setItem(`kv:${key}`, JSON.stringify(newValue))
-        } catch (e) {
-          console.warn('Failed to persist KV:', e)
-        }
-      }
-
-      // Always persist to localStorage as a backup
-      persistLocally()
+      // Get admin token from sessionStorage (secure, cleared on tab close)
+      const adminToken = sessionStorage.getItem('admin-session-token') || ''
 
       // Only write to the remote KV once the initial load has finished and
       // the user is authenticated (has an admin token) to prevent
@@ -116,17 +87,16 @@ export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater
             try {
               const errorData = await res.json()
               if (res.status === 503) {
-                console.error(`KV service unavailable (${res.status}) for key "${key}":`, errorData.message || errorData.error)
-                console.warn('Data is saved locally in localStorage but not synced to server.')
+                console.error(`[KV] Service unavailable (${res.status}) for key "${key}":`, errorData.message || errorData.error)
               } else {
-                console.error(`KV POST failed (${res.status}) for key "${key}":`, errorData)
+                console.error(`[KV] POST failed (${res.status}) for key "${key}":`, errorData)
               }
             } catch {
-              console.warn(`KV POST failed (${res.status}) for key "${key}"`)
+              console.warn(`[KV] POST failed (${res.status}) for key "${key}"`)
             }
           }
         }).catch(err => {
-          console.error('KV POST error:', err)
+          console.error('[KV] POST error:', err)
         })
       }
 

@@ -1,14 +1,13 @@
 /**
  * Cookie Consent Banner
  * GDPR-compliant consent management
+ * MIGRATED TO VERCEL KV - NO localStorage
  */
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { X } from '@phosphor-icons/react'
-
-const CONSENT_KEY = 'zardonic-cookie-consent'
 
 interface ConsentPreferences {
   essential: boolean // Always true, can't be disabled
@@ -18,6 +17,41 @@ interface ConsentPreferences {
 
 interface CookieConsentProps {
   onPreferencesChange?: (preferences: ConsentPreferences) => void
+}
+
+/**
+ * Get consent preferences from Vercel KV
+ */
+async function getConsentPreferences(): Promise<ConsentPreferences | null> {
+  try {
+    const response = await fetch('/api/kv?key=cookie-consent')
+    if (!response.ok) return null
+    
+    const result = await response.json()
+    return result.value || null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Save consent preferences to Vercel KV
+ */
+async function saveConsentPreferences(prefs: ConsentPreferences): Promise<void> {
+  try {
+    await fetch('/api/kv', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        key: 'cookie-consent',
+        value: prefs,
+      }),
+    })
+  } catch (error) {
+    console.error('[CookieConsent] Failed to save preferences:', error)
+  }
 }
 
 export function CookieConsent({ onPreferencesChange }: CookieConsentProps) {
@@ -31,24 +65,19 @@ export function CookieConsent({ onPreferencesChange }: CookieConsentProps) {
 
   useEffect(() => {
     // Check if user has already consented
-    const stored = localStorage.getItem(CONSENT_KEY)
-    if (!stored) {
-      // Show banner after a short delay
-      setTimeout(() => setShowBanner(true), 1000)
-    } else {
-      try {
-        const prefs = JSON.parse(stored) as ConsentPreferences
-        setPreferences(prefs)
-        onPreferencesChange?.(prefs)
-      } catch {
-        // Invalid stored data, show banner
-        setShowBanner(true)
+    getConsentPreferences().then(stored => {
+      if (!stored) {
+        // Show banner after a short delay
+        setTimeout(() => setShowBanner(true), 1000)
+      } else {
+        setPreferences(stored)
+        onPreferencesChange?.(stored)
       }
-    }
+    })
   }, [onPreferencesChange])
 
-  const saveConsent = (prefs: ConsentPreferences) => {
-    localStorage.setItem(CONSENT_KEY, JSON.stringify(prefs))
+  const saveConsent = async (prefs: ConsentPreferences) => {
+    await saveConsentPreferences(prefs)
     setPreferences(prefs)
     setShowBanner(false)
     setShowDetails(false)
@@ -239,30 +268,17 @@ export function useAnalyticsConsent(): boolean {
   const [hasConsent, setHasConsent] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem(CONSENT_KEY)
-    if (stored) {
-      try {
-        const prefs = JSON.parse(stored) as ConsentPreferences
-        setHasConsent(prefs.analytics)
-      } catch {
-        setHasConsent(false)
-      }
-    }
+    getConsentPreferences().then(prefs => {
+      setHasConsent(prefs?.analytics || false)
+    })
   }, [])
 
   return hasConsent
 }
 
 /**
- * Function to get current consent preferences
+ * Function to get current consent preferences (async)
  */
-export function getConsentPreferences(): ConsentPreferences | null {
-  const stored = localStorage.getItem(CONSENT_KEY)
-  if (!stored) return null
-
-  try {
-    return JSON.parse(stored) as ConsentPreferences
-  } catch {
-    return null
-  }
+export async function getConsentPreferencesAsync(): Promise<ConsentPreferences | null> {
+  return getConsentPreferences()
 }
