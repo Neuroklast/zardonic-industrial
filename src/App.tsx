@@ -249,7 +249,17 @@ function App() {
       const x = e.clientX / window.innerWidth
       const y = (e.clientY + window.scrollY) / document.documentElement.scrollHeight
       const target = e.target as HTMLElement
-      const el = target.tagName.toLowerCase() + (target.className ? '.' + String(target.className).split(' ')[0].slice(0, 20) : '')
+      // Find the closest interactive element for meaningful names
+      const interactive = target.closest('button, a, [role="button"]') as HTMLElement | null
+      let el: string
+      if (interactive) {
+        const text = interactive.textContent?.trim().slice(0, 30) || ''
+        const tag = interactive.tagName.toLowerCase()
+        const ariaLabel = interactive.getAttribute('aria-label') || interactive.getAttribute('title') || ''
+        el = ariaLabel || text || `${tag}`
+      } else {
+        el = target.textContent?.trim().slice(0, 30) || target.tagName.toLowerCase()
+      }
       trackHeatmapClick(x, y, el)
     }
     document.addEventListener('click', handleClick)

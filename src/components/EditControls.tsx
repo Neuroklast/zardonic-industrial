@@ -480,6 +480,66 @@ export default function EditControls({
                   />
                 </div>
               </div>
+              <div className="space-y-3 pt-2 border-t border-border">
+                <Label className="font-mono text-xs font-bold">Heading Glitch Text</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="font-mono text-sm">Glitch Effect</Label>
+                  <Switch
+                    checked={adminSettings?.glitchTextSettings?.enabled !== false}
+                    onCheckedChange={(checked) =>
+                      onAdminSettingsChange?.({
+                        ...adminSettings,
+                        glitchTextSettings: {
+                          ...(adminSettings?.glitchTextSettings || {}),
+                          enabled: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs">Glitch Interval</Label>
+                    <span className="font-mono text-xs text-muted-foreground">{adminSettings?.glitchTextSettings?.intervalMs || 8000}ms</span>
+                  </div>
+                  <Slider
+                    value={[adminSettings?.glitchTextSettings?.intervalMs || 8000]}
+                    min={1000}
+                    max={30000}
+                    step={500}
+                    onValueChange={([v]) =>
+                      onAdminSettingsChange?.({
+                        ...adminSettings,
+                        glitchTextSettings: {
+                          ...(adminSettings?.glitchTextSettings || {}),
+                          intervalMs: v,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs">Glitch Duration</Label>
+                    <span className="font-mono text-xs text-muted-foreground">{adminSettings?.glitchTextSettings?.durationMs || 120}ms</span>
+                  </div>
+                  <Slider
+                    value={[adminSettings?.glitchTextSettings?.durationMs || 120]}
+                    min={50}
+                    max={1000}
+                    step={10}
+                    onValueChange={([v]) =>
+                      onAdminSettingsChange?.({
+                        ...adminSettings,
+                        glitchTextSettings: {
+                          ...(adminSettings?.glitchTextSettings || {}),
+                          durationMs: v,
+                        },
+                      })
+                    }
+                  />
+                </div>
+              </div>
               {onOpenConfigEditor && (
                 <Button
                   onClick={() => {
