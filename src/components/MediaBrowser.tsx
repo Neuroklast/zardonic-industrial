@@ -4,15 +4,7 @@ import { Folder, File, DownloadSimple, Plus, Trash, PencilSimple, X } from '@pho
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-
-export interface MediaFile {
-  id: string
-  name: string
-  url: string
-  folder?: string
-  type?: 'audio' | 'youtube' | 'download'
-  description?: string
-}
+import type { MediaFile } from '@/lib/types'
 
 interface MediaBrowserProps {
   mediaFiles?: MediaFile[]

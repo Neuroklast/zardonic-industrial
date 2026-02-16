@@ -9,6 +9,7 @@ import {
   OVERLAY_GLITCH_PHASE_DELAY_MS,
   OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
+import type { TerminalCommand } from '@/lib/types'
 
 const TERMINAL_LOADING_TEXTS = [
   '> ACCESSING TERMINAL...',
@@ -19,12 +20,6 @@ const TERMINAL_LOADING_TEXTS = [
 const RESERVED_COMMANDS = ['help', 'clear', 'exit', 'about', 'social']
 
 const TYPING_SPEED_MS = 15
-
-export interface TerminalCommand {
-  name: string
-  description: string
-  output: string[]
-}
 
 interface TerminalProps {
   isOpen: boolean
