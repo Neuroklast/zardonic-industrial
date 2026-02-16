@@ -80,6 +80,10 @@ import AdminLoginDialog, { hashPassword } from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
 import ConfigEditorDialog from '@/components/ConfigEditorDialog'
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
+import StatsDashboard from '@/components/StatsDashboard'
+import { MediaBrowser } from '@/components/MediaBrowser'
+import EditableHeading from '@/components/EditableHeading'
+import type { TerminalCommand, SectionLabels } from '@/lib/types'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -332,11 +336,32 @@ In the end, Zardonic will unite listeners with Superstars.
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [showConfigEditor, setShowConfigEditor] = useState(false)
+  const [showStats, setShowStats] = useState(false)
 
   // Admin settings (persisted in Redis)
   const [adminSettings, setAdminSettings] = useKV<AdminSettings>('zardonic-admin-settings', {})
   const vis = adminSettings?.sectionVisibility ?? {}
   const anim = adminSettings?.animations ?? {}
+  const sectionLabels = adminSettings?.sectionLabels ?? {}
+  const terminalCommands = adminSettings?.terminalCommands ?? []
+
+  const updateSectionLabel = useCallback((key: keyof SectionLabels, value: string) => {
+    setAdminSettings((prev) => ({
+      ...(prev || {}),
+      sectionLabels: {
+        ...(prev?.sectionLabels || {}),
+        [key]: value,
+      },
+    }))
+  }, [setAdminSettings])
+
+  const handleSaveTerminalCommands = useCallback((commands: TerminalCommand[]) => {
+    setAdminSettings((prev) => ({
+      ...(prev || {}),
+      terminalCommands: commands,
+    }))
+    toast.success('Terminal commands saved')
+  }, [setAdminSettings])
 
   // Apply theme customizations to CSS variables
   useEffect(() => {
@@ -951,7 +976,12 @@ In the end, Zardonic will unite listeners with Superstars.
             className="relative"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="BIOGRAPHY">
-              BIOGRAPHY
+              <EditableHeading
+                text={sectionLabels.biography || ''}
+                defaultText="BIOGRAPHY"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('biography', v)}
+              />
             </h2>
             
             {editMode ? (
@@ -1029,7 +1059,18 @@ In the end, Zardonic will unite listeners with Superstars.
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <div className="data-label mb-6">// CREDIT.HIGHLIGHTS</div>
+            <div className="data-label mb-6">
+              {editMode ? (
+                <Input
+                  value={sectionLabels.creditHighlights || ''}
+                  onChange={(e) => updateSectionLabel('creditHighlights', e.target.value)}
+                  placeholder="// CREDIT.HIGHLIGHTS"
+                  className="bg-transparent border-border font-mono text-xs text-center max-w-xs mx-auto"
+                />
+              ) : (
+                <>// {sectionLabels.creditHighlights || 'CREDIT.HIGHLIGHTS'}</>
+              )}
+            </div>
 
             {editMode && (
               <div className="mb-8 space-y-3 max-w-xl mx-auto text-left">
@@ -1120,7 +1161,12 @@ In the end, Zardonic will unite listeners with Superstars.
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="MUSIC PLAYER">
-              MUSIC PLAYER
+              <EditableHeading
+                text={sectionLabels.musicPlayer || ''}
+                defaultText="MUSIC PLAYER"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('musicPlayer', v)}
+              />
             </h2>
 
             <Card className="p-0 bg-card border-border relative cyber-card hover-noise overflow-hidden">
@@ -1161,7 +1207,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="UPCOMING GIGS">
-                UPCOMING GIGS
+                <EditableHeading
+                  text={sectionLabels.upcomingGigs || ''}
+                  defaultText="UPCOMING GIGS"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('upcomingGigs', v)}
+                />
               </h2>
               {editMode && (
                 <Button onClick={addGig} className="gap-2">
@@ -1307,7 +1358,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="RELEASES">
-                RELEASES
+                <EditableHeading
+                  text={sectionLabels.releases || ''}
+                  defaultText="RELEASES"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('releases', v)}
+                />
               </h2>
               {editMode && (
                 <Button onClick={addRelease} className="gap-2">
@@ -1479,7 +1535,12 @@ In the end, Zardonic will unite listeners with Superstars.
           >
             <div className="flex items-center justify-between mb-12">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="GALLERY">
-                GALLERY
+                <EditableHeading
+                  text={sectionLabels.gallery || ''}
+                  defaultText="GALLERY"
+                  editMode={editMode}
+                  onChange={(v) => updateSectionLabel('gallery', v)}
+                />
               </h2>
               {editMode && (
                 <div className="flex gap-2">
@@ -1593,6 +1654,31 @@ In the end, Zardonic will unite listeners with Superstars.
 
       <Separator className="bg-border" />
 
+      <MediaBrowser
+        mediaFiles={siteData.mediaFiles?.map(f => ({
+          id: f.id,
+          name: f.name,
+          url: f.url,
+          type: f.type === 'image' || f.type === 'pdf' || f.type === 'zip' ? 'download' as const : (f.type as 'audio' | 'youtube' | 'download' | undefined),
+          description: f.size,
+        })) || []}
+        editMode={editMode}
+        onUpdate={(files) => {
+          setSiteData((data) => data ? {
+            ...data,
+            mediaFiles: files.map(f => ({
+              id: f.id,
+              name: f.name,
+              url: f.url,
+              type: (f.type === 'download' ? 'zip' : f.type || 'zip') as 'image' | 'pdf' | 'zip',
+              size: f.description || '',
+            })),
+          } : data!)
+        }}
+      />
+
+      <Separator className="bg-border" />
+
       {vis.connect !== false && (
       <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-4xl">
@@ -1604,7 +1690,12 @@ In the end, Zardonic will unite listeners with Superstars.
             className="text-center"
           >
             <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="CONNECT">
-              CONNECT
+              <EditableHeading
+                text={sectionLabels.connect || ''}
+                defaultText="CONNECT"
+                editMode={editMode}
+                onChange={(v) => updateSectionLabel('connect', v)}
+              />
             </h2>
 
             {editMode && (
@@ -1815,7 +1906,12 @@ In the end, Zardonic will unite listeners with Superstars.
       <Terminal 
         isOpen={terminalOpen} 
         onClose={() => setTerminalOpen(false)}
+        customCommands={terminalCommands}
+        editMode={editMode}
+        onSaveCommands={handleSaveTerminalCommands}
       />
+
+      <StatsDashboard open={showStats} onClose={() => setShowStats(false)} />
 
       <AnimatePresence>
         {cyberpunkOverlay && (
@@ -2829,6 +2925,7 @@ In the end, Zardonic will unite listeners with Superstars.
           adminSettings={adminSettings}
           onAdminSettingsChange={(settings) => setAdminSettings(settings)}
           onOpenConfigEditor={() => setShowConfigEditor(true)}
+          onOpenStats={() => setShowStats(true)}
         />
       )}
 

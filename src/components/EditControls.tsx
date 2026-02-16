@@ -9,6 +9,7 @@ import {
   EyeSlash,
   Palette,
   GearSix,
+  ChartLine,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +34,7 @@ interface EditControlsProps {
   adminSettings?: AdminSettings
   onAdminSettingsChange?: (settings: AdminSettings) => void
   onOpenConfigEditor?: () => void
+  onOpenStats?: () => void
 }
 
 export default function EditControls({
@@ -46,6 +48,7 @@ export default function EditControls({
   adminSettings,
   onAdminSettingsChange,
   onOpenConfigEditor,
+  onOpenStats,
 }: EditControlsProps) {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [showVisibilityPanel, setShowVisibilityPanel] = useState(false)
@@ -512,6 +515,16 @@ export default function EditControls({
               >
                 <Sliders size={18} weight="bold" />
               </Button>
+              {onOpenStats && (
+                <Button
+                  onClick={onOpenStats}
+                  className="bg-secondary hover:bg-secondary/80 active:scale-90 w-10 h-10 md:w-12 md:h-12 rounded-full shadow-lg transition-all touch-manipulation"
+                  size="icon"
+                  title="View site statistics"
+                >
+                  <ChartLine size={18} weight="bold" />
+                </Button>
+              )}
             </motion.div>
             <motion.div
               initial={{ scale: 0, opacity: 0 }}
