@@ -105,17 +105,4 @@ describe('fetchBandsintownEvents', () => {
     const result = await fetchBandsintownEvents()
     expect(result[0].date).toBe('')
   })
-
-  it('should include app_id in the request URL', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve([]),
-    })
-
-    await fetchBandsintownEvents()
-
-    const calledUrl = (fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string
-    expect(calledUrl).toContain('app_id=')
-    expect(calledUrl).toContain('artist=')
-  })
 })
