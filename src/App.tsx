@@ -363,6 +363,13 @@ In the end, Zardonic will unite listeners with Superstars.
   const sectionLabels = adminSettings?.sectionLabels ?? {}
   const terminalCommands = adminSettings?.terminalCommands ?? []
 
+  const DEFAULT_SECTION_ORDER = ['bio', 'creditHighlights', 'music', 'gigs', 'releases', 'gallery', 'media', 'connect']
+  const sectionOrder = adminSettings?.sectionOrder ?? DEFAULT_SECTION_ORDER
+  const getSectionOrder = useCallback((section: string) => {
+    const idx = sectionOrder.indexOf(section)
+    return idx >= 0 ? idx : DEFAULT_SECTION_ORDER.indexOf(section)
+  }, [sectionOrder])
+
   const updateSectionLabel = useCallback((key: keyof SectionLabels, value: string) => {
     setAdminSettings((prev) => ({
       ...(prev || {}),
@@ -981,9 +988,12 @@ In the end, Zardonic will unite listeners with Superstars.
         </motion.div>
       </section>
 
-      <Separator className="bg-border" />
+      <div className="flex flex-col">
 
+      <div style={{ order: getSectionOrder('bio') }}>
       {vis.bio !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="bio" className="py-24 px-4">
         <div className="container mx-auto max-w-4xl">
           <motion.div
@@ -1065,9 +1075,13 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
+      <div style={{ order: getSectionOrder('creditHighlights') }}>
       {vis.creditHighlights !== false && (
+      <>
       <section className="py-16 px-4 bg-card/50 noise-effect overflow-hidden">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1165,11 +1179,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('music') }}>
       {vis.music !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="music" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1210,11 +1227,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('gigs') }}>
       {vis.gigs !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="gigs" className="py-24 px-4 noise-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1361,11 +1381,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('releases') }}>
       {vis.releases !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1538,11 +1561,14 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('gallery') }}>
       {vis.gallery !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="gallery" className="py-24 px-4 crt-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -1668,8 +1694,11 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
 
+      <div style={{ order: getSectionOrder('media') }}>
       <Separator className="bg-border" />
 
       <MediaBrowser
@@ -1694,10 +1723,12 @@ In the end, Zardonic will unite listeners with Superstars.
           } : data!)
         }}
       />
+      </div>
 
-      <Separator className="bg-border" />
-
+      <div style={{ order: getSectionOrder('connect') }}>
       {vis.connect !== false && (
+      <>
+      <Separator className="bg-border" />
       <section id="connect" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
         <div className="container mx-auto max-w-4xl">
           <motion.div
@@ -1866,7 +1897,11 @@ In the end, Zardonic will unite listeners with Superstars.
           </motion.div>
         </div>
       </section>
+      </>
       )}
+      </div>
+
+      </div>{/* end flex container for reorderable sections */}
 
       <footer className="py-12 px-4 border-t border-border noise-effect">
         <div className="container mx-auto text-center space-y-4">

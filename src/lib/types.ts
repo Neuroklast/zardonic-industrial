@@ -16,6 +16,7 @@ export interface ThemeCustomization {
   fontHeading?: string
   fontBody?: string
   fontMono?: string
+  fontSizes?: Record<string, string>
 }
 
 export interface AnimationSettings {
