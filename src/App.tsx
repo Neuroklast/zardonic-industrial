@@ -758,7 +758,10 @@ In the end, Zardonic will unite listeners with Superstars.
       }
 
       setSiteData((data) => {
-        if (!data) return data!
+        if (!data) {
+          console.warn('siteData is undefined during Bandsintown sync, skipping update')
+          return data
+        }
         const existingIds = new Set(data.gigs.map(g => g.id))
         const newGigs: Gig[] = events
           .filter(e => !existingIds.has(e.id))

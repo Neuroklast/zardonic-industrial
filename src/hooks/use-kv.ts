@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
  * KV/localStorage/default fetch has completed so consumers can avoid acting on
  * stale default data.
  */
-export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater: T | ((current: T | undefined) => T)) => void, boolean] {
+export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater: T | ((current: T | undefined) => T | undefined)) => void, boolean] {
   const [value, setValue] = useState<T | undefined>(undefined)
   const [loaded, setLoaded] = useState(false)
   const initializedRef = useRef(false)
@@ -58,11 +58,17 @@ export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater
       })
   }, [key])
 
-  const updateValue = useCallback((updater: T | ((current: T | undefined) => T)) => {
+  const updateValue = useCallback((updater: T | ((current: T | undefined) => T | undefined)) => {
     setValue(prev => {
       const newValue = typeof updater === 'function'
-        ? (updater as (current: T | undefined) => T)(prev)
+        ? (updater as (current: T | undefined) => T | undefined)(prev)
         : updater
+
+      // Don't persist or sync if the updater returned undefined, which signals "no change"
+      if (newValue === undefined && prev !== undefined) {
+        // Updater returned undefined but previous value was defined - skip update
+        return prev
+      }
 
       const adminToken = localStorage.getItem('admin-token') || ''
 
