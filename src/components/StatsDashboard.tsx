@@ -1,30 +1,13 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Trash, Eye, CursorClick, X } from '@phosphor-icons/react'
+import { Trash, Eye, CursorClick, X, ArrowSquareOut, DeviceMobile, Desktop, Globe, Browser } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
-
-interface AnalyticsData {
-  pageViews: number
-  sectionViews: Record<string, number>
-  clicks: Record<string, number>
-  visitors: string[]
-}
+import { getAnalyticsData, resetAnalytics } from '@/hooks/use-analytics'
+import type { AnalyticsData, HeatmapPoint } from '@/hooks/use-analytics'
 
 interface StatsDashboardProps {
   open: boolean
   onClose: () => void
-}
-
-function getAnalyticsData(): AnalyticsData {
-  try {
-    const stored = localStorage.getItem('zardonic-analytics')
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch {
-    // ignore parse errors
-  }
-  return { pageViews: 0, sectionViews: {}, clicks: {}, visitors: [] }
 }
 
 function CornerDecoration({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' }) {
@@ -34,10 +17,21 @@ function CornerDecoration({ position }: { position: 'tl' | 'tr' | 'bl' | 'br' })
     bl: 'bottom-0 left-0 border-b-2 border-l-2',
     br: 'bottom-0 right-0 border-b-2 border-r-2',
   }
+  return <div className={`absolute w-4 h-4 border-primary/50 ${classes[position]}`} />
+}
+
+function StatCard({ icon: Icon, label, value, sublabel }: { icon: React.ComponentType<{ size: number }>; label: string; value: number | string; sublabel?: string }) {
   return (
-    <div
-      className={`absolute w-4 h-4 border-primary/50 ${classes[position]}`}
-    />
+    <div className="bg-secondary/30 border border-primary/20 p-4 relative">
+      <CornerDecoration position="tl" />
+      <CornerDecoration position="br" />
+      <div className="flex items-center gap-2 text-primary/60 mb-2">
+        <Icon size={16} />
+        <span className="text-[10px] tracking-wider uppercase">{label}</span>
+      </div>
+      <p className="text-2xl text-primary">{value}</p>
+      {sublabel && <p className="text-[9px] text-primary/40 mt-1">{sublabel}</p>}
+    </div>
   )
 }
 
@@ -76,6 +70,162 @@ function BarChart({ data, color }: { data: Record<string, number>; color: string
   )
 }
 
+function TopList({ items, limit = 5 }: { items: Record<string, number>; limit?: number }) {
+  const sorted = Object.entries(items)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, limit)
+
+  if (sorted.length === 0) {
+    return <p className="text-[10px] text-primary/30 font-mono">NO DATA YET</p>
+  }
+
+  const max = sorted[0][1]
+
+  return (
+    <div className="space-y-1.5">
+      {sorted.map(([name, count]) => (
+        <div key={name} className="space-y-0.5">
+          <div className="flex justify-between text-[10px] font-mono">
+            <span className="text-foreground/70 truncate mr-2">{name}</span>
+            <span className="text-primary/60 flex-shrink-0">{count}</span>
+          </div>
+          <div className="h-[3px] bg-primary/10 overflow-hidden">
+            <div className="h-full bg-primary/50" style={{ width: `${(count / max) * 100}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function HeatmapCanvas({ points }: { points: HeatmapPoint[] }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas || points.length === 0) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const w = canvas.width
+    const h = canvas.height
+    ctx.clearRect(0, 0, w, h)
+
+    // Draw grid
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)'
+    ctx.lineWidth = 1
+    for (let i = 1; i < 4; i++) {
+      ctx.beginPath()
+      ctx.moveTo((w / 4) * i, 0)
+      ctx.lineTo((w / 4) * i, h)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(0, (h / 4) * i)
+      ctx.lineTo(w, (h / 4) * i)
+      ctx.stroke()
+    }
+
+    ctx.font = '9px monospace'
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.25)'
+    ctx.fillText('TOP-LEFT', 4, 12)
+    ctx.textAlign = 'right'
+    ctx.fillText('TOP-RIGHT', w - 4, 12)
+    ctx.fillText('BOTTOM-RIGHT', w - 4, h - 4)
+    ctx.textAlign = 'left'
+    ctx.fillText('BOTTOM-LEFT', 4, h - 4)
+
+    // Draw each point as a radial gradient
+    for (const p of points) {
+      const px = p.x * w
+      const py = p.y * h
+      const radius = 12
+      const gradient = ctx.createRadialGradient(px, py, 0, px, py, radius)
+      gradient.addColorStop(0, 'rgba(255, 0, 0, 0.3)')
+      gradient.addColorStop(1, 'rgba(255, 0, 0, 0)')
+      ctx.beginPath()
+      ctx.fillStyle = gradient
+      ctx.arc(px, py, radius, 0, Math.PI * 2)
+      ctx.fill()
+    }
+  }, [points])
+
+  useEffect(() => {
+    draw()
+  }, [draw])
+
+  if (points.length === 0) {
+    return <p className="text-[10px] text-primary/30 font-mono">NO HEATMAP DATA YET</p>
+  }
+
+  return (
+    <div className="space-y-2">
+      <canvas
+        ref={canvasRef}
+        width={400}
+        height={300}
+        className="w-full h-48 border border-primary/10 bg-black/50"
+      />
+      <div className="flex items-center gap-4 text-[9px] font-mono text-primary/40">
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full" style={{ background: 'radial-gradient(rgba(255,0,0,0.6), rgba(255,0,0,0))' }} />
+          <span>HIGH ACTIVITY</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-3 h-3 rounded-full" style={{ background: 'radial-gradient(rgba(255,0,0,0.2), rgba(255,0,0,0))' }} />
+          <span>LOW ACTIVITY</span>
+        </div>
+        <span className="ml-auto">X/Y = viewport position ratio</span>
+      </div>
+    </div>
+  )
+}
+
+function ClickTable({ points }: { points: HeatmapPoint[] }) {
+  const elementCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const p of points) {
+      const key = p.el || 'unknown'
+      counts[key] = (counts[key] || 0) + 1
+    }
+    return Object.entries(counts).sort(([, a], [, b]) => b - a)
+  }, [points])
+
+  if (elementCounts.length === 0) {
+    return <p className="text-[10px] text-primary/30 font-mono">NO CLICK DATA YET</p>
+  }
+
+  const total = elementCounts.reduce((sum, [, c]) => sum + c, 0)
+
+  return (
+    <div className="border border-primary/10 overflow-hidden">
+      <table className="w-full text-[10px] font-mono">
+        <thead>
+          <tr className="bg-primary/10 text-primary/70">
+            <th className="text-left px-3 py-1.5 tracking-wider">ELEMENT</th>
+            <th className="text-right px-3 py-1.5 tracking-wider">CLICKS</th>
+            <th className="text-right px-3 py-1.5 tracking-wider">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          {elementCounts.map(([el, count]) => (
+            <tr key={el} className="border-t border-primary/5 hover:bg-primary/5 transition-colors">
+              <td className="px-3 py-1 text-foreground/70 uppercase">{el}</td>
+              <td className="px-3 py-1 text-right text-foreground/60">{count}</td>
+              <td className="px-3 py-1 text-right text-primary/50">{((count / total) * 100).toFixed(1)}%</td>
+            </tr>
+          ))}
+          <tr className="border-t border-primary/20 bg-primary/5">
+            <td className="px-3 py-1 text-foreground/80 font-bold">TOTAL</td>
+            <td className="px-3 py-1 text-right text-foreground/80 font-bold">{total}</td>
+            <td className="px-3 py-1 text-right text-primary/60">100%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
   const [data, setData] = useState<AnalyticsData>(getAnalyticsData)
 
@@ -104,22 +254,13 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
     [data.clicks],
   )
 
-  const topSections = useMemo(
-    () => Object.entries(data.sectionViews).sort(([, a], [, b]) => b - a).slice(0, 5),
-    [data.sectionViews],
-  )
-
-  const topClicks = useMemo(
-    () => Object.entries(data.clicks).sort(([, a], [, b]) => b - a).slice(0, 5),
-    [data.clicks],
+  const totalRedirects = useMemo(
+    () => Object.values(data.redirects).reduce((a, b) => a + b, 0),
+    [data.redirects],
   )
 
   const handleReset = () => {
-    try {
-      localStorage.removeItem('zardonic-analytics')
-    } catch {
-      // ignore storage errors
-    }
+    resetAnalytics()
     reload()
   }
 
@@ -153,7 +294,7 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
               <div className="flex items-center gap-3">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 <span id="stats-dashboard-title" className="text-xs text-primary/70 tracking-wider uppercase">
-                  ANALYTICS DASHBOARD
+                  SITE ANALYTICS // ADMIN DASHBOARD
                 </span>
               </div>
               <button onClick={onClose} aria-label="Close analytics dashboard" className="text-primary/60 hover:text-primary p-1">
@@ -162,38 +303,15 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
             </div>
 
             {/* Stats summary */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 border-b border-primary/20">
-              <div className="bg-secondary/30 border border-primary/20 p-4 relative">
-                <CornerDecoration position="tl" />
-                <CornerDecoration position="br" />
-                <div className="flex items-center gap-2 text-primary/60 mb-2">
-                  <Eye size={16} />
-                  <span className="text-[10px] tracking-wider uppercase">Page Views</span>
-                </div>
-                <p className="text-2xl text-primary">{data.pageViews}</p>
-              </div>
-              <div className="bg-secondary/30 border border-primary/20 p-4 relative">
-                <CornerDecoration position="tl" />
-                <CornerDecoration position="br" />
-                <div className="flex items-center gap-2 text-primary/60 mb-2">
-                  <Eye size={16} />
-                  <span className="text-[10px] tracking-wider uppercase">Section Views</span>
-                </div>
-                <p className="text-2xl text-primary">{totalSectionViews}</p>
-              </div>
-              <div className="bg-secondary/30 border border-primary/20 p-4 relative">
-                <CornerDecoration position="tl" />
-                <CornerDecoration position="br" />
-                <div className="flex items-center gap-2 text-primary/60 mb-2">
-                  <CursorClick size={16} />
-                  <span className="text-[10px] tracking-wider uppercase">Total Clicks</span>
-                </div>
-                <p className="text-2xl text-primary">{totalClicks}</p>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 border-b border-primary/20">
+              <StatCard icon={Eye} label="Page Views" value={data.pageViews} sublabel={data.firstTracked ? `Since ${data.firstTracked}` : undefined} />
+              <StatCard icon={Eye} label="Section Views" value={totalSectionViews} />
+              <StatCard icon={CursorClick} label="Total Clicks" value={totalClicks} />
+              <StatCard icon={ArrowSquareOut} label="Redirects" value={totalRedirects} />
             </div>
 
-            {/* Charts */}
-            <div className="max-h-[55vh] overflow-y-auto p-4 space-y-6">
+            {/* Content */}
+            <div className="max-h-[60vh] overflow-y-auto p-4 space-y-6">
               {/* Section Views Chart */}
               <div>
                 <h3 className="text-xs text-primary/60 tracking-wider uppercase mb-3 border-b border-primary/10 pb-1">
@@ -210,44 +328,86 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
                 <BarChart data={data.clicks} color="bg-accent/70" />
               </div>
 
-              {/* Top lists */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Redirects */}
+              {Object.keys(data.redirects).length > 0 && (
                 <div>
                   <h3 className="text-xs text-primary/60 tracking-wider uppercase mb-3 border-b border-primary/10 pb-1">
-                    {'>'} Top Sections
+                    <ArrowSquareOut size={12} className="inline mr-1" /> Outbound Redirects
                   </h3>
-                  {topSections.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No data yet</p>
+                  <TopList items={data.redirects} />
+                </div>
+              )}
+
+              {/* Breakdown grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Devices */}
+                <div className="space-y-3">
+                  <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                    {'>'} Devices
+                  </h3>
+                  {Object.keys(data.devices).length === 0 ? (
+                    <p className="text-[10px] text-primary/30 font-mono">NO DATA YET</p>
                   ) : (
-                    <ol className="space-y-1">
-                      {topSections.map(([name, count], i) => (
-                        <li key={name} className="flex items-center gap-2 text-xs">
-                          <span className="text-primary/40 w-4 text-right">{i + 1}.</span>
-                          <span className="text-foreground/80 flex-1 truncate">{name}</span>
-                          <span className="text-primary">{count}</span>
-                        </li>
+                    <div className="flex gap-4">
+                      {Object.entries(data.devices).map(([device, count]) => (
+                        <div key={device} className="flex items-center gap-2">
+                          {device === 'mobile' ? <DeviceMobile size={16} className="text-primary/60" /> : <Desktop size={16} className="text-primary/60" />}
+                          <div>
+                            <p className="text-xs text-foreground/80 capitalize">{device}</p>
+                            <p className="text-[9px] text-primary/40">{count} visits</p>
+                          </div>
+                        </div>
                       ))}
-                    </ol>
+                    </div>
                   )}
                 </div>
-                <div>
-                  <h3 className="text-xs text-primary/60 tracking-wider uppercase mb-3 border-b border-primary/10 pb-1">
-                    {'>'} Top Clicked Elements
+
+                {/* Referrers */}
+                <div className="space-y-3">
+                  <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                    <Globe size={12} className="inline mr-1" /> Traffic Sources
                   </h3>
-                  {topClicks.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No data yet</p>
-                  ) : (
-                    <ol className="space-y-1">
-                      {topClicks.map(([name, count], i) => (
-                        <li key={name} className="flex items-center gap-2 text-xs">
-                          <span className="text-primary/40 w-4 text-right">{i + 1}.</span>
-                          <span className="text-foreground/80 flex-1 truncate">{name}</span>
-                          <span className="text-primary">{count}</span>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
+                  <TopList items={data.referrers} />
                 </div>
+
+                {/* Browsers */}
+                {Object.keys(data.browsers).length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                      <Browser size={12} className="inline mr-1" /> Browsers
+                    </h3>
+                    <TopList items={data.browsers} />
+                  </div>
+                )}
+
+                {/* Screen Resolutions */}
+                {Object.keys(data.screenResolutions).length > 0 && (
+                  <div className="space-y-3">
+                    <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                      {'>'} Screen Resolutions
+                    </h3>
+                    <TopList items={data.screenResolutions} />
+                  </div>
+                )}
+              </div>
+
+              {/* Heatmap */}
+              <div className="space-y-3">
+                <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                  {'>'} Click Heatmap // {data.heatmap.length} Points
+                </h3>
+                <p className="text-[9px] font-mono text-primary/30">
+                  Shows where users click on the page. Red areas = more clicks.
+                </p>
+                <HeatmapCanvas points={data.heatmap} />
+              </div>
+
+              {/* Click table by element */}
+              <div className="space-y-3">
+                <h3 className="text-xs text-primary/60 tracking-wider uppercase border-b border-primary/10 pb-1">
+                  {'>'} Clicks by Element Type
+                </h3>
+                <ClickTable points={data.heatmap} />
               </div>
             </div>
 
@@ -262,6 +422,9 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
                 <Trash size={14} />
                 Reset Analytics
               </Button>
+              <div className="text-[9px] text-primary/40">
+                {data.firstTracked && <span>Data since {data.firstTracked}</span>}
+              </div>
               <Button variant="outline" size="sm" onClick={onClose}>
                 Close
               </Button>

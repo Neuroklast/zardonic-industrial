@@ -59,7 +59,11 @@ export default function EditControls({
 
   const handleExport = () => {
     if (!siteData) return
-    const json = JSON.stringify(siteData, null, 2)
+    const exportData = {
+      ...siteData,
+      _adminSettings: adminSettings || {},
+    }
+    const json = JSON.stringify(exportData, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -69,7 +73,7 @@ export default function EditControls({
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    toast.success('Data exported successfully')
+    toast.success('Data exported (including settings)')
   }
 
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,8 +87,15 @@ export default function EditControls({
           toast.error('Invalid site data file')
           return
         }
-        onImportData(parsed as SiteData)
-        toast.success('Data imported successfully')
+        // Extract admin settings if present in the export
+        const { _adminSettings, ...siteDataOnly } = parsed
+        onImportData(siteDataOnly as SiteData)
+        if (_adminSettings && onAdminSettingsChange) {
+          onAdminSettingsChange(_adminSettings)
+          toast.success('Data & settings imported successfully')
+        } else {
+          toast.success('Data imported successfully')
+        }
       } catch {
         toast.error('Failed to parse JSON file')
       }

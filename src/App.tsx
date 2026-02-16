@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 import { useKV } from '@/hooks/use-kv'
 import { useKonami } from '@/hooks/use-konami'
-import { useAnalytics, trackClick } from '@/hooks/use-analytics'
+import { useAnalytics, trackClick, trackPageView, trackHeatmapClick, trackRedirect } from '@/hooks/use-analytics'
 import { fetchITunesReleases, type ITunesRelease } from '@/lib/itunes'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { fetchBandsintownEvents } from '@/lib/bandsintown'
@@ -230,6 +230,24 @@ function App() {
       setTimeout(() => setContentLoaded(true), 100)
     }
   }, [loading])
+
+  // Track page view on mount
+  useEffect(() => {
+    trackPageView()
+  }, [])
+
+  // Track heatmap clicks globally
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const x = e.clientX / window.innerWidth
+      const y = (e.clientY + window.scrollY) / document.documentElement.scrollHeight
+      const target = e.target as HTMLElement
+      const el = target.tagName.toLowerCase() + (target.className ? '.' + String(target.className).split(' ')[0].slice(0, 20) : '')
+      trackHeatmapClick(x, y, el)
+    }
+    document.addEventListener('click', handleClick)
+    return () => document.removeEventListener('click', handleClick)
+  }, [])
 
   const [siteData, setSiteData] = useKV<SiteData>('zardonic-site-data', {
     artistName: 'ZARDONIC',
