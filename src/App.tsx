@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { useLocalStorage } from '@/hooks/use-local-storage'
-import { useKV } from '@/hooks/use-kv'
+import { useKV, SKIP_UPDATE } from '@/hooks/use-kv'
 import { useKonami } from '@/hooks/use-konami'
 import { useAnalytics, trackClick, trackPageView, trackHeatmapClick, trackRedirect } from '@/hooks/use-analytics'
 import { fetchITunesReleases, type ITunesRelease } from '@/lib/itunes'
@@ -695,7 +695,7 @@ In the end, Zardonic will unite listeners with Superstars.
       setSiteData((data) => {
         if (!data) {
           console.warn('siteData is undefined during iTunes sync, skipping update')
-          return data
+          return SKIP_UPDATE as any
         }
         const existingIds = new Set(data.releases.map(r => r.id))
         const newReleases: Release[] = iTunesReleases
@@ -763,7 +763,7 @@ In the end, Zardonic will unite listeners with Superstars.
       setSiteData((data) => {
         if (!data) {
           console.warn('siteData is undefined during Bandsintown sync, skipping update')
-          return data
+          return SKIP_UPDATE as any
         }
         const existingIds = new Set(data.gigs.map(g => g.id))
         const newGigs: Gig[] = events
@@ -892,7 +892,7 @@ In the end, Zardonic will unite listeners with Superstars.
     setSiteData((data) => {
       if (!data) {
         console.warn('siteData is undefined during gig save, skipping update')
-        return data
+        return SKIP_UPDATE as any
       }
       const gigIndex = data.gigs.findIndex(g => g.id === gig.id)
       if (gigIndex >= 0) {
@@ -930,7 +930,7 @@ In the end, Zardonic will unite listeners with Superstars.
     setSiteData((data) => {
       if (!data) {
         console.warn('siteData is undefined during release save, skipping update')
-        return data
+        return SKIP_UPDATE as any
       }
       const releaseIndex = data.releases.findIndex(r => r.id === release.id)
       if (releaseIndex >= 0) {
@@ -953,7 +953,7 @@ In the end, Zardonic will unite listeners with Superstars.
     setSiteData((data) => {
       if (!data) {
         console.warn('siteData is undefined during gallery image delete, skipping update')
-        return data
+        return SKIP_UPDATE as any
       }
       const newGallery = [...data.gallery]
       newGallery.splice(index, 1)

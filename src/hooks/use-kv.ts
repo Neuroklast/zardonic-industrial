@@ -1,6 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 /**
+ * Sentinel value to indicate that a state update should be skipped.
+ * Use this in updater functions when you want to abort an update without changing the state.
+ * 
+ * @example
+ * ```ts
+ * setSiteData((data) => {
+ *   if (!data) return SKIP_UPDATE as any
+ *   return { ...data, newField: 'value' }
+ * })
+ * ```
+ */
+export const SKIP_UPDATE = Symbol('SKIP_UPDATE')
+
+/**
  * Custom KV hook backed by Vercel KV API routes, with localStorage fallback for local dev.
  * Uses /api/kv (Vercel KV) for persistence, with localStorage fallback for local dev.
  * The admin token from localStorage is sent with write requests for auth.
@@ -8,8 +22,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
  * Returns [value, updateValue, loaded] — `loaded` is true once the initial
  * KV/localStorage/default fetch has completed so consumers can avoid acting on
  * stale default data.
+ * 
+ * The updater function can return SKIP_UPDATE to abort the update without changing state.
+ * For backwards compatibility, returning undefined when prev was defined also skips the update.
  */
-export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater: T | ((current: T | undefined) => T | undefined)) => void, boolean] {
+export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater: T | ((current: T | undefined) => T | undefined | typeof SKIP_UPDATE)) => void, boolean] {
   const [value, setValue] = useState<T | undefined>(undefined)
   const [loaded, setLoaded] = useState(false)
   const initializedRef = useRef(false)
@@ -58,15 +75,15 @@ export function useKV<T>(key: string, defaultValue: T): [T | undefined, (updater
       })
   }, [key])
 
-  const updateValue = useCallback((updater: T | ((current: T | undefined) => T | undefined)) => {
+  const updateValue = useCallback((updater: T | ((current: T | undefined) => T | undefined | typeof SKIP_UPDATE)) => {
     setValue(prev => {
       const newValue = typeof updater === 'function'
-        ? (updater as (current: T | undefined) => T | undefined)(prev)
+        ? (updater as (current: T | undefined) => T | undefined | typeof SKIP_UPDATE)(prev)
         : updater
 
-      // Don't persist or sync if the updater returned undefined, which signals "no change"
-      if (newValue === undefined && prev !== undefined) {
-        // Updater returned undefined but previous value was defined - skip update
+      // Check if update should be skipped (explicit sentinel or implicit undefined with defined prev)
+      if (newValue === SKIP_UPDATE || (newValue === undefined && prev !== undefined)) {
+        // Skip update - return previous value unchanged
         return prev
       }
 
