@@ -40,5 +40,6 @@ The following environment variables contain sensitive values and should never be
 
 - `UPSTASH_REDIS_REST_URL` — Redis connection URL
 - `UPSTASH_REDIS_REST_TOKEN` — Redis authentication token
+- `BANDSINTOWN_API_KEY` — Bandsintown API authentication key
 
 These should be configured through your deployment platform's environment variable settings.
