@@ -248,6 +248,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
 
       <div className="absolute bottom-8 left-8 font-mono text-xs text-muted-foreground opacity-50">
         <div>BUILD: 2077.v1.23</div>
+        <div>DEPLOYED: {new Date(__BUILD_DATE__).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' })}</div>
         <div>PLATFORM: WEB.NEURAL</div>
       </div>
 
