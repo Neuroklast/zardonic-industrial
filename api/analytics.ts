@@ -81,7 +81,7 @@ async function validateAdminToken(req: VercelRequest): Promise<boolean> {
  * Main handler for analytics API
  * 
  * GET /api/analytics - Retrieve analytics data (public)
- * POST /api/analytics - Update analytics data (requires admin token)
+ * POST /api/analytics - Update analytics data (public - visitor tracking)
  * DELETE /api/analytics - Reset analytics data (requires admin token)
  */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -122,17 +122,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ value: data })
     }
 
-    // POST: Update analytics data (requires admin token)
+    // POST: Update analytics data (public - allows visitor tracking)
     if (req.method === 'POST') {
-      const isAdmin = await validateAdminToken(req)
-      
-      if (!isAdmin) {
-        return res.status(401).json({
-          error: 'Unauthorized',
-          message: 'Valid admin token required for analytics updates',
-        })
-      }
-
       const { data } = req.body as { data: AnalyticsData }
 
       if (!data) {
