@@ -71,13 +71,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Require auth to change an existing password
         const existingHash = await kv.get<string>('admin-password-hash')
         if (existingHash && !timingSafeEqual(token, existingHash)) {
-          return res.status(403).json({ error: 'Unauthorized' })
+          // Also accept a valid session token
+          const session = token ? await kv.get(`session:${token}`) : null
+          if (!session) {
+            return res.status(403).json({ error: 'Unauthorized' })
+          }
         }
       } else {
-        // All other writes require a valid admin token
+        // All other writes require a valid admin token (session token or password hash)
         const adminHash = await kv.get<string>('admin-password-hash')
-        if (adminHash && !timingSafeEqual(token, adminHash)) {
-          return res.status(403).json({ error: 'Unauthorized' })
+        if (adminHash) {
+          // First try direct hash comparison (legacy)
+          if (!timingSafeEqual(token, adminHash)) {
+            // Then try session token validation
+            const session = token ? await kv.get(`session:${token}`) : null
+            if (!session) {
+              return res.status(403).json({ error: 'Unauthorized' })
+            }
+          }
         }
       }
 

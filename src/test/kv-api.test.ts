@@ -111,7 +111,7 @@ describe('KV API handler', () => {
       expect(res.json).toHaveBeenCalledWith({ success: true })
     })
 
-    it('saves value with valid admin token', async () => {
+    it('saves value with valid admin token (direct hash match)', async () => {
       const hash = 'abc123'
       mockKvGet.mockResolvedValue(hash)
       mockKvSet.mockResolvedValue('OK')
@@ -126,8 +126,31 @@ describe('KV API handler', () => {
       expect(res.json).toHaveBeenCalledWith({ success: true })
     })
 
-    it('rejects write with invalid admin token', async () => {
-      mockKvGet.mockResolvedValue('correct-hash')
+    it('saves value with valid session token', async () => {
+      const adminHash = 'admin-hash-123'
+      const sessionToken = 'session-token-xyz'
+      // First call: get admin-password-hash (returns hash, won't match session token)
+      // Second call: get session:<token> (returns session data)
+      mockKvGet
+        .mockResolvedValueOnce(adminHash)
+        .mockResolvedValueOnce({ token: sessionToken, createdAt: Date.now() })
+      mockKvSet.mockResolvedValue('OK')
+      const res = mockRes()
+      await handler({
+        method: 'POST',
+        query: {},
+        body: { key: 'site-data', value: { name: 'updated' } },
+        headers: { 'x-admin-token': sessionToken },
+      }, res)
+      expect(mockKvSet).toHaveBeenCalledWith('site-data', { name: 'updated' }, { ex: 86400 })
+      expect(res.json).toHaveBeenCalledWith({ success: true })
+    })
+
+    it('rejects write with invalid admin token and no valid session', async () => {
+      // First call: get admin-password-hash
+      mockKvGet.mockResolvedValueOnce('correct-hash')
+      // Second call: get session:<wrong-hash> (returns null = invalid session)
+      mockKvGet.mockResolvedValueOnce(null)
       const res = mockRes()
       await handler({
         method: 'POST',
@@ -154,8 +177,11 @@ describe('KV API handler', () => {
         expect(res.json).toHaveBeenCalledWith({ success: true })
       })
 
-      it('rejects password change with wrong token', async () => {
-        mockKvGet.mockResolvedValue('correct-hash')
+      it('rejects password change with wrong token and no valid session', async () => {
+        // First call: get existing admin-password-hash
+        mockKvGet.mockResolvedValueOnce('correct-hash')
+        // Second call: get session:<wrong-token> (returns null = invalid session)
+        mockKvGet.mockResolvedValueOnce(null)
         const res = mockRes()
         await handler({
           method: 'POST',

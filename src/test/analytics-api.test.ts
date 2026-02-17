@@ -88,21 +88,7 @@ describe('Analytics API handler', () => {
   })
 
   describe('POST /api/analytics', () => {
-    it('should require admin token', async () => {
-      const res = mockRes()
-      await handler({
-        method: 'POST',
-        body: { data: { pageViews: 1 } },
-        headers: {},
-      } as any, res as any)
-
-      expect(res.status).toHaveBeenCalledWith(401)
-    })
-
-    it('should update analytics data with valid admin token', async () => {
-      // Mock admin token validation
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
+    it('should accept analytics data without admin token (public tracking)', async () => {
       const analyticsData = {
         pageViews: 150,
         sectionViews: { bio: 75 },
@@ -122,7 +108,7 @@ describe('Analytics API handler', () => {
       await handler({
         method: 'POST',
         body: { data: analyticsData },
-        headers: { 'x-admin-token': 'valid-hash' },
+        headers: {},
       } as any, res as any)
 
       expect(mockKvSet).toHaveBeenCalledWith(
@@ -135,8 +121,6 @@ describe('Analytics API handler', () => {
     })
 
     it('should limit heatmap size to 500 points', async () => {
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
       const heatmap = Array.from({ length: 600 }, (_, i) => ({
         x: i,
         y: i,
@@ -163,7 +147,7 @@ describe('Analytics API handler', () => {
       await handler({
         method: 'POST',
         body: { data: analyticsData },
-        headers: { 'x-admin-token': 'valid-hash' },
+        headers: {},
       } as any, res as any)
 
       // Verify heatmap was limited to last 500
@@ -172,13 +156,11 @@ describe('Analytics API handler', () => {
     })
 
     it('should return 400 if data is missing', async () => {
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
       const res = mockRes()
       await handler({
         method: 'POST',
         body: {},
-        headers: { 'x-admin-token': 'valid-hash' },
+        headers: {},
       } as any, res as any)
 
       expect(res.status).toHaveBeenCalledWith(400)

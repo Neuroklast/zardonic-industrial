@@ -105,7 +105,7 @@ function getEmptyAnalytics(): AnalyticsData {
 
 /**
  * Save analytics data to Vercel KV API
- * Requires admin token for write access
+ * Analytics tracking is public - no admin token required
  */
 async function saveAnalyticsData(analytics: AnalyticsData): Promise<void> {
   try {
@@ -120,14 +120,10 @@ async function saveAnalyticsData(analytics: AnalyticsData): Promise<void> {
       analytics.heatmap = analytics.heatmap.slice(-500)
     }
 
-    // Get admin token from session storage (temporary, cleared on tab close)
-    const adminToken = sessionStorage.getItem('admin-session-token') || ''
-
     const response = await fetch('/api/analytics', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-admin-token': adminToken,
       },
       body: JSON.stringify({ data: analytics }),
     })
