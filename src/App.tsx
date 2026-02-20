@@ -88,6 +88,7 @@ import EditableHeading from '@/components/EditableHeading'
 import SecurityIncidentsDashboard from '@/components/SecurityIncidentsDashboard'
 import SecuritySettingsDialog from '@/components/SecuritySettingsDialog'
 import BlocklistManagerDialog from '@/components/BlocklistManagerDialog'
+import AttackerProfileDialog from '@/components/AttackerProfileDialog'
 import { SystemMonitorHUD } from '@/components/SystemMonitorHUD'
 import type { TerminalCommand, SectionLabels } from '@/lib/types'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
@@ -393,6 +394,8 @@ In the end, Zardonic will unite listeners with Superstars.
   const [showSecurityIncidents, setShowSecurityIncidents] = useState(false)
   const [showSecuritySettings, setShowSecuritySettings] = useState(false)
   const [showBlocklist, setShowBlocklist] = useState(false)
+  const [showAttackerProfile, setShowAttackerProfile] = useState(false)
+  const [selectedAttackerIp, setSelectedAttackerIp] = useState<string>('')
 
   // Admin settings (persisted in Redis)
   const [adminSettings, setAdminSettings] = useKV<AdminSettings>('zardonic-admin-settings', {})
@@ -3561,6 +3564,10 @@ In the end, Zardonic will unite listeners with Superstars.
           <SecurityIncidentsDashboard
             open={showSecurityIncidents}
             onClose={() => setShowSecurityIncidents(false)}
+            onViewProfile={(hashedIp) => {
+              setSelectedAttackerIp(hashedIp)
+              setShowAttackerProfile(true)
+            }}
           />
           <SecuritySettingsDialog
             open={showSecuritySettings}
@@ -3569,6 +3576,11 @@ In the end, Zardonic will unite listeners with Superstars.
           <BlocklistManagerDialog
             open={showBlocklist}
             onClose={() => setShowBlocklist(false)}
+          />
+          <AttackerProfileDialog
+            open={showAttackerProfile}
+            onClose={() => setShowAttackerProfile(false)}
+            hashedIp={selectedAttackerIp}
           />
         </>
       )}

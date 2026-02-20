@@ -17,6 +17,39 @@ export const kvKeySchema = z.string({ required_error: 'key is required' })
   .max(200, 'key must be 200 characters or less')
   .regex(/^[^\n\r\0]*$/, 'Must not contain control characters')
   .min(1, 'key is required')
+
+// ---------------------------------------------------------------------------
+// Analytics API — POST body
+// ---------------------------------------------------------------------------
+
+const analyticsMetaSchema = z.object({
+  referrer: safeString().optional(),
+  device: safeString().optional(),
+  browser: safeString().optional(),
+  screenResolution: safeString(50).optional(),
+  landingPage: safeString().optional(),
+  utmSource: safeString(100).optional(),
+  utmMedium: safeString(100).optional(),
+  utmCampaign: safeString(100).optional(),
+  sessionId: safeString(100).optional(),
+}).optional()
+
+const heatmapSchema = z.object({
+  // x: normalized viewport width (0–1)
+  x: z.number().min(0).max(1),
+  // y: normalized document height (0–2 allows tracking clicks below the fold when page is scrollable)
+  y: z.number().min(0).max(2),
+  page: safeString().optional(),
+  elementTag: safeString(100).optional(),
+}).optional()
+
+export const analyticsPostSchema = z.object({
+  type: z.enum(['page_view', 'section_view', 'interaction', 'click']),
+  target: safeString().optional(),
+  meta: analyticsMetaSchema,
+  heatmap: heatmapSchema,
+})
+
 // ---------------------------------------------------------------------------
 // KV API
 // ---------------------------------------------------------------------------
