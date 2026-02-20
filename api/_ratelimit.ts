@@ -17,7 +17,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 const SALT = process.env.RATE_LIMIT_SALT || 'zd-default-rate-limit-salt-change-me'
 
 if (!process.env.RATE_LIMIT_SALT && process.env.NODE_ENV === 'production') {
-  throw new Error('[SECURITY] RATE_LIMIT_SALT environment variable is not set. A unique random salt is required in production to protect IP hashes.')
+  throw new Error('[SECURITY] RATE_LIMIT_SALT environment variable is not set. A unique random salt is required in production to protect IP hashes. Generate one with: openssl rand -hex 32')
 }
 
 const WINDOW_SECONDS = 10
