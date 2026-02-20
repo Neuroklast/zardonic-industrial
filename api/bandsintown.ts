@@ -1,6 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { applyRateLimit } from './_ratelimit.js'
+import { fetchWithRetry } from './_fetch-retry.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Rate limiting
+  const allowed = await applyRateLimit(req, res)
+  if (!allowed) return
+
   const { artist } = req.query
 
   if (!artist || typeof artist !== 'string') {
@@ -20,13 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   params.set('app_id', apiKey)
 
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `https://rest.bandsintown.com/artists/${encodeURIComponent(artist)}/events?${params.toString()}`,
-      {
-        headers: {
-          'Accept': 'application/json',
-        },
-      }
+      { headers: { 'Accept': 'application/json' } }
     )
 
     if (!response.ok) {

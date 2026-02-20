@@ -1,10 +1,23 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
+import { applyRateLimit } from './_ratelimit.js'
+import { isHoneytoken, triggerHoneytokenAlarm, isMarkedAttacker, injectEntropyHeaders, getRandomTaunt, setDefenseHeaders } from './_honeytokens.js'
+import { kvGetQuerySchema, kvPostSchema, validate } from './_schemas.js'
+import { validateSession } from './auth.js'
+import { isHardBlocked } from './_blocklist.js'
 
 // Check if KV is properly configured
 const isKVConfigured = () => {
   return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
+
+/**
+ * Allow-list of keys that may be read without admin authentication.
+ * Only explicitly listed keys are publicly readable.
+ */
+const ALLOWED_PUBLIC_READ_KEYS = new Set([
+  'zardonic-band-data',
+])
 
 // Lazily create the Redis client so we only instantiate when env vars are set
 let _redis: Redis | null = null
@@ -22,17 +35,57 @@ function getRedis(): Redis {
 
 // Constant-time string comparison to prevent timing attacks on hash comparison
 export function timingSafeEqual(a: string, b: string): boolean {
-  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false
-  let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  if (typeof a !== 'string' || typeof b !== 'string') return false
+  const len = Math.max(a.length, b.length)
+  let result = a.length ^ b.length
+  for (let i = 0; i < len; i++) {
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
   }
   return result === 0
+}
+
+/** Suspicious User-Agent patterns used by hacking/fuzzing tools */
+const SUSPICIOUS_UA_PATTERNS = [/wfuzz/i, /nikto/i, /sqlmap/i, /dirbuster/i, /gobuster/i, /ffuf/i]
+
+function isSuspiciousUA(req: VercelRequest): boolean {
+  const ua = req.headers['user-agent'] || ''
+  return SUSPICIOUS_UA_PATTERNS.some(p => p.test(ua))
+}
+
+/** Sensitive key patterns that must never be readable by the public */
+const SENSITIVE_KEY_PATTERNS = [/token/i, /secret/i, /password/i, /private/i, /credential/i]
+
+function hasSensitivePattern(key: string): boolean {
+  return SENSITIVE_KEY_PATTERNS.some(p => p.test(key))
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end()
+  }
+
+  // Hard-block check — immediate rejection
+  const blocked = await isHardBlocked(req)
+  if (blocked) {
+    return res.status(403).json({ error: 'FORBIDDEN' })
+  }
+
+  // Wfuzz / hacking tool detection
+  if (isSuspiciousUA(req)) {
+    return res.status(403).json({
+      error: 'NOOB_DETECTED',
+      tip: "Next time, try changing your User-Agent before hacking a band.",
+    })
+  }
+
+  // Rate limiting (GDPR-compliant, IP is hashed)
+  const allowed = await applyRateLimit(req, res)
+  if (!allowed) return
+
+  // Entropy injection for flagged attacker IPs
+  if (await isMarkedAttacker(req)) {
+    injectEntropyHeaders(res)
+    setDefenseHeaders(res)
   }
 
   // Check if KV is configured
@@ -48,10 +101,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (req.method === 'GET') {
-      const key = req.query.key
-      if (!key || typeof key !== 'string') return res.status(400).json({ error: 'key is required' })
+      const parsed = validate(kvGetQuerySchema, req.query)
+      if (!parsed.success) return res.status(400).json({ error: parsed.error })
+      const { key } = parsed.data
+
+      // Honeytoken detection on GET
+      if (isHoneytoken(key)) {
+        await triggerHoneytokenAlarm(req, key)
+        setDefenseHeaders(res)
+        return res.status(403).json({
+          error: 'ACCESS_DENIED',
+          message: getRandomTaunt(),
+        })
+      }
+
+      // Allow-list: only explicitly listed keys are publicly readable
+      const isPublicRead = ALLOWED_PUBLIC_READ_KEYS.has(key)
+      if (!isPublicRead) {
+        const sessionValid = await validateSession(req)
+        if (!sessionValid) {
+          return res.status(403).json({ error: 'Forbidden' })
+        }
+      }
 
       const value = await kv.get(key)
+
+      // Strip sensitive fields from public band-data reads
+      if (isPublicRead && value && typeof value === 'object') {
+        const safeValue = { ...(value as Record<string, unknown>) }
+        delete safeValue['terminalCommands']
+        return res.json({ value: safeValue })
+      }
+
       return res.json({ value: value ?? null })
     }
 
@@ -60,23 +141,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Request body is required' })
       }
 
-      const { key, value } = req.body as { key: unknown; value: unknown }
-      if (!key || typeof key !== 'string') return res.status(400).json({ error: 'key is required' })
-      if (value === undefined) return res.status(400).json({ error: 'value is required' })
+      const parsed = validate(kvPostSchema, req.body)
+      if (!parsed.success) return res.status(400).json({ error: parsed.error })
+      const { key, value } = parsed.data
 
-      const token = (req.headers['x-admin-token'] as string) || ''
+      // Honeytoken detection on POST
+      if (isHoneytoken(key)) {
+        await triggerHoneytokenAlarm(req, key)
+        setDefenseHeaders(res)
+        return res.status(403).json({
+          error: 'ACCESS_DENIED',
+          message: getRandomTaunt(),
+        })
+      }
 
+      // Block writes to sensitive key patterns without a valid session
+      if (hasSensitivePattern(key) && key !== 'admin-password-hash') {
+        const sessionValid = await validateSession(req)
+        if (!sessionValid) {
+          return res.status(403).json({ error: 'Forbidden' })
+        }
+      }
+
+      // All writes require a valid session (except initial password setup)
       if (key === 'admin-password-hash') {
-        // Allow setting password if none exists (initial setup)
-        // Require auth to change an existing password
         const existingHash = await kv.get<string>('admin-password-hash')
-        if (existingHash && !timingSafeEqual(token, existingHash)) {
-          return res.status(403).json({ error: 'Unauthorized' })
+        if (existingHash) {
+          const sessionValid = await validateSession(req)
+          if (!sessionValid) {
+            return res.status(403).json({ error: 'Unauthorized' })
+          }
         }
       } else {
-        // All other writes require a valid admin token
-        const adminHash = await kv.get<string>('admin-password-hash')
-        if (adminHash && !timingSafeEqual(token, adminHash)) {
+        const sessionValid = await validateSession(req)
+        if (!sessionValid) {
           return res.status(403).json({ error: 'Unauthorized' })
         }
       }
@@ -94,12 +192,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error) {
     console.error('KV API error:', error)
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('KV API error details:', {
-      message: errorMessage,
-      key: req.body?.key,
-      method: req.method,
-      hasToken: !!req.headers['x-admin-token']
-    })
     
     const isKVConfigError = error instanceof Error && (
       errorMessage.toLowerCase().includes('upstash_redis_rest_url') ||
