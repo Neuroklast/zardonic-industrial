@@ -13,6 +13,9 @@ import {
   ArrowsVertical,
   ArrowUp,
   ArrowDown,
+  ShieldWarning,
+  ShieldCheck,
+  ProhibitInset,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,6 +41,9 @@ interface EditControlsProps {
   onAdminSettingsChange?: (settings: AdminSettings) => void
   onOpenConfigEditor?: () => void
   onOpenStats?: () => void
+  onOpenSecurityIncidents?: () => void
+  onOpenSecuritySettings?: () => void
+  onOpenBlocklist?: () => void
 }
 
 export default function EditControls({
@@ -52,6 +58,9 @@ export default function EditControls({
   onAdminSettingsChange,
   onOpenConfigEditor,
   onOpenStats,
+  onOpenSecurityIncidents,
+  onOpenSecuritySettings,
+  onOpenBlocklist,
 }: EditControlsProps) {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [showVisibilityPanel, setShowVisibilityPanel] = useState(false)
@@ -869,6 +878,36 @@ export default function EditControls({
                   title="View site statistics"
                 >
                   <ChartLine size={18} weight="bold" />
+                </Button>
+              )}
+              {onOpenSecurityIncidents && (
+                <Button
+                  onClick={onOpenSecurityIncidents}
+                  className="bg-secondary hover:bg-secondary/80 active:scale-90 w-10 h-10 md:w-12 md:h-12 rounded-full shadow-lg transition-all touch-manipulation"
+                  size="icon"
+                  title="Security incidents"
+                >
+                  <ShieldWarning size={18} weight="bold" />
+                </Button>
+              )}
+              {onOpenSecuritySettings && (
+                <Button
+                  onClick={onOpenSecuritySettings}
+                  className="bg-secondary hover:bg-secondary/80 active:scale-90 w-10 h-10 md:w-12 md:h-12 rounded-full shadow-lg transition-all touch-manipulation"
+                  size="icon"
+                  title="Security settings"
+                >
+                  <ShieldCheck size={18} weight="bold" />
+                </Button>
+              )}
+              {onOpenBlocklist && (
+                <Button
+                  onClick={onOpenBlocklist}
+                  className="bg-secondary hover:bg-secondary/80 active:scale-90 w-10 h-10 md:w-12 md:h-12 rounded-full shadow-lg transition-all touch-manipulation"
+                  size="icon"
+                  title="Manage blocklist"
+                >
+                  <ProhibitInset size={18} weight="bold" />
                 </Button>
               )}
             </motion.div>

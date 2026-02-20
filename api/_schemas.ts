@@ -13,8 +13,10 @@ const safeString = (maxLen = 200) =>
   z.string().max(maxLen).regex(/^[^\n\r\0]*$/, 'Must not contain control characters')
 
 /** KV key: bounded length, no control characters */
-export const kvKeySchema = safeString(200).min(1, 'key is required')
-
+export const kvKeySchema = z.string({ required_error: 'key is required' })
+  .max(200, 'key is required')
+  .regex(/^[^\n\r\0]*$/, 'Must not contain control characters')
+  .min(1, 'key is required')
 // ---------------------------------------------------------------------------
 // KV API
 // ---------------------------------------------------------------------------

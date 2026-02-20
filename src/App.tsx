@@ -85,6 +85,10 @@ import { SpotifyEmbed } from '@/components/SpotifyEmbed'
 import StatsDashboard from '@/components/StatsDashboard'
 import { MediaBrowser } from '@/components/MediaBrowser'
 import EditableHeading from '@/components/EditableHeading'
+import SecurityIncidentsDashboard from '@/components/SecurityIncidentsDashboard'
+import SecuritySettingsDialog from '@/components/SecuritySettingsDialog'
+import BlocklistManagerDialog from '@/components/BlocklistManagerDialog'
+import { SystemMonitorHUD } from '@/components/SystemMonitorHUD'
 import type { TerminalCommand, SectionLabels } from '@/lib/types'
 import heroImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
@@ -386,6 +390,9 @@ In the end, Zardonic will unite listeners with Superstars.
   const [editMode, setEditMode] = useState(false)
   const [showConfigEditor, setShowConfigEditor] = useState(false)
   const [showStats, setShowStats] = useState(false)
+  const [showSecurityIncidents, setShowSecurityIncidents] = useState(false)
+  const [showSecuritySettings, setShowSecuritySettings] = useState(false)
+  const [showBlocklist, setShowBlocklist] = useState(false)
 
   // Admin settings (persisted in Redis)
   const [adminSettings, setAdminSettings] = useKV<AdminSettings>('zardonic-admin-settings', {})
@@ -990,6 +997,7 @@ In the end, Zardonic will unite listeners with Superstars.
       {anim.scanlineEnabled !== false && <div className="crt-scanline-bg" />}
       {anim.noiseEnabled !== false && <div className="full-page-noise periodic-noise-glitch" />}
       {anim.circuitBackgroundEnabled !== false && <CircuitBackground />}
+      <SystemMonitorHUD />
       
       <Toaster />
       <audio ref={audioRef} src={currentTrack?.url} />
@@ -3534,6 +3542,9 @@ In the end, Zardonic will unite listeners with Superstars.
           onAdminSettingsChange={(settings) => setAdminSettings(settings)}
           onOpenConfigEditor={() => setShowConfigEditor(true)}
           onOpenStats={() => setShowStats(true)}
+          onOpenSecurityIncidents={() => setShowSecurityIncidents(true)}
+          onOpenSecuritySettings={() => setShowSecuritySettings(true)}
+          onOpenBlocklist={() => setShowBlocklist(true)}
         />
       )}
 
@@ -3543,6 +3554,24 @@ In the end, Zardonic will unite listeners with Superstars.
         overrides={adminSettings?.configOverrides || {}}
         onSave={(configOverrides) => setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))}
       />
+
+      {/* Security admin dialogs — only rendered when admin is logged in */}
+      {isOwner && (
+        <>
+          <SecurityIncidentsDashboard
+            open={showSecurityIncidents}
+            onClose={() => setShowSecurityIncidents(false)}
+          />
+          <SecuritySettingsDialog
+            open={showSecuritySettings}
+            onClose={() => setShowSecuritySettings(false)}
+          />
+          <BlocklistManagerDialog
+            open={showBlocklist}
+            onClose={() => setShowBlocklist(false)}
+          />
+        </>
+      )}
 
       {/* Admin Login Dialogs */}
       <AdminLoginDialog
