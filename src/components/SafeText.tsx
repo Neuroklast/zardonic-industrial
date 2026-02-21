@@ -24,7 +24,7 @@ export default function SafeText({ text, className = '', fontSize = 14 }: SafeTe
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    // Resolve current computed styles for font and colour so the canvas
+    // Resolve current computed styles for font and color so the canvas
     // text inherits the page theme rather than using hard-coded values.
     const computed = window.getComputedStyle(canvas)
     const color = computed.color || '#ffffff'
