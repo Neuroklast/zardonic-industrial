@@ -1,223 +1,226 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import * as authMod from '../../api/auth.ts'
 
-// Mock @upstash/redis
-const mockKvGet = vi.fn()
-const mockKvSet = vi.fn()
-const mockKvDel = vi.fn()
+// ---------------------------------------------------------------------------
+// Mock @upstash/redis before importing handler
+// ---------------------------------------------------------------------------
+const mockHgetall = vi.fn()
+const mockHincrby = vi.fn().mockResolvedValue(1)
+const mockHsetnx = vi.fn().mockResolvedValue(1)
+const mockHset = vi.fn().mockResolvedValue(1)
+const mockHlen = vi.fn().mockResolvedValue(0)
+const mockSadd = vi.fn().mockResolvedValue(1)
+const mockSmembers = vi.fn().mockResolvedValue([])
+const mockLpush = vi.fn().mockResolvedValue(1)
+const mockLtrim = vi.fn().mockResolvedValue('OK')
+const mockLrange = vi.fn().mockResolvedValue([])
+const mockDel = vi.fn().mockResolvedValue(1)
+const mockExpire = vi.fn().mockResolvedValue(1)
+const mockPipelineExec = vi.fn().mockResolvedValue([])
 
 vi.mock('@upstash/redis', () => ({
   Redis: class {
-    get = mockKvGet
-    set = mockKvSet
-    del = mockKvDel
+    hgetall = mockHgetall
+    hincrby = mockHincrby
+    hsetnx = mockHsetnx
+    hset = mockHset
+    hlen = mockHlen
+    sadd = mockSadd
+    smembers = mockSmembers
+    lpush = mockLpush
+    ltrim = mockLtrim
+    lrange = mockLrange
+    del = mockDel
+    expire = mockExpire
+    pipeline = () => ({
+      hincrby: vi.fn().mockReturnThis(),
+      sadd: vi.fn().mockReturnThis(),
+      del: vi.fn().mockReturnThis(),
+      hsetnx: vi.fn().mockReturnThis(),
+      hset: vi.fn().mockReturnThis(),
+      exec: mockPipelineExec,
+    })
   },
 }))
 
-type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn> }
+// Mock security helpers
+vi.mock('../../api/_ratelimit.ts', () => ({
+  applyRateLimit: vi.fn().mockResolvedValue(true),
+  getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
+  hashIp: vi.fn().mockReturnValue('hashed-ip'),
+}))
 
-function mockRes(): Res {
-  return {
-    status: vi.fn().mockReturnThis(),
-    json: vi.fn().mockReturnThis(),
-  }
-}
+vi.mock('../../api/_blocklist.ts', () => ({
+  isHardBlocked: vi.fn().mockResolvedValue(false),
+}))
+
+vi.mock('../../api/auth.ts', () => ({
+  validateSession: vi.fn().mockResolvedValue(true),
+}))
 
 const { default: handler } = await import('../../api/analytics.ts')
+
+type Res = {
+  status: ReturnType<typeof vi.fn>
+  json: ReturnType<typeof vi.fn>
+  end: ReturnType<typeof vi.fn>
+}
+
+function mockRes(): Res {
+  const res: Res = {
+    status: vi.fn(),
+    json: vi.fn(),
+    end: vi.fn(),
+  }
+  res.status.mockReturnValue(res)
+  res.json.mockReturnValue(res)
+  res.end.mockReturnValue(res)
+  return res
+}
 
 describe('Analytics API handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env.UPSTASH_REDIS_REST_URL = 'https://fake-redis.upstash.io'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'fake-token'
+    mockHgetall.mockResolvedValue(null)
+    mockSmembers.mockResolvedValue([])
+    mockLrange.mockResolvedValue([])
+    mockHlen.mockResolvedValue(0)
+    mockPipelineExec.mockResolvedValue([])
+    vi.mocked(authMod.validateSession).mockResolvedValue(true)
+  })
+
+  it('OPTIONS returns 200', async () => {
+    const res = mockRes()
+    await handler({ method: 'OPTIONS', query: {}, headers: {} } as any, res as any)
+    expect(res.status).toHaveBeenCalledWith(200)
   })
 
   describe('GET /api/analytics', () => {
-    it('should return empty analytics data when none exists', async () => {
-      mockKvGet.mockResolvedValue(null)
-      
-      const res = mockRes()
-      await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
-
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith({
-        value: expect.objectContaining({
-          pageViews: 0,
-          sectionViews: {},
-          clicks: {},
-          heatmap: [],
-        }),
-      })
-    })
-
-    it('should return stored analytics data', async () => {
-      const mockData = {
-        pageViews: 100,
-        sectionViews: { bio: 50, music: 30 },
-        clicks: { button1: 10 },
-        visitors: ['visitor1'],
-        redirects: {},
-        devices: { mobile: 60, desktop: 40 },
-        referrers: {},
-        browsers: {},
-        screenResolutions: {},
-        heatmap: [],
-        countries: {},
-        languages: {},
-      }
-      mockKvGet.mockResolvedValue(mockData)
-      
-      const res = mockRes()
-      await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
-
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith({ value: mockData })
-    })
-
     it('should return 503 when Redis is not configured', async () => {
       delete process.env.UPSTASH_REDIS_REST_URL
-      
       const res = mockRes()
       await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
-
       expect(res.status).toHaveBeenCalledWith(503)
-      expect(res.json).toHaveBeenCalledWith({
-        error: 'Service unavailable',
-        message: expect.any(String),
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Service unavailable' }))
+    })
+
+    it('should return empty analytics snapshot when no data', async () => {
+      mockHgetall.mockResolvedValue(null)
+      const res = mockRes()
+      await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        totalPageViews: 0,
+        totalSessions: 0,
+      }))
+    })
+
+    it('should return snapshot when data exists', async () => {
+      mockHgetall.mockResolvedValue({
+        totalPageViews: '42',
+        totalSessions: '10',
+        firstTracked: '2026-01-01',
+        lastTracked: '2026-02-20',
+        'section:bio': '20',
+        'device:mobile': '15',
+        'hourly:14': '5',
       })
+      mockSmembers.mockResolvedValue(['2026-02-20'])
+      const res = mockRes()
+      await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        totalPageViews: 42,
+        totalSessions: 10,
+      }))
+    })
+
+    it('should require session for GET', async () => {
+      vi.mocked(authMod.validateSession).mockResolvedValue(false)
+      const res = mockRes()
+      await handler({ method: 'GET', query: {}, headers: {} } as any, res as any)
+      expect(res.status).toHaveBeenCalledWith(403)
+    })
+
+    it('should return heatmap data for type=heatmap', async () => {
+      mockLrange.mockResolvedValue([JSON.stringify({ x: 0.5, y: 0.7, el: 'button', ts: 123 })])
+      const res = mockRes()
+      await handler({ method: 'GET', query: { type: 'heatmap' }, headers: {} } as any, res as any)
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ heatmap: expect.any(Array) }))
     })
   })
 
   describe('POST /api/analytics', () => {
-    it('should require admin token', async () => {
+    it('should record a page_view event', async () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        body: { data: { pageViews: 1 } },
+        body: { type: 'page_view', meta: { sessionId: 'abc123' } },
         headers: {},
       } as any, res as any)
-
-      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({ ok: true })
     })
 
-    it('should update analytics data with valid admin token', async () => {
-      // Mock admin token validation
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
-      const analyticsData = {
-        pageViews: 150,
-        sectionViews: { bio: 75 },
-        clicks: {},
-        visitors: [],
-        redirects: {},
-        devices: {},
-        referrers: {},
-        browsers: {},
-        screenResolutions: {},
-        heatmap: [],
-        countries: {},
-        languages: {},
-      }
-
+    it('should record a section_view event', async () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        body: { data: analyticsData },
-        headers: { 'x-admin-token': 'valid-hash' },
+        body: { type: 'section_view', target: 'bio' },
+        headers: {},
       } as any, res as any)
-
-      expect(mockKvSet).toHaveBeenCalledWith(
-        'zardonic-analytics',
-        analyticsData,
-        { ex: 30 * 24 * 60 * 60 }
-      )
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith({ success: true })
+      expect(res.json).toHaveBeenCalledWith({ ok: true })
     })
 
-    it('should limit heatmap size to 500 points', async () => {
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
-      const heatmap = Array.from({ length: 600 }, (_, i) => ({
-        x: i,
-        y: i,
-        el: 'button',
-        ts: Date.now(),
-      }))
-
-      const analyticsData = {
-        pageViews: 1,
-        sectionViews: {},
-        clicks: {},
-        visitors: [],
-        redirects: {},
-        devices: {},
-        referrers: {},
-        browsers: {},
-        screenResolutions: {},
-        heatmap,
-        countries: {},
-        languages: {},
-      }
-
+    it('should reject invalid event type', async () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        body: { data: analyticsData },
-        headers: { 'x-admin-token': 'valid-hash' },
+        body: { type: 'unknown_type' },
+        headers: {},
       } as any, res as any)
-
-      // Verify heatmap was limited to last 500
-      const savedData = mockKvSet.mock.calls[0][1]
-      expect(savedData.heatmap).toHaveLength(500)
-    })
-
-    it('should return 400 if data is missing', async () => {
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
-      const res = mockRes()
-      await handler({
-        method: 'POST',
-        body: {},
-        headers: { 'x-admin-token': 'valid-hash' },
-      } as any, res as any)
-
       expect(res.status).toHaveBeenCalledWith(400)
+    })
+
+    it('should reject missing body', async () => {
+      const res = mockRes()
+      await handler({
+        method: 'POST',
+        body: null,
+        headers: {},
+      } as any, res as any)
+      expect(res.status).toHaveBeenCalledWith(400)
+    })
+
+    it('should reject excessively large body (>4096 bytes)', async () => {
+      const res = mockRes()
+      await handler({
+        method: 'POST',
+        body: { type: 'page_view', meta: { referrer: 'x'.repeat(5000) } },
+        headers: {},
+      } as any, res as any)
+      expect(res.status).toHaveBeenCalledWith(413)
     })
   })
 
   describe('DELETE /api/analytics', () => {
-    it('should require admin token', async () => {
+    it('should require session for DELETE', async () => {
+      vi.mocked(authMod.validateSession).mockResolvedValue(false)
       const res = mockRes()
-      await handler({
-        method: 'DELETE',
-        headers: {},
-      } as any, res as any)
-
-      expect(res.status).toHaveBeenCalledWith(401)
+      await handler({ method: 'DELETE', headers: {} } as any, res as any)
+      expect(res.status).toHaveBeenCalledWith(403)
     })
 
-    it('should delete analytics data with valid admin token', async () => {
-      mockKvGet.mockResolvedValueOnce('valid-hash')
-      
+    it('should delete analytics data with valid session', async () => {
+      mockSmembers.mockResolvedValue(['2026-02-20'])
       const res = mockRes()
-      await handler({
-        method: 'DELETE',
-        headers: { 'x-admin-token': 'valid-hash' },
-      } as any, res as any)
-
-      expect(mockKvDel).toHaveBeenCalledWith('zardonic-analytics')
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith({ success: true })
+      await handler({ method: 'DELETE', headers: {} } as any, res as any)
+      expect(res.json).toHaveBeenCalledWith({ ok: true })
     })
   })
 
   it('should return 405 for unsupported methods', async () => {
     const res = mockRes()
-    await handler({
-      method: 'PUT',
-      headers: {},
-    } as any, res as any)
-
+    await handler({ method: 'PUT', headers: {} } as any, res as any)
     expect(res.status).toHaveBeenCalledWith(405)
   })
 })
