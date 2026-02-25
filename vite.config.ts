@@ -15,6 +15,7 @@ export default defineConfig({
       fastRefresh: true,
     }),
     tailwindcss(),
+    ...(process.env.NODE_ENV === 'production' ? [obfuscator({})] : []),
   ],
   resolve: {
     alias: {

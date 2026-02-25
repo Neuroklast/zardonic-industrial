@@ -78,7 +78,7 @@ describe('Rate limiting integration', () => {
       mockApplyRateLimit.mockResolvedValue(true)
       mockKvGet.mockResolvedValue({ name: 'test' })
       const res = mockRes()
-      await kvHandler({ method: 'GET', query: { key: 'band-data' }, body: {}, headers: {} }, res)
+      await kvHandler({ method: 'GET', query: { key: 'zardonic-band-data' }, body: {}, headers: {} }, res)
       expect(mockApplyRateLimit).toHaveBeenCalled()
       expect(res.json).toHaveBeenCalledWith({ value: { name: 'test' } })
     })

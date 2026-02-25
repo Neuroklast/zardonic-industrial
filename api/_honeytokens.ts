@@ -207,6 +207,7 @@ export function serveFingerprintPixel(res: VercelResponse): void {
   res.setHeader('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Platform, Viewport-Width, Width')
   res.setHeader('Critical-CH', 'Sec-CH-UA, Sec-CH-UA-Mobile')
   res.setHeader('Vary', 'Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Platform')
+  setDefenseHeaders(res)
   res.status(200).send(PIXEL)
 }
 
