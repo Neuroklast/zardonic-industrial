@@ -9,7 +9,7 @@ interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null)
 
-const STORAGE_KEY = 'nk-locale'
+const STORAGE_KEY = 'zd-locale'
 
 function detectLocale(): Locale {
   try {
@@ -26,8 +26,43 @@ function detectLocale(): Locale {
   return 'en'
 }
 
+async function detectLocaleAsync(): Promise<Locale> {
+  try {
+    const res = await fetch('/api/geo')
+    if (res.ok) {
+      const data = await res.json()
+      if (data?.country === 'DE') return 'de'
+    }
+  } catch {
+    // geo detection failed, fall through
+  }
+
+  if (typeof navigator !== 'undefined' && navigator.language?.startsWith('de')) {
+    return 'de'
+  }
+
+  return 'en'
+}
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(detectLocale)
+
+  // Async geo detection on mount if no stored preference
+  useEffect(() => {
+    let cancelled = false
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored === 'en' || stored === 'de') return
+    } catch {
+      // localStorage unavailable
+    }
+
+    detectLocaleAsync().then((detected) => {
+      if (!cancelled) setLocaleState(detected)
+    })
+
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     document.documentElement.lang = locale

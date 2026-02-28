@@ -57,11 +57,11 @@ describe('LocaleContext', () => {
     )
 
     fireEvent.click(screen.getByTestId('switch-de'))
-    expect(localStorage.getItem('nk-locale')).toBe('de')
+    expect(localStorage.getItem('zd-locale')).toBe('de')
   })
 
   it('should restore locale from localStorage', () => {
-    localStorage.setItem('nk-locale', 'de')
+    localStorage.setItem('zd-locale', 'de')
     render(
       <LocaleProvider>
         <TestConsumer />

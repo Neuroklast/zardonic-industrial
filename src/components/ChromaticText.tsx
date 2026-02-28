@@ -1,67 +1,41 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useScrollAberration } from '@/hooks/use-scroll-aberration'
+import { cn } from '@/lib/utils'
+import { type ReactNode } from 'react'
 
 interface ChromaticTextProps {
   children: ReactNode
   className?: string
-  as?: keyof JSX.IntrinsicElements
+  intensity?: number
 }
 
 /**
  * ChromaticText — applies a scroll-driven chromatic aberration effect.
  *
- * On scroll, red and blue text-shadow offsets are computed from scroll velocity
- * and applied as CSS custom properties.  The effect fades out smoothly once
- * scrolling stops via requestAnimationFrame.
+ * Uses the useScrollAberration hook to drive oklch-based text-shadow offsets.
+ * The optional intensity prop scales the effect strength (default: 1).
  */
-export default function ChromaticText({ children, className = '', as: Tag = 'span' }: ChromaticTextProps) {
-  const ref = useRef<HTMLElement | null>(null)
-  const [offset, setOffset] = useState(0)
-  const lastScrollY = useRef(0)
-  const rafId = useRef<number | null>(null)
-  const velocityRef = useRef(0)
+export function ChromaticText({ children, className, intensity = 1 }: ChromaticTextProps) {
+  const { aberrationIntensity } = useScrollAberration()
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY
-      const delta = currentY - lastScrollY.current
-      lastScrollY.current = currentY
-      velocityRef.current = delta
-    }
+  const offsetX = aberrationIntensity * intensity * 2
+  const offsetY = aberrationIntensity * intensity * 0.5
 
-    const animate = () => {
-      // Decay the velocity smoothly
-      velocityRef.current *= 0.8
-      const clamped = Math.max(-12, Math.min(12, velocityRef.current))
-      setOffset(prev => {
-        const next = clamped
-        if (Math.abs(prev - next) < 0.05) return 0
-        return next
-      })
-      rafId.current = requestAnimationFrame(animate)
-    }
+  const textShadow = aberrationIntensity > 0.01
+    ? `
+        ${offsetX}px ${offsetY}px 0 oklch(0.50 0.22 25 / ${aberrationIntensity * 0.8}),
+        ${-offsetX}px ${-offsetY}px 0 oklch(0.60 0.24 200 / ${aberrationIntensity * 0.6}),
+        ${offsetY}px ${-offsetX}px 0 oklch(0.50 0.22 120 / ${aberrationIntensity * 0.5})
+      `
+    : 'none'
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    rafId.current = requestAnimationFrame(animate)
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-      if (rafId.current !== null) cancelAnimationFrame(rafId.current)
-    }
-  }, [])
-
-  const px = offset.toFixed(2)
-  const textShadow = offset === 0
-    ? 'none'
-    : `${px}px 0 0 rgba(255,0,0,0.6), -${px}px 0 0 rgba(0,0,255,0.6)`
-
-  const El = Tag as React.ElementType
   return (
-    <El
-      ref={ref as React.RefObject<HTMLElement>}
-      className={className}
-      style={{ textShadow, display: 'inline-block' }}
+    <span
+      className={cn('chromatic-aberration-text', className)}
+      style={{ textShadow }}
     >
       {children}
-    </El>
+    </span>
   )
 }
+
+export default ChromaticText
