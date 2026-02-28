@@ -36,6 +36,8 @@
     { "source": "/xmlrpc.php", "destination": "/api/denied?_src=/xmlrpc.php" },
     { "source": "/.env", "destination": "/api/denied?_src=/.env" },
     { "source": "/.git/:p*", "destination": "/api/denied?_src=/.git/:p*" },
-    { "source": "/sitemap-extended.xml", "destination": "/api/sitemap-trap" }
+    { "source": "/sitemap-extended.xml", "destination": "/api/sitemap-trap" },
+    { "source": "/sitemap.xml", "destination": "/api/sitemap-trap" },
+    { "source": "/share/:type/:id", "destination": "/api/og?type=:type&id=:id" }
   ]
 }
