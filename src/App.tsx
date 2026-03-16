@@ -29,6 +29,9 @@ import {
   slotsToShellMembers,
   SLOT_TYPE_LABELS,
 } from '@/lib/member-slots'
+import { generateMetaTags, applyMetaTags } from '@/lib/meta-tags'
+import { logActivity } from '@/lib/activity-log'
+import type { SiteConfig } from '@/lib/types'
 import {
   Play,
   Pause,
@@ -275,6 +278,23 @@ function App() {
   // Track page view on mount
   useEffect(() => {
     trackPageView()
+  }, [])
+
+  // Apply SEO meta tags
+  useEffect(() => {
+    try {
+      const siteConfig: Partial<SiteConfig> = {
+        siteName: 'ZARDONIC',
+        siteType: 'band',
+        description: 'ZARDONIC - Industrial Cyberpunk',
+        socialLinks: {},
+        genres: ['Industrial', 'Electronic', 'Cyberpunk'],
+      }
+      const tags = generateMetaTags(siteConfig as SiteConfig)
+      applyMetaTags(tags)
+    } catch {
+      // Meta tag generation is best-effort
+    }
   }, [])
 
   // Track heatmap clicks globally
@@ -648,9 +668,13 @@ In the end, Zardonic will unite listeners with Superstars.
 
   // Admin authentication handlers
   const handleAdminLogin = async (password: string, totpCode?: string): Promise<{ success: boolean; totpRequired?: boolean }> => {
+    logActivity('login-attempt', 'Admin login attempted')
     const result = await loginWithPassword(password, totpCode)
     if (result.success) {
       setIsOwner(true)
+      logActivity('login-success', 'Admin login successful')
+    } else {
+      logActivity('login-failure', 'Admin login failed')
     }
     return result
   }
@@ -661,6 +685,7 @@ In the end, Zardonic will unite listeners with Superstars.
       // Also need to store the hash in KV for the password check
       setAdminPasswordHash(await hashPassword(password))
       setIsOwner(true)
+      logActivity('password-change', 'Admin password set during initial setup')
     }
   }
 
@@ -668,6 +693,7 @@ In the end, Zardonic will unite listeners with Superstars.
     const success = await setupPassword(password)
     if (success) {
       setAdminPasswordHash(await hashPassword(password))
+      logActivity('password-change', 'Admin password changed')
     }
   }
 
@@ -3588,7 +3614,10 @@ In the end, Zardonic will unite listeners with Superstars.
         open={showConfigEditor}
         onClose={() => setShowConfigEditor(false)}
         overrides={adminSettings?.configOverrides || {}}
-        onSave={(configOverrides) => setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))}
+        onSave={(configOverrides) => {
+          setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))
+          logActivity('config-change', 'Configuration overrides updated')
+        }}
       />
 
       {/* Security admin dialogs — only rendered when admin is logged in */}
