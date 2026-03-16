@@ -17,7 +17,18 @@ import {
 import { submitContactForm, contactFormSchema } from '@/lib/contact'
 import { loginWithPassword, setupPassword, validateSession, hashPassword } from '@/lib/session'
 import { getSyncTimestamps, updateReleasesSync, updateGigsSync } from '@/lib/sync'
-import type { AdminSettings } from '@/lib/types'
+import type { AdminSettings, ShellMemberSlot } from '@/lib/types'
+import { ENTITY_SLOT_COUNT, TOTAL_MEMBER_SLOTS } from '@/lib/types'
+import {
+  buildDefaultMemberSlots,
+  migrateToMemberSlots,
+  isSlotFilled,
+  getFilledSlots,
+  updateMemberSlot,
+  clearMemberSlot,
+  slotsToShellMembers,
+  SLOT_TYPE_LABELS,
+} from '@/lib/member-slots'
 import {
   Play,
   Pause,
@@ -1299,22 +1310,21 @@ In the end, Zardonic will unite listeners with Superstars.
                 />
               </h2>
               {editMode && (
-                <Button onClick={() => {
-                  const members = adminSettings?.shellMembers || (adminSettings?.shellMember ? [adminSettings.shellMember] : [])
-                  setAdminSettings((prev) => ({
-                    ...(prev || {}),
-                    shellMembers: [...members, { name: 'New Member', role: '', bio: '' }],
-                  }))
-                }} className="gap-2">
-                  <Plus className="w-4 h-4" />
-                  Add Member
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="font-mono text-xs">{ENTITY_SLOT_COUNT} ENTITIES + {TOTAL_MEMBER_SLOTS - ENTITY_SLOT_COUNT} ENGINEER</Badge>
+                </div>
               )}
             </div>
 
             <div className="space-y-12">
-              {(adminSettings?.shellMembers || (adminSettings?.shellMember ? [adminSettings.shellMember] : [])).map((member, memberIndex) => (
-                <div key={memberIndex} className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
+              {(() => {
+                const memberSlots: ShellMemberSlot[] = migrateToMemberSlots(adminSettings?.shellMembers, adminSettings?.shellMember)
+                const displaySlots = editMode ? memberSlots : getFilledSlots(memberSlots)
+                return displaySlots.map((member, displayIndex) => {
+                  const slotIndex = editMode ? displayIndex : member.slotIndex
+                  const filled = isSlotFilled(member)
+                  return (
+                <div key={slotIndex} className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
                   <motion.div
                     className="relative aspect-square bg-muted border border-primary/30 overflow-hidden cyber-card"
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -1347,9 +1357,9 @@ In the end, Zardonic will unite listeners with Superstars.
                                 const reader = new FileReader()
                                 reader.onloadend = () => {
                                   setAdminSettings((prev) => {
-                                    const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                                    members[memberIndex] = { ...members[memberIndex], photo: reader.result as string }
-                                    return { ...(prev || {}), shellMembers: members }
+                                    const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                                    const updated = updateMemberSlot(slots, slotIndex, { photo: reader.result as string })
+                                    return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                                   })
                                 }
                                 reader.readAsDataURL(file)
@@ -1372,19 +1382,19 @@ In the end, Zardonic will unite listeners with Superstars.
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: 0.2 }}
                   >
-                    <div className="data-label mb-2">// PROFILE.DATA.STREAM [{String(memberIndex).padStart(2, '0')}]</div>
+                    <div className="data-label mb-2">// {SLOT_TYPE_LABELS[member.slotType]}.DATA.STREAM [{String(slotIndex).padStart(2, '0')}]</div>
                     <div className="cyber-grid p-4">
                       <div className="data-label mb-2">Subject</div>
                       {editMode ? (
                         <Input
                           value={member?.name || ''}
                           onChange={(e) => setAdminSettings((prev) => {
-                            const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                            members[memberIndex] = { ...members[memberIndex], name: e.target.value }
-                            return { ...(prev || {}), shellMembers: members }
+                            const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                            const updated = updateMemberSlot(slots, slotIndex, { name: e.target.value })
+                            return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                           })}
                           className="bg-card border-border font-mono text-xl"
-                          placeholder="Member name"
+                          placeholder={member.slotType === 'engineer' ? 'Engineer name' : 'Member name'}
                         />
                       ) : (
                         <p className="text-xl font-bold font-mono hover-chromatic">{member?.name || 'Unknown'}</p>
@@ -1397,12 +1407,12 @@ In the end, Zardonic will unite listeners with Superstars.
                         <Input
                           value={member?.role || ''}
                           onChange={(e) => setAdminSettings((prev) => {
-                            const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                            members[memberIndex] = { ...members[memberIndex], role: e.target.value }
-                            return { ...(prev || {}), shellMembers: members }
+                            const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                            const updated = updateMemberSlot(slots, slotIndex, { role: e.target.value })
+                            return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                           })}
                           className="bg-card border-border font-mono"
-                          placeholder="Member role"
+                          placeholder={member.slotType === 'engineer' ? 'Sound Engineer' : 'Member role'}
                         />
                       ) : (
                         <p className="text-muted-foreground font-mono">{member?.role || ''}</p>
@@ -1415,12 +1425,12 @@ In the end, Zardonic will unite listeners with Superstars.
                         <Textarea
                           value={member?.bio || ''}
                           onChange={(e) => setAdminSettings((prev) => {
-                            const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                            members[memberIndex] = { ...members[memberIndex], bio: e.target.value }
-                            return { ...(prev || {}), shellMembers: members }
+                            const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                            const updated = updateMemberSlot(slots, slotIndex, { bio: e.target.value })
+                            return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                           })}
                           className="bg-card border-border font-mono min-h-[100px]"
-                          placeholder="Member bio"
+                          placeholder={member.slotType === 'engineer' ? 'Engineer bio' : 'Member bio'}
                         />
                       ) : (
                         <p className="text-foreground/90 leading-relaxed font-mono text-sm">{member?.bio || ''}</p>
@@ -1437,12 +1447,11 @@ In the end, Zardonic will unite listeners with Superstars.
                               <Input
                                 value={member?.social?.[platform] || ''}
                                 onChange={(e) => setAdminSettings((prev) => {
-                                  const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                                  members[memberIndex] = {
-                                    ...members[memberIndex],
-                                    social: { ...(members[memberIndex]?.social || {}), [platform]: e.target.value },
-                                  }
-                                  return { ...(prev || {}), shellMembers: members }
+                                  const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                                  const updated = updateMemberSlot(slots, slotIndex, {
+                                    social: { ...(member?.social || {}), [platform]: e.target.value },
+                                  })
+                                  return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                                 })}
                                 className="bg-card border-border font-mono text-xs flex-1"
                                 placeholder={`https://${platform}.com/...`}
@@ -1469,31 +1478,33 @@ In the end, Zardonic will unite listeners with Superstars.
                       </div>
                     )}
 
-                    {editMode && (
+                    {editMode && filled && (
                       <Button
                         variant="destructive"
                         size="sm"
                         className="mt-2"
                         onClick={() => setAdminSettings((prev) => {
-                          const members = [...(prev?.shellMembers || (prev?.shellMember ? [prev.shellMember] : []))]
-                          members.splice(memberIndex, 1)
-                          return { ...(prev || {}), shellMembers: members }
+                          const slots = migrateToMemberSlots(prev?.shellMembers, prev?.shellMember)
+                          const updated = clearMemberSlot(slots, slotIndex)
+                          return { ...(prev || {}), shellMembers: slotsToShellMembers(updated) }
                         })}
                       >
                         <Trash className="w-4 h-4 mr-1" />
-                        Remove Member
+                        Clear Slot
                       </Button>
                     )}
 
                     <div className="flex items-center gap-2 text-[9px] text-primary/40 pt-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" />
-                      <span>SESSION ACTIVE</span>
+                      <span>{SLOT_TYPE_LABELS[member.slotType]} SLOT {filled ? 'ACTIVE' : 'VACANT'}</span>
                     </div>
                   </motion.div>
                 </div>
-              ))}
+                  )
+                })
+              })()}
 
-              {(adminSettings?.shellMembers || (adminSettings?.shellMember ? [adminSettings.shellMember] : [])).length === 0 && !editMode && (
+              {getFilledSlots(migrateToMemberSlots(adminSettings?.shellMembers, adminSettings?.shellMember)).length === 0 && !editMode && (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground font-mono">No members configured</p>
                 </div>
