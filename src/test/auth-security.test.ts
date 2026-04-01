@@ -19,7 +19,9 @@ vi.mock('@upstash/redis', () => {
 // Mock rate limiter — always allow requests in tests
 vi.mock('../../api/_ratelimit.js', () => ({
   applyRateLimit: vi.fn().mockResolvedValue(true),
+  applyAuthRateLimit: vi.fn().mockResolvedValue(true),
   getClientIp: vi.fn().mockReturnValue('1.2.3.4'),
+  hashIp: vi.fn().mockReturnValue('abc123def456abc123def456abc123def456abc123def456abc123def456abc1'),
 }))
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,7 +2,7 @@ import { Redis } from '@upstash/redis'
 import { scrypt, randomBytes, createHash, timingSafeEqual as cryptoTimingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { applyRateLimit, getClientIp } from './_ratelimit.js'
+import { applyAuthRateLimit, getClientIp, hashIp } from './_ratelimit.js'
 import {
   authLoginSchema,
   authSetupSchema,
@@ -20,6 +20,9 @@ const SESSION_TTL = 14400 // 4 hours
 const COOKIE_NAME = 'zd-session'
 const TOTP_ISSUER = 'ZARDONIC Admin'
 const TOTP_KEY = 'zd-admin-totp-secret'
+// OWASP A07:2021 — Brute-force protection: max failed TOTP attempts before lockout
+const TOTP_MAX_ATTEMPTS = 5
+const TOTP_LOCKOUT_SECONDS = 900 // 15 minutes
 
 const isKVConfigured = () => {
   return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
@@ -206,7 +209,8 @@ function validateSetupToken(setupToken: string | undefined): boolean {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method === 'OPTIONS') return res.status(200).end()
 
-  const allowed = await applyRateLimit(req, res)
+  // OWASP A07:2021 — Use stricter auth-specific rate limit (3/min per IP)
+  const allowed = await applyAuthRateLimit(req, res)
   if (!allowed) return
 
   if (!isKVConfigured()) {
@@ -230,6 +234,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'POST') {
+      // OWASP A08:2021 — Limit request body size on auth endpoints (max 1 KB).
+      // Check Content-Length header first as an early gate before inspecting the parsed body.
+      const contentLength = parseInt(req.headers['content-length'] as string || '0', 10)
+      if (contentLength > 1024) {
+        return res.status(413).json({ error: 'Request body too large' })
+      }
+      const bodyStr = JSON.stringify(req.body ?? {})
+      if (bodyStr.length > 1024) {
+        return res.status(413).json({ error: 'Request body too large' })
+      }
+
       if (!req.body || typeof req.body !== 'object') {
         return res.status(400).json({ error: 'Request body is required' })
       }
@@ -347,6 +362,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // --- Login flow ---
       if ((req.body as Record<string, unknown>).password && !action) {
+        const ip = getClientIp(req)
+        // OWASP A07:2021 — TOTP brute-force protection: check lockout before any auth logic
+        // Use hashIp() (with RATE_LIMIT_SALT) for consistent, salted IP hashing across the application
+        const totpLockKey = `zd-totp-lockout:${hashIp(ip)}`
+        const lockoutActive = await kv.get(totpLockKey)
+        if (lockoutActive) {
+          return res.status(429).json({ error: 'Too many failed attempts. Account temporarily locked. Please try again later.' })
+        }
+
         const totpSecret = await kv.get<string>(TOTP_KEY)
 
         const schema = totpSecret ? authLoginTotpSchema : authLoginSchema
@@ -364,9 +388,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (!parsedWithTotp.totpCode) {
             return res.status(403).json({ error: 'TOTP code required', totpRequired: true })
           }
+          // OWASP A07:2021 — Track failed TOTP attempts; lock out after TOTP_MAX_ATTEMPTS
+          // Use hashIp() (with RATE_LIMIT_SALT) for consistent, salted IP hashing across the application
+          const totpAttemptsKey = `zd-totp-attempts:${hashIp(ip)}`
           if (!verifyTotpCode(totpSecret, parsedWithTotp.totpCode)) {
+            const attempts = await kv.incr(totpAttemptsKey)
+            if (attempts === 1) {
+              // Set TTL on the attempts counter (reset window on first failure)
+              await kv.expire(totpAttemptsKey, TOTP_LOCKOUT_SECONDS)
+            }
+            if (attempts >= TOTP_MAX_ATTEMPTS) {
+              await kv.set(totpLockKey, 1, { ex: TOTP_LOCKOUT_SECONDS })
+              await kv.del(totpAttemptsKey)
+              return res.status(429).json({ error: 'Too many failed TOTP attempts. Account locked for 15 minutes.' })
+            }
             return res.status(403).json({ error: 'Invalid TOTP code', totpRequired: true })
           }
+          // Successful TOTP — clear attempt counter
+          await kv.del(totpAttemptsKey)
         }
 
         // Migration: rehash legacy SHA-256 to scrypt on successful login

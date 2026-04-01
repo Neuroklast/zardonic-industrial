@@ -118,8 +118,8 @@ describe('Spotify API handler — validation', () => {
     expect(res.status).toHaveBeenCalledWith(400)
   })
 
+  // With refine-based schema validation, these fail at schema level before any token fetch
   it('returns 400 when action=artist but id is missing', async () => {
-    mockFetchWithRetry.mockResolvedValueOnce(tokenResponse())
     const res = mockRes()
     await handler(mockReq({ action: 'artist' }), res as unknown as VercelResponse)
     expect(res.status).toHaveBeenCalledWith(400)
@@ -127,21 +127,18 @@ describe('Spotify API handler — validation', () => {
   })
 
   it('returns 400 when action=top-tracks but id is missing', async () => {
-    mockFetchWithRetry.mockResolvedValueOnce(tokenResponse())
     const res = mockRes()
     await handler(mockReq({ action: 'top-tracks' }), res as unknown as VercelResponse)
     expect(res.status).toHaveBeenCalledWith(400)
   })
 
   it('returns 400 when action=albums but id is missing', async () => {
-    mockFetchWithRetry.mockResolvedValueOnce(tokenResponse())
     const res = mockRes()
     await handler(mockReq({ action: 'albums' }), res as unknown as VercelResponse)
     expect(res.status).toHaveBeenCalledWith(400)
   })
 
   it('returns 400 when action=search but query is missing', async () => {
-    mockFetchWithRetry.mockResolvedValueOnce(tokenResponse())
     const res = mockRes()
     await handler(mockReq({ action: 'search' }), res as unknown as VercelResponse)
     expect(res.status).toHaveBeenCalledWith(400)
@@ -188,7 +185,7 @@ describe('Spotify API handler — action: artist', () => {
       .mockResolvedValueOnce({ ok: false, status: 404, json: vi.fn() })
 
     const res = mockRes()
-    await handler(mockReq({ action: 'artist', id: 'not-found' }), res as unknown as VercelResponse)
+    await handler(mockReq({ action: 'artist', id: 'notfound' }), res as unknown as VercelResponse)
 
     expect(res.status).toHaveBeenCalledWith(404)
   })

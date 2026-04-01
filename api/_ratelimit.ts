@@ -75,6 +75,29 @@ function getRatelimit(): Ratelimit | null {
 }
 
 /**
+ * OWASP A07:2021 — Broken Authentication.
+ * Stricter rate limiter for authentication endpoints.
+ * Sliding window: 3 requests per 60 seconds per (hashed) IP.
+ * Applied exclusively on login / auth mutation paths.
+ */
+let authRatelimit: Ratelimit | null = null
+
+function getAuthRatelimit(): Ratelimit | null {
+  if (authRatelimit) return authRatelimit
+  if (!isKVConfigured()) return null
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  })
+  authRatelimit = new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(3, '60 s'),
+    prefix: 'zd-auth-rl',
+  })
+  return authRatelimit
+}
+
+/**
  * Apply rate limiting to a request.
  *
  * Returns `true` if the request is allowed, `false` + sends a 429 response
@@ -105,6 +128,42 @@ export async function applyRateLimit(req: VercelRequest, res: VercelResponse): P
     // If rate limiting itself fails (e.g. KV outage), fail closed to prevent
     // brute-force bypass by destabilizing the KV backend.
     console.error('Rate limit check failed, blocking request:', err)
+    res.status(503).json({
+      error: 'Service Unavailable',
+      message: 'Rate limiting service is temporarily unavailable. Please try again later.',
+    })
+    return false
+  }
+}
+
+/**
+ * OWASP A07:2021 — Broken Authentication.
+ * Apply the stricter auth-specific rate limit (3 per 60 s) to a request.
+ * Use this on all authentication mutation endpoints (login, password change, etc.)
+ * in addition to or instead of the global applyRateLimit.
+ *
+ * Returns `true` if allowed, `false` + 429 sent if limit exceeded.
+ */
+export async function applyAuthRateLimit(req: VercelRequest, res: VercelResponse): Promise<boolean> {
+  const rl = getAuthRatelimit()
+  if (!rl) return true // KV not configured — allow (dev mode)
+
+  const ip = getClientIp(req)
+  const identifier = hashIp(ip)
+
+  try {
+    const { success } = await rl.limit(identifier)
+    if (!success) {
+      res.status(429).setHeader('Retry-After', '60').json({
+        error: 'Too Many Requests',
+        message: 'Too many authentication attempts. Please wait 60 seconds before trying again.',
+      })
+      return false
+    }
+    return true
+  } catch (err) {
+    // Fail closed — a KV outage must not bypass auth rate limiting.
+    console.error('Auth rate limit check failed, blocking request:', err)
     res.status(503).json({
       error: 'Service Unavailable',
       message: 'Rate limiting service is temporarily unavailable. Please try again later.',
