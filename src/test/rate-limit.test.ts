@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // ---------------------------------------------------------------------------
 // Mock @vercel/kv (for reset-password handler) and @upstash/redis (for kv handler)
@@ -43,11 +44,8 @@ vi.mock('../../api/_blocklist.js', () => ({
   isHardBlocked: vi.fn().mockResolvedValue(false),
 }))
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> }
-
-function mockRes(): Res {
-  const res: Res = {
+function mockRes() {
+  const res = {
     status: vi.fn(),
     json: vi.fn(),
     end: vi.fn(),
@@ -55,7 +53,7 @@ function mockRes(): Res {
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 const { default: kvHandler } = await import('../../api/kv.js')
@@ -78,14 +76,14 @@ describe('Rate limiting integration', () => {
       mockApplyRateLimit.mockResolvedValue(true)
       mockKvGet.mockResolvedValue({ name: 'test' })
       const res = mockRes()
-      await kvHandler({ method: 'GET', query: { key: 'zardonic-band-data' }, body: {}, headers: {} }, res)
+      await kvHandler({ method: 'GET', query: { key: 'zardonic-band-data' }, body: {}, headers: {} } as unknown as VercelRequest, res)
       expect(mockApplyRateLimit).toHaveBeenCalled()
       expect(res.json).toHaveBeenCalledWith({ value: { name: 'test' } })
     })
 
     it('blocks request with 429 when rate limit exceeded', async () => {
       // Simulate rate limiter sending 429 and returning false
-      mockApplyRateLimit.mockImplementation(async (_req: unknown, res: Res) => {
+      ;(mockApplyRateLimit as ReturnType<typeof vi.fn>).mockImplementation(async (_req: unknown, res: any) => {
         res.status(429).json({
           error: 'Too Many Requests',
           message: 'Rate limit exceeded. Please try again in a few seconds.',
@@ -93,7 +91,7 @@ describe('Rate limiting integration', () => {
         return false
       })
       const res = mockRes()
-      await kvHandler({ method: 'GET', query: { key: 'band-data' }, body: {}, headers: {} }, res)
+      await kvHandler({ method: 'GET', query: { key: 'band-data' }, body: {}, headers: {} } as unknown as VercelRequest, res)
       expect(res.status).toHaveBeenCalledWith(429)
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Too Many Requests' }))
       // KV should not be called
@@ -102,13 +100,13 @@ describe('Rate limiting integration', () => {
 
     it('does not rate limit OPTIONS requests', async () => {
       const res = mockRes()
-      await kvHandler({ method: 'OPTIONS', query: {}, body: {}, headers: {} }, res)
+      await kvHandler({ method: 'OPTIONS', query: {}, body: {}, headers: {} } as unknown as VercelRequest, res)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(mockApplyRateLimit).not.toHaveBeenCalled()
     })
 
     it('rate limits POST requests', async () => {
-      mockApplyRateLimit.mockImplementation(async (_req: unknown, res: Res) => {
+      ;(mockApplyRateLimit as ReturnType<typeof vi.fn>).mockImplementation(async (_req: unknown, res: any) => {
         res.status(429).json({ error: 'Too Many Requests' })
         return false
       })
@@ -118,7 +116,7 @@ describe('Rate limiting integration', () => {
         query: {},
         body: { key: 'band-data', value: 'test' },
         headers: {},
-      }, res)
+      } as unknown as VercelRequest, res)
       expect(res.status).toHaveBeenCalledWith(429)
       expect(mockKvSet).not.toHaveBeenCalled()
     })
@@ -134,14 +132,14 @@ describe('Rate limiting integration', () => {
         query: {},
         body: { email: 'wrong@example.com' },
         headers: {},
-      }, res)
+      } as unknown as VercelRequest, res)
       expect(mockApplyRateLimit).toHaveBeenCalled()
       // Should succeed (even for wrong email — returns same message)
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
     })
 
     it('blocks password reset attempts when rate limited', async () => {
-      mockApplyRateLimit.mockImplementation(async (_req: unknown, res: Res) => {
+      ;(mockApplyRateLimit as ReturnType<typeof vi.fn>).mockImplementation(async (_req: unknown, res: any) => {
         res.status(429).json({
           error: 'Too Many Requests',
           message: 'Rate limit exceeded. Please try again in a few seconds.',
@@ -154,7 +152,7 @@ describe('Rate limiting integration', () => {
         query: {},
         body: { email: 'admin@example.com' },
         headers: {},
-      }, res)
+      } as unknown as VercelRequest, res)
       expect(res.status).toHaveBeenCalledWith(429)
     })
   })
@@ -207,7 +205,7 @@ describe('Rate limit utility: getClientIp logic', () => {
   })
 
   it('falls back to 127.0.0.1 when no forwarded header', () => {
-    const forwarded = undefined
+    const forwarded: string | undefined = undefined
     const ip = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : '127.0.0.1'
     expect(ip).toBe('127.0.0.1')
   })

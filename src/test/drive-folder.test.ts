@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // ---------------------------------------------------------------------------
 // Mock rate limiter
@@ -19,7 +20,7 @@ vi.stubGlobal('fetch', mockFetch)
 
 type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn> }
 
-function mockRes(): Res {
+function mockRes() {
   const res: Res = {
     status: vi.fn(),
     json: vi.fn(),
@@ -27,7 +28,7 @@ function mockRes(): Res {
   }
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 const { default: handler } = await import('../../api/drive-folder.js')
@@ -42,30 +43,30 @@ describe('Drive folder API (Google Drive v3)', () => {
 
   it('rejects non-GET methods with 405', async () => {
     const res = mockRes()
-    await handler({ method: 'POST', query: {}, headers: {} }, res)
+    await handler({ method: 'POST', query: {}, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(405)
     expect(res.json).toHaveBeenCalledWith({ error: 'Method not allowed' })
   })
 
   it('returns 400 for missing folderId', async () => {
     const res = mockRes()
-    await handler({ method: 'GET', query: {}, headers: {} }, res)
+    await handler({ method: 'GET', query: {}, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(400)
   })
 
   it('returns 400 for invalid folderId', async () => {
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'bad folder!@#' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'bad folder!@#' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(400)
   })
 
   it('blocks requests when rate limited', async () => {
-    mockApplyRateLimit.mockImplementation(async (_req: unknown, res: Res) => {
+    (mockApplyRateLimit as ReturnType<typeof vi.fn>).mockImplementation(async (_req: unknown, res: Res) => {
       res.status(429).json({ error: 'Too Many Requests' })
       return false
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(429)
     expect(mockFetch).not.toHaveBeenCalled()
   })
@@ -76,7 +77,7 @@ describe('Drive folder API (Google Drive v3)', () => {
       json: async () => ({ files: [] }),
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'testFolder123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'testFolder123' }, headers: {} } as unknown as VercelRequest, res)
 
     expect(mockFetch).toHaveBeenCalledTimes(1)
     const calledUrl = mockFetch.mock.calls[0][0] as string
@@ -100,7 +101,7 @@ describe('Drive folder API (Google Drive v3)', () => {
       }),
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'testFolder123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'testFolder123' }, headers: {} } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledTimes(1)
     const { images } = res.json.mock.calls[0][0]
@@ -129,14 +130,14 @@ describe('Drive folder API (Google Drive v3)', () => {
       json: async () => ({ files: [] }),
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.setHeader).toHaveBeenCalledWith('Cache-Control', 'public, max-age=300, s-maxage=600')
   })
 
   it('returns 502 when Google API returns an error', async () => {
     mockFetch.mockResolvedValue({ ok: false, status: 403 })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(502)
     expect(res.json).toHaveBeenCalledWith({ error: 'Failed to list Drive folder' })
   })
@@ -144,7 +145,7 @@ describe('Drive folder API (Google Drive v3)', () => {
   it('returns 502 when fetch throws a network error', async () => {
     mockFetch.mockRejectedValue(new Error('Network failure'))
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(502)
     expect(res.json).toHaveBeenCalledWith({ error: 'Failed to list Drive folder' })
   })
@@ -155,7 +156,7 @@ describe('Drive folder API (Google Drive v3)', () => {
       json: async () => ({ files: [] }),
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.json).toHaveBeenCalledWith({ images: [] })
   })
 
@@ -169,7 +170,7 @@ describe('Drive folder API (Google Drive v3)', () => {
       }),
     })
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     const { images } = res.json.mock.calls[0][0]
     expect(images[0].caption).toBe('my.photo')
   })
@@ -177,7 +178,7 @@ describe('Drive folder API (Google Drive v3)', () => {
   it('returns 503 when GOOGLE_DRIVE_API_KEY is not set', async () => {
     delete process.env.GOOGLE_DRIVE_API_KEY
     const res = mockRes()
-    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} }, res)
+    await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
     expect(res.status).toHaveBeenCalledWith(503)
     expect(res.json).toHaveBeenCalledWith({ error: 'Service unavailable' })
     expect(mockFetch).not.toHaveBeenCalled()

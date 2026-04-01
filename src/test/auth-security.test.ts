@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // ---------------------------------------------------------------------------
 // Mock @upstash/redis — must be declared before importing the handler
@@ -24,7 +25,7 @@ vi.mock('../../api/_ratelimit.js', () => ({
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn> }
 
-function mockRes(): Res {
+function mockRes() {
   const res: Res = {
     status: vi.fn(),
     json: vi.fn(),
@@ -34,7 +35,7 @@ function mockRes(): Res {
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 const { default: handler, hashPassword } = await import('../../api/auth.js')
@@ -64,7 +65,7 @@ describe('Auth security: password change requires currentPassword', () => {
       method: 'POST',
       body: { newPassword: 'newSecurePassword123' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     // Should be rejected because currentPassword is now required (Zod validation)
     expect(res.status).toHaveBeenCalledWith(400)
@@ -86,7 +87,7 @@ describe('Auth security: password change requires currentPassword', () => {
       method: 'POST',
       body: { currentPassword: 'wrongPassword', newPassword: 'newSecurePassword123' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(403)
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Current password is incorrect' }))
@@ -122,7 +123,7 @@ describe('Auth security: session invalidation on password change', () => {
       method: 'POST',
       body: { currentPassword: 'oldPassword', newPassword: 'newSecurePassword123' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
     // Verify scan was called to find sessions
@@ -156,7 +157,7 @@ describe('Auth security: session TTL is 4 hours', () => {
       method: 'POST',
       body: { password: 'testPassword' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
     // Check session is created with 4-hour TTL (14400 seconds)
@@ -191,7 +192,7 @@ describe('Auth security: client fingerprint binding', () => {
       method: 'POST',
       body: { password: 'testPassword' },
       headers: { 'user-agent': 'Mozilla/5.0', 'x-forwarded-for': '1.2.3.4' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
     // Session should include a fingerprint
@@ -218,7 +219,7 @@ describe('Auth security: client fingerprint binding', () => {
     await handler({
       method: 'GET',
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'DifferentBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonCall = res.json.mock.calls[0][0]
     // Session should be invalid due to fingerprint mismatch

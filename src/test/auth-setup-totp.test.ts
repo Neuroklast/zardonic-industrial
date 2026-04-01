@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 // ---------------------------------------------------------------------------
 // Mock @upstash/redis — must be declared before importing the handler
@@ -36,7 +37,7 @@ vi.mock('../../api/_ratelimit.js', () => ({
 
 type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn> }
 
-function mockRes(): Res {
+function mockRes(): Res & VercelResponse {
   const res: Res = {
     status: vi.fn(),
     json: vi.fn(),
@@ -46,7 +47,7 @@ function mockRes(): Res {
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as Res & VercelResponse
 }
 
 const { default: handler, hashPassword } = await import('../../api/auth.js')
@@ -69,7 +70,7 @@ describe('Auth security: setup token protection', () => {
       method: 'POST',
       body: { password: 'securePass123', action: 'setup' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
   })
@@ -83,7 +84,7 @@ describe('Auth security: setup token protection', () => {
       method: 'POST',
       body: { password: 'securePass123', action: 'setup' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(403)
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Invalid setup token' }))
@@ -98,7 +99,7 @@ describe('Auth security: setup token protection', () => {
       method: 'POST',
       body: { password: 'securePass123', action: 'setup', setupToken: 'wrong-token' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(403)
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: 'Invalid setup token' }))
@@ -114,7 +115,7 @@ describe('Auth security: setup token protection', () => {
       method: 'POST',
       body: { password: 'securePass123', action: 'setup', setupToken: 'my-secret-token' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
   })
@@ -127,7 +128,7 @@ describe('Auth security: setup token protection', () => {
     await handler({
       method: 'GET',
       headers: {},
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonData = res.json.mock.calls[0][0]
     expect(jsonData.setupTokenRequired).toBe(true)
@@ -140,7 +141,7 @@ describe('Auth security: setup token protection', () => {
     await handler({
       method: 'GET',
       headers: {},
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonData = res.json.mock.calls[0][0]
     expect(jsonData.setupTokenRequired).toBe(false)
@@ -163,7 +164,7 @@ describe('Auth security: TOTP 2FA', () => {
     await handler({
       method: 'GET',
       headers: {},
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonData = res.json.mock.calls[0][0]
     expect(jsonData.totpEnabled).toBe(false)
@@ -179,7 +180,7 @@ describe('Auth security: TOTP 2FA', () => {
     await handler({
       method: 'GET',
       headers: {},
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonData = res.json.mock.calls[0][0]
     expect(jsonData.totpEnabled).toBe(true)
@@ -193,7 +194,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { action: 'totp-setup' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(401)
   })
@@ -214,7 +215,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { action: 'totp-setup' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     const jsonData = res.json.mock.calls[0][0]
     expect(jsonData.success).toBe(true)
@@ -238,7 +239,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { action: 'totp-setup' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(409)
   })
@@ -257,7 +258,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { password: 'testPassword' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(403)
     const jsonData = res.json.mock.calls[0][0]
@@ -279,7 +280,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { password: 'testPassword' },
       headers: { 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledWith({ success: true })
   })
@@ -300,7 +301,7 @@ describe('Auth security: TOTP 2FA', () => {
       method: 'POST',
       body: { action: 'totp-disable', password: 'wrong', code: '123456' },
       headers: { cookie: 'zd-session=valid-token', 'user-agent': 'TestBrowser' },
-    }, res)
+    } as unknown as VercelRequest, res)
 
     expect(res.status).toHaveBeenCalledWith(403)
   })
