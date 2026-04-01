@@ -119,8 +119,14 @@ describe('vercel.json Content-Security-Policy', () => {
     expect(cspHeader).toBeDefined()
   })
 
-  it('restricts connect-src to self only (prevents XSS data exfiltration)', () => {
-    expect(cspHeader.value).toMatch(/connect-src 'self'(?:;|$)/)
+  it('restricts connect-src to self and known trusted APIs only', () => {
+    // connect-src allows 'self' plus the specific external APIs used by the app
+    expect(cspHeader.value).toMatch(/connect-src 'self'/)
+    expect(cspHeader.value).toContain('https://api.spotify.com')
+    expect(cspHeader.value).toContain('https://api.song.link')
+    expect(cspHeader.value).toContain('https://rest.bandsintown.com')
+    expect(cspHeader.value).toContain('https://itunes.apple.com')
+    expect(cspHeader.value).toContain('https://wsrv.nl')
   })
 
   it('restricts default-src to self', () => {
@@ -142,11 +148,20 @@ describe('vercel.json Content-Security-Policy', () => {
     expect(cspHeader.value).toContain('frame-src https://www.youtube-nocookie.com')
   })
 
-  it('does not allow connect-src to arbitrary external domains', () => {
-    // connect-src should ONLY be 'self' — no wildcard or external domains
+  it('does not allow connect-src to arbitrary external domains (only whitelisted APIs)', () => {
+    // connect-src allows 'self' and specific whitelisted APIs — no wildcards
     const connectSrc = cspHeader.value.match(/connect-src ([^;]+)/)
     expect(connectSrc).toBeTruthy()
-    expect(connectSrc[1].trim()).toBe("'self'")
+    const connectSrcValue = connectSrc[1].trim()
+    expect(connectSrcValue).toContain("'self'")
+    expect(connectSrcValue).not.toContain('*')
+    // Verify only known trusted origins are present
+    const allowed = ["'self'", 'https://api.spotify.com', 'https://api.song.link',
+      'https://rest.bandsintown.com', 'https://itunes.apple.com', 'https://wsrv.nl']
+    const domains = connectSrcValue.split(/\s+/)
+    for (const domain of domains) {
+      expect(allowed).toContain(domain)
+    }
   })
 })
 

@@ -123,6 +123,11 @@ export default defineConfig(({ mode }) => {
             return `/artists/${encodeURIComponent(artist)}/events?${params.toString()}`
           },
         },
+        '/api/spotify': {
+          target: 'https://api.spotify.com',
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(/^\/api\/spotify/, ''),
+        },
       },
     },
   };
