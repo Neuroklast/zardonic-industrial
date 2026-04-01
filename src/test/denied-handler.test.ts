@@ -91,12 +91,12 @@ describe('Denied handler: robots.txt access violation response', () => {
     const promise = deniedHandler(req, res)
     await vi.advanceTimersByTimeAsync(10000)
     return promise
-  } as unknown as VercelRequest
+  }
 
   it('returns 403 with HTML content', async () => {
     const res = mockRes()
     await runHandler(
-      { method: 'GET', query: { _src: '/admin/login' }, headers: { 'user-agent': 'TestBot/1.0' }, url: '/api/denied' },
+      { method: 'GET', query: { _src: '/admin/login' }, headers: { 'user-agent': 'TestBot/1.0' }, url: '/api/denied' } as unknown as VercelRequest,
       res,
     )
     expect(res.status).toHaveBeenCalledWith(403)
