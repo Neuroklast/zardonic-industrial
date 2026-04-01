@@ -219,6 +219,13 @@ describe('CMS Schemas — sectionsReorderSchema', () => {
     expect(result.success).toBe(true)
   })
 
+  it('accepts valid CUID2-formatted ids', () => {
+    const result = sectionsReorderSchema.safeParse({
+      order: [{ id: 'clh1234567890abcdefghijklmn', sortOrder: 0 }],
+    })
+    expect(result.success).toBe(true)
+  })
+
   it('rejects non-cuid ids', () => {
     const result = sectionsReorderSchema.safeParse({
       order: [{ id: 'not-a-cuid', sortOrder: 0 }],

@@ -5,12 +5,16 @@
  */
 
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import type { Prisma } from '@prisma/client'
 import { prisma } from '../_prisma.js'
 import { validateSession } from '../auth.js'
 import { applyRateLimit } from '../_ratelimit.js'
 import { logActivity } from '../_activity-log.js'
 import { validate } from '../_schemas.js'
 import { sectionCreateSchema, sectionUpdateSchema, sectionsReorderSchema } from '../_cms-schemas.js'
+
+type SectionCreateData = Prisma.SectionCreateInput
+type SectionUpdateData = Prisma.SectionUpdateInput
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('X-Content-Type-Options', 'nosniff')
@@ -44,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'POST') {
       const parsed = validate(sectionCreateSchema, req.body)
       if (!parsed.success) return res.status(400).json({ error: parsed.error })
-      const section = await prisma.section.create({ data: parsed.data as Parameters<typeof prisma.section.create>[0]['data'] })
+      const section = await prisma.section.create({ data: parsed.data as SectionCreateData })
       await logActivity({ action: 'create', entity: 'section', entityId: section.id, req })
       return res.status(201).json(section)
     }
@@ -53,7 +57,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method === 'PUT' && id) {
       const parsed = validate(sectionUpdateSchema, req.body)
       if (!parsed.success) return res.status(400).json({ error: parsed.error })
-      const section = await prisma.section.update({ where: { id }, data: parsed.data as Parameters<typeof prisma.section.update>[0]['data'] })
+      const section = await prisma.section.update({ where: { id }, data: parsed.data as SectionUpdateData })
       await logActivity({ action: 'update', entity: 'section', entityId: id, req })
       return res.status(200).json(section)
     }

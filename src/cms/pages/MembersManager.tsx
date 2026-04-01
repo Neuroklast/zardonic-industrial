@@ -2,7 +2,7 @@
  * MembersManager — edit all 8 shell member slots.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CmsTopBar } from '../components/CmsTopBar'
 import { ImageUploader } from '../components/ImageUploader'
 import { useMembers, useUpdateMember } from '../hooks/useCmsApi'
@@ -28,17 +28,20 @@ export function MembersManager() {
 
   // Build 8-slot grid including empty slots
   const slots: (Member | null)[] = Array.from({ length: 8 }, (_, i) => members.find(m => m.slotIndex === i) ?? null)
+  // Keep a stable ref to avoid stale closure in the editing effect
+  const slotsRef = useRef(slots)
+  slotsRef.current = slots
 
   useEffect(() => {
     if (editing !== null) {
-      const member = slots[editing]
+      const member = slotsRef.current[editing]
       if (member) {
         setForm({ name: member.name, role: member.role, slotIndex: member.slotIndex, imageUrl: member.imageUrl, bio: member.bio, isActive: member.isActive })
       } else {
         setForm({ name: '', role: editing === 7 ? 'engineer' : 'entity', slotIndex: editing, isActive: false })
       }
     }
-  }, [editing]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [editing])
 
   async function handleSave() {
     if (editing === null) return

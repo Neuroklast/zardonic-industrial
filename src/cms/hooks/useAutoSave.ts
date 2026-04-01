@@ -26,7 +26,8 @@ export function useAutoSave<T>({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestDataRef = useRef(data)
 
-  // Keep latest data ref updated
+  // Ref tracks the latest data so saveNow() always uses the current value
+  // without needing data in its dependency array (avoids stale closure).
   useEffect(() => { latestDataRef.current = data }, [data])
 
   const saveNow = useCallback(async () => {

@@ -106,7 +106,11 @@ export function SiteSettings() {
         </section>
 
         <button
-          onClick={() => { void save(form).then(() => toast.success('Gespeichert!')) }}
+          onClick={() => {
+            save(form).then(() => toast.success('Gespeichert!')).catch((err: unknown) => {
+              toast.error(err instanceof Error ? err.message : 'Fehler beim Speichern')
+            })
+          }}
           disabled={mutation.isPending}
           className="px-6 py-2 bg-red-600 text-white font-mono text-sm hover:bg-red-700 disabled:opacity-50"
         >
