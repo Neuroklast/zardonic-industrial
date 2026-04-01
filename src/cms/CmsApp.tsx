@@ -58,7 +58,7 @@ function RedirectToMain() {
   return null
 }
 
-function CmsAuthGuard({ children }: { children: React.ReactNode }) {
+function CmsAuthGuard() {
   const { isAuthenticated, isLoading, logout } = useCmsAuth()
 
   if (isLoading) {
@@ -69,20 +69,10 @@ function CmsAuthGuard({ children }: { children: React.ReactNode }) {
     return <RedirectToMain />
   }
 
-  return (
-    <CmsInner logout={logout}>
-      {children}
-    </CmsInner>
-  )
+  return <CmsInner logout={logout} />
 }
 
-function CmsInner({
-  logout,
-  children: _children,
-}: {
-  logout: () => Promise<void>
-  children: React.ReactNode
-}) {
+function CmsInner({ logout }: { logout: () => Promise<void> }) {
   const [route, navigate] = useCmsRoute()
 
   return (
@@ -108,10 +98,7 @@ export function CmsApp() {
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary FallbackComponent={CmsErrorFallback}>
         <Suspense fallback={<CmsLoadingFallback />}>
-          <CmsAuthGuard>
-            {/* Children are rendered inside CmsInner via CmsRouter */}
-            <></>
-          </CmsAuthGuard>
+          <CmsAuthGuard />
         </Suspense>
       </ErrorBoundary>
       <Toaster

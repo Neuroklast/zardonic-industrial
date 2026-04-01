@@ -6,6 +6,7 @@ export function useUnsavedChanges(isDirty: boolean): void {
 
     function handleBeforeUnload(e: BeforeUnloadEvent) {
       e.preventDefault()
+      e.returnValue = ''
     }
 
     window.addEventListener('beforeunload', handleBeforeUnload)
