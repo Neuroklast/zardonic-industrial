@@ -1,0 +1,68 @@
+/**
+ * CMS News API — CRUD for blog/news posts.
+ * OWASP A01:2021 — Access Control: admin session required.
+ * OWASP A03:2021 — Injection: Zod validation on all inputs.
+ */
+
+import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { prisma } from '../_prisma.js'
+import { validateSession } from '../auth.js'
+import { applyRateLimit } from '../_ratelimit.js'
+import { logActivity } from '../_activity-log.js'
+import { validate } from '../_schemas.js'
+import { newsPostCreateSchema, newsPostUpdateSchema } from '../_cms-schemas.js'
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('Cache-Control', 'no-store')
+
+  if (req.method === 'OPTIONS') return res.status(200).end()
+
+  const authenticated = await validateSession(req)
+  if (!authenticated) return res.status(401).json({ error: 'Unauthorized' })
+
+  const allowed = await applyRateLimit(req, res)
+  if (!allowed) return
+
+  const { id } = req.query as Record<string, string>
+
+  try {
+    if (req.method === 'GET' && !id) {
+      const posts = await prisma.newsPost.findMany({ orderBy: { createdAt: 'desc' } })
+      return res.status(200).json(posts)
+    }
+
+    if (req.method === 'GET' && id) {
+      const post = await prisma.newsPost.findUnique({ where: { id } })
+      if (!post) return res.status(404).json({ error: 'Not found' })
+      return res.status(200).json(post)
+    }
+
+    if (req.method === 'POST') {
+      const parsed = validate(newsPostCreateSchema, req.body)
+      if (!parsed.success) return res.status(400).json({ error: parsed.error })
+      const post = await prisma.newsPost.create({ data: parsed.data })
+      await logActivity({ action: 'create', entity: 'news', entityId: post.id, req })
+      return res.status(201).json(post)
+    }
+
+    if (req.method === 'PUT' && id) {
+      const parsed = validate(newsPostUpdateSchema, req.body)
+      if (!parsed.success) return res.status(400).json({ error: parsed.error })
+      const post = await prisma.newsPost.update({ where: { id }, data: parsed.data })
+      await logActivity({ action: 'update', entity: 'news', entityId: id, req })
+      return res.status(200).json(post)
+    }
+
+    if (req.method === 'DELETE' && id) {
+      await prisma.newsPost.delete({ where: { id } })
+      await logActivity({ action: 'delete', entity: 'news', entityId: id, req })
+      return res.status(200).json({ ok: true })
+    }
+
+    return res.status(405).json({ error: 'Method Not Allowed' })
+  } catch (err) {
+    console.error('[cms/news]', err instanceof Error ? err.message : 'unknown error')
+    return res.status(500).json({ error: 'Internal Server Error' })
+  }
+}

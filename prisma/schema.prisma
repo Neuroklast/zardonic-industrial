@@ -1,0 +1,187 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Admin Session — OWASP A07:2021 Session Management
+model AdminSession {
+  id           String   @id @default(cuid())
+  token        String   @unique
+  fingerprint  String?
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+  lastActiveAt DateTime @default(now())
+}
+
+// Site-wide Configuration
+model SiteConfig {
+  id          String   @id @default("main")
+  siteName    String   @default("Zardonic")
+  tagline     String?
+  logoUrl     String?
+  faviconUrl  String?
+  socialLinks Json     @default("{}")
+  footerText  String?
+  analyticsId String?
+  customCss   String?
+  updatedAt   DateTime @updatedAt
+}
+
+// Homepage Sections (dynamic, reorderable)
+model Section {
+  id               String    @id @default(cuid())
+  type             String
+  title            String?
+  enabled          Boolean   @default(true)
+  sortOrder        Int       @default(0)
+  config           Json      @default("{}")
+  content          Json      @default("{}")
+  isDraft          Boolean   @default(true)
+  publishedContent Json?
+  publishedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// Releases / Discography
+model Release {
+  id            String    @id @default(cuid())
+  title         String
+  type          String
+  releaseDate   DateTime?
+  coverUrl      String?
+  description   String?   @db.Text
+  spotifyUrl    String?
+  appleMusicUrl String?
+  bandcampUrl   String?
+  youtubeUrl    String?
+  soundcloudUrl String?
+  odesliUrl     String?
+  tracks        Json      @default("[]")
+  featured      Boolean   @default(false)
+  sortOrder     Int       @default(0)
+  isDraft       Boolean   @default(true)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Tour Dates / Gigs
+model Gig {
+  id              String    @id @default(cuid())
+  title           String
+  venue           String
+  city            String
+  country         String
+  date            DateTime
+  doorsOpen       String?
+  ticketUrl       String?
+  flyerUrl        String?
+  description     String?   @db.Text
+  isSoldOut       Boolean   @default(false)
+  isCancelled     Boolean   @default(false)
+  isFeatured      Boolean   @default(false)
+  bandsinTownId   String?
+  isDraft         Boolean   @default(true)
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Videos
+model Video {
+  id           String    @id @default(cuid())
+  title        String
+  youtubeId    String?
+  thumbnailUrl String?
+  description  String?   @db.Text
+  category     String?
+  featured     Boolean   @default(false)
+  sortOrder    Int       @default(0)
+  isDraft      Boolean   @default(true)
+  publishedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Shell Members (7 entities + 1 engineer)
+model ShellMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  slotIndex   Int      @unique
+  imageUrl    String?
+  bio         String?  @db.Text
+  socialLinks Json     @default("{}")
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+}
+
+// Media Library
+model MediaFile {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  url          String
+  thumbnailUrl String?
+  webpUrl      String?
+  avifUrl      String?
+  alt          String?
+  folder       String   @default("general")
+  createdAt    DateTime @default(now())
+}
+
+// News / Blog Posts
+model NewsPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String    @db.Text
+  excerpt     String?
+  coverUrl    String?
+  isDraft     Boolean   @default(true)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// Biography / About
+model Biography {
+  id               String    @id @default("main")
+  content          String    @db.Text
+  shortBio         String?   @db.Text
+  pressKitUrl      String?
+  photoUrls        Json      @default("[]")
+  isDraft          Boolean   @default(true)
+  publishedContent String?   @db.Text
+  publishedAt      DateTime?
+  updatedAt        DateTime  @updatedAt
+}
+
+// Activity Log (Admin Audit Trail) — OWASP A09:2021
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  details   String?
+  ipHash    String?
+  createdAt DateTime @default(now())
+}
+
+// Newsletter Subscribers
+model Subscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  isActive       Boolean   @default(true)
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+}
