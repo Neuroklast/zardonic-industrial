@@ -109,6 +109,17 @@ export const itunesQuerySchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
+// Spotify API
+// ---------------------------------------------------------------------------
+
+export const spotifyQuerySchema = z.object({
+  action: z.enum(['artist', 'top-tracks', 'albums', 'search']),
+  id: z.string().max(100).optional(),
+  query: z.string().max(200).optional(),
+  market: z.string().length(2).regex(/^[A-Z]{2}$/).optional(),
+})
+
+// ---------------------------------------------------------------------------
 // Odesli API
 // ---------------------------------------------------------------------------
 
