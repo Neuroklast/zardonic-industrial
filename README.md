@@ -70,6 +70,22 @@ BANDSINTOWN_API_KEY=your-bandsintown-api-key
 | `npm run lint` | Run ESLint |
 | `npm run preview` | Preview production build |
 
+## Documentation
+
+Comprehensive project documentation is maintained in the [`docs/`](./docs/) directory.
+
+| Document | Description |
+|----------|-------------|
+| [docs/DEEP_AUDIT.md](./docs/DEEP_AUDIT.md) | Full deep-audit: architecture, security, UX, quality findings |
+| [docs/DEVELOPMENT_STATUS.md](./docs/DEVELOPMENT_STATUS.md) | Current development state, feature checklists, open PRs, blockers |
+| [docs/CODING_AGENT_WORKFLOW.md](./docs/CODING_AGENT_WORKFLOW.md) | Mandatory 5-phase workflow for all coding agents |
+| [docs/LESSONS_LEARNED.md](./docs/LESSONS_LEARNED.md) | Lessons learned log — updated after every agent session |
+| [docs/ARCHITECTURE_DECISION_RECORDS.md](./docs/ARCHITECTURE_DECISION_RECORDS.md) | ADRs documenting key architectural decisions |
+| [docs/TECH_DEBT_TRACKER.md](./docs/TECH_DEBT_TRACKER.md) | Technical debt register with severity, effort, and status |
+| [docs/SECURITY_FINDINGS.md](./docs/SECURITY_FINDINGS.md) | Security findings with CVSS scores and remediation timelines |
+
+> **Coding agents:** Read [`docs/DEVELOPMENT_STATUS.md`](./docs/DEVELOPMENT_STATUS.md) and [`docs/CODING_AGENT_WORKFLOW.md`](./docs/CODING_AGENT_WORKFLOW.md) before starting any work.
+
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
