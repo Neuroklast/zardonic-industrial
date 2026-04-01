@@ -7,6 +7,8 @@ const mockGet = vi.fn()
 const mockSet = vi.fn()
 const mockDel = vi.fn()
 const mockScan = vi.fn()
+const mockIncr = vi.fn()
+const mockExpire = vi.fn()
 const mockSetHeader = vi.fn()
 
 vi.mock('@upstash/redis', () => ({
@@ -15,11 +17,14 @@ vi.mock('@upstash/redis', () => ({
     set = mockSet
     del = mockDel
     scan = mockScan
+    incr = mockIncr
+    expire = mockExpire
   },
 }))
 
 vi.mock('../../api/_ratelimit.ts', () => ({
   applyRateLimit: vi.fn().mockResolvedValue(true),
+  applyAuthRateLimit: vi.fn().mockResolvedValue(true),
   getClientIp: vi.fn().mockReturnValue('127.0.0.1'),
   hashIp: vi.fn().mockReturnValue('abc123def456abc123def456abc123def456abc123def456abc123def456abc1'),
 }))
@@ -113,6 +118,8 @@ describe('Auth API handler', () => {
     mockSet.mockReset()
     mockDel.mockReset()
     mockScan.mockReset()
+    mockIncr.mockReset()
+    mockExpire.mockReset()
     process.env.UPSTASH_REDIS_REST_URL = 'https://fake.upstash.io'
     process.env.UPSTASH_REDIS_REST_TOKEN = 'token'
     delete process.env.ADMIN_SETUP_TOKEN
@@ -227,8 +234,9 @@ describe('Auth API handler', () => {
   // -------------------------------------------------------------------------
   describe('POST (login)', () => {
     it('returns success on valid SHA-256 password', async () => {
-      // Login flow: (1) get TOTP_KEY → null, (2) get admin-password-hash → SHA-256 hash
-      mockGet.mockResolvedValueOnce(null)                  // kv.get(TOTP_KEY)
+      // Login flow: (1) get totpLockKey → null (no lockout), (2) get TOTP_KEY → null, (3) get admin-password-hash → SHA-256 hash
+      mockGet.mockResolvedValueOnce(null)                  // kv.get(totpLockKey) — no lockout
+        .mockResolvedValueOnce(null)                       // kv.get(TOTP_KEY)
         .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)  // kv.get('admin-password-hash')
       const res = mockRes()
       await handler({
@@ -241,7 +249,8 @@ describe('Auth API handler', () => {
     })
 
     it('returns 401 on invalid password', async () => {
-      mockGet.mockResolvedValueOnce(null)                  // kv.get(TOTP_KEY)
+      mockGet.mockResolvedValueOnce(null)                  // kv.get(totpLockKey) — no lockout
+        .mockResolvedValueOnce(null)                       // kv.get(TOTP_KEY)
         .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)  // kv.get('admin-password-hash')
       const res = mockRes()
       await handler({
@@ -253,7 +262,9 @@ describe('Auth API handler', () => {
     })
 
     it('returns 401 when no password hash is stored', async () => {
-      mockGet.mockResolvedValueOnce(null) // kv.get(TOTP_KEY) → null
+      // totpLockKey=null, TOTP_KEY=null, admin-password-hash=null (all fall through to default null)
+      mockGet.mockResolvedValueOnce(null) // kv.get(totpLockKey)
+        .mockResolvedValueOnce(null)      // kv.get(TOTP_KEY) → null
         .mockResolvedValueOnce(null)      // kv.get('admin-password-hash') → null
       const res = mockRes()
       await handler({
@@ -265,8 +276,9 @@ describe('Auth API handler', () => {
     })
 
     it('returns 403 totpRequired when TOTP enabled but no code provided', async () => {
-      // TOTP enabled: (1) get TOTP_KEY → secret, (2) get password hash → SHA-256
-      mockGet.mockResolvedValueOnce('TOTPSECRET')          // kv.get(TOTP_KEY) → TOTP enabled
+      // TOTP enabled: (1) no lockout, (2) get TOTP_KEY → secret, (3) get password hash → SHA-256
+      mockGet.mockResolvedValueOnce(null)                  // kv.get(totpLockKey) — no lockout
+        .mockResolvedValueOnce('TOTPSECRET')               // kv.get(TOTP_KEY) → TOTP enabled
         .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)  // kv.get('admin-password-hash')
       const res = mockRes()
       await handler({
@@ -279,8 +291,11 @@ describe('Auth API handler', () => {
     })
 
     it('returns 403 on invalid TOTP code', async () => {
-      mockGet.mockResolvedValueOnce('TOTPSECRET')
-        .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)
+      mockGet.mockResolvedValueOnce(null)                  // kv.get(totpLockKey) — no lockout
+        .mockResolvedValueOnce('TOTPSECRET')               // kv.get(TOTP_KEY)
+        .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)  // kv.get('admin-password-hash')
+      mockIncr.mockResolvedValue(1) // first failed attempt
+      mockExpire.mockResolvedValue(1)
       const res = mockRes()
       await handler({
         method: 'POST',
@@ -291,8 +306,9 @@ describe('Auth API handler', () => {
     })
 
     it('succeeds with correct TOTP code 123456', async () => {
-      mockGet.mockResolvedValueOnce('TOTPSECRET')
-        .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)
+      mockGet.mockResolvedValueOnce(null)                  // kv.get(totpLockKey) — no lockout
+        .mockResolvedValueOnce('TOTPSECRET')               // kv.get(TOTP_KEY)
+        .mockResolvedValueOnce(LEGACY_SHA256_OF_PASSWORD)  // kv.get('admin-password-hash')
       const res = mockRes()
       await handler({
         method: 'POST',

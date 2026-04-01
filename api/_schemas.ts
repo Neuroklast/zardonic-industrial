@@ -112,12 +112,20 @@ export const itunesQuerySchema = z.object({
 // Spotify API
 // ---------------------------------------------------------------------------
 
+// OWASP A03:2021 — Strict ID validation prevents injection via Spotify ID parameter
 export const spotifyQuerySchema = z.object({
   action: z.enum(['artist', 'top-tracks', 'albums', 'search']),
-  id: z.string().max(100).optional(),
+  id: z.string().max(100).regex(/^[A-Za-z0-9]+$/, 'Invalid Spotify ID').optional(),
   query: z.string().max(200).optional(),
   market: z.string().length(2).regex(/^[A-Z]{2}$/).optional(),
-})
+}).refine(
+  (data) => {
+    if (['artist', 'top-tracks', 'albums'].includes(data.action)) return !!data.id
+    if (data.action === 'search') return !!data.query
+    return true
+  },
+  { message: 'id is required for artist/top-tracks/albums; query is required for search' }
+)
 
 // ---------------------------------------------------------------------------
 // Odesli API
