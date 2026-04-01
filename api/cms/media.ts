@@ -141,7 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       const mediaItem: MediaItem = {
         id,
-        fileName: fileName.replace(/\.[^.]+$/, '') + '.webp',
+        fileName: (fileName.includes('.') && !fileName.startsWith('.') ? fileName.replace(/\.[^.]+$/, '') : fileName) + '.webp',
         mimeType: 'image/webp',
         size: webpSize,
         width,
