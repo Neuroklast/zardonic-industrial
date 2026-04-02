@@ -19,6 +19,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@sanity/client'
 import { fetchWithRetry } from './_fetch-retry.js'
 
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const ARTIST_NAME = 'Zardonic'
+const ITUNES_ARTWORK_SMALL = '100x100bb'
+const ITUNES_ARTWORK_LARGE = '600x600bb'
+const ITUNES_ARTWORK_SMALL_ALT = '60x60bb'
+
 // ─── Sanity Client (server-side, with write token) ──────────────────────────
 
 function getSanityClient() {
@@ -113,14 +120,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // ── Step 1: Sync iTunes Releases ────────────────────────────────────────
 
   try {
-    const ARTIST = 'Zardonic'
     const [songsRes, albumsRes] = await Promise.all([
       fetchWithRetry(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST)}&entity=song&limit=200`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST_NAME)}&entity=song&limit=200`,
         { headers: { Accept: 'application/json' } }
       ),
       fetchWithRetry(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST)}&entity=album&limit=200`,
+        `https://itunes.apple.com/search?term=${encodeURIComponent(ARTIST_NAME)}&entity=album&limit=200`,
         { headers: { Accept: 'application/json' } }
       ),
     ])
@@ -151,8 +157,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         )
         if (existing) continue
 
-        const artwork = track.artworkUrl100?.replace('100x100bb', '600x600bb')
-          || track.artworkUrl60?.replace('60x60bb', '600x600bb')
+        const artwork = track.artworkUrl100?.replace(ITUNES_ARTWORK_SMALL, ITUNES_ARTWORK_LARGE)
+          || track.artworkUrl60?.replace(ITUNES_ARTWORK_SMALL_ALT, ITUNES_ARTWORK_LARGE)
           || ''
 
         const releaseDate = track.releaseDate
@@ -215,7 +221,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const params = new URLSearchParams({ app_id: bandsintownKey })
       const bitRes = await fetchWithRetry(
-        `https://rest.bandsintown.com/artists/${encodeURIComponent('Zardonic')}/events?${params.toString()}`,
+        `https://rest.bandsintown.com/artists/${encodeURIComponent(ARTIST_NAME)}/events?${params.toString()}`,
         { headers: { Accept: 'application/json' } }
       )
 

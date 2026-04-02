@@ -223,10 +223,11 @@ export async function loadSiteData(): Promise<SanitySiteData> {
 /**
  * Loads admin settings from Sanity.
  * Returns the same shape as the legacy AdminSettings interface.
+ * Returns an empty AdminSettings object (not null) so consumers don't need null-checks.
  */
 export async function loadAdminSettings(): Promise<AdminSettings> {
   const settings = await fetchAdminSettings()
-  return settings ?? {}
+  return settings ?? ({} as AdminSettings)
 }
 
 // Re-export resolveImageUrl for convenience

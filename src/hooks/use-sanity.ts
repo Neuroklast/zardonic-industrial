@@ -28,24 +28,40 @@ export function useSanityQuery<T>(
   const [data, setData] = useState<T | undefined>(undefined)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
-  const fetchedRef = useRef(false)
+  const queryRef = useRef(query)
+  const paramsRef = useRef(params)
+  const fetchedKeyRef = useRef('')
 
   useEffect(() => {
-    if (fetchedRef.current) return
-    fetchedRef.current = true
+    // Build a stable cache key from query + params so we re-fetch when they change
+    const cacheKey = query + JSON.stringify(params ?? {})
+    if (fetchedKeyRef.current === cacheKey) return
+    fetchedKeyRef.current = cacheKey
+    queryRef.current = query
+    paramsRef.current = params
+
+    let cancelled = false
 
     sanityClient
       .fetch<T>(query, params ?? {})
       .then((result) => {
-        setData(result)
-        setLoading(false)
+        if (!cancelled) {
+          setData(result)
+          setLoading(false)
+        }
       })
       .catch((err: unknown) => {
-        const fetchError = err instanceof Error ? err : new Error('Sanity fetch failed')
-        console.error('[useSanityQuery] Error:', fetchError)
-        setError(fetchError)
-        setLoading(false)
+        if (!cancelled) {
+          const fetchError = err instanceof Error ? err : new Error('Sanity fetch failed')
+          console.error('[useSanityQuery] Error:', fetchError)
+          setError(fetchError)
+          setLoading(false)
+        }
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [query, params])
 
   return [data, loading, error]

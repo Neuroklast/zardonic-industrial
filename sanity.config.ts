@@ -6,7 +6,7 @@
  */
 import { defineConfig } from 'sanity'
 import { structureTool } from 'sanity/structure'
-import { schemaTypes } from './schemas'
+import { schemaTypes } from './sanity/schemas'
 
 /**
  * Custom desk structure: Singletons as direct links, collections as lists.
