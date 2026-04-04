@@ -182,6 +182,21 @@ export interface SiteData {
   }
 }
 
+const DEFAULT_SITE_DATA: SiteData = {
+  artistName: 'ZARDONIC',
+  heroImage: '',
+  bio: '',
+  tracks: [],
+  gigs: [],
+  releases: [],
+  gallery: [],
+  instagramFeed: [],
+  members: [],
+  mediaFiles: [],
+  creditHighlights: [],
+  social: {},
+}
+
 /** Discriminated union so TypeScript narrows `data` to the correct type per overlay variant. */
 type CyberpunkOverlayState =
   | { type: 'impressum' | 'privacy' | 'contact'; data?: never }
@@ -608,8 +623,8 @@ function App() {
       }
 
       setSiteData((data) => {
-        if (!data) return data
-        const existingIds = new Set(data.releases.map(r => r.id))
+        const currentData = data || DEFAULT_SITE_DATA
+        const existingIds = new Set(currentData.releases.map(r => r.id))
         const newReleases: Release[] = iTunesReleases
           .filter(r => !existingIds.has(r.id))
           .map(r => ({
@@ -629,7 +644,7 @@ function App() {
           }))
 
         // Update existing releases with better artwork from iTunes
-        const updatedReleases = data.releases.map(existing => {
+        const updatedReleases = currentData.releases.map(existing => {
           const match = iTunesReleases.find(s => s.id === existing.id)
           if (match) {
             return {
@@ -648,7 +663,7 @@ function App() {
           return existing
         })
 
-        return { ...data, releases: [...updatedReleases, ...newReleases] }
+        return { ...currentData, releases: [...updatedReleases, ...newReleases] }
       })
 
       if (!isAutoLoad) {
@@ -673,8 +688,8 @@ function App() {
       }
 
       setSiteData((data) => {
-        if (!data) return data
-        const existingIds = new Set(data.gigs.map(g => g.id))
+        const currentData = data || DEFAULT_SITE_DATA
+        const existingIds = new Set(currentData.gigs.map(g => g.id))
         const newGigs: Gig[] = events
           .filter(e => !existingIds.has(e.id))
           .map(e => ({
@@ -694,7 +709,7 @@ function App() {
           }))
 
         // Also update existing gigs with enriched data from API
-        const updatedGigs = data.gigs.map(existing => {
+        const updatedGigs = currentData.gigs.map(existing => {
           const match = events.find(e => e.id === existing.id)
           if (match) {
             return {
@@ -710,7 +725,7 @@ function App() {
           return existing
         })
 
-        return { ...data, gigs: [...updatedGigs, ...newGigs] }
+        return { ...currentData, gigs: [...updatedGigs, ...newGigs] }
       })
 
       if (!isAutoLoad) {
