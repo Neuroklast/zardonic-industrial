@@ -15,7 +15,7 @@ import {
   OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
 import { submitContactForm, contactFormSchema } from '@/lib/contact'
-import { loginWithPassword, setupPassword, validateSession, hashPassword } from '@/lib/session'
+import { loginWithPassword, setupPassword, validateSession } from '@/lib/session'
 import { getSyncTimestamps, updateReleasesSync, updateGigsSync } from '@/lib/sync'
 import type { AdminSettings } from '@/lib/types'
 import {
@@ -203,11 +203,10 @@ function App() {
   const [contentLoaded, setContentLoaded] = useState(false)
 
   // Admin authentication
-  const [adminPasswordHash, setAdminPasswordHash] = useKV<string>('admin-password-hash', '')
+  const [hasPassword, setHasPassword] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const [showSetupDialog, setShowSetupDialog] = useState(false)
-  const wantsSetup = useRef(false)
   
   useEffect(() => {
     if (konamiActivated) {
@@ -216,37 +215,27 @@ function App() {
     }
   }, [konamiActivated])
 
-  // Check for ?admin-setup URL parameter on mount
+  // Check for session & ?admin-setup on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.has('admin-setup')) {
-      wantsSetup.current = true
-      // Clean up URL
+    const wantsSetup = params.has('admin-setup')
+
+    if (wantsSetup) {
       const url = new URL(window.location.href)
       url.searchParams.delete('admin-setup')
       window.history.replaceState({}, '', url.toString())
     }
-  }, [])
 
-  // Restore admin session from Vercel KV
-  useEffect(() => {
-    if (!adminPasswordHash) return
-    
-    // Validate session token if exists
     validateSession().then(result => {
+      setHasPassword(!result.needsSetup)
       if (result.authenticated) {
         setIsOwner(true)
       }
+      if (wantsSetup && result.needsSetup) {
+        setShowSetupDialog(true)
+      }
     })
-  }, [adminPasswordHash])
-
-  // Open setup dialog once KV data has loaded and confirms no password exists
-  useEffect(() => {
-    if (wantsSetup.current && adminPasswordHash !== undefined && !adminPasswordHash) {
-      wantsSetup.current = false
-      setShowSetupDialog(true)
-    }
-  }, [adminPasswordHash])
+  }, [])
 
   useEffect(() => {
     if (!loading) {
@@ -538,8 +527,7 @@ function App() {
   const handleSetupAdminPassword = async (password: string): Promise<void> => {
     const success = await setupPassword(password)
     if (success) {
-      // Also need to store the hash in KV for the password check
-      setAdminPasswordHash(await hashPassword(password))
+      setHasPassword(true)
       setIsOwner(true)
     }
   }
@@ -547,7 +535,7 @@ function App() {
   const handleSetAdminPassword = async (password: string): Promise<void> => {
     const success = await setupPassword(password)
     if (success) {
-      setAdminPasswordHash(await hashPassword(password))
+      setHasPassword(true)
     }
   }
 
@@ -791,7 +779,7 @@ function App() {
         editMode={editMode}
         isOwner={isOwner}
         setEditMode={setEditMode}
-        adminPasswordHash={adminPasswordHash || ''}
+        hasPassword={hasPassword}
         setShowLoginDialog={setShowLoginDialog}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
@@ -1361,7 +1349,7 @@ function App() {
       <AppFooter
         artistName={siteData?.artistName || ''}
         isOwner={isOwner}
-        adminPasswordHash={adminPasswordHash || ''}
+        hasPassword={hasPassword}
         setShowLoginDialog={setShowLoginDialog}
         setShowSetupDialog={setShowSetupDialog}
         setCyberpunkOverlay={setCyberpunkOverlay}
@@ -2386,7 +2374,7 @@ function App() {
         <EditControls
           editMode={editMode}
           onToggleEdit={() => setEditMode(!editMode)}
-          hasPassword={!!adminPasswordHash}
+          hasPassword={hasPassword}
           onChangePassword={handleSetAdminPassword}
           onSetPassword={handleSetAdminPassword}
           adminSettings={adminSettings}

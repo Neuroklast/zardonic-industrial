@@ -12,7 +12,7 @@ interface AppNavBarProps {
   editMode: boolean
   isOwner: boolean
   setEditMode: (v: boolean) => void
-  adminPasswordHash: string
+  hasPassword: boolean
   setShowLoginDialog: (v: boolean) => void
   mobileMenuOpen: boolean
   setMobileMenuOpen: (v: boolean) => void
@@ -24,7 +24,7 @@ export default function AppNavBar({
   editMode,
   isOwner,
   setEditMode,
-  adminPasswordHash,
+  hasPassword,
   setShowLoginDialog,
   mobileMenuOpen,
   setMobileMenuOpen,
@@ -71,7 +71,7 @@ export default function AppNavBar({
             >
               <Pencil className="w-4 h-4" />
             </Button>
-          ) : adminPasswordHash ? (
+          ) : hasPassword ? (
             <Button
               size="sm"
               variant="outline"
