@@ -223,8 +223,8 @@ export default function AdminPanel({
   }, [])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (open) { fetchApiHealth().catch(() => {}) }
+    if (!open) return
+    void fetchApiHealth()
   }, [open, fetchApiHealth])
 
   const handleExport = () => {

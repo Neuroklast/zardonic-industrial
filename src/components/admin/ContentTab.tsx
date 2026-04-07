@@ -184,7 +184,7 @@ export default function ContentTab({
               <Input
                 value={localSocial[key] ?? ''}
                 onChange={(e) =>
-                  setLocalSocial({ ...localSocial, [key]: e.target.value })
+                  setLocalSocial((prev) => ({ ...prev, [key]: e.target.value }))
                 }
                 placeholder={placeholder}
                 className="bg-background border-border font-mono text-xs"
@@ -231,7 +231,7 @@ export default function ContentTab({
           size="sm"
           className="font-mono text-xs"
           onClick={() => {
-            setAdminSettings?.({ ...adminSettings, sectionLabels: localSectionLabels })
+            setAdminSettings?.({ ...(adminSettings ?? {}), sectionLabels: localSectionLabels })
             toast.success('Section labels saved')
           }}
           disabled={!setAdminSettings}
