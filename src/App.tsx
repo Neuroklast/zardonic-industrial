@@ -60,14 +60,14 @@ import { LoadingScreen } from '@/components/LoadingScreen'
 import { CircuitBackground } from '@/components/CircuitBackground'
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
-import ConfigEditorDialog from '@/components/ConfigEditorDialog'
+const ConfigEditorDialog = React.lazy(() => import('@/components/ConfigEditorDialog'))
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
 import { MediaBrowser } from '@/components/MediaBrowser'
 import EditableHeading from '@/components/EditableHeading'
 import { SystemMonitorHUD } from '@/components/SystemMonitorHUD'
 import ContactSection from '@/components/ContactSection'
-import ContactInboxDialog from '@/components/ContactInboxDialog'
-import SubscriberListDialog from '@/components/SubscriberListDialog'
+const ContactInboxDialog = React.lazy(() => import('@/components/ContactInboxDialog'))
+const SubscriberListDialog = React.lazy(() => import('@/components/SubscriberListDialog'))
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import type { TerminalCommand, SectionLabels, ContactSettings } from '@/lib/types'
 import AppNavBar from '@/components/AppNavBar'
@@ -2414,12 +2414,14 @@ function App() {
         />
       )}
 
-      <ConfigEditorDialog
-        open={showConfigEditor}
-        onClose={() => setShowConfigEditor(false)}
-        overrides={adminSettings?.configOverrides || {}}
-        onSave={(configOverrides) => setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))}
-      />
+      <Suspense fallback={null}>
+        <ConfigEditorDialog
+          open={showConfigEditor}
+          onClose={() => setShowConfigEditor(false)}
+          overrides={adminSettings?.configOverrides || {}}
+          onSave={(configOverrides) => setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))}
+        />
+      </Suspense>
 
       {/* Security admin dialogs — only rendered when admin is logged in */}
       {isOwner && (
