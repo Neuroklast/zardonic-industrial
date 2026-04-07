@@ -132,8 +132,8 @@ function App() {
   const [siteData, setSiteData] = useState<SiteData | undefined>(undefined)
   const [adminSettings, setAdminSettings] = useState<AdminSettings | undefined>(undefined)
 
-  const [kvSiteData, , isSiteDataLoaded] = useKV<SiteData>('band-data', DEFAULT_SITE_DATA)
-  const [kvAdminSettings, , isAdminSettingsLoaded] = useKV<AdminSettings | undefined>('admin:settings', undefined)
+  const [kvSiteData, setKvSiteData, isSiteDataLoaded] = useKV<SiteData>('band-data', DEFAULT_SITE_DATA)
+  const [kvAdminSettings, setKvAdminSettings, isAdminSettingsLoaded] = useKV<AdminSettings | undefined>('admin:settings', undefined)
 
   useEffect(() => {
     if (isSiteDataLoaded) {
@@ -146,6 +146,21 @@ function App() {
       setAdminSettings(kvAdminSettings)
     }
   }, [kvAdminSettings, isAdminSettingsLoaded])
+
+  /** Update siteData both in local React state and in KV (persists to server). */
+  const handleUpdateSiteData = useCallback((updater: SiteData | ((current: SiteData) => SiteData)) => {
+    setSiteData(prev => {
+      const next = typeof updater === 'function' ? updater(prev ?? DEFAULT_SITE_DATA) : updater
+      setKvSiteData(next)
+      return next
+    })
+  }, [setKvSiteData])
+
+  /** Update adminSettings both in local React state and in KV. */
+  const handleUpdateAdminSettings = useCallback((settings: AdminSettings) => {
+    setAdminSettings(settings)
+    setKvAdminSettings(settings)
+  }, [setKvAdminSettings])
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
@@ -267,6 +282,7 @@ function App() {
         editMode={editMode}
         sectionLabel={sectionLabels.biography || ''}
         adminSettings={adminSettings}
+        onUpdate={(bio) => handleUpdateSiteData(prev => ({ ...(prev ?? DEFAULT_SITE_DATA), bio }))}
       />
       </SectionErrorBoundary>
 
@@ -274,6 +290,7 @@ function App() {
       <ShellSection
         editMode={editMode}
         adminSettings={adminSettings}
+        setAdminSettings={handleUpdateAdminSettings}
         sectionOrder={getSectionOrder('shell')}
         visible={vis.shell !== false}
         sectionLabel={sectionLabels.shell || ''}
@@ -431,6 +448,9 @@ function App() {
           onChangePassword={handleSetAdminPassword}
           onSetPassword={handleSetAdminPassword}
           adminSettings={adminSettings}
+          setAdminSettings={handleUpdateAdminSettings}
+          siteData={siteData}
+          onImportData={(data) => handleUpdateSiteData(data as SiteData)}
           onOpenConfigEditor={() => setShowConfigEditor(true)}
           onOpenStats={() => setShowStats(true)}
           onOpenSecurityIncidents={() => setShowSecurityIncidents(true)}
@@ -446,7 +466,7 @@ function App() {
           open={showConfigEditor}
           onClose={() => setShowConfigEditor(false)}
           overrides={adminSettings?.configOverrides || {}}
-          onSave={(configOverrides) => setAdminSettings((prev) => ({ ...(prev || {}), configOverrides }))}
+          onSave={(configOverrides) => handleUpdateAdminSettings({ ...(adminSettings || {}), configOverrides })}
         />
       </Suspense>
 
