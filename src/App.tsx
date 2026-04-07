@@ -4,11 +4,12 @@ import { AnimatePresence } from 'framer-motion'
 import { useKV } from '@/hooks/use-kv'
 import { useKonami } from '@/hooks/use-konami'
 import { trackPageView, trackHeatmapClick } from '@/hooks/use-analytics'
-import { loginWithPassword, setupPassword, validateSession, hashPassword } from '@/lib/session'
+import { useAdminAuth } from '@/hooks/use-admin-auth'
 import type { AdminSettings } from '@/lib/types'
 import { useAppTheme } from '@/hooks/use-app-theme'
 import { useSiteDataSync } from '@/hooks/use-site-data-sync'
 import type { SiteData, CyberpunkOverlayState } from '@/lib/app-types'
+import { DEFAULT_SITE_DATA } from '@/lib/app-types'
 export type { SiteData } from '@/lib/app-types'
 import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
@@ -52,9 +53,14 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [contentLoaded, setContentLoaded] = useState(false)
 
-  // Admin authentication
-  const [adminPasswordHash, setAdminPasswordHash] = useKV<string>('admin-password-hash', '')
-  const [isOwner, setIsOwner] = useState(false)
+  // Admin authentication via cookie-based session (no KV read on page load)
+  const {
+    isOwner,
+    needsSetup,
+    handleAdminLogin: _handleAdminLogin,
+    handleSetupAdminPassword,
+    handleChangeAdminPassword,
+  } = useAdminAuth()
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const [showSetupDialog, setShowSetupDialog] = useState(false)
   const wantsSetup = useRef(false)
@@ -78,25 +84,13 @@ function App() {
     }
   }, [])
 
-  // Restore admin session from Vercel KV
+  // Open setup dialog when auth check confirms no password exists and user requested setup
   useEffect(() => {
-    if (!adminPasswordHash) return
-    
-    // Validate session token if exists
-    validateSession().then(result => {
-      if (result.authenticated) {
-        setIsOwner(true)
-      }
-    })
-  }, [adminPasswordHash])
-
-  // Open setup dialog once KV data has loaded and confirms no password exists
-  useEffect(() => {
-    if (wantsSetup.current && adminPasswordHash !== undefined && !adminPasswordHash) {
+    if (wantsSetup.current && needsSetup) {
       wantsSetup.current = false
       setShowSetupDialog(true)
     }
-  }, [adminPasswordHash])
+  }, [needsSetup])
 
   useEffect(() => {
     if (!loading) {
@@ -135,20 +129,20 @@ function App() {
   const [siteData, setSiteData] = useState<SiteData | undefined>(undefined)
   const [adminSettings, setAdminSettings] = useState<AdminSettings | undefined>(undefined)
 
-  const { data: kvSiteData, isLoading: isSiteDataLoading } = useKV<SiteData>('zd-cms:site')
-  const { data: kvAdminSettings, isLoading: isAdminSettingsLoading } = useKV<AdminSettings>('admin:settings')
+  const [kvSiteData, , isSiteDataLoaded] = useKV<SiteData>('band-data', DEFAULT_SITE_DATA)
+  const [kvAdminSettings, , isAdminSettingsLoaded] = useKV<AdminSettings | undefined>('admin:settings', undefined)
 
   useEffect(() => {
-    if (!isSiteDataLoading && kvSiteData) {
+    if (isSiteDataLoaded) {
       setSiteData(kvSiteData)
     }
-  }, [kvSiteData, isSiteDataLoading])
+  }, [kvSiteData, isSiteDataLoaded])
 
   useEffect(() => {
-    if (!isAdminSettingsLoading && kvAdminSettings) {
+    if (isAdminSettingsLoaded && kvAdminSettings) {
       setAdminSettings(kvAdminSettings)
     }
-  }, [kvAdminSettings, isAdminSettingsLoading])
+  }, [kvAdminSettings, isAdminSettingsLoaded])
 
   const [currentTrackIndex] = useState(0)
   const [volume] = useState([80])
@@ -202,29 +196,16 @@ function App() {
   }, [volume])
 
   // Admin authentication handlers
-  const handleAdminLogin = async (password: string, totpCode?: string): Promise<{ success: boolean; totpRequired?: boolean }> => {
-    const result = await loginWithPassword(password, totpCode)
-    if (result.success) {
-      setIsOwner(true)
-    }
-    return result
-  }
+  const handleAdminLogin = useCallback(async (password: string, totpCode?: string): Promise<{ success: boolean; totpRequired?: boolean }> => {
+    const result = await _handleAdminLogin(password, totpCode)
+    if (result === true) return { success: true }
+    if (result === 'totp-required') return { success: false, totpRequired: true }
+    return { success: false }
+  }, [_handleAdminLogin])
 
-  const handleSetupAdminPassword = async (password: string): Promise<void> => {
-    const success = await setupPassword(password)
-    if (success) {
-      // Also need to store the hash in KV for the password check
-      setAdminPasswordHash(await hashPassword(password))
-      setIsOwner(true)
-    }
-  }
-
-  const handleSetAdminPassword = async (password: string): Promise<void> => {
-    const success = await setupPassword(password)
-    if (success) {
-      setAdminPasswordHash(await hashPassword(password))
-    }
-  }
+  const handleSetAdminPassword = useCallback(async (password: string): Promise<void> => {
+    await handleChangeAdminPassword(password)
+  }, [handleChangeAdminPassword])
 
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false)
@@ -269,7 +250,7 @@ function App() {
         editMode={editMode}
         isOwner={isOwner}
         setEditMode={setEditMode}
-        adminPasswordHash={adminPasswordHash || ''}
+        hasPassword={!needsSetup}
         setShowLoginDialog={setShowLoginDialog}
         mobileMenuOpen={mobileMenuOpen}
         setMobileMenuOpen={setMobileMenuOpen}
@@ -392,7 +373,7 @@ function App() {
       <AppFooter
         artistName={siteData?.artistName || ''}
         isOwner={isOwner}
-        adminPasswordHash={adminPasswordHash || ''}
+        hasPassword={!needsSetup}
         setShowLoginDialog={setShowLoginDialog}
         setShowSetupDialog={setShowSetupDialog}
         setCyberpunkOverlay={setCyberpunkOverlay}
@@ -436,7 +417,7 @@ function App() {
         <EditControls
           editMode={editMode}
           onToggleEdit={() => setEditMode(!editMode)}
-          hasPassword={!!adminPasswordHash}
+          hasPassword={!needsSetup}
           onChangePassword={handleSetAdminPassword}
           onSetPassword={handleSetAdminPassword}
           adminSettings={adminSettings}

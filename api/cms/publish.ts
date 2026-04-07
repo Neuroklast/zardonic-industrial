@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // OWASP A03:2021 — Input validation via Zod
   const parsed = cmsPublishSchema.safeParse(req.body)
   if (!parsed.success) {
-    return res.status(400).json({ error: 'Bad Request', details: parsed.error.errors.map(e => e.message) })
+    return res.status(400).json({ error: 'Bad Request', details: parsed.error.issues.map((e: { message: string }) => e.message) })
   }
 
   const { key, revert } = parsed.data
