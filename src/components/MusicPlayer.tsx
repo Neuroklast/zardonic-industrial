@@ -79,7 +79,7 @@ export default function MusicPlayer({ tracks, initialIndex = 0 }: MusicPlayerPro
       }
     }
     setProgress(0)
-  }, [currentIndex, isPlaying])
+  }, [currentIndex, isPlaying, volume])
   
   // Connect audio element to analyser for visualizer
   useEffect(() => {

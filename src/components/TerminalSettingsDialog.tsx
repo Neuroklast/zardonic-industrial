@@ -60,7 +60,7 @@ export default function TerminalSettingsDialog({
       setIsRecordingKey(false)
     }
     prevOpenRef.current = open
-  }, [open])
+  }, [open, commands, secretCode, morseCode])
 
   const hasNameConflict = (name: string, index: number) => {
     const lower = (name || '').toLowerCase().trim()

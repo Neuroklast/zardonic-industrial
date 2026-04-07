@@ -1,8 +1,6 @@
 import React from 'react'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
-import type { SiteData } from '@/App'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Pencil, List, X } from '@phosphor-icons/react'
 

@@ -415,7 +415,7 @@ export default function ThemeCustomizerDialog({
       setCanUndo(false)
     }
     prevOpenRef.current = open
-  }, [open])
+  }, [open, themeSettings, sectionVisibility])
 
   // Load all Google Fonts when fonts tab is opened
   useEffect(() => {

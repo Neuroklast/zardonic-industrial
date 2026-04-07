@@ -72,6 +72,27 @@ export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loa
   const onCompleteRef = useRef(onLoadComplete)
   onCompleteRef.current = onLoadComplete
 
+  const codeFragmentStyles = useMemo(
+    () => Array.from({ length: 50 }, () => ({
+      opacity: [0.05 + Math.random() * 0.35, 0.05] as [number, number],
+      duration: Math.random() * 3 + 1,
+      delay: Math.random() * 2,
+      translateX: Math.random() * 20 - 10,
+    })),
+    []
+  )
+
+  const hexAddressStyles = useMemo(
+    () => Array.from({ length: 8 }, () => ({
+      left: `${Math.random() * 90}%`,
+      top: `${Math.random() * 90}%`,
+      duration: Math.random() * 3 + 2,
+      delay: Math.random() * 3,
+      text: `0x${Math.random().toString(16).slice(2, 10).toUpperCase().padEnd(8, '0')}`,
+    })),
+    []
+  )
+
   // Background data caching during the loading screen
   useEffect(() => {
     if (precacheUrls.length === 0) {
@@ -103,7 +124,7 @@ export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loa
     }, LOADER_PROGRESS_INTERVAL_MS)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [hackingTexts])
 
   // Complete when both progress animation and background caching are done
   useEffect(() => {
@@ -126,10 +147,10 @@ export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loa
             <motion.div
               key={i}
               className="whitespace-nowrap"
-              animate={{ opacity: [0.05, 0.4, 0.05] }}
-              transition={{ duration: Math.random() * 3 + 1, repeat: Infinity, delay: Math.random() * 2 }}
+              animate={{ opacity: codeFragmentStyles[i].opacity }}
+              transition={{ duration: codeFragmentStyles[i].duration, repeat: Infinity, delay: codeFragmentStyles[i].delay }}
               style={{ 
-                transform: `translateX(${Math.random() * 20 - 10}px)`,
+                transform: `translateX(${codeFragmentStyles[i].translateX}px)`,
               }}
             >
               {codeFragments[i % codeFragments.length]}
@@ -150,20 +171,20 @@ export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loa
             key={`hex-${i}`}
             className="absolute text-primary/10 font-mono text-xs"
             style={{
-              left: `${Math.random() * 90}%`,
-              top: `${Math.random() * 90}%`,
+              left: hexAddressStyles[i].left,
+              top: hexAddressStyles[i].top,
             }}
             animate={{ 
               opacity: [0, 0.2, 0],
               y: [0, -30],
             }}
             transition={{ 
-              duration: Math.random() * 3 + 2,
+              duration: hexAddressStyles[i].duration,
               repeat: Infinity,
-              delay: Math.random() * 3,
+              delay: hexAddressStyles[i].delay,
             }}
           >
-            0x{Math.random().toString(16).slice(2, 10).toUpperCase().padEnd(8, '0')}
+            {hexAddressStyles[i].text}
           </motion.div>
         ))}
       </div>

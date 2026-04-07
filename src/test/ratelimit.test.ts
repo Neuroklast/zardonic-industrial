@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelResponse } from '@vercel/node';
 
 // ---------------------------------------------------------------------------
 // Global @upstash/ratelimit mock is defined in src/test/setup.ts
@@ -20,12 +20,6 @@ vi.mock('@upstash/redis', () => ({
 
 // Import after mocks
 const { hashIp, getClientIp, applyRateLimit } = await import('../../api/_ratelimit.ts')
-
-type MockRes = {
-  status: ReturnType<typeof vi.fn>
-  json: ReturnType<typeof vi.fn>
-  setHeader: ReturnType<typeof vi.fn>
-}
 
 function mockRes() {
   const res: any = {

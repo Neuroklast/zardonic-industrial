@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { Trash, ShieldWarning, Globe, Clock, User, Hash, Eye, ShieldCheck, CaretDown, CaretUp, X } from '@phosphor-icons/react'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useState, useEffect } from 'react'

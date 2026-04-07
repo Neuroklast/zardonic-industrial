@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import EditableHeading from '@/components/EditableHeading'
-import { User, Plus, Upload, Trash } from '@phosphor-icons/react'
-import type { AdminSettings, SectionLabels } from '@/lib/types'
+import { User, Trash } from '@phosphor-icons/react'
+import type { AdminSettings } from '@/lib/types'
 
 interface ShellSectionProps {
   setAdminSettings?: (settings: AdminSettings) => void

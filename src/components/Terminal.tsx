@@ -111,7 +111,6 @@ export function Terminal({ isOpen, onClose, customCommands = [], editMode = fals
           return
         }
         if (charIdx < fullLine.length) {
-          const nextChar = fullLine[charIdx]
           charIdx++
           setHistory((prev) => {
             const updated = [...prev]

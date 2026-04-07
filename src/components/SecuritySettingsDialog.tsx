@@ -1,4 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
 import { ShieldCheck, ShieldWarning, Lock, Bug, Robot, Fingerprint, ChartLine, ProhibitInset, Package, BellRinging, X } from '@phosphor-icons/react'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useState, useEffect, useMemo } from 'react'

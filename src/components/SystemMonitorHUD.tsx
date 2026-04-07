@@ -30,9 +30,9 @@ export function SystemMonitorHUD() {
     scrollSpeed: 0,
   })
 
-  const [startTime] = useState(Date.now())
+  const [startTime] = useState(() => Date.now())
   const [lastScrollPos, setLastScrollPos] = useState(0)
-  const [lastScrollTime, setLastScrollTime] = useState(Date.now())
+  const [lastScrollTime, setLastScrollTime] = useState(() => Date.now())
 
   useEffect(() => {
     if (!HUD_METADATA_ENABLED) return

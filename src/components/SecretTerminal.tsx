@@ -63,7 +63,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
       inputRef.current.focus()
     }
     prevIsOpenRef.current = isOpen
-  }, [isOpen])
+  }, [isOpen, customCommands, secretCode])
 
   useEffect(() => {
     if (!isOpen) return

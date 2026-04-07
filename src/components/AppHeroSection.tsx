@@ -69,7 +69,7 @@ export default function AppHeroSection({
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => (((e: any, t: any) => Promise.resolve(""))(e, 'hero'))}
+                onChange={(_e) => Promise.resolve("")}
               />
             </label>
           </div>
