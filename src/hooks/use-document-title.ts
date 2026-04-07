@@ -43,8 +43,10 @@ export function useDocumentTitle(artistName: string) {
       { threshold: 0.3 },
     )
 
-    const elements = sectionIds.map(id => document.getElementById(id)).filter(Boolean)
-    elements.forEach(el => observer.observe(el!))
+    const elements = sectionIds
+      .map(id => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null)
+    elements.forEach(el => observer.observe(el))
 
     return () => {
       observer.disconnect()

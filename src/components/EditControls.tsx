@@ -784,7 +784,7 @@ export default function EditControls({ setAdminSettings, onImportData, siteData,
                 ))}
               </div>
               <Button
-                onClick={() => setAdminSettings?.({ ...adminSettings, sectionOrder: [...DEFAULT_SECTION_ORDER] })}
+                onClick={() => setAdminSettings?.({ ...adminSettings, sectionOrder: DEFAULT_SECTION_ORDER })}
                 variant="outline"
                 className="w-full font-mono text-xs"
               >

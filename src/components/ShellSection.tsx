@@ -94,7 +94,8 @@ export default function ShellSection({ setAdminSettings,
                       <Input
                         value={member?.name || ''}
                         onChange={(e) => {
-                          const prev = adminSettings ?? {} as AdminSettings
+                          if (!setAdminSettings) return
+                          const prev = adminSettings ?? ({} as AdminSettings)
                           const members = [...(prev.shellMembers || (prev.shellMember ? [prev.shellMember] : []))]
                           members[memberIndex] = { ...members[memberIndex], name: e.target.value }
                           setAdminSettings?.({ ...prev, shellMembers: members })
@@ -113,7 +114,8 @@ export default function ShellSection({ setAdminSettings,
                       <Input
                         value={member?.role || ''}
                         onChange={(e) => {
-                          const prev = adminSettings ?? {} as AdminSettings
+                          if (!setAdminSettings) return
+                          const prev = adminSettings ?? ({} as AdminSettings)
                           const members = [...(prev.shellMembers || (prev.shellMember ? [prev.shellMember] : []))]
                           members[memberIndex] = { ...members[memberIndex], role: e.target.value }
                           setAdminSettings?.({ ...prev, shellMembers: members })
@@ -132,7 +134,8 @@ export default function ShellSection({ setAdminSettings,
                       <Textarea
                         value={member?.bio || ''}
                         onChange={(e) => {
-                          const prev = adminSettings ?? {} as AdminSettings
+                          if (!setAdminSettings) return
+                          const prev = adminSettings ?? ({} as AdminSettings)
                           const members = [...(prev.shellMembers || (prev.shellMember ? [prev.shellMember] : []))]
                           members[memberIndex] = { ...members[memberIndex], bio: e.target.value }
                           setAdminSettings?.({ ...prev, shellMembers: members })
@@ -155,7 +158,8 @@ export default function ShellSection({ setAdminSettings,
                             <Input
                               value={member?.social?.[platform] || ''}
                               onChange={(e) => {
-                              const prev = adminSettings ?? {} as AdminSettings
+                              if (!setAdminSettings) return
+                          const prev = adminSettings ?? ({} as AdminSettings)
                               const members = [...(prev.shellMembers || (prev.shellMember ? [prev.shellMember] : []))]
                               members[memberIndex] = {
                                 ...members[memberIndex],
@@ -194,7 +198,8 @@ export default function ShellSection({ setAdminSettings,
                       size="sm"
                       className="mt-2"
                       onClick={() => {
-                        const prev = adminSettings ?? {} as AdminSettings
+                        if (!setAdminSettings) return
+                          const prev = adminSettings ?? ({} as AdminSettings)
                         const members = [...(prev.shellMembers || (prev.shellMember ? [prev.shellMember] : []))]
                         members.splice(memberIndex, 1)
                         setAdminSettings?.({ ...prev, shellMembers: members })

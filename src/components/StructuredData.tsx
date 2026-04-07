@@ -57,7 +57,17 @@ function buildEventSchemas(artistName: string, gigs: Gig[]) {
         '@type': 'MusicGroup',
         name: artistName,
       },
-      ...(gig.ticketUrl ? { offers: { '@type': 'Offer', url: gig.ticketUrl, availability: gig.soldOut ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock' } } : {}),
+      ...(gig.ticketUrl
+        ? {
+            offers: {
+              '@type': 'Offer',
+              url: gig.ticketUrl,
+              availability: gig.soldOut
+                ? 'https://schema.org/SoldOut'
+                : 'https://schema.org/InStock',
+            },
+          }
+        : {}),
     }))
 }
 
