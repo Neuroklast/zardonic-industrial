@@ -414,21 +414,23 @@ export default function AdminPanel({
             className="fixed z-[9998] bg-card border-border flex flex-col
               bottom-0 left-0 right-0 h-[92dvh] border-t
               md:top-0 md:bottom-0 md:left-auto md:right-0 md:w-[600px] md:h-full md:border-t-0 md:border-l"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={
+              typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+                ? { x: '100%' }
+                : { y: '100%' }
+            }
+            animate={
+              typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+                ? { x: 0 }
+                : { y: 0 }
+            }
+            exit={
+              typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+                ? { x: '100%' }
+                : { y: '100%' }
+            }
             transition={{ type: 'spring', stiffness: 300, damping: 35 }}
-            style={{ ['--tw-translate-x' as string]: undefined }}
           >
-            {/* On desktop override animation to slide from right */}
-            <style>{`
-              @media (min-width: 768px) {
-                [aria-label="Admin Panel"] {
-                  animation: none !important;
-                }
-              }
-            `}</style>
-
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
               <div className="flex items-center gap-3">
@@ -653,7 +655,9 @@ export default function AdminPanel({
                     placeholder="https://example.com/hero.jpg"
                     className="bg-background border-border font-mono text-xs"
                   />
-                  {localHeroImage && (
+                  {localHeroImage && (() => {
+                    try { new URL(localHeroImage); return true } catch { return false }
+                  })() && (
                     <img
                       src={localHeroImage}
                       alt="Hero preview"
