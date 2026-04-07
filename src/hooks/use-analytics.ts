@@ -8,6 +8,8 @@ import { useEffect } from 'react'
 
 const STORAGE_KEY = 'zd-site-analytics'
 const SESSION_ID_KEY = 'zd-session-id'
+/** Minimum milliseconds between server-side heatmap event POSTs (rate-limit guard). */
+const HEATMAP_THROTTLE_MS = 1000
 
 export interface HeatmapPoint {
   /** X position as ratio (0-1) of viewport width */
@@ -272,6 +274,9 @@ export async function resetAnalytics(): Promise<void> {
 
 // ─── Public tracking API ──────────────────────────────────────────────────────
 
+/** Module-level timestamp of last heatmap server POST — throttles the call rate. */
+let _lastHeatmapSend = 0
+
 /** Track a page view. Call once on initial page load. */
 export function trackPageView(): void {
   const analytics = loadLocalAnalytics()
@@ -395,6 +400,10 @@ export function trackClick(event: MouseEvent): void {
   const y = (event.clientY + window.scrollY) / dh
   const label = describeClickTarget(target)
 
+  const now = Date.now()
+  if (now - _lastHeatmapSend < HEATMAP_THROTTLE_MS) return
+  _lastHeatmapSend = now
+
   sendToServer({
     type: 'click',
     target: label,
@@ -409,6 +418,10 @@ export function trackClick(event: MouseEvent): void {
 
 /** Track a heatmap click by raw coordinates (for explicit calls) */
 export function trackHeatmapClick(x: number, y: number, el: string): void {
+  const now = Date.now()
+  if (now - _lastHeatmapSend < HEATMAP_THROTTLE_MS) return
+  _lastHeatmapSend = now
+
   sendToServer({
     type: 'click',
     target: el,
