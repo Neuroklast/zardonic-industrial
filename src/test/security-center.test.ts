@@ -4,7 +4,7 @@ import {
   classifyIncident,
   classifyCountermeasure,
   type SecurityIncident,
-} from '@/components/SecurityIncidentsDashboard'
+} from '@/lib/security-incidents'
 
 // ---------------------------------------------------------------------------
 describe('i18n-security: t() translation lookup', () => {

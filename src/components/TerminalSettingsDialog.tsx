@@ -8,7 +8,7 @@ import CyberCloseButton from '@/components/CyberCloseButton'
 import CyberModalBackdrop from '@/components/CyberModalBackdrop'
 import type { TerminalCommand } from '@/lib/types'
 import { TERMINAL_RESERVED_COMMANDS } from '@/lib/config'
-import { DEFAULT_KONAMI_CODE } from '@/components/KonamiListener'
+import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 interface TerminalSettingsDialogProps {
   open: boolean

@@ -8,13 +8,13 @@ import { toast } from 'sonner'
 import type { ThemeSettings, SectionVisibility, OverlayEffect } from '@/lib/types'
 
 /* ─── Theme presets ─── */
-export interface ThemePreset {
+interface ThemePreset {
   name: string
   description: string
   theme: ThemeSettings
 }
 
-export const THEME_PRESETS: ThemePreset[] = [
+const THEME_PRESETS: ThemePreset[] = [
   {
     name: 'Neon Red (Default)',
     description: 'Default Neuroklast red cyberpunk theme',
@@ -197,7 +197,7 @@ interface ThemeCustomizerDialogProps {
 }
 
 /** Apply theme CSS variables to <html> element */
-export function applyThemeToDOM(theme: ThemeSettings | undefined) {
+function applyThemeToDOM(theme: ThemeSettings | undefined) {
   const root = document.documentElement
   if (!theme) return
 
@@ -275,7 +275,7 @@ function applyOverlayEffectsToDOM(theme: ThemeSettings | undefined) {
 }
 
 /** Reset all custom CSS variables set by theme */
-export function resetThemeDOM() {
+function resetThemeDOM() {
   const root = document.documentElement
   const props = [
     '--primary', '--accent', '--background', '--card', '--foreground',

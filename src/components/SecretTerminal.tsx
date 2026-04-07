@@ -14,7 +14,7 @@ import {
   TERMINAL_TYPING_SPEED_MS,
 } from '@/lib/config'
 
-import { DEFAULT_KONAMI_CODE } from '@/components/KonamiListener'
+import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 interface SecretTerminalProps {
   isOpen: boolean
