@@ -458,6 +458,7 @@ function App() {
           onOpenBlocklist={() => setShowBlocklist(true)}
           onOpenContactInbox={() => setShowContactInbox(true)}
           onOpenSubscriberList={() => setShowSubscriberList(true)}
+          onUpdateSiteData={handleUpdateSiteData}
         />
       )}
 
