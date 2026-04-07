@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { motion, AnimatePresence } from 'framer-motion'
-import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
+import { useRef, useState, useCallback, useEffect, useMemo, type ChangeEvent } from 'react'
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import type {
   AdminSettings,
@@ -224,7 +224,7 @@ export default function AdminPanel({
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (open) void fetchApiHealth()
+    if (open) { fetchApiHealth().catch(() => {}) }
   }, [open, fetchApiHealth])
 
   const handleExport = () => {
@@ -243,7 +243,7 @@ export default function AdminPanel({
     toast.success('Data exported (including settings)')
   }
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !onImportData) return
     const reader = new FileReader()
@@ -499,7 +499,7 @@ export default function AdminPanel({
                     variant="outline"
                     size="sm"
                     className="font-mono text-xs w-full"
-                    onClick={() => void fetchApiHealth()}
+                    onClick={() => { fetchApiHealth().catch(() => {}) }}
                   >
                     <ArrowCounterClockwise size={13} className="mr-1" /> Refresh
                   </Button>
