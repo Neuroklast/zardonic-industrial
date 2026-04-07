@@ -6,6 +6,42 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import type { MediaFile } from '@/lib/types'
 
+/**
+ * Convert a Google Drive share/view URL to a direct download URL so the
+ * browser triggers a real download instead of opening the Drive UI.
+ *
+ * Supported input formats:
+ *   https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+ *   https://drive.google.com/file/d/FILE_ID/view
+ *   https://drive.google.com/open?id=FILE_ID
+ *   https://drive.google.com/uc?id=FILE_ID (already a download link)
+ */
+function toDriveDirectDownload(url: string): string {
+  try {
+    // Already a direct download link
+    if (url.includes('drive.google.com/uc')) return url
+
+    // Pattern: /file/d/FILE_ID/
+    const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/)
+    if (fileMatch) {
+      return `https://drive.google.com/uc?export=download&id=${fileMatch[1]}`
+    }
+
+    // Pattern: ?id=FILE_ID or &id=FILE_ID
+    const idMatch = url.match(/[?&]id=([^&]+)/)
+    if (idMatch && url.includes('drive.google.com')) {
+      return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`
+    }
+  } catch { /* fallback – return original */ }
+  return url
+}
+
+/** Return the effective download href for a file URL (handles Drive links). */
+function getDownloadHref(url: string): string {
+  if (url.includes('drive.google.com')) return toDriveDirectDownload(url)
+  return url
+}
+
 interface MediaBrowserProps {
   mediaFiles?: MediaFile[]
   editMode?: boolean
@@ -241,10 +277,10 @@ function MediaOverlay({
                         </p>
                       )}
                       <a
-                        href={selectedFile.url}
+                        href={getDownloadHref(selectedFile.url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        download
+                        download={selectedFile.name || true}
                         className="inline-flex items-center gap-2 mt-4 px-4 py-2 border border-accent/50 text-accent text-sm tracking-wider hover:bg-accent/10 transition-colors"
                         aria-label={`Download ${selectedFile.name}`}
                       >
