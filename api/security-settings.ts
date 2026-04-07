@@ -36,7 +36,7 @@ interface VercelResponse {
 const KV_KEY = 'nk-security-settings'
 
 const isKVConfigured = (): boolean => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
 
 /** Default security settings */
@@ -100,7 +100,7 @@ const DEFAULTS = {
 }
 
 /** Zod schema for security settings */
-const securitySettingsSchema = z.object({
+export const securitySettingsSchema = z.object({
   honeytokensEnabled: z.boolean().optional(),
   rateLimitEnabled: z.boolean().optional(),
   robotsTrapEnabled: z.boolean().optional(),

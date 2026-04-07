@@ -38,7 +38,7 @@ const TOTP_ISSUER = process.env.SITE_NAME ? `${process.env.SITE_NAME} Admin` : '
 const TOTP_KEY = 'admin-totp-secret'
 
 const isKVConfigured = () => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
 
 /**

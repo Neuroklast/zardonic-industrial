@@ -76,12 +76,12 @@ const LEGACY_SHA256_OF_PASSWORD = '5e884898da28047151d0e56f8dc6292773603d0d6aabb
 // ---------------------------------------------------------------------------
 describe('getSessionFromCookie()', () => {
   it('extracts token from zd-session cookie', () => {
-    const req: any = { headers: { cookie: 'zd-session=mytoken123' } } as any
+    const req: any = { headers: { cookie: 'nk-session=mytoken123' } } as any
     expect(getSessionFromCookie(req)).toBe('mytoken123')
   })
 
   it('extracts token from cookie with other cookies before it', () => {
-    const req: any = { headers: { cookie: 'other=x; zd-session=tok2; another=y' } } as any
+    const req: any = { headers: { cookie: 'other=x; nk-session=tok2; another=y' } } as any
     expect(getSessionFromCookie(req)).toBe('tok2')
   })
 
@@ -245,7 +245,7 @@ describe('Auth API handler', () => {
         body: { password: 'password' },
       } as any, res as any)
       expect(res.json).toHaveBeenCalledWith({ success: true })
-      expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', expect.stringContaining('zd-session='))
+      expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', expect.stringContaining('nk-session='))
     })
 
     it('returns 401 on invalid password', async () => {
@@ -351,7 +351,7 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { currentPassword: 'wrongold', newPassword: 'newpassword1' },
       } as any, res as any)
       // Should reject because currentPassword doesn't match
@@ -379,7 +379,7 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { action: 'totp-setup' },
       } as any, res as any)
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
@@ -395,7 +395,7 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { action: 'totp-setup' },
       } as any, res as any)
       expect(res.status).toHaveBeenCalledWith(409)
@@ -421,7 +421,7 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { action: 'totp-verify', code: '123456' },
       } as any, res as any)
       expect(res.status).toHaveBeenCalledWith(400)
@@ -433,7 +433,7 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { action: 'totp-verify', code: '999999' }, // mock only accepts 123456
       } as any, res as any)
       expect(res.status).toHaveBeenCalledWith(403)
@@ -445,12 +445,12 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'POST',
-        headers: { cookie: 'zd-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
+        headers: { cookie: 'nk-session=validtoken', 'user-agent': '', 'x-forwarded-for': '127.0.0.1' },
         body: { action: 'totp-verify', code: '123456' },
       } as any, res as any)
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
       // TOTP secret should be persisted and pending deleted
-      expect(mockDel).toHaveBeenCalledWith('zd-admin-totp-pending')
+      expect(mockDel).toHaveBeenCalledWith('admin-totp-pending')
     })
   })
 
@@ -460,10 +460,10 @@ describe('Auth API handler', () => {
       const res = mockRes()
       await handler({
         method: 'DELETE',
-        headers: { cookie: 'zd-session=mytoken' },
+        headers: { cookie: 'nk-session=mytoken' },
         body: {},
       } as any, res as any)
-      expect(mockDel).toHaveBeenCalledWith('zd-session:mytoken')
+      expect(mockDel).toHaveBeenCalledWith('session:mytoken')
       expect(res.setHeader).toHaveBeenCalledWith('Set-Cookie', expect.stringContaining('Max-Age=0'))
       expect(res.json).toHaveBeenCalledWith({ success: true })
     })

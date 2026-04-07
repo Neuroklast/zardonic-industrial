@@ -26,15 +26,15 @@ interface VercelResponse {
   end(): VercelResponse
 }
 
-const isKVConfigured = (): boolean => !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+const isKVConfigured = (): boolean => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
-const getProfileSchema = z.object({
+export const getProfileSchema = z.object({
   hashedIp: z.string().min(8).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   offset: z.coerce.number().int().min(0).optional().default(0)
 })
 
-const deleteProfileSchema = z.object({
+export const deleteProfileSchema = z.object({
   hashedIp: z.string().min(8).max(64)
 })
 

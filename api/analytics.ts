@@ -86,7 +86,7 @@ function normalizeLandingPage(p: string | undefined): string | undefined {
 
 // Check if KV is properly configured
 const isKVConfigured = (): boolean => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
 
 interface AnalyticsEvent {

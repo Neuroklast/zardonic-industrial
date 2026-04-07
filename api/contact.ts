@@ -35,7 +35,7 @@ const KV_KEY = 'contact-messages'
 const MAX_CONTACT_MESSAGES = 500 // Safety cap against storage exhaustion DoS
 
 const isKVConfigured = (): boolean => {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
 
 /** HTML entity escaping to prevent XSS */

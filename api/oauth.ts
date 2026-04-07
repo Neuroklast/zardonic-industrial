@@ -55,7 +55,7 @@ interface OAuthLog {
 
 
 
-const isKVConfigured = () => !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+const isKVConfigured = () => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
 // ---------------------------------------------------------------------------
 // Token Encryption (AES-256-GCM)

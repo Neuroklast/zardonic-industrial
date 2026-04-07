@@ -42,7 +42,7 @@ interface VercelResponse {
 }
 
 const isKVConfigured = (): boolean =>
-  !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
 const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).optional().default(100),

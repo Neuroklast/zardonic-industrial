@@ -120,7 +120,7 @@ describe('Security Settings API handler', () => {
         body: { zipBombEnabled: true },
       } as any, res as any)
       expect(mockSet).toHaveBeenCalledWith(
-        'zd-security-settings',
+        'nk-security-settings',
         expect.objectContaining({ zipBombEnabled: true })
       )
       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }))
@@ -161,7 +161,7 @@ describe('Security Settings API handler', () => {
         body: { alertingEnabled: true },
       } as any, res as any)
       expect(mockSet).toHaveBeenCalledWith(
-        'zd-security-settings',
+        'nk-security-settings',
         expect.objectContaining({ zipBombEnabled: true, alertingEnabled: true })
       )
     })

@@ -108,7 +108,7 @@ export function getVercelGeoData(req: VercelLikeRequest): {
  * The rate limiter is a no-op in environments without KV (e.g. local dev).
  */
 function isKVConfigured(): boolean {
-  return !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }
 
 /**

@@ -18,15 +18,15 @@ interface VercelResponse {
   end(): VercelResponse
 }
 
-const isKVConfigured = (): boolean => !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+const isKVConfigured = (): boolean => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
-const blockSchema = z.object({
+export const blockSchema = z.object({
   hashedIp: z.string().min(8).max(64),
   reason: z.string().max(200).optional().default('manual'),
   ttlSeconds: z.number().int().min(60).max(2592000).optional().default(604800),
 })
 
-const unblockSchema = z.object({
+export const unblockSchema = z.object({
   hashedIp: z.string().min(8).max(64),
 })
 
