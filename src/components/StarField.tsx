@@ -50,7 +50,8 @@ const StarField = memo(function StarField() {
 
     resize()
     initStars()
-    window.addEventListener('resize', () => { resize(); initStars() })
+    const handleResize = () => { resize(); initStars() }
+    window.addEventListener('resize', handleResize)
 
     const speed = 6
 
@@ -106,7 +107,7 @@ const StarField = memo(function StarField() {
 
     return () => {
       cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])

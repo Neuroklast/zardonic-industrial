@@ -797,7 +797,7 @@ export default function AdminPanel({
                     <div key={field} className="space-y-1">
                       <Label className="font-mono text-xs text-muted-foreground">{label}</Label>
                       <Input
-                        value={(adminSettings?.loaderTexts?.[field] as string | undefined) ?? ''}
+                        value={(adminSettings?.loaderTexts?.[field] ?? '') as string}
                         onChange={e => {
                           const val = e.target.value
                           setAdminSettings?.({

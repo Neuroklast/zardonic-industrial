@@ -66,8 +66,14 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
   // Memoize messages to prevent recreation
   const messages = useMemo(() => {
     if (loaderTexts?.stageMessages?.length === 5) return loaderTexts.stageMessages
-    return DEFAULT_MESSAGES as unknown as string[]
+    return DEFAULT_MESSAGES as string[]
   }, [loaderTexts?.stageMessages])
+
+  const systemCheckLabels: [string, string, string] = [
+    loaderTexts?.systemChecks?.[0] ?? 'WETWARE',
+    loaderTexts?.systemChecks?.[1] ?? 'NEURAL',
+    loaderTexts?.systemChecks?.[2] ?? 'CYBERDECK',
+  ]
 
   // Complete when progress reaches 100% and background caching is done
   useEffect(() => {
@@ -206,7 +212,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
             </div>
 
             <div className="grid grid-cols-3 gap-2 mt-6 font-mono text-xs text-muted-foreground">
-              {([loaderTexts?.systemChecks?.[0] ?? 'WETWARE', loaderTexts?.systemChecks?.[1] ?? 'NEURAL', loaderTexts?.systemChecks?.[2] ?? 'CYBERDECK'] as [string, string, string]).map((label, idx) => {
+              {systemCheckLabels.map((label, idx) => {
                 const threshold = idx === 0 ? 10 : idx === 1 ? 40 : 70
                 return (
                   <motion.div

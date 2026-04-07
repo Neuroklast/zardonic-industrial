@@ -7,6 +7,19 @@ import { Label } from '@/components/ui/label'
 import type { MediaFile } from '@/lib/types'
 
 /**
+ * Returns true if the URL's hostname is exactly 'drive.google.com'.
+ * Using URL parsing instead of substring matching to prevent spoofing
+ * (e.g. 'evil.com?host=drive.google.com').
+ */
+function isDriveUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname === 'drive.google.com'
+  } catch {
+    return false
+  }
+}
+
+/**
  * Convert a Google Drive share/view URL to a direct download URL so the
  * browser triggers a real download instead of opening the Drive UI.
  *
@@ -18,19 +31,22 @@ import type { MediaFile } from '@/lib/types'
  */
 function toDriveDirectDownload(url: string): string {
   try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'drive.google.com') return url
+
     // Already a direct download link
-    if (url.includes('drive.google.com/uc')) return url
+    if (parsed.pathname === '/uc') return url
 
     // Pattern: /file/d/FILE_ID/
-    const fileMatch = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/)
+    const fileMatch = parsed.pathname.match(/^\/file\/d\/([^/]+)/)
     if (fileMatch) {
       return `https://drive.google.com/uc?export=download&id=${fileMatch[1]}`
     }
 
-    // Pattern: ?id=FILE_ID or &id=FILE_ID
-    const idMatch = url.match(/[?&]id=([^&]+)/)
-    if (idMatch && url.includes('drive.google.com')) {
-      return `https://drive.google.com/uc?export=download&id=${idMatch[1]}`
+    // Pattern: ?id=FILE_ID (e.g. /open?id=… or /drive/folders?id=…)
+    const id = parsed.searchParams.get('id')
+    if (id) {
+      return `https://drive.google.com/uc?export=download&id=${id}`
     }
   } catch { /* fallback – return original */ }
   return url
@@ -38,7 +54,7 @@ function toDriveDirectDownload(url: string): string {
 
 /** Return the effective download href for a file URL (handles Drive links). */
 function getDownloadHref(url: string): string {
-  if (url.includes('drive.google.com')) return toDriveDirectDownload(url)
+  if (isDriveUrl(url)) return toDriveDirectDownload(url)
   return url
 }
 

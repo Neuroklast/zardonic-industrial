@@ -31,7 +31,8 @@ const MatrixRain = memo(function MatrixRain() {
     }
 
     resize()
-    window.addEventListener('resize', resize)
+    const handleResize = () => resize()
+    window.addEventListener('resize', handleResize)
 
     const primaryColor = getComputedStyle(document.documentElement)
       .getPropertyValue('--primary')
@@ -83,7 +84,7 @@ const MatrixRain = memo(function MatrixRain() {
 
     return () => {
       cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [])
