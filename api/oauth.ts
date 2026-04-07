@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -6,22 +7,6 @@ const kv = new Redis({
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
 import { applyRateLimit, getClientIp } from './_ratelimit.js'
 import { validateSession } from './auth.js'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-  send(data: unknown): VercelResponse
-}
-
 interface OAuthProvider {
   name: string
   authUrl: string
@@ -52,8 +37,6 @@ interface OAuthLog {
   email?: string | null
   ip?: string
 }
-
-
 
 const isKVConfigured = () => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 

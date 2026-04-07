@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -8,22 +9,6 @@ import { applyRateLimit } from './_ratelimit.js'
 import { isMarkedAttacker, serveFingerprintPixel } from './_honeytokens.js'
 import { imageProxyQuerySchema, validate } from './_schemas.js'
 import { isHardBlocked } from './_blocklist.js'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-  send(data: unknown): VercelResponse
-}
-
 /**
  * Server-side image proxy that fetches remote images, caches them in Vercel KV,
  * and returns the binary data. Handles Google Drive URLs and other CORS-restricted

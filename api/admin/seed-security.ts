@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { validateSession } from '../auth.js'
 import { applyRateLimit } from '../_ratelimit.js'
 import { seedHoneytokens, HONEYTOKEN_KEYS } from '../_honeytokens.js'
@@ -19,21 +20,6 @@ const kv = new Redis({
  * honeytoken trap is active.  Subsequent calls are safe and produce no
  * side-effects on already-seeded keys.
  */
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method === 'OPTIONS') {
     res.status(200).end()

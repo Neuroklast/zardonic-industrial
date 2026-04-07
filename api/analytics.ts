@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -7,21 +8,6 @@ import { validateSession } from './auth.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { analyticsPostSchema, validate } from './_schemas.js'
 import { isHardBlocked } from './_blocklist.js'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 interface AnalyticsMeta {
   referrer?: string
   device?: string

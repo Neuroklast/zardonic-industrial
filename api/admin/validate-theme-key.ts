@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -9,18 +10,6 @@ import { isPrimaryHost } from '../_primary-check.js'
 import { z } from 'zod'
 
 // Minimal inline types so we avoid the vulnerable @vercel/node package
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  headers: Record<string, string | string[] | undefined>
-}
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 // ─── Validation schema ────────────────────────────────────────────────────────
 
 const BodySchema = z.object({

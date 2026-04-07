@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -17,21 +18,6 @@ import { validateSession } from './auth.js'
  * DELETE /api/security-incidents
  *   Requires admin session. Clears all stored security incidents.
  */
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 const isKVConfigured = (): boolean => {
   return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 }

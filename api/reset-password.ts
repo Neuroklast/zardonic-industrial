@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -9,23 +10,6 @@ import { hashPassword, invalidateAllSessions } from './auth.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { resetPasswordSchema, confirmResetPasswordSchema, validate } from './_schemas.js'
 import { Resend } from 'resend'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
-
-
 // Check if KV is properly configured
 const isKVConfigured = () => {
   return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)

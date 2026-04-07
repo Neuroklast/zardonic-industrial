@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -8,27 +9,10 @@ import { promisify } from 'node:util'
 import { applyRateLimit, getClientIp } from './_ratelimit.js'
 import { authLoginSchema, authSetupSchema, authChangePasswordSchema, authLoginTotpSchema, totpSetupSchema, totpVerifySchema, validate } from './_schemas.js'
 import * as OTPAuth from 'otpauth'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 interface SessionData {
   created: number
   fingerprint: string
 }
-
-
 
 const scryptAsync = promisify(scrypt)
 

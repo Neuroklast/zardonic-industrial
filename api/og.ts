@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -15,21 +16,6 @@ import { applyRateLimit } from './_ratelimit.js'
  * og:image (and Twitter card) meta tags.  A client-side redirect sends
  * real browsers to the SPA with the matching hash fragment.
  */
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  send(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 interface OgMeta {
   title: string
   description: string

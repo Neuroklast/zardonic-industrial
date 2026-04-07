@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -23,20 +24,6 @@ const kv = new Redis({
  */
 
 const CANARY_TOKEN_PREFIX = 'nk-canary:'
-
-interface VercelRequest {
-  method?: string
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  end(): VercelResponse
-  send(data: unknown): VercelResponse
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
     res.status(405).end()

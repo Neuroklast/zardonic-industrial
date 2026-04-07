@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL || '',
@@ -21,23 +22,6 @@ import { handleProbeBackfire } from './_probe-detection.js'
 /**
  * Handles requests to paths listed as Disallow in robots.txt.
  */
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-  url?: string
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-  send(data: unknown): VercelResponse
-}
-
 interface SecuritySettings {
   underAttackMode?: boolean
   zipBombEnabled?: boolean

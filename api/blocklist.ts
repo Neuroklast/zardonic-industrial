@@ -1,23 +1,9 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'
 import { blockIp, unblockIp, getAllBlockedIps } from './_blocklist.js'
 import { z } from 'zod'
 import { validate } from './_schemas.js'
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 const isKVConfigured = (): boolean => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
 export const blockSchema = z.object({

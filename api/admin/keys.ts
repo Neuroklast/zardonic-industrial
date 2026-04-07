@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { randomBytes } from 'crypto'
 import { Redis } from '@upstash/redis'
 const kv = new Redis({
@@ -8,18 +9,6 @@ import { validateSession } from '../auth.js'
 import { isPrimaryHost } from '../_primary-check.js'
 
 // Minimal inline types so we avoid the vulnerable @vercel/node package
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  headers: Record<string, string | string[] | undefined>
-}
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 // ─── Default key entry for error fallbacks ────────────────────────────────────
 
 const FALLBACK_KEY_ENTRY = {

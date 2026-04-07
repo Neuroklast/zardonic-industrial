@@ -1,3 +1,4 @@
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'
 import { getProfile, getAllProfiles, deleteProfile, analyzeUserAgents } from './_attacker-profile.js'
@@ -11,21 +12,6 @@ import { validate } from './_schemas.js'
  * GET  /api/attacker-profile?limit=50&offset=0 → Get all attacker profiles (paginated)
  * DELETE /api/attacker-profile?hashedIp=xxx → Delete attacker profile
  */
-
-interface VercelRequest {
-  method?: string
-  body?: Record<string, unknown>
-  query?: Record<string, string | string[]>
-  headers: Record<string, string | string[] | undefined>
-}
-
-interface VercelResponse {
-  setHeader(key: string, value: string): VercelResponse
-  status(code: number): VercelResponse
-  json(data: unknown): VercelResponse
-  end(): VercelResponse
-}
-
 const isKVConfigured = (): boolean => !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
 
 export const getProfileSchema = z.object({
