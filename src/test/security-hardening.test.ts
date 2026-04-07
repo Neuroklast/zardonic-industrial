@@ -252,14 +252,14 @@ describe('vercel.json sitemap-trap rewrite', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test: vite.config.ts uses inline obfuscation (javascript-obfuscator)
+// Test: vite.config.ts does not use obfuscation (removed for build performance)
 // ---------------------------------------------------------------------------
 
 describe('vite.config.ts obfuscator plugin', () => {
   const viteConfig = readFileSync(resolve(__dirname, '../../vite.config.ts'), 'utf-8')
 
-  it('uses inline javascript-obfuscator for production builds', () => {
-    expect(viteConfig).toContain("from 'javascript-obfuscator'")
-    expect(viteConfig).toContain('vite:obfuscatefiles')
+  it('does not use javascript-obfuscator (removed for build speed and debuggability)', () => {
+    expect(viteConfig).not.toContain("from 'javascript-obfuscator'")
+    expect(viteConfig).not.toContain('vite:obfuscatefiles')
   })
 })

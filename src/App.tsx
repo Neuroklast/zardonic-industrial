@@ -9,6 +9,7 @@ import type { AdminSettings } from '@/lib/types'
 import { useAppTheme } from '@/hooks/use-app-theme'
 import { useSiteDataSync } from '@/hooks/use-site-data-sync'
 import type { SiteData, CyberpunkOverlayState } from '@/lib/app-types'
+import { DEFAULT_SITE_DATA } from '@/lib/app-types'
 export type { SiteData } from '@/lib/app-types'
 import { Separator } from '@/components/ui/separator'
 import { Toaster } from '@/components/ui/sonner'
@@ -53,7 +54,7 @@ function App() {
   const [contentLoaded, setContentLoaded] = useState(false)
 
   // Admin authentication
-  const [adminPasswordHash, setAdminPasswordHash] = useKV<string>('admin-password-hash', '')
+  const [adminPasswordHash, setAdminPasswordHash, adminPasswordHashLoaded] = useKV<string>('admin-password-hash', '')
   const [isOwner, setIsOwner] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const [showSetupDialog, setShowSetupDialog] = useState(false)
@@ -78,25 +79,22 @@ function App() {
     }
   }, [])
 
-  // Restore admin session from Vercel KV
+  // Restore admin session on mount
   useEffect(() => {
-    if (!adminPasswordHash) return
-    
-    // Validate session token if exists
     validateSession().then(result => {
       if (result.authenticated) {
         setIsOwner(true)
       }
     })
-  }, [adminPasswordHash])
+  }, [])
 
   // Open setup dialog once KV data has loaded and confirms no password exists
   useEffect(() => {
-    if (wantsSetup.current && adminPasswordHash !== undefined && !adminPasswordHash) {
+    if (wantsSetup.current && adminPasswordHashLoaded && !adminPasswordHash) {
       wantsSetup.current = false
       setShowSetupDialog(true)
     }
-  }, [adminPasswordHash])
+  }, [adminPasswordHash, adminPasswordHashLoaded])
 
   useEffect(() => {
     if (!loading) {
@@ -135,20 +133,20 @@ function App() {
   const [siteData, setSiteData] = useState<SiteData | undefined>(undefined)
   const [adminSettings, setAdminSettings] = useState<AdminSettings | undefined>(undefined)
 
-  const { data: kvSiteData, isLoading: isSiteDataLoading } = useKV<SiteData>('zd-cms:site')
-  const { data: kvAdminSettings, isLoading: isAdminSettingsLoading } = useKV<AdminSettings>('admin:settings')
+  const [kvSiteData, , isSiteDataLoaded] = useKV<SiteData>('band-data', DEFAULT_SITE_DATA)
+  const [kvAdminSettings, , isAdminSettingsLoaded] = useKV<AdminSettings | undefined>('admin:settings', undefined)
 
   useEffect(() => {
-    if (!isSiteDataLoading && kvSiteData) {
+    if (isSiteDataLoaded) {
       setSiteData(kvSiteData)
     }
-  }, [kvSiteData, isSiteDataLoading])
+  }, [kvSiteData, isSiteDataLoaded])
 
   useEffect(() => {
-    if (!isAdminSettingsLoading && kvAdminSettings) {
+    if (isAdminSettingsLoaded && kvAdminSettings) {
       setAdminSettings(kvAdminSettings)
     }
-  }, [kvAdminSettings, isAdminSettingsLoading])
+  }, [kvAdminSettings, isAdminSettingsLoaded])
 
   const [currentTrackIndex] = useState(0)
   const [volume] = useState([80])
