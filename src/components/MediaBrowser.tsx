@@ -383,7 +383,7 @@ function EditPanel({
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: 20 }}
-        className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-card border-l border-primary/30 z-[9999] overflow-y-auto p-6 font-mono"
+        className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-background border-l border-primary/30 z-[9999] overflow-y-auto p-6 font-mono"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
