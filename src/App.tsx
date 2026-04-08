@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useKV } from '@/hooks/use-kv'
 import { useKonami } from '@/hooks/use-konami'
 import { trackPageView, trackHeatmapClick } from '@/hooks/use-analytics'
+import { useAnalyticsConsent, CookieConsent, CookiePreferencesButton } from '@/components/CookieConsent'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
 import type { AdminSettings, BackgroundType, HudTexts, SectionLabels, Release as FullRelease } from '@/lib/types'
 import { useAppTheme } from '@/hooks/use-app-theme'
@@ -123,13 +124,19 @@ function App() {
     }
   }, [loading])
 
-  // Track page view on mount
+  // Track page view on mount — only if analytics consent was given
+  const analyticsConsent = useAnalyticsConsent()
   useEffect(() => {
-    trackPageView()
-  }, [])
+    if (analyticsConsent) {
+      trackPageView()
+    }
+  // Only run once on mount; analyticsConsent may become true later (after banner)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [analyticsConsent])
 
-  // Track heatmap clicks globally
+  // Track heatmap clicks globally — guard with consent
   useEffect(() => {
+    if (!analyticsConsent) return
     const handleClick = (e: MouseEvent) => {
       const x = e.clientX / window.innerWidth
       const y = (e.clientY + window.scrollY) / document.documentElement.scrollHeight
@@ -149,7 +156,7 @@ function App() {
     }
     document.addEventListener('click', handleClick)
     return () => document.removeEventListener('click', handleClick)
-  }, [])
+  }, [analyticsConsent])
 
   const [siteData, setSiteData] = useState<SiteData | undefined>(undefined)
   const [adminSettings, setAdminSettings] = useState<AdminSettings | undefined>(undefined)
@@ -609,6 +616,11 @@ function App() {
         overlay={cyberpunkOverlay}
         onClose={() => setCyberpunkOverlay(null)}
         adminSettings={adminSettings}
+      />
+
+      {/* GDPR Cookie Consent Banner */}
+      <CookieConsent
+        onOpenPrivacyPolicy={() => setCyberpunkOverlay({ type: 'privacy' })}
       />
 
 
