@@ -146,7 +146,9 @@ async function enrichWithOdesli(
   try {
     const cached = await redis.get<OdesliResponse>(cacheKey)
     if (cached) return extractLinks(cached)
-  } catch { /* fall through */ }
+  } catch (e) {
+    console.warn(`[releases-enrich] Redis cache miss for ${release.title}:`, e)
+  }
 
   // Call the external Odesli API (server-to-server, no rate limiter overhead)
   const response = await fetchWithRetry(
@@ -241,10 +243,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       try {
         const links = await enrichWithOdesli(release, redis)
         if (links.spotify || links.soundcloud || links.youtube) {
-          const updated = { ...release, ...Object.fromEntries(
-            Object.entries(links).filter(([, v]) => v !== undefined)
-          ) }
-          existingById.set(release.id, updated as Release)
+          const updated: Release = { ...release }
+          if (links.spotify) updated.spotify = links.spotify
+          if (links.soundcloud) updated.soundcloud = links.soundcloud
+          if (links.youtube) updated.youtube = links.youtube
+          if (links.bandcamp) updated.bandcamp = links.bandcamp
+          if (links.deezer) updated.deezer = links.deezer
+          if (links.tidal) updated.tidal = links.tidal
+          if (links.amazonMusic) updated.amazonMusic = links.amazonMusic
+          existingById.set(release.id, updated)
           enriched++
         }
       } catch (e) {

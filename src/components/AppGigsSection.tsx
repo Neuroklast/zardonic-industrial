@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -28,21 +28,22 @@ interface AppGigsSectionProps {
 export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, bandsintownFetching, sectionLabels, onLabelChange, onGigClick, onRefresh }: AppGigsSectionProps) {
   const [showAll, setShowAll] = useState(false)
 
+  // Only show future gigs (date >= today) — memoized so it only recomputes when gigs change
+  const upcomingGigs = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return gigs.filter(gig => {
+      if (!gig.date) return false
+      return new Date(gig.date) >= today
+    })
+  }, [gigs])
+
   if (!visible) return null
 
   const loadingLabel = sectionLabels?.gigsLoadingLabel ?? '// LOADING.BANDSINTOWN.EVENTS'
   const syncingText = sectionLabels?.gigsSyncingText ?? 'SYNCING...'
   const fetchingText = sectionLabels?.gigsFetchingText ?? 'FETCHING LIVE EVENT DATA'
   const noShowsText = sectionLabels?.gigsNoShowsText ?? 'No upcoming shows - Check back soon'
-
-  // Only show future gigs (date >= today)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const upcomingGigs = gigs.filter(gig => {
-    if (!gig.date) return false
-    const gigDate = new Date(gig.date)
-    return gigDate >= today
-  })
 
   const visibleGigs = showAll ? upcomingGigs : upcomingGigs.slice(0, INITIAL_VISIBLE)
 
