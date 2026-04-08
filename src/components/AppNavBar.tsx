@@ -30,7 +30,7 @@ export default function AppNavBar({
   sectionLabels,
 }: AppNavBarProps) {
   const navItems: { id: string; label: string }[] = [
-    { id: 'bio', label: sectionLabels?.biography || 'BIO' },
+    { id: 'bio', label: sectionLabels?.biography || 'BIOGRAPHY' },
     { id: 'music', label: sectionLabels?.musicPlayer || 'MUSIC' },
     { id: 'gigs', label: sectionLabels?.upcomingGigs || 'GIGS' },
     { id: 'releases', label: sectionLabels?.releases || 'RELEASES' },
