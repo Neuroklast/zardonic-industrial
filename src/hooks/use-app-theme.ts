@@ -83,7 +83,7 @@ export function useAppTheme(adminSettings: AdminSettings | undefined): void {
       root.style.removeProperty('--crt-overlay-opacity')
       root.style.removeProperty('--crt-vignette-opacity')
     }
-  }, [adminSettings?.animations?.crtOverlayOpacity, adminSettings?.animations?.crtVignetteOpacity])
+  }, [adminSettings?.animations])
 
   // Effect 3: Config overrides
   useEffect(() => {

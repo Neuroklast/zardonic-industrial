@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { createElement } from 'react'
-import KonamiListener, { DEFAULT_KONAMI_CODE } from '@/components/KonamiListener'
+import KonamiListener from '@/components/KonamiListener'
+import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 function fireKey(key: string) {
   window.dispatchEvent(new KeyboardEvent('keydown', { key }))

@@ -11,8 +11,7 @@ interface FooterProps {
   onDatenschutz?: () => void
 }
 
-export default function Footer({ socialLinks, genres, label, onAdminLogin, onImpressum, onDatenschutz }: FooterProps) {
-  const safeSocialLinks = socialLinks || {}
+export default function Footer({ socialLinks: _socialLinks, genres, label, onAdminLogin, onImpressum, onDatenschutz }: FooterProps) {
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })

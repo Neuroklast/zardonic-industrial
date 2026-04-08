@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { t, tip, LOCALES, type Locale } from '@/lib/i18n-security'
+import { t, tip, LOCALES } from '@/lib/i18n-security'
 import {
   classifyIncident,
   classifyCountermeasure,
   type SecurityIncident,
-} from '@/components/SecurityIncidentsDashboard'
+} from '@/lib/security-incidents'
 
 // ---------------------------------------------------------------------------
 describe('i18n-security: t() translation lookup', () => {

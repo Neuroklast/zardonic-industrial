@@ -23,7 +23,7 @@ interface HeroProps {
   titleImageUrl?: string // if set, display this title image
 }
 
-export default function Hero({ name, genres, editMode, onEdit, logoUrl, titleImageUrl }: HeroProps) {
+export default function Hero({ name: _name, genres, editMode, onEdit, logoUrl, titleImageUrl }: HeroProps) {
   const [glitchLogo, setGlitchLogo] = useState(false)
   const [glitchTitle, setGlitchTitle] = useState(false)
 

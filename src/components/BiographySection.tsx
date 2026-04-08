@@ -86,13 +86,13 @@ export default function BiographySection({ biography = defaultBiography, editMod
   useEffect(() => {
     const urlsToCache: string[] = []
     for (const p of photos) {
-      if (p.startsWith('http') && !cachedPhotos[p]) urlsToCache.push(p)
+      if (p.startsWith('http')) urlsToCache.push(p)
     }
     for (const m of (biography.members || []).map(normalizeMember)) {
-      if (m.photo && m.photo.startsWith('http') && !cachedPhotos[m.photo]) urlsToCache.push(m.photo)
+      if (m.photo && m.photo.startsWith('http')) urlsToCache.push(m.photo)
     }
     for (const f of (biography.friends || [])) {
-      if (f.photo && f.photo.startsWith('http') && !cachedPhotos[f.photo]) urlsToCache.push(f.photo)
+      if (f.photo && f.photo.startsWith('http')) urlsToCache.push(f.photo)
     }
     urlsToCache.forEach((url) => {
       cacheImage(url).then((cached: string) => {

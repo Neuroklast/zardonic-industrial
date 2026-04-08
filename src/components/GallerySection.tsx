@@ -2,15 +2,11 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Separator } from '@/components/ui/separator'
 import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { MagnifyingGlassPlus, Upload, Plus, Trash } from '@phosphor-icons/react'
+import { MagnifyingGlassPlus } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
-import { normalizeImageUrl, toDirectImageUrl } from '@/lib/image-cache'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
-import type { SectionLabels, AdminSettings } from '@/lib/types'
-import { toast } from 'sonner'
+import type { AdminSettings } from '@/lib/types'
 
 interface GallerySectionProps {
   siteData: SiteData

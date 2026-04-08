@@ -213,13 +213,13 @@ describe('Canary Alerts API: GET /api/canary-alerts', () => {
 // ---------------------------------------------------------------------------
 describe('Security Settings: configurable thresholds and points', () => {
   it('DEFAULT_SETTINGS includes threat level thresholds', async () => {
-    const { DEFAULT_SETTINGS } = await import('../../src/components/SecuritySettingsDialog')
+    const { DEFAULT_SETTINGS } = await import('../../src/lib/security-defaults')
     expect(DEFAULT_SETTINGS).toHaveProperty('warnThreshold', 3)
     expect(DEFAULT_SETTINGS).toHaveProperty('tarpitThreshold', 7)
   })
 
   it('DEFAULT_SETTINGS includes threat reason points', async () => {
-    const { DEFAULT_SETTINGS } = await import('../../src/components/SecuritySettingsDialog')
+    const { DEFAULT_SETTINGS } = await import('../../src/lib/security-defaults')
     expect(DEFAULT_SETTINGS).toHaveProperty('pointsRobotsViolation', 3)
     expect(DEFAULT_SETTINGS).toHaveProperty('pointsHoneytokenAccess', 5)
     expect(DEFAULT_SETTINGS).toHaveProperty('pointsSuspiciousUa', 4)
@@ -229,13 +229,13 @@ describe('Security Settings: configurable thresholds and points', () => {
   })
 
   it('DEFAULT_SETTINGS includes alert channel configuration', async () => {
-    const { DEFAULT_SETTINGS } = await import('../../src/components/SecuritySettingsDialog')
+    const { DEFAULT_SETTINGS } = await import('../../src/lib/security-defaults')
     expect(DEFAULT_SETTINGS).toHaveProperty('discordWebhookUrl', '')
     expect(DEFAULT_SETTINGS).toHaveProperty('alertEmail', '')
   })
 
   it('all new settings are JSON-serializable', async () => {
-    const { DEFAULT_SETTINGS } = await import('../../src/components/SecuritySettingsDialog')
+    const { DEFAULT_SETTINGS } = await import('../../src/lib/security-defaults')
     const json = JSON.stringify(DEFAULT_SETTINGS)
     const parsed = JSON.parse(json)
     expect(parsed.warnThreshold).toBe(3)

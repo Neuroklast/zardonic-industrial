@@ -1,23 +1,11 @@
 import { useEffect } from 'react'
+import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 interface KonamiListenerProps {
   onCodeActivated: () => void
   /** Custom key sequence. Falls back to the classic Konami code when omitted. */
   customCode?: string[]
 }
-
-export const DEFAULT_KONAMI_CODE = [
-  'ArrowUp',
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowLeft',
-  'ArrowRight',
-  'b',
-  'a'
-]
 
 export default function KonamiListener({ onCodeActivated, customCode }: KonamiListenerProps) {
   const code = customCode && customCode.length > 0 ? customCode : DEFAULT_KONAMI_CODE

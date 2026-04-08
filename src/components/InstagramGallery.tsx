@@ -1,6 +1,6 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
-import { Images, X, CaretLeft, CaretRight, Plus, PencilSimple, FolderOpen, ArrowsClockwise } from '@phosphor-icons/react'
+import { Images, X, CaretLeft, CaretRight, Plus, FolderOpen, ArrowsClockwise } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTypingEffect } from '@/hooks/use-typing-effect'
@@ -61,49 +61,6 @@ export default function InstagramGallery({ galleryImages = [], editMode, onUpdat
     200
   )
 
-  // Load and cache URL-based images
-  useEffect(() => {
-    if (!galleryImages || galleryImages.length === 0) return
-    galleryImages.forEach((img) => {
-      if (!cachedUrls[img.url]) {
-        cacheImage(img.url).then((cached: string) => {
-          setCachedUrls((prev) => ({ ...prev, [img.url]: cached }))
-        })
-      }
-    })
-  }, [galleryImages])
-
-  // Auto-load from Drive folder on first render if URL is set
-  useEffect(() => {
-    if (driveFolderUrl && !driveAutoLoaded.current && galleryImages.length === 0) {
-      driveAutoLoaded.current = true
-      loadDriveFolder(driveFolderUrl, true)
-    }
-  }, [driveFolderUrl])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Math.random() > 0.7 && photos.length > 0) {
-        const randomIndex = Math.floor(Math.random() * photos.length)
-        setGlitchIndex(randomIndex)
-        setTimeout(() => setGlitchIndex(null), 300)
-      }
-    }, 3000)
-
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (selectedImage) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [selectedImage])
-
   // URL-based images from KV store (includes Drive-imported images)
   const urlPhotos = (galleryImages || []).map((img) => ({
     id: img.id,
@@ -115,34 +72,7 @@ export default function InstagramGallery({ galleryImages = [], editMode, onUpdat
 
   const photos = urlPhotos
 
-  // Close overlay and navigate with keyboard
-  useEffect(() => {
-    if (!selectedImage) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        triggerTransition()
-        setSelectedImage(null)
-      }
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault()
-        const currentIdx = photos.findIndex(p => p.imageUrl === selectedImage.imageUrl)
-        if (currentIdx < photos.length - 1) {
-          setSelectedImage(photos[currentIdx + 1])
-        }
-      }
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault()
-        const currentIdx = photos.findIndex(p => p.imageUrl === selectedImage.imageUrl)
-        if (currentIdx > 0) {
-          setSelectedImage(photos[currentIdx - 1])
-        }
-      }
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [selectedImage, photos, triggerTransition])
-
-  const loadDriveFolder = async (url: string, silent = false, replace = false) => {
+  const loadDriveFolder = useCallback(async (url: string, silent = false, replace = false) => {
     const folderId = extractDriveFolderId(url)
     if (!folderId) {
       if (!silent) toast.error('Invalid Google Drive folder URL. Expected format: https://drive.google.com/drive/folders/...')
@@ -183,7 +113,75 @@ export default function InstagramGallery({ galleryImages = [], editMode, onUpdat
     } finally {
       setIsDriveLoading(false)
     }
-  }
+  }, [galleryImages, onUpdate])
+
+  // Load and cache URL-based images
+  useEffect(() => {
+    if (!galleryImages || galleryImages.length === 0) return
+    galleryImages.forEach((img) => {
+      cacheImage(img.url).then((cached: string) => {
+        setCachedUrls((prev) => ({ ...prev, [img.url]: cached }))
+      })
+    })
+  }, [galleryImages])
+
+  // Auto-load from Drive folder on first render if URL is set
+  useEffect(() => {
+    if (driveFolderUrl && !driveAutoLoaded.current && galleryImages.length === 0) {
+      driveAutoLoaded.current = true
+      loadDriveFolder(driveFolderUrl, true)
+    }
+  }, [driveFolderUrl, galleryImages.length, loadDriveFolder])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (Math.random() > 0.7 && photos.length > 0) {
+        const randomIndex = Math.floor(Math.random() * photos.length)
+        setGlitchIndex(randomIndex)
+        setTimeout(() => setGlitchIndex(null), 300)
+      }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [photos.length])
+
+  useEffect(() => {
+    if (selectedImage) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [selectedImage])
+
+  // Close overlay and navigate with keyboard
+  useEffect(() => {
+    if (!selectedImage) return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        triggerTransition()
+        setSelectedImage(null)
+      }
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        const currentIdx = photos.findIndex(p => p.imageUrl === selectedImage.imageUrl)
+        if (currentIdx < photos.length - 1) {
+          setSelectedImage(photos[currentIdx + 1])
+        }
+      }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        const currentIdx = photos.findIndex(p => p.imageUrl === selectedImage.imageUrl)
+        if (currentIdx > 0) {
+          setSelectedImage(photos[currentIdx - 1])
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [selectedImage, photos, triggerTransition])
 
   const handleSaveDriveUrl = () => {
     const url = driveUrlInput.trim()

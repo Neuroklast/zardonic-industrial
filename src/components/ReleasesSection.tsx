@@ -1,4 +1,4 @@
-import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import CyberModalBackdrop from '@/components/CyberModalBackdrop'
 import { MusicNote, Plus, Trash, SpotifyLogo, SoundcloudLogo, YoutubeLogo, ArrowsClockwise } from '@phosphor-icons/react'
 import { Card } from '@/components/ui/card'
@@ -66,62 +66,8 @@ export default function ReleasesSection({ releases, editMode, onUpdate, fontSize
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    if (!hasAutoLoaded && dataLoaded && (!releases || releases.length === 0)) {
-      setHasAutoLoaded(true)
-      handleFetchITunesReleases(true)
-    }
-  }, [hasAutoLoaded, releases, dataLoaded])
 
-  const sortedReleases = [...(releases || [])].sort(
-    (a, b) => {
-      // Featured releases are shown first
-      if (a.featured && !b.featured) return -1
-      if (!a.featured && b.featured) return 1
-      // Releases without a date are treated as upcoming/future → shown first
-      if (!a.releaseDate && !b.releaseDate) return 0
-      if (!a.releaseDate) return -1
-      if (!b.releaseDate) return 1
-      return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
-    }
-  )
-
-  const DESKTOP_INITIAL_COUNT = 3
-  const desktopReleases = showAllDesktop || editMode ? sortedReleases : sortedReleases.slice(0, DESKTOP_INITIAL_COUNT)
-  const hasMoreDesktop = sortedReleases.length > DESKTOP_INITIAL_COUNT
-
-  const scrollToMobileRelease = useCallback((index: number) => {
-    const clamped = Math.max(0, Math.min(index, sortedReleases.length - 1))
-    setMobileScrollIndex(clamped)
-    if (mobileScrollRef.current) {
-      const firstCard = mobileScrollRef.current.querySelector('[data-release-card]') as HTMLElement | null
-      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 176 // card width + gap fallback
-      mobileScrollRef.current.scrollTo({ left: clamped * cardWidth, behavior: 'smooth' })
-    }
-  }, [sortedReleases.length])
-
-  const swipeHandlers = useTouchSwipe({
-    onSwipeLeft: () => scrollToMobileRelease(mobileScrollIndex + 1),
-    onSwipeRight: () => scrollToMobileRelease(mobileScrollIndex - 1),
-    threshold: 50,
-  })
-
-  const handleDelete = (id: string) => {
-    onUpdate((releases || []).filter(r => r.id !== id))
-  }
-
-  const handleSave = (release: Release) => {
-    const currentReleases = releases || []
-    if (editingRelease) {
-      onUpdate(currentReleases.map(r => r.id === release.id ? release : r))
-    } else {
-      onUpdate([...currentReleases, release])
-    }
-    setEditingRelease(null)
-    setIsAdding(false)
-  }
-
-  const handleFetchITunesReleases = async (isAutoLoad = false) => {
+  const handleFetchITunesReleases = useCallback(async (isAutoLoad = false) => {
     setIsFetching(true)
     try {
       const iTunesReleases = await fetchITunesReleases()
@@ -198,6 +144,61 @@ export default function ReleasesSection({ releases, editMode, onUpdate, fontSize
     } finally {
       setIsFetching(false)
     }
+  }, [releases, onUpdate])
+
+  useEffect(() => {
+    if (!hasAutoLoaded && dataLoaded && (!releases || releases.length === 0)) {
+      setHasAutoLoaded(true)
+      handleFetchITunesReleases(true)
+    }
+  }, [hasAutoLoaded, releases, dataLoaded, handleFetchITunesReleases])
+
+  const sortedReleases = [...(releases || [])].sort(
+    (a, b) => {
+      // Featured releases are shown first
+      if (a.featured && !b.featured) return -1
+      if (!a.featured && b.featured) return 1
+      // Releases without a date are treated as upcoming/future → shown first
+      if (!a.releaseDate && !b.releaseDate) return 0
+      if (!a.releaseDate) return -1
+      if (!b.releaseDate) return 1
+      return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+    }
+  )
+
+  const DESKTOP_INITIAL_COUNT = 3
+  const desktopReleases = showAllDesktop || editMode ? sortedReleases : sortedReleases.slice(0, DESKTOP_INITIAL_COUNT)
+  const hasMoreDesktop = sortedReleases.length > DESKTOP_INITIAL_COUNT
+
+  const scrollToMobileRelease = useCallback((index: number) => {
+    const clamped = Math.max(0, Math.min(index, sortedReleases.length - 1))
+    setMobileScrollIndex(clamped)
+    if (mobileScrollRef.current) {
+      const firstCard = mobileScrollRef.current.querySelector('[data-release-card]') as HTMLElement | null
+      const cardWidth = firstCard ? firstCard.offsetWidth + 16 : 176 // card width + gap fallback
+      mobileScrollRef.current.scrollTo({ left: clamped * cardWidth, behavior: 'smooth' })
+    }
+  }, [sortedReleases.length])
+
+  const swipeHandlers = useTouchSwipe({
+    onSwipeLeft: () => scrollToMobileRelease(mobileScrollIndex + 1),
+    onSwipeRight: () => scrollToMobileRelease(mobileScrollIndex - 1),
+    threshold: 50,
+  })
+
+  const handleDelete = (id: string) => {
+    onUpdate((releases || []).filter(r => r.id !== id))
+  }
+
+  const handleSave = (release: Release) => {
+    const currentReleases = releases || []
+    if (editingRelease) {
+      onUpdate(currentReleases.map(r => r.id === release.id ? release : r))
+    } else {
+      onUpdate([...currentReleases, release])
+    }
+    setEditingRelease(null)
+    setIsAdding(false)
   }
 
   return (

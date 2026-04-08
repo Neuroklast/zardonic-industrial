@@ -241,7 +241,7 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
     countries: {},
     languages: {},
   })
-  const [loading, setLoading] = useState(true)
+  const [, setLoading] = useState(true)
 
   const reload = useCallback(async () => {
     setLoading(true)

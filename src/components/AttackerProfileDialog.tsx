@@ -1,6 +1,6 @@
-import { Warning, Clock, Globe, User, ChartLine, List, Shield, X } from '@phosphor-icons/react'
+import { Warning, Globe, User, ChartLine, List, Shield, X } from '@phosphor-icons/react'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface AttackerProfileDialogProps {
@@ -85,12 +85,7 @@ export default function AttackerProfileDialog({ open, onClose, hashedIp }: Attac
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!open || !hashedIp) return
-    loadProfile()
-  }, [open, hashedIp])
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -103,18 +98,12 @@ export default function AttackerProfileDialog({ open, onClose, hashedIp }: Attac
     } finally {
       setLoading(false)
     }
-  }
+  }, [hashedIp])
 
-  const formatTime = (ts: string) => {
-    try {
-      return new Date(ts).toLocaleString('en-GB', {
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-      })
-    } catch {
-      return ts
-    }
-  }
+  useEffect(() => {
+    if (!open || !hashedIp) return
+    loadProfile()
+  }, [open, hashedIp, loadProfile])
 
   const formatShortTime = (ts: string) => {
     try {

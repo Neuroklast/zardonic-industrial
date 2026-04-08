@@ -1,3 +1,4 @@
+import React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
@@ -10,6 +11,26 @@ interface RichTextEditorProps {
   onChange: (json: unknown) => void
   placeholder?: string
   onImageInsert?: () => void
+}
+
+interface ToolBtnProps {
+  onClick: () => void
+  active?: boolean
+  children: React.ReactNode
+  title: string
+}
+
+function ToolBtn({ onClick, active, children, title }: ToolBtnProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className={`p-1.5 rounded transition-colors ${active ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700'}`}
+    >
+      {children}
+    </button>
+  )
 }
 
 export function RichTextEditor({ content, onChange, placeholder, onImageInsert }: RichTextEditorProps) {
@@ -31,17 +52,6 @@ export function RichTextEditor({ content, onChange, placeholder, onImageInsert }
     if (url) editor.chain().focus().setLink({ href: url }).run()
     else editor.chain().focus().unsetLink().run()
   }
-
-  const ToolBtn = ({ onClick, active, children, title }: { onClick: () => void; active?: boolean; children: React.ReactNode; title: string }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      className={`p-1.5 rounded transition-colors ${active ? 'bg-red-600 text-white' : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-700'}`}
-    >
-      {children}
-    </button>
-  )
 
   return (
     <div className="border border-zinc-700 rounded overflow-hidden">

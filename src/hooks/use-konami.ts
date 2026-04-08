@@ -1,27 +1,15 @@
 import { useEffect, useState } from 'react'
-
-const KONAMI_CODE = [
-  'ArrowUp',
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'ArrowLeft',
-  'ArrowRight',
-  'b',
-  'a',
-]
+import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 export function useKonami() {
   const [success, setSuccess] = useState(false)
-  const [sequence, setSequence] = useState<string[]>([])
+  const [, setSequence] = useState<string[]>([])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       setSequence((prev) => {
         const newSeq = [...prev, e.key].slice(-10)
-        if (newSeq.join(',') === KONAMI_CODE.join(',')) {
+        if (newSeq.join(',') === DEFAULT_KONAMI_CODE.join(',')) {
           setSuccess(true)
           return []
         }

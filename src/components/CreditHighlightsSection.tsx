@@ -1,12 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Plus, Trash } from '@phosphor-icons/react'
-import { normalizeImageUrl, toDirectImageUrl } from '@/lib/image-cache'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
-import type { SectionLabels } from '@/lib/types'
 
 interface CreditHighlightsSectionProps {
   siteData: SiteData
@@ -18,7 +13,7 @@ interface CreditHighlightsSectionProps {
 
 export default function CreditHighlightsSection({
   siteData,
-  editMode,
+  editMode: _editMode,
   sectionOrder,
   visible,
   sectionLabel,

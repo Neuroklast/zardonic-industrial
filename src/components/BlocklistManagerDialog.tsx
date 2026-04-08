@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { ProhibitInset, Trash, Clock, Warning, Plus, CheckCircle, X } from '@phosphor-icons/react'
+import { ProhibitInset, Trash, Plus, CheckCircle, X } from '@phosphor-icons/react'
 import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
