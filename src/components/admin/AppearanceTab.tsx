@@ -1,4 +1,20 @@
 import { X, FloppyDisk, Sliders, Warning } from '@phosphor-icons/react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Slider } from '@/components/ui/slider'
+import { Separator } from '@/components/ui/separator'
+import { TabsContent } from '@/components/ui/tabs'
+import { toast } from 'sonner'
+import { getContrastRatio } from '@/lib/contrast'
+import type {
+  AdminSettings,
+  ThemeCustomization,
+  AnimationSettings,
+  ProgressiveOverlayModes,
+  CustomColorPreset,
+} from '@/lib/types'
 
 const BUILTIN_PRESETS: { name: string; theme: Partial<ThemeCustomization> }[] = [
   {
@@ -67,22 +83,6 @@ const BUILTIN_PRESETS: { name: string; theme: Partial<ThemeCustomization> }[] = 
     },
   },
 ]
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Slider } from '@/components/ui/slider'
-import { Separator } from '@/components/ui/separator'
-import { TabsContent } from '@/components/ui/tabs'
-import { toast } from 'sonner'
-import { getContrastRatio } from '@/lib/contrast'
-import type {
-  AdminSettings,
-  ThemeCustomization,
-  AnimationSettings,
-  ProgressiveOverlayModes,
-  CustomColorPreset,
-} from '@/lib/types'
 
 interface AppearanceTabProps {
   adminSettings?: AdminSettings | null

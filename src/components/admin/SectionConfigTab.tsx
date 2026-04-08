@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import type { AdminSettings, SectionLabels, ContactInfo, ContactSettings } from '@/lib/types'
+import type { AdminSettings, SectionLabels, ContactInfo, ContactSettings, ShellMember } from '@/lib/types'
 import type { SiteData } from '@/App'
 
 interface SectionConfigTabProps {
@@ -85,6 +85,13 @@ export default function SectionConfigTab({
       ...current,
       social: { ...(current.social ?? {}), [key]: value },
     }))
+  }
+
+  const updateShellMember = (key: keyof ShellMember, value: string) => {
+    setAdminSettings?.({
+      ...(adminSettings ?? {}),
+      shellMember: { ...(adminSettings?.shellMember ?? { name: '' }), [key]: value },
+    })
   }
 
   return (
@@ -179,19 +186,19 @@ export default function SectionConfigTab({
                 <Field
                   label="Member Name"
                   value={adminSettings?.shellMember?.name ?? ''}
-                  onChange={v => setAdminSettings?.({ ...(adminSettings ?? {}), shellMember: { ...(adminSettings?.shellMember ?? { name: '' }), name: v } })}
+                  onChange={v => updateShellMember('name', v)}
                   placeholder="Member name"
                 />
                 <Field
                   label="Member Role"
                   value={adminSettings?.shellMember?.role ?? ''}
-                  onChange={v => setAdminSettings?.({ ...(adminSettings ?? {}), shellMember: { ...(adminSettings?.shellMember ?? { name: '' }), role: v } })}
+                  onChange={v => updateShellMember('role', v)}
                   placeholder="e.g. Producer / DJ"
                 />
                 <Field
                   label="Member Bio"
                   value={adminSettings?.shellMember?.bio ?? ''}
-                  onChange={v => setAdminSettings?.({ ...(adminSettings ?? {}), shellMember: { ...(adminSettings?.shellMember ?? { name: '' }), bio: v } })}
+                  onChange={v => updateShellMember('bio', v)}
                   placeholder="Short member bio..."
                   multiline
                 />
