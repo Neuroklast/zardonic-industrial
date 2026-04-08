@@ -46,10 +46,9 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
                   glitchIntervalMs={adminSettings?.glitchTextSettings?.intervalMs}
                   glitchDurationMs={adminSettings?.glitchTextSettings?.durationMs}
                 />
+                {adminSettings?.animations?.blinkingCursor !== false && <span className="animate-pulse">_</span>}
               </h2>
             </div>
-
-            {(iTunesFetching || !hasAutoLoaded) && releases.length === 0 ? (
               <Card className="p-12 bg-card/50 border-border relative overflow-hidden">
                 <div className="flex flex-col items-center justify-center space-y-6">
                   <motion.div

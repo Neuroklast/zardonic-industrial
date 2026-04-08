@@ -50,10 +50,9 @@ export default function GallerySection({
                 glitchIntervalMs={adminSettings?.glitchTextSettings?.intervalMs}
                 glitchDurationMs={adminSettings?.glitchTextSettings?.durationMs}
               />
+              {adminSettings?.animations?.blinkingCursor !== false && <span className="animate-pulse">_</span>}
             </h2>
           </div>
-
-          {siteData.gallery.length === 0 ? (
             <Card className="p-12 text-center bg-card/50 border-border">
               <p className="text-xl text-muted-foreground uppercase tracking-wide font-mono">
                 Gallery coming soon
