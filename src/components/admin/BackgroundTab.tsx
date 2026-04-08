@@ -275,6 +275,7 @@ export default function BackgroundTab({
               <button
                 key={fit}
                 onClick={() => updateAnim({ backgroundImageFit: fit })}
+                aria-label={`Set image fit to ${fit}`}
                 className={`text-left px-2 py-1.5 border rounded font-mono text-xs transition-colors ${
                   (anim.backgroundImageFit ?? 'cover') === fit
                     ? 'border-primary bg-primary/10 text-primary'
@@ -329,6 +330,7 @@ export default function BackgroundTab({
               <button
                 key={opt.value}
                 onClick={() => updateAnim({ loadingScreenType: opt.value })}
+                aria-label={`Select ${opt.label} loading screen`}
                 className={`text-left px-3 py-2 border rounded font-mono text-xs transition-colors ${
                   (anim.loadingScreenType ?? 'cyberpunk') === opt.value
                     ? 'border-primary bg-primary/10 text-primary'
@@ -354,6 +356,7 @@ export default function BackgroundTab({
                   <button
                     key={opt.value}
                     onClick={() => updateAnim({ loadingScreenMode: opt.value })}
+                    aria-label={`Set loading duration mode to ${opt.label}`}
                     className={`text-left px-2 py-2 border rounded font-mono text-xs transition-colors ${
                       (anim.loadingScreenMode ?? 'real') === opt.value
                         ? 'border-primary bg-primary/10 text-primary'

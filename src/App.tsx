@@ -226,10 +226,11 @@ function App() {
 
   // When loading screen type is 'none', skip loading immediately
   useEffect(() => {
-    if (anim.loadingScreenType === 'none' && loading) {
+    if (anim.loadingScreenType === 'none') {
       setLoading(false)
     }
-  }, [anim.loadingScreenType, loading])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anim.loadingScreenType])
 
   // Collect image URLs for precaching during loading screen
   const precacheUrls = useMemo(() => {
@@ -340,10 +341,7 @@ function App() {
             alt=""
             className="w-full h-full"
             style={{
-              objectFit: anim.backgroundImageFit === 'fill' ? 'fill'
-                : anim.backgroundImageFit === 'contain' ? 'contain'
-                : anim.backgroundImageFit === 'none' ? 'none'
-                : 'cover',
+              objectFit: anim.backgroundImageFit ?? 'cover',
               display: 'block',
             }}
           />
