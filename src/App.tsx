@@ -22,6 +22,9 @@ import CyberpunkBackground from '@/components/CyberpunkBackground'
 const MatrixRain = React.lazy(() => import('@/components/MatrixRain'))
 const StarField = React.lazy(() => import('@/components/StarField'))
 const CloudChamberBackground = React.lazy(() => import('@/components/CloudChamberBackground'))
+const GlitchGridBackground = React.lazy(() => import('@/components/GlitchGridBackground'))
+const MinimalBarLoader = React.lazy(() => import('@/components/MinimalBarLoader'))
+const GlitchDecodeLoader = React.lazy(() => import('@/components/GlitchDecodeLoader'))
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
 const ConfigEditorDialog = React.lazy(() => import('@/components/ConfigEditorDialog'))
@@ -54,6 +57,7 @@ function BackgroundLayer({ type, hudTexts }: { type: BackgroundType | undefined;
   if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain /></Suspense>
   if (bg === 'stars') return <Suspense fallback={null}><StarField /></Suspense>
   if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground /></Suspense>
+  if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground /></Suspense>
   // 'minimal' – no decorative background
   return null
 }
@@ -220,6 +224,13 @@ function App() {
   const { iTunesFetching, bandsintownFetching, hasAutoLoaded, handleFetchBandsintownEvents, handleFetchITunesReleases } = useSiteDataSync(siteData, setSiteData)
   useDocumentTitle(siteData?.artistName ?? '')
 
+  // When loading screen type is 'none', skip loading immediately
+  useEffect(() => {
+    if (anim.loadingScreenType === 'none' && loading) {
+      setLoading(false)
+    }
+  }, [anim.loadingScreenType, loading])
+
   // Collect image URLs for precaching during loading screen
   const precacheUrls = useMemo(() => {
     if (!siteData) return []
@@ -267,9 +278,49 @@ function App() {
     <>
       {siteData && <StructuredData artistName={siteData.artistName} siteData={siteData} />}
       <AnimatePresence>
-        {(!siteData || loading) && (
-          <LoadingScreen onLoadComplete={() => setLoading(false)} precacheUrls={precacheUrls} loaderTexts={adminSettings?.loaderTexts} />
-        )}
+        {(!siteData || loading) && (() => {
+          const lsType = anim.loadingScreenType ?? 'cyberpunk'
+          if (lsType === 'none') {
+            // Still need to signal load complete
+            return null
+          }
+          if (lsType === 'minimal-bar') {
+            return (
+              <Suspense fallback={null}>
+                <MinimalBarLoader
+                  onLoadComplete={() => setLoading(false)}
+                  precacheUrls={precacheUrls}
+                  mode={anim.loadingScreenMode ?? 'real'}
+                  duration={anim.loadingScreenDuration ?? 3}
+                  loaderTexts={adminSettings?.loaderTexts}
+                />
+              </Suspense>
+            )
+          }
+          if (lsType === 'glitch-decode') {
+            return (
+              <Suspense fallback={null}>
+                <GlitchDecodeLoader
+                  onLoadComplete={() => setLoading(false)}
+                  precacheUrls={precacheUrls}
+                  mode={anim.loadingScreenMode ?? 'real'}
+                  duration={anim.loadingScreenDuration ?? 3}
+                  loaderTexts={adminSettings?.loaderTexts}
+                />
+              </Suspense>
+            )
+          }
+          // default: 'cyberpunk'
+          return (
+            <LoadingScreen
+              onLoadComplete={() => setLoading(false)}
+              precacheUrls={precacheUrls}
+              loaderTexts={adminSettings?.loaderTexts}
+              mode={anim.loadingScreenMode ?? 'real'}
+              duration={anim.loadingScreenDuration ?? 3}
+            />
+          )
+        })()}
       </AnimatePresence>
 
       <div className={`min-h-screen bg-background text-foreground relative${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}>
@@ -277,7 +328,31 @@ function App() {
       {anim.crtEnabled !== false && <div className="crt-vignette" />}
       {anim.scanlineEnabled !== false && <div className="crt-scanline-bg" />}
       {anim.noiseEnabled !== false && <div className="full-page-noise periodic-noise-glitch" />}
-      {anim.circuitBackgroundEnabled !== false && <BackgroundLayer type={anim.backgroundType} hudTexts={adminSettings?.hudTexts} />}
+      {/* Background image layer */}
+      {anim.backgroundImageUrl && (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{ zIndex: 0, opacity: typeof anim.backgroundImageOpacity === 'number' ? anim.backgroundImageOpacity : 1 }}
+          aria-hidden="true"
+        >
+          <img
+            src={anim.backgroundImageUrl}
+            alt=""
+            className="w-full h-full"
+            style={{
+              objectFit: anim.backgroundImageFit === 'fill' ? 'fill'
+                : anim.backgroundImageFit === 'contain' ? 'contain'
+                : anim.backgroundImageFit === 'none' ? 'none'
+                : 'cover',
+              display: 'block',
+            }}
+          />
+        </div>
+      )}
+      {/* Animated background effect: show when enabled and (no image, or overlay mode is on) */}
+      {anim.circuitBackgroundEnabled !== false && (!anim.backgroundImageUrl || anim.backgroundImageOverlay === true) && (
+        <BackgroundLayer type={anim.backgroundType} hudTexts={adminSettings?.hudTexts} />
+      )}
       <SystemMonitorHUD />
       
       <Toaster />
