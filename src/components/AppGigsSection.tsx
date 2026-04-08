@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import { ArrowsClockwise, MapPin, CalendarBlank } from '@phosphor-icons/react'
@@ -18,9 +19,10 @@ interface AppGigsSectionProps {
   sectionLabels?: SectionLabels
   onLabelChange?: (key: keyof SectionLabels, value: string) => void
   onGigClick: (gig: Gig) => void
+  onRefresh?: () => void
 }
 
-export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, bandsintownFetching, sectionLabels, onLabelChange, onGigClick }: AppGigsSectionProps) {
+export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, bandsintownFetching, sectionLabels, onLabelChange, onGigClick, onRefresh }: AppGigsSectionProps) {
   if (!visible) return null
 
   const loadingLabel = sectionLabels?.gigsLoadingLabel ?? '// LOADING.BANDSINTOWN.EVENTS'
@@ -42,16 +44,29 @@ export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, 
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'UPCOMING GIGS'}`}>
                 {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
-                <EditableHeading onChange={() => {}}
+                <EditableHeading
+                  onChange={(v) => onLabelChange?.('upcomingGigs', v)}
                   text={sectionLabel}
                   defaultText="UPCOMING GIGS"
-                  editMode={editMode}
+                  editMode={editMode && !!onLabelChange}
                   glitchEnabled={adminSettings?.glitchTextSettings?.enabled !== false}
                   glitchIntervalMs={adminSettings?.glitchTextSettings?.intervalMs}
                   glitchDurationMs={adminSettings?.glitchTextSettings?.durationMs}
                 />
                 {adminSettings?.animations?.blinkingCursor !== false && <span className="animate-pulse">_</span>}
               </h2>
+              {editMode && onRefresh && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onRefresh()}
+                  disabled={bandsintownFetching}
+                  className="gap-2 border-primary/30 font-mono tracking-wider text-xs shrink-0"
+                >
+                  <ArrowsClockwise className={`w-4 h-4 ${bandsintownFetching ? 'animate-spin' : ''}`} />
+                  Sync Gigs
+                </Button>
+              )}
             </div>
 
             {bandsintownFetching && gigs.length === 0 ? (
