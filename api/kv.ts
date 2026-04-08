@@ -259,7 +259,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
               }
             }
           }
-        } catch { /* ignore — best-effort preservation */ }
+        } catch (preserveErr) {
+          console.warn('admin:settings field preservation failed — writing incoming value as-is:', preserveErr instanceof Error ? preserveErr.message : preserveErr)
+        }
         await kv.set(key, incoming)
         return res.json({ success: true })
       }
