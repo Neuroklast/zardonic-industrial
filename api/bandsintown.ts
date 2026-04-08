@@ -146,6 +146,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const payload = { events }
     if (redis) {
+      // 24-hour TTL aligns with the daily gigs-sync cron job
       try { await redis.set(redisKey, payload, { ex: 86400 }) } catch { /* non-fatal */ }
     }
     res

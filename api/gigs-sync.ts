@@ -14,7 +14,7 @@ import { fetchWithRetry } from './_fetch-retry.js'
 const BANDSINTOWN_API_BASE = 'https://rest.bandsintown.com'
 const ARTIST_NAME = 'Zardonic'
 const GIGS_CACHE_KEY = 'gigs:events:zardonic'
-const GIGS_TTL_SECONDS = 25 * 60 * 60 // 25 hours
+const GIGS_TTL_SECONDS = 25 * 60 * 60 // 25 hours (1-hour buffer over the daily cron in case of execution delays)
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method === 'OPTIONS') {
