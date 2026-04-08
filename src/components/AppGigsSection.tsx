@@ -7,6 +7,7 @@ import EditableHeading from '@/components/EditableHeading'
 import { ArrowsClockwise, MapPin, CalendarBlank, CaretDown, CaretUp } from '@phosphor-icons/react'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 import type { Gig } from '@/lib/app-types'
+import { parseGigDate } from '@/lib/utils'
 
 const INITIAL_VISIBLE = 3
 
@@ -34,7 +35,7 @@ export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, 
     today.setHours(0, 0, 0, 0)
     return gigs.filter(gig => {
       if (!gig.date) return false
-      return new Date(gig.date) >= today
+      return parseGigDate(gig.date) >= today
     })
   }, [gigs])
 

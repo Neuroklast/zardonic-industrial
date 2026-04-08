@@ -5,6 +5,7 @@ import { fetchITunesReleases } from '@/lib/itunes'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { fetchBandsintownEvents } from '@/lib/bandsintown'
 import { getSyncTimestamps, updateReleasesSync, updateGigsSync } from '@/lib/sync'
+import { parseGigDate } from '@/lib/utils'
 import { toast } from 'sonner'
 import type React from 'react'
 
@@ -190,7 +191,14 @@ export function useSiteDataSync(
             updateReleasesSync(Date.now())
           })
         }
-        if (now - lastGigsSync > CACHE_DURATION_MS || siteData.gigs.length === 0) {
+        // Also refresh if all stored gigs are in the past (no upcoming gigs visible)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const hasUpcomingGigs = siteData.gigs.some(g => {
+          if (!g.date) return false
+          return parseGigDate(g.date) >= today
+        })
+        if (now - lastGigsSync > CACHE_DURATION_MS || siteData.gigs.length === 0 || !hasUpcomingGigs) {
           handleFetchBandsintownEvents(true).then(() => {
             updateGigsSync(Date.now())
           })
