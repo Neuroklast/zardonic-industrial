@@ -170,7 +170,7 @@ export const imageProxyQuerySchema = z.object({
 /** GET /api/bandsintown — query params */
 export const bandsintownQuerySchema = z.object({
   artist: z.string().min(1, 'artist is required').max(200),
-  app_id: z.string().min(1, 'app_id is required').max(200),
+  app_id: z.string().max(200).optional(),
   /** Optional: include past events. Accepts 'true'/'false' string. Default: false */
   include_past: z
     .enum(['true', 'false'])
