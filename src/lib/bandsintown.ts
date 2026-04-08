@@ -39,12 +39,11 @@ interface BandsintownApiEvent {
 }
 
 const ARTIST_NAME = 'Zardonic'
-const APP_ID = 'zardonic-website'
 
 export async function fetchBandsintownEvents(): Promise<BandsintownEvent[]> {
   try {
     const response = await fetch(
-      `/api/bandsintown?artist=${encodeURIComponent(ARTIST_NAME)}&app_id=${encodeURIComponent(APP_ID)}`
+      `/api/bandsintown?artist=${encodeURIComponent(ARTIST_NAME)}`
     )
 
     if (!response.ok) {

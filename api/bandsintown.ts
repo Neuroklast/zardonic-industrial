@@ -1,11 +1,11 @@
 /**
- * GET /api/bandsintown?artist=<name>&app_id=<id>[&include_past=true]
+ * GET /api/bandsintown?artist=<name>[&include_past=true]
  *
  * Server-side proxy for the Bandsintown REST API that avoids CSP / CORS issues
  * when called from the browser.
  *
- * The Bandsintown app_id is a public client identifier, not a secret — it is
- * safe to pass it through the query string.
+ * The Bandsintown API key is read from the BANDSINTOWN_API_KEY environment
+ * variable and is never exposed to the client.
  *
  * Returns:
  *   200 { events: BandsintownEvent[] }   — success (may be empty array)
@@ -69,13 +69,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     res.status(400).json({ error: parsed.error })
     return
   }
-  const { artist, app_id, include_past } = parsed.data
+  const { artist, include_past } = parsed.data
+
+  const apiKey = process.env.BANDSINTOWN_API_KEY
+  if (!apiKey) {
+    res.status(503).json({
+      error: 'BANDSINTOWN_API_KEY not configured',
+      message: 'Please set BANDSINTOWN_API_KEY environment variable',
+    })
+    return
+  }
 
   try {
     const url = new URL(
       `${BANDSINTOWN_API_BASE}/artists/${encodeURIComponent(artist)}/events`,
     )
-    url.searchParams.set('app_id', app_id)
+    url.searchParams.set('app_id', apiKey)
     if (include_past) {
       url.searchParams.set('date', 'all')
     }
