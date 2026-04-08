@@ -2,13 +2,25 @@ import React from 'react'
 import logoImage from '@/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Upload, Storefront } from '@phosphor-icons/react'
+import { Upload, Storefront, Plus, Trash, PencilSimple, Check } from '@phosphor-icons/react'
+import type { SiteData, HeroLink } from '@/lib/app-types'
+import type { AdminSettings } from '@/lib/types'
+import { useState } from 'react'
+
+const DEFAULT_HERO_LINKS: HeroLink[] = [
+  { id: 'listen', label: 'Listen Now', type: 'section', target: 'music' },
+  { id: 'tour', label: 'Tour Dates', type: 'section', target: 'gigs' },
+  { id: 'merch', label: 'Merch', type: 'url', target: 'https://zardonic.channl.co/merch', icon: 'Storefront' },
+]
 
 interface AppHeroSectionProps {
   contentLoaded: boolean
   editMode: boolean
   scrollToSection: (id: string) => void
   artistName: string
+  adminSettings?: AdminSettings
+  onUpdateSiteData?: (updater: SiteData | ((current: SiteData) => SiteData)) => void
+  siteData?: SiteData
 }
 
 export default function AppHeroSection({
@@ -16,7 +28,25 @@ export default function AppHeroSection({
   editMode,
   scrollToSection,
   artistName,
+  onUpdateSiteData,
+  siteData,
 }: AppHeroSectionProps) {
+  const heroLinks = siteData?.heroLinks ?? DEFAULT_HERO_LINKS
+  const [editingLinks, setEditingLinks] = useState(false)
+  const [linksDraft, setLinksDraft] = useState<HeroLink[]>(heroLinks)
+
+  const startEditLinks = () => {
+    setLinksDraft(siteData?.heroLinks ?? DEFAULT_HERO_LINKS)
+    setEditingLinks(true)
+  }
+
+  const saveLinks = () => {
+    onUpdateSiteData?.((prev) => ({ ...prev, heroLinks: linksDraft }))
+    setEditingLinks(false)
+  }
+
+  const genId = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).slice(2))
+
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect">
       <div className="absolute inset-0 bg-black" />
@@ -81,20 +111,112 @@ export default function AppHeroSection({
           transition={{ delay: 1.2, duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="mt-12 flex gap-4 justify-center flex-wrap"
         >
-          <Button onClick={() => scrollToSection('music')} size="lg" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
-            <span className="hover-chromatic">Listen Now</span>
-          </Button>
-          <Button onClick={() => scrollToSection('gigs')} size="lg" variant="outline" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
-            <span className="hover-chromatic">Tour Dates</span>
-          </Button>
-          <Button asChild size="lg" variant="outline" className="uppercase font-mono hover-glitch hover-noise relative cyber-border">
-            <a href="https://zardonic.channl.co/merch" target="_blank" rel="noopener noreferrer">
-              <Storefront className="w-5 h-5 mr-2" />
-              <span className="hover-chromatic">Merch</span>
-            </a>
-          </Button>
+          {heroLinks.map((link) => {
+            const isExternal = link.type === 'url'
+            const commonClass = "uppercase font-mono hover-glitch hover-noise relative cyber-border"
+            if (isExternal) {
+              return (
+                <Button key={link.id} asChild size="lg" variant="outline" className={commonClass}>
+                  <a href={link.target} target="_blank" rel="noopener noreferrer">
+                    {link.icon === 'Storefront' && <Storefront className="w-5 h-5 mr-2" />}
+                    <span className="hover-chromatic">{link.label}</span>
+                  </a>
+                </Button>
+              )
+            }
+            return (
+              <Button
+                key={link.id}
+                onClick={() => scrollToSection(link.target)}
+                size="lg"
+                variant={link.id === 'listen' ? 'default' : 'outline'}
+                className={commonClass}
+              >
+                <span className="hover-chromatic">{link.label}</span>
+              </Button>
+            )
+          })}
+
+          {editMode && onUpdateSiteData && (
+            <Button
+              onClick={startEditLinks}
+              size="lg"
+              variant="ghost"
+              className="uppercase font-mono border border-dashed border-primary/40 hover:border-primary"
+              aria-label="Edit hero links"
+            >
+              <PencilSimple className="w-5 h-5 mr-2" />
+              Edit Links
+            </Button>
+          )}
         </motion.div>
       </motion.div>
+
+      {/* Edit hero links dialog */}
+      {editingLinks && (
+        <div
+          className="fixed inset-0 z-[300] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setEditingLinks(false)}
+        >
+          <div
+            className="bg-card border border-primary/30 p-6 w-full max-w-lg font-mono space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="data-label">// HERO.LINKS.EDITOR</div>
+              <button onClick={() => setEditingLinks(false)} className="text-muted-foreground hover:text-foreground" aria-label="Close">✕</button>
+            </div>
+
+            {linksDraft.map((link, idx) => (
+              <div key={link.id} className="border border-border/50 p-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    value={link.label}
+                    onChange={(e) => setLinksDraft(d => d.map((l, i) => i === idx ? { ...l, label: e.target.value } : l))}
+                    placeholder="Button label"
+                    className="flex-1 bg-transparent border border-primary/30 px-2 py-1 text-xs focus:outline-none focus:border-primary"
+                  />
+                  <select
+                    value={link.type}
+                    onChange={(e) => setLinksDraft(d => d.map((l, i) => i === idx ? { ...l, type: e.target.value as HeroLink['type'] } : l))}
+                    className="bg-card border border-primary/30 px-2 py-1 text-xs focus:outline-none"
+                  >
+                    <option value="section">Scroll to section</option>
+                    <option value="url">External URL</option>
+                  </select>
+                  <button
+                    onClick={() => setLinksDraft(d => d.filter((_, i) => i !== idx))}
+                    className="text-destructive hover:text-destructive/80 p-1"
+                    aria-label="Remove link"
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
+                </div>
+                <input
+                  value={link.target}
+                  onChange={(e) => setLinksDraft(d => d.map((l, i) => i === idx ? { ...l, target: e.target.value } : l))}
+                  placeholder={link.type === 'section' ? 'Section ID (e.g. music, gigs)' : 'https://...'}
+                  className="w-full bg-transparent border border-primary/30 px-2 py-1 text-xs focus:outline-none focus:border-primary"
+                />
+              </div>
+            ))}
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setLinksDraft(d => [...d, { id: genId(), label: 'New Link', type: 'section', target: '' }])}
+                className="gap-1 text-xs font-mono"
+              >
+                <Plus className="w-3 h-3" /> Add Link
+              </Button>
+              <Button size="sm" onClick={saveLinks} className="gap-1 text-xs font-mono ml-auto">
+                <Check className="w-3 h-3" /> Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

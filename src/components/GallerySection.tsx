@@ -14,6 +14,7 @@ interface GallerySectionProps {
   sectionOrder: number
   visible: boolean
   sectionLabel: string
+  headingPrefix?: string
   setGalleryIndex: (index: number) => void
   adminSettings: AdminSettings | undefined
 }
@@ -24,6 +25,7 @@ export default function GallerySection({
   sectionOrder,
   visible,
   sectionLabel,
+  headingPrefix,
   setGalleryIndex,
   adminSettings,
 }: GallerySectionProps) {
@@ -41,7 +43,8 @@ export default function GallerySection({
           transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
           <div className="flex items-center justify-between mb-12">
-            <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="GALLERY">
+            <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'GALLERY'}`}>
+              {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
               <EditableHeading onChange={() => {}}
                 text={sectionLabel || ''}
                 defaultText="GALLERY"

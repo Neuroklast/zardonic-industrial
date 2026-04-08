@@ -60,6 +60,15 @@ export interface CreditHighlight {
   alt: string
 }
 
+export interface HeroLink {
+  id: string
+  label: string
+  /** 'section' = scrolls to a section ID, 'url' = external URL */
+  type: 'section' | 'url'
+  target: string
+  icon?: string
+}
+
 export interface SiteData {
   artistName: string
   heroImage: string
@@ -72,6 +81,7 @@ export interface SiteData {
   members: Member[]
   mediaFiles: MediaFile[]
   creditHighlights: CreditHighlight[]
+  heroLinks?: HeroLink[]
   social: {
     instagram?: string
     facebook?: string

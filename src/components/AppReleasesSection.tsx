@@ -14,13 +14,14 @@ interface AppReleasesSectionProps {
   visible: boolean
   editMode: boolean
   sectionLabel: string
+  headingPrefix?: string
   adminSettings: AdminSettings | undefined
   iTunesFetching: boolean
   hasAutoLoaded: boolean
   onReleaseClick: (release: Release) => void
 }
 
-export default function AppReleasesSection({ releases, sectionOrder, visible, editMode, sectionLabel, adminSettings, iTunesFetching, hasAutoLoaded, onReleaseClick }: AppReleasesSectionProps) {
+export default function AppReleasesSection({ releases, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, iTunesFetching, hasAutoLoaded, onReleaseClick }: AppReleasesSectionProps) {
   const [showAllReleases, setShowAllReleases] = useState(false)
 
   if (!visible) return null
@@ -37,7 +38,8 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="RELEASES">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'RELEASES'}`}>
+                {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
                 <EditableHeading onChange={() => {}}
                   text={sectionLabel}
                   defaultText="RELEASES"

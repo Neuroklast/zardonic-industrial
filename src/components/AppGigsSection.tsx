@@ -12,12 +12,13 @@ interface AppGigsSectionProps {
   visible: boolean
   editMode: boolean
   sectionLabel: string
+  headingPrefix?: string
   adminSettings: AdminSettings | undefined
   bandsintownFetching: boolean
   onGigClick: (gig: Gig) => void
 }
 
-export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, adminSettings, bandsintownFetching, onGigClick }: AppGigsSectionProps) {
+export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, bandsintownFetching, onGigClick }: AppGigsSectionProps) {
   if (!visible) return null
 
   return (
@@ -32,7 +33,8 @@ export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, 
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text="UPCOMING GIGS">
+              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'UPCOMING GIGS'}`}>
+                {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
                 <EditableHeading onChange={() => {}}
                   text={sectionLabel}
                   defaultText="UPCOMING GIGS"

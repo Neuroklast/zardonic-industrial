@@ -37,6 +37,9 @@ interface MediaBrowserProps {
   mediaFiles?: MediaFile[]
   editMode?: boolean
   onUpdate?: (files: MediaFile[]) => void
+  /** When true, renders as a fullscreen overlay with close button (used by AppMediaSection) */
+  isOverlay?: boolean
+  onClose?: () => void
 }
 
 // ---------------------------------------------------------------------------
@@ -358,7 +361,7 @@ function FileCard({ file, onClick }: { file: MediaFile; onClick: () => void }) {
 // Main export
 // ---------------------------------------------------------------------------
 
-export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: MediaBrowserProps) {
+export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOverlay = false, onClose }: MediaBrowserProps) {
   const [overlayFile, setOverlayFile] = useState<MediaFile | null>(null)
   const [editOpen, setEditOpen] = useState(false)
 
@@ -379,6 +382,103 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: Me
   }
   const folders = Object.keys(folderMap)
 
+  // When used as overlay (from AppMediaSection), render as fullscreen modal browser
+  if (isOverlay) {
+    return (
+      <motion.div
+        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div
+          className="relative w-full max-w-3xl bg-card border border-primary/30 flex flex-col max-h-[90dvh]"
+          initial={{ scale: 0.95, y: 20 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <HudCorner pos="tl" /><HudCorner pos="tr" /><HudCorner pos="bl" /><HudCorner pos="br" />
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <div className="data-label">// MEDIA.ARCHIVE</div>
+            <div className="flex items-center gap-2">
+              {editMode && onUpdate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditOpen(true)}
+                  className="gap-1 border-primary/30 font-mono text-xs"
+                >
+                  <PencilSimple className="w-3 h-3" />
+                  MANAGE FILES
+                </Button>
+              )}
+              <button
+                onClick={onClose}
+                className="text-muted-foreground hover:text-foreground p-1"
+                aria-label="Close media archive"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* File list */}
+          <div className="flex-1 overflow-y-auto p-4 min-h-0">
+            {mediaFiles.length === 0 ? (
+              <p className="text-xs font-mono text-foreground/30 text-center py-12">
+                {editMode ? 'NO FILES — CLICK "MANAGE FILES" TO ADD' : 'NO FILES AVAILABLE'}
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {rootFiles.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {rootFiles.map((f) => (
+                      <FileCard key={f.id} file={f} onClick={() => handleOpen(f)} />
+                    ))}
+                  </div>
+                )}
+                {folders.map((folder) => (
+                  <div key={folder}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <FolderOpen className="w-4 h-4 text-accent/60" />
+                      <span className="data-label">// {folder.toUpperCase()}</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l border-border/30">
+                      {folderMap[folder].map((f) => (
+                        <FileCard key={f.id} file={f} onClick={() => handleOpen(f)} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        <AnimatePresence>
+          {overlayFile && (
+            <MediaOverlay file={overlayFile} onClose={() => setOverlayFile(null)} />
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {editOpen && onUpdate && (
+            <EditPanel
+              files={mediaFiles}
+              onSave={onUpdate}
+              onClose={() => setEditOpen(false)}
+            />
+          )}
+        </AnimatePresence>
+      </motion.div>
+    )
+  }
+
+  // Inline section (legacy usage)
   return (
     <section id="media" className="py-24 px-4">
       <div className="container mx-auto max-w-4xl">
@@ -412,11 +512,6 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: Me
         <motion.div
           className="relative border border-primary/30 bg-card/40 p-6 cursor-pointer hover:border-primary/60 hover:bg-primary/5 transition-all group"
           whileHover={{ scale: 1.005 }}
-          onClick={() => {
-            if (mediaFiles.length === 0) {
-              if (editMode && onUpdate) setEditOpen(true)
-            }
-          }}
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -429,7 +524,7 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: Me
               <div className="data-label mb-1">// PRESS KITS · LOGOS · ASSETS</div>
               <div className="text-foreground/50 text-sm tracking-wider">
                 {mediaFiles.length === 0
-                  ? editMode ? 'CLICK TO ADD FILES' : 'NO FILES AVAILABLE'
+                  ? 'NO FILES AVAILABLE'
                   : `${mediaFiles.length} FILE${mediaFiles.length !== 1 ? 'S' : ''} AVAILABLE`
                 }
               </div>
@@ -446,7 +541,6 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: Me
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            {/* Root files */}
             {rootFiles.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {rootFiles.map((f) => (
@@ -454,8 +548,6 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate }: Me
                 ))}
               </div>
             )}
-
-            {/* Folders */}
             {folders.map((folder) => (
               <div key={folder}>
                 <div className="flex items-center gap-2 mb-3">
