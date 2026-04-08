@@ -73,7 +73,7 @@ export interface ThemeCustomization {
   dataLabelFontFamily?: string
 }
 
-export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal'
+export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal' | 'cloud-chamber'
 
 export interface AnimationSettings {
   glitchEnabled?: boolean

@@ -24,11 +24,12 @@ interface AppSocialSectionProps {
   visible: boolean
   editMode: boolean
   sectionLabel: string
+  headingPrefix?: string
   adminSettings: AdminSettings | undefined
   onContactClick: () => void
 }
 
-export default function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabel, adminSettings, onContactClick }: AppSocialSectionProps) {
+export default function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, onContactClick }: AppSocialSectionProps) {
   if (!visible) return null
 
   return (
@@ -44,7 +45,8 @@ export default function AppSocialSection({ social, sectionOrder, visible, editMo
             className=""
           >
             <div className="flex items-center justify-between mb-12">
-            <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="CONNECT">
+            <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'CONNECT'}`}>
+              {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
               <EditableHeading onChange={() => {}}
                 text={sectionLabel}
                 defaultText="CONNECT"

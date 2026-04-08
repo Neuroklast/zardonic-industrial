@@ -493,17 +493,50 @@ export default function AdminPanel({
                   {apiHealth ? (
                     <div className="space-y-2">
                       {Object.entries(apiHealth.services).map(([service, status]) => (
-                        <div key={service} className="flex items-center justify-between">
-                          <span className="font-mono text-xs uppercase">{service}</span>
-                          <span className={`font-mono text-[10px] px-2 py-0.5 rounded border ${
-                            status === 'ok' || status === 'configured'
-                              ? 'border-green-500/40 text-green-400 bg-green-500/10'
-                              : status === 'unconfigured'
-                              ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10'
-                              : 'border-destructive/40 text-destructive bg-destructive/10'
-                          }`}>
-                            {String(status).toUpperCase()}
-                          </span>
+                        <div key={service} className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono text-xs uppercase">{service}</span>
+                            <span className={`font-mono text-[10px] px-2 py-0.5 rounded border ${
+                              status === 'ok' || status === 'configured'
+                                ? 'border-green-500/40 text-green-400 bg-green-500/10'
+                                : status === 'unconfigured'
+                                ? 'border-yellow-500/40 text-yellow-400 bg-yellow-500/10'
+                                : 'border-destructive/40 text-destructive bg-destructive/10'
+                            }`}>
+                              {String(status).toUpperCase()}
+                            </span>
+                          </div>
+                          {(status === 'unconfigured' || status === 'error') && (
+                            <div className="ml-2 border-l-2 border-yellow-500/30 pl-2 font-mono text-[10px] text-muted-foreground space-y-0.5">
+                              {service === 'redis' && (<>
+                                <div>Set env: <code className="text-yellow-400">UPSTASH_REDIS_REST_URL</code></div>
+                                <div>Set env: <code className="text-yellow-400">UPSTASH_REDIS_REST_TOKEN</code></div>
+                                <div className="text-foreground/40">→ Free Redis at upstash.com</div>
+                              </>)}
+                              {service === 'spotify' && (<>
+                                <div>Set env: <code className="text-yellow-400">SPOTIFY_CLIENT_ID</code></div>
+                                <div>Set env: <code className="text-yellow-400">SPOTIFY_CLIENT_SECRET</code></div>
+                                <div className="text-foreground/40">→ developer.spotify.com</div>
+                              </>)}
+                              {service === 'bandsintown' && (<>
+                                <div>Set env: <code className="text-yellow-400">BANDSINTOWN_API_KEY</code></div>
+                                <div className="text-foreground/40">→ artists.bandsintown.com</div>
+                              </>)}
+                              {service === 'itunes' && (<>
+                                <div>Set env: <code className="text-yellow-400">ITUNES_ARTIST_ID</code></div>
+                                <div className="text-foreground/40">→ iTunes artist ID from store URL</div>
+                              </>)}
+                              {service === 'sanity' && (<>
+                                <div>Set env: <code className="text-yellow-400">SANITY_PROJECT_ID</code></div>
+                                <div>Set env: <code className="text-yellow-400">SANITY_DATASET</code></div>
+                                <div>Set env: <code className="text-yellow-400">SANITY_API_TOKEN</code></div>
+                                <div className="text-foreground/40">→ sanity.io</div>
+                              </>)}
+                              {!['redis','spotify','bandsintown','itunes','sanity'].includes(service) && (
+                                <div>See <code className="text-yellow-400">.env.example</code></div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

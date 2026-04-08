@@ -21,10 +21,11 @@ import { CircuitBackground } from '@/components/CircuitBackground'
 import CyberpunkBackground from '@/components/CyberpunkBackground'
 const MatrixRain = React.lazy(() => import('@/components/MatrixRain'))
 const StarField = React.lazy(() => import('@/components/StarField'))
+const CloudChamberBackground = React.lazy(() => import('@/components/CloudChamberBackground'))
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
 const ConfigEditorDialog = React.lazy(() => import('@/components/ConfigEditorDialog'))
-import { MediaBrowser } from '@/components/MediaBrowser'
+import AppMediaSection from '@/components/AppMediaSection'
 import { SystemMonitorHUD } from '@/components/SystemMonitorHUD'
 import ContactSection from '@/components/ContactSection'
 const ContactInboxDialog = React.lazy(() => import('@/components/ContactInboxDialog'))
@@ -52,6 +53,7 @@ function BackgroundLayer({ type, hudTexts }: { type: BackgroundType | undefined;
   if (bg === 'cyberpunk-hud') return <CyberpunkBackground hudTexts={hudTexts} />
   if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain /></Suspense>
   if (bg === 'stars') return <Suspense fallback={null}><StarField /></Suspense>
+  if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground /></Suspense>
   // 'minimal' – no decorative background
   return null
 }
@@ -237,6 +239,12 @@ function App() {
     await handleChangeAdminPassword(password)
   }, [handleChangeAdminPassword])
 
+  // Wrap logout to also exit edit mode automatically
+  const handleLogout = useCallback(async () => {
+    setEditMode(false)
+    await handleAdminLogout()
+  }, [handleAdminLogout])
+
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false)
     // Small delay to let mobile menu close before scrolling
@@ -250,15 +258,11 @@ function App() {
     }, 100)
   }
 
-  if (!siteData) {
-    return <LoadingScreen onLoadComplete={() => setLoading(false)} precacheUrls={precacheUrls} loaderTexts={adminSettings?.loaderTexts} />
-  }
-
   return (
     <>
-      <StructuredData artistName={siteData.artistName} siteData={siteData} />
+      {siteData && <StructuredData artistName={siteData.artistName} siteData={siteData} />}
       <AnimatePresence>
-        {loading && (
+        {(!siteData || loading) && (
           <LoadingScreen onLoadComplete={() => setLoading(false)} precacheUrls={precacheUrls} loaderTexts={adminSettings?.loaderTexts} />
         )}
       </AnimatePresence>
@@ -272,12 +276,12 @@ function App() {
       <SystemMonitorHUD />
       
       <Toaster />
-      {siteData.tracks.length > 0 && siteData.tracks[0]?.url && (
+      {siteData?.tracks && siteData.tracks.length > 0 && siteData.tracks[0]?.url && (
         <audio src={siteData.tracks[0].url} aria-label="Background music player" />
       )}
 
       <AppNavBar
-        artistName={siteData.artistName}
+        artistName={siteData?.artistName ?? ''}
         editMode={editMode}
         isOwner={isOwner}
         setEditMode={setEditMode}
@@ -292,11 +296,15 @@ function App() {
         contentLoaded={contentLoaded}
         editMode={editMode}
         scrollToSection={scrollToSection}
-        artistName={siteData.artistName}
+        artistName={siteData?.artistName ?? ''}
+        adminSettings={adminSettings}
+        onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
+        siteData={siteData}
       />
 
       <div className="flex flex-col">
 
+      {siteData && (<>
       <SectionErrorBoundary sectionName="Biography">
       <AppBioSection
         bio={siteData.bio}
@@ -305,6 +313,7 @@ function App() {
         editMode={editMode}
         sectionLabel={sectionLabels.biography || ''}
         adminSettings={adminSettings}
+        headingPrefix={sectionLabels.headingPrefix}
         onUpdate={(bio) => handleUpdateSiteData(prev => ({ ...(prev ?? DEFAULT_SITE_DATA), bio }))}
       />
       </SectionErrorBoundary>
@@ -351,6 +360,7 @@ function App() {
         visible={vis.gigs !== false}
         editMode={editMode}
         sectionLabel={sectionLabels.upcomingGigs || ''}
+        headingPrefix={sectionLabels.headingPrefix}
         adminSettings={adminSettings}
         bandsintownFetching={bandsintownFetching}
         onGigClick={(gig) => setCyberpunkOverlay({ type: 'gig', data: gig })}
@@ -365,6 +375,7 @@ function App() {
         editMode={editMode}
         sectionLabel={sectionLabels.releases || ''}
         adminSettings={adminSettings}
+        headingPrefix={sectionLabels.headingPrefix}
         iTunesFetching={iTunesFetching}
         hasAutoLoaded={hasAutoLoaded}
         onReleaseClick={(release) => setCyberpunkOverlay({ type: 'release', data: release })}
@@ -378,16 +389,14 @@ function App() {
         sectionOrder={getSectionOrder('gallery')}
         visible={vis.gallery !== false}
         sectionLabel={sectionLabels.gallery || ''}
+        headingPrefix={sectionLabels.headingPrefix}
         setGalleryIndex={setGalleryIndex}
         adminSettings={adminSettings}
       />
       </SectionErrorBoundary>
 
-      <div style={{ order: getSectionOrder('media') }}>
-      <Separator className="bg-border" />
-
       <SectionErrorBoundary sectionName="Media">
-      <MediaBrowser
+      <AppMediaSection
         mediaFiles={siteData.mediaFiles?.map(f => ({
           id: f.id,
           name: f.name,
@@ -395,7 +404,13 @@ function App() {
           type: f.type === 'image' || f.type === 'pdf' || f.type === 'zip' ? 'download' as const : (f.type as 'audio' | 'youtube' | 'download' | undefined),
           description: f.size,
         })) || []}
+        sectionOrder={getSectionOrder('media')}
+        visible={vis.media !== false}
         editMode={editMode}
+        sectionLabel={sectionLabels.media || ''}
+        headingPrefix={sectionLabels.headingPrefix}
+        adminSettings={adminSettings}
+        onLabelChange={editMode ? handleLabelChange : undefined}
         onUpdate={editMode ? (files) => handleUpdateSiteData(prev => ({
           ...prev,
           mediaFiles: files.map(f => ({
@@ -408,7 +423,6 @@ function App() {
         })) : undefined}
       />
       </SectionErrorBoundary>
-      </div>
 
       <SectionErrorBoundary sectionName="Connect">
       <AppSocialSection
@@ -417,6 +431,7 @@ function App() {
         visible={vis.connect !== false}
         editMode={editMode}
         sectionLabel={sectionLabels.connect || ''}
+        headingPrefix={sectionLabels.headingPrefix}
         adminSettings={adminSettings}
         onContactClick={() => setCyberpunkOverlay({ type: 'contact' })}
       />
@@ -437,6 +452,7 @@ function App() {
         </SectionErrorBoundary>
       )}
       </div>
+      </>)}
 
       </div>{/* end flex container for reorderable sections */}
 
@@ -499,7 +515,7 @@ function App() {
           onOpenContactInbox={() => setShowContactInbox(true)}
           onOpenSubscriberList={() => setShowSubscriberList(true)}
           onUpdateSiteData={handleUpdateSiteData}
-          onLogout={handleAdminLogout}
+          onLogout={handleLogout}
         />
       )}
 

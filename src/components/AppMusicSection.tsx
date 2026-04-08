@@ -26,6 +26,7 @@ export default function AppMusicSection({
 }: AppMusicSectionProps) {
   if (!visible) return null
 
+  const headingPrefix = sectionLabels?.headingPrefix
   const streamLabel = sectionLabels?.musicStreamLabel ?? '// SPOTIFY.STREAM.INTERFACE'
   const statusLabel = sectionLabels?.musicStatusLabel ?? '// STATUS: [STREAMING]'
 
@@ -40,7 +41,8 @@ export default function AppMusicSection({
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text="MUSIC PLAYER">
+            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'MUSIC PLAYER'}`}>
+              {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
               <EditableHeading onChange={() => {}}
                 text={sectionLabel}
                 defaultText="MUSIC PLAYER"
