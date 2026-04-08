@@ -141,8 +141,11 @@ describe('vercel.json Content-Security-Policy', () => {
     const scriptSrc = cspHeader.value.match(/script-src ([^;]+)/)
     expect(scriptSrc).toBeTruthy()
     expect(scriptSrc[1]).not.toContain("'unsafe-inline'")
-    // Spotify IFrame API + embed CDN require their origins in script-src (two-click GDPR consent)
-    expect(scriptSrc[1].trim()).toBe("'self' https://open.spotify.com https://embed-cdn.spotifycdn.com")
+    // 'unsafe-eval' is required by the Spotify IFrame Embed API (spotify.com/embed/iframe-api/v1)
+    // which uses eval() internally. It is intentionally allowed alongside the Spotify origin allowlist.
+    expect(scriptSrc[1]).toContain("'unsafe-eval'")
+    expect(scriptSrc[1]).toContain("https://open.spotify.com")
+    expect(scriptSrc[1]).toContain("https://embed-cdn.spotifycdn.com")
   })
 
   it('allows inline styles', () => {

@@ -11,6 +11,19 @@ import "./main.css"
 import "./styles/theme.css"
 import "./index.css"
 
+// Suppress non-error console output in production to avoid leaking
+// internal structure, variable names, and API endpoint details.
+if (import.meta.env.PROD) {
+  const noop = () => {}
+  console.log = noop
+  console.warn = noop
+  console.info = noop
+  console.debug = noop
+}
+
+// Disable text selection on page load; re-enabled in admin edit mode.
+document.body.classList.add('no-select')
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 5 * 60_000 },

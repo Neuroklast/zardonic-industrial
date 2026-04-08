@@ -1,8 +1,10 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DownloadSimple, FolderOpen, File, X, Plus, Trash, PencilSimple, Check, ArrowSquareOut, MusicNote, YoutubeLogo } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import type { MediaFile } from '@/lib/types'
+import { useLocale } from '@/contexts/LocaleContext'
+import { formatFileCount } from '@/lib/i18n'
 
 // ---------------------------------------------------------------------------
 // Google Drive URL helpers
@@ -364,6 +366,15 @@ function FileCard({ file, onClick }: { file: MediaFile; onClick: () => void }) {
 export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOverlay = false, onClose }: MediaBrowserProps) {
   const [overlayFile, setOverlayFile] = useState<MediaFile | null>(null)
   const [editOpen, setEditOpen] = useState(false)
+  const { t, locale } = useLocale()
+
+  // Auto-open the edit panel when there are no files and we're in edit mode
+  // so the admin immediately sees where to add files.
+  useEffect(() => {
+    if (isOverlay && editMode && onUpdate && mediaFiles.length === 0) {
+      setEditOpen(true)
+    }
+  }, [isOverlay, editMode, onUpdate, mediaFiles.length])
 
   const handleOpen = useCallback((file: MediaFile) => {
     setOverlayFile(file)
@@ -407,10 +418,9 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOv
             <div className="flex items-center gap-2">
               {editMode && onUpdate && (
                 <Button
-                  variant="outline"
                   size="sm"
                   onClick={() => setEditOpen(true)}
-                  className="gap-1 border-primary/30 font-mono text-xs"
+                  className="gap-1 font-mono text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <PencilSimple className="w-3 h-3" />
                   MANAGE FILES
@@ -521,11 +531,11 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOv
 
           <div className="flex items-center justify-between">
             <div className="font-mono">
-              <div className="data-label mb-1">// PRESS KITS · LOGOS · ASSETS</div>
+              <div className="data-label mb-1">{t('media.pressKits')}</div>
               <div className="text-foreground/50 text-sm tracking-wider">
                 {mediaFiles.length === 0
-                  ? 'NO FILES AVAILABLE'
-                  : `${mediaFiles.length} FILE${mediaFiles.length !== 1 ? 'S' : ''} AVAILABLE`
+                  ? t('media.noFiles')
+                  : formatFileCount(mediaFiles.length, locale)
                 }
               </div>
             </div>

@@ -7,6 +7,8 @@ import { PencilSimple, Folder } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
 import { MediaBrowser } from '@/components/MediaBrowser'
 import type { AdminSettings, SectionLabels, MediaFile } from '@/lib/types'
+import { useLocale } from '@/contexts/LocaleContext'
+import { formatFileCount } from '@/lib/i18n'
 
 interface AppMediaSectionProps {
   mediaFiles?: MediaFile[]
@@ -35,6 +37,7 @@ export default function AppMediaSection({
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
   const labelInputRef = useRef<HTMLInputElement>(null)
+  const { t, locale } = useLocale()
 
   const prefix = headingPrefix !== undefined ? headingPrefix : ''
   const displayLabel = sectionLabel || 'MEDIA'
@@ -56,7 +59,7 @@ export default function AppMediaSection({
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
       <section id="media" className="py-24 px-4">
-        <div className="container mx-auto max-w-4xl">
+        <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
@@ -140,18 +143,18 @@ export default function AppMediaSection({
                   </div>
                   <div className="font-mono">
                     <p className="text-sm text-foreground/90 group-hover:text-primary transition-colors tracking-wider">
-                      OPEN MEDIA ARCHIVE
+                      {t('media.openArchive')}
                     </p>
                     <p className="data-label mt-1">
                       {mediaFiles.length > 0
-                        ? `${mediaFiles.length} FILE${mediaFiles.length !== 1 ? 'S' : ''} AVAILABLE // PRESS KITS · LOGOS · ASSETS`
-                        : '// PRESS KITS · LOGOS · ASSETS'}
+                        ? formatFileCount(mediaFiles.length, locale)
+                        : t('media.pressKits')}
                     </p>
                   </div>
                 </div>
                 <div className="hidden md:flex items-center gap-2 text-xs text-primary/40 font-mono">
                   <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse" />
-                  CLICK TO ACCESS
+                  {t('media.clickToAccess')}
                 </div>
               </div>
             </motion.button>
