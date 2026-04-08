@@ -189,6 +189,11 @@ function App() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [editMode, setEditMode] = useState(false)
+
+  // Toggle text-selection lock based on edit mode
+  useEffect(() => {
+    document.body.classList.toggle('no-select', !editMode)
+  }, [editMode])
   const [showConfigEditor, setShowConfigEditor] = useState(false)
   const [showStats, setShowStats] = useState(false)
   const [showSecurityIncidents, setShowSecurityIncidents] = useState(false)

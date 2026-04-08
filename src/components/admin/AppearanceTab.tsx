@@ -1,4 +1,4 @@
-import { X, FloppyDisk, Sliders } from '@phosphor-icons/react'
+import { X, FloppyDisk, Sliders, Warning } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -7,6 +7,7 @@ import { Slider } from '@/components/ui/slider'
 import { Separator } from '@/components/ui/separator'
 import { TabsContent } from '@/components/ui/tabs'
 import { toast } from 'sonner'
+import { getContrastRatio } from '@/lib/contrast'
 import type {
   AdminSettings,
   ThemeCustomization,
@@ -130,6 +131,26 @@ const fontOptions: {
 
 const isHexColor = (v: string) => /^#[0-9a-fA-F]{6}$/i.test(v)
 
+/** Shows a WCAG contrast warning when foreground/background ratio is too low. */
+function ContrastBadge({ fg, bg, largeText = false }: { fg: string; bg: string; largeText?: boolean }) {
+  if (!fg || !bg) return null
+  const ratio = getContrastRatio(fg, bg)
+  if (ratio === null) return null
+  const threshold = largeText ? 3 : 4.5
+  const passed = ratio >= threshold
+  const ratioStr = ratio.toFixed(2)
+  if (passed) return null
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[10px] font-mono text-yellow-400 border border-yellow-500/40 bg-yellow-500/10 px-1.5 py-0.5 rounded-sm"
+      title={`WCAG contrast ratio: ${ratioStr}:1 (minimum ${threshold}:1 required)`}
+    >
+      <Warning size={10} weight="fill" />
+      {ratioStr}:1 — low contrast
+    </span>
+  )
+}
+
 export default function AppearanceTab({
   adminSettings,
   setAdminSettings,
@@ -242,6 +263,19 @@ export default function AppearanceTab({
                     />
                   )}
                 </div>
+                {/* WCAG contrast warnings for text-on-background pairs */}
+                {key === 'foregroundColor' && theme.backgroundColor && (
+                  <ContrastBadge fg={theme.foregroundColor || ''} bg={theme.backgroundColor || ''} />
+                )}
+                {key === 'cardForegroundColor' && theme.cardColor && (
+                  <ContrastBadge fg={theme.cardForegroundColor || ''} bg={theme.cardColor || ''} />
+                )}
+                {key === 'mutedForegroundColor' && theme.backgroundColor && (
+                  <ContrastBadge fg={theme.mutedForegroundColor || ''} bg={theme.backgroundColor || ''} largeText />
+                )}
+                {key === 'primaryForegroundColor' && theme.primaryColor && (
+                  <ContrastBadge fg={theme.primaryForegroundColor || ''} bg={theme.primaryColor || ''} />
+                )}
               </div>
             ))}
           </div>

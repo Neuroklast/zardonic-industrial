@@ -39,19 +39,18 @@ interface BandsintownApiEvent {
 }
 
 const ARTIST_NAME = 'Zardonic'
+const APP_ID = 'zardonic-website'
 
 export async function fetchBandsintownEvents(): Promise<BandsintownEvent[]> {
   try {
     const response = await fetch(
-      `/api/bandsintown?artist=${encodeURIComponent(ARTIST_NAME)}`
+      `/api/bandsintown?artist=${encodeURIComponent(ARTIST_NAME)}&app_id=${encodeURIComponent(APP_ID)}`
     )
 
     if (!response.ok) {
-      // Check if it's a configuration error (503)
       if (response.status === 503) {
         const data = await response.json().catch(() => ({}))
         console.error('Bandsintown API configuration error:', data.message || 'Service unavailable')
-        console.error('Please set BANDSINTOWN_API_KEY environment variable to enable gig syncing')
       } else {
         console.error('Bandsintown API responded with', response.status)
       }
@@ -60,11 +59,18 @@ export async function fetchBandsintownEvents(): Promise<BandsintownEvent[]> {
 
     const data = await response.json()
 
-    if (!Array.isArray(data)) {
-      return []
+    // API proxy returns { events: [...] }; some legacy paths may return a raw array
+    let raw: BandsintownApiEvent[]
+    if (Array.isArray(data)) {
+      raw = data
+    } else if (Array.isArray(data?.events)) {
+      raw = data.events
+    } else {
+      raw = []
     }
+    if (raw.length === 0) return []
 
-    return data.map((event: BandsintownApiEvent) => ({
+    return raw.map((event: BandsintownApiEvent) => ({
       id: `bit-${event.id}`,
       venue: event.venue?.name || 'TBA',
       location: [event.venue?.city, event.venue?.region, event.venue?.country]

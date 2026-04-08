@@ -88,6 +88,21 @@ body {
   text-rendering: optimizeSpeed;
 }
 
+/* Disable text selection outside of admin edit mode.
+   Keeps the designed layout feeling like an app rather than a document.
+   Inputs, textareas and contenteditable always remain selectable. */
+body.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+body.no-select input,
+body.no-select textarea,
+body.no-select [contenteditable],
+body.no-select a {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
 /* Enable GPU acceleration for common transforms */
 [class*="motion-"], [class*="animate-"] {
   will-change: transform;

@@ -8,6 +8,7 @@ import EditableHeading from '@/components/EditableHeading'
 import { MediaBrowser } from '@/components/MediaBrowser'
 import type { AdminSettings, SectionLabels, MediaFile } from '@/lib/types'
 import { useLocale } from '@/contexts/LocaleContext'
+import { formatFileCount } from '@/lib/i18n'
 
 interface AppMediaSectionProps {
   mediaFiles?: MediaFile[]
@@ -36,7 +37,7 @@ export default function AppMediaSection({
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
   const labelInputRef = useRef<HTMLInputElement>(null)
-  const { t } = useLocale()
+  const { t, locale } = useLocale()
 
   const prefix = headingPrefix !== undefined ? headingPrefix : ''
   const displayLabel = sectionLabel || 'MEDIA'
@@ -146,7 +147,7 @@ export default function AppMediaSection({
                     </p>
                     <p className="data-label mt-1">
                       {mediaFiles.length > 0
-                        ? t('media.filesAvailable').replace('{0}', String(mediaFiles.length)).replace('{1}', mediaFiles.length !== 1 ? 'S' : '')
+                        ? formatFileCount(mediaFiles.length, locale)
                         : t('media.pressKits')}
                     </p>
                   </div>

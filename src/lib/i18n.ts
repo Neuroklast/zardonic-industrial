@@ -107,6 +107,7 @@ const translations: Record<string, Record<Locale, string>> = {
   'media.pressKits':           { en: '// PRESS KITS · LOGOS · ASSETS', de: '// PRESSEMAPPEN · LOGOS · ASSETS' },
   'media.filesAvailable':      { en: '{0} FILE{1} AVAILABLE // PRESS KITS · LOGOS · ASSETS', de: '{0} DATEI{1} VERFÜGBAR // PRESSEMAPPEN · LOGOS · ASSETS' },
   'media.clickToAccess':       { en: 'CLICK TO ACCESS', de: 'KLICKEN ZUM ÖFFNEN' },
+  'media.noFiles':             { en: 'NO FILES AVAILABLE', de: 'KEINE DATEIEN VERFÜGBAR' },
 
   // ── Social buttons ────────────────────────────────────────────────────
   'social.merchShop':          { en: 'Merch Shop', de: 'Merch-Shop' },
@@ -158,4 +159,18 @@ const translations: Record<string, Record<Locale, string>> = {
 /** Get a translated string for a key and locale */
 export function t(key: string, locale: Locale): string {
   return translations[key]?.[locale] ?? translations[key]?.en ?? key
+}
+
+/**
+ * Format a file count with correct singular/plural for the media section.
+ * e.g. formatFileCount(1, 'en') → '1 FILE AVAILABLE'
+ *      formatFileCount(3, 'de') → '3 DATEIEN VERFÜGBAR'
+ */
+export function formatFileCount(count: number, locale: Locale): string {
+  if (locale === 'de') {
+    const plural = count !== 1 ? 'EN' : ''
+    return `${count} DATEI${plural} VERFÜGBAR // PRESSEMAPPEN · LOGOS · ASSETS`
+  }
+  const plural = count !== 1 ? 'S' : ''
+  return `${count} FILE${plural} AVAILABLE // PRESS KITS · LOGOS · ASSETS`
 }

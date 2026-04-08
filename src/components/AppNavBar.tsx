@@ -37,7 +37,6 @@ export default function AppNavBar({
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <motion.div
           className="text-2xl md:text-3xl font-bold tracking-tighter text-foreground uppercase"
-          whileHover={{ filter: 'drop-shadow(2px 0 0 rgba(255,0,100,0.3)) drop-shadow(-2px 0 0 rgba(0,255,255,0.3))' }}
         >
             <img 
               src={logoImage} 
