@@ -10,11 +10,6 @@ import { useEffect, useRef, memo } from 'react'
  */
 const GlitchGridBackground = memo(function GlitchGridBackground({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const transparentRef = useRef(transparent)
-
-  useEffect(() => {
-    transparentRef.current = transparent
-  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -58,7 +53,7 @@ const GlitchGridBackground = memo(function GlitchGridBackground({ transparent }:
       const H = canvas.height
 
       // Base: near-pure black, or clear (transparent) when overlaying a background image
-      if (transparentRef.current) {
+      if (transparent) {
         ctx.clearRect(0, 0, W, H)
       } else {
         ctx.fillStyle = 'rgb(4, 4, 6)'
@@ -182,7 +177,7 @@ const GlitchGridBackground = memo(function GlitchGridBackground({ transparent }:
       cancelAnimationFrame(animFrame)
       window.removeEventListener('resize', resize)
     }
-  }, [])
+  }, [transparent])
 
   return (
     <canvas

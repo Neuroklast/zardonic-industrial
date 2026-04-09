@@ -14,11 +14,6 @@ interface Star {
  */
 const StarField = memo(function StarField({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const transparentRef = useRef(transparent)
-
-  useEffect(() => {
-    transparentRef.current = transparent
-  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -70,7 +65,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
       // Clear or fade: in transparent (overlay) mode clear the canvas so the
       // background image shows through; otherwise use a semi-transparent fill
       // to create the motion-blur trail effect.
-      if (transparentRef.current) {
+      if (transparent) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
       } else {
         ctx.fillStyle = 'rgba(0,0,0,0.15)'
@@ -122,7 +117,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [])
+  }, [transparent])
 
   return (
     <canvas

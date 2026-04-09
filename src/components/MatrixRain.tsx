@@ -7,11 +7,6 @@ import { useEffect, useRef, memo } from 'react'
  */
 const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const transparentRef = useRef(transparent)
-
-  useEffect(() => {
-    transparentRef.current = transparent
-  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -55,7 +50,7 @@ const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boo
       // Fade previous frame: in transparent (overlay) mode clear the canvas so
       // the background image shows through; otherwise use a semi-transparent
       // black fill to create the character trail/fade effect.
-      if (transparentRef.current) {
+      if (transparent) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
       } else {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
@@ -99,7 +94,7 @@ const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boo
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [])
+  }, [transparent])
 
   return (
     <canvas
