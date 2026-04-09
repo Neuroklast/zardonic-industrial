@@ -677,8 +677,6 @@ function App() {
 
       </>)}
 
-      </div>{/* end flex container for reorderable sections */}
-
       <AppFooter
         artistName={siteData?.artistName || ''}
         isOwner={isOwner}
@@ -687,6 +685,8 @@ function App() {
         setShowSetupDialog={setShowSetupDialog}
         setCyberpunkOverlay={setCyberpunkOverlay}
       />
+
+      </div>{/* end flex container for reorderable sections + footer */}
 
       <AnimatePresence>
         {galleryIndex !== null && siteData && (
