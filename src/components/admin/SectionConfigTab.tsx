@@ -55,7 +55,7 @@ export default function SectionConfigTab({
   const contactInfo: ContactInfo = adminSettings?.contactInfo ?? {}
   const contactSettings: ContactSettings = adminSettings?.contactSettings ?? {}
 
-  const updateLabel = (key: keyof SectionLabels, value: string) => {
+  const updateLabel = (key: keyof SectionLabels, value: string | boolean) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
       sectionLabels: { ...labels, [key]: value },
@@ -238,6 +238,55 @@ export default function SectionConfigTab({
                   onChange={v => updateLabel('releases', v)}
                   placeholder="RELEASES"
                 />
+                <Separator />
+                <h4 className="font-mono text-xs font-semibold text-muted-foreground uppercase tracking-wider">Release Card Labels</h4>
+                <Field
+                  label="Stream &amp; Download Label"
+                  value={labels.releaseStreamLabel ?? ''}
+                  onChange={v => updateLabel('releaseStreamLabel', v)}
+                  placeholder="Stream & Download"
+                />
+                <Field
+                  label="Info Label"
+                  value={labels.releaseInfoLabel ?? ''}
+                  onChange={v => updateLabel('releaseInfoLabel', v)}
+                  placeholder="RELEASE.INFO.STREAM"
+                />
+                <Field
+                  label="Tracklist Label"
+                  value={labels.releaseTracksLabel ?? ''}
+                  onChange={v => updateLabel('releaseTracksLabel', v)}
+                  placeholder="Tracklist"
+                />
+                <Field
+                  label="Status Label"
+                  value={labels.releaseStatusLabel ?? ''}
+                  onChange={v => updateLabel('releaseStatusLabel', v)}
+                  placeholder="MEDIA.STATUS: [AVAILABLE]"
+                />
+                <Separator />
+                <h4 className="font-mono text-xs font-semibold text-muted-foreground uppercase tracking-wider">Card Field Visibility</h4>
+                {([
+                  { key: 'releaseShowType' as keyof SectionLabels, label: 'Show Release Type Badge' },
+                  { key: 'releaseShowYear' as keyof SectionLabels, label: 'Show Release Year' },
+                  { key: 'releaseShowDescription' as keyof SectionLabels, label: 'Show Description' },
+                  { key: 'releaseShowTracks' as keyof SectionLabels, label: 'Show Tracklist' },
+                ] as { key: keyof SectionLabels; label: string }[]).map(({ key, label }) => {
+                  const isOn = (labels[key] as boolean | undefined) !== false
+                  return (
+                    <div key={key} className="flex items-center justify-between">
+                      <Label className="font-mono text-xs text-muted-foreground">{label}</Label>
+                      <button
+                        type="button"
+                        onClick={() => updateLabel(key, !isOn)}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isOn ? 'bg-primary' : 'bg-muted'}`}
+                        aria-label={`Toggle ${label}`}
+                      >
+                        <span className={`inline-block h-3 w-3 rounded-full bg-white transition-transform ${isOn ? 'translate-x-5' : 'translate-x-1'}`} />
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
             )}
 
@@ -298,6 +347,27 @@ export default function SectionConfigTab({
                   onChange={v => updateLabel('creditHighlights', v)}
                   placeholder="CREDITS"
                 />
+                <Field
+                  label="Heading Prefix (decorative)"
+                  value={labels.creditHighlightsPrefix ?? '//'}
+                  onChange={v => updateLabel('creditHighlightsPrefix', v)}
+                  placeholder="//"
+                />
+                <div className="flex items-center justify-between">
+                  <Label className="font-mono text-xs text-muted-foreground uppercase tracking-wider">Show Heading</Label>
+                  <button
+                    type="button"
+                    onClick={() => updateLabel('creditHighlightsHeadingVisible', labels.creditHighlightsHeadingVisible === false)}
+                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                      labels.creditHighlightsHeadingVisible !== false ? 'bg-primary' : 'bg-muted'
+                    }`}
+                    aria-label="Toggle heading visibility"
+                  >
+                    <span className={`inline-block h-3 w-3 rounded-full bg-white transition-transform ${
+                      labels.creditHighlightsHeadingVisible !== false ? 'translate-x-5' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
               </div>
             )}
 

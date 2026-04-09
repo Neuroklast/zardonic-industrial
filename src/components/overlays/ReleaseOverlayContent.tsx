@@ -2,12 +2,23 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SpotifyLogo, YoutubeLogo, ApplePodcastsLogo } from '@phosphor-icons/react'
 import type { Release } from '@/lib/app-types'
+import type { SectionLabels } from '@/lib/types'
 
 interface ReleaseOverlayContentProps {
   data: Release
+  sectionLabels?: SectionLabels
 }
 
-export function ReleaseOverlayContent({ data }: ReleaseOverlayContentProps) {
+export function ReleaseOverlayContent({ data, sectionLabels }: ReleaseOverlayContentProps) {
+  const showType = sectionLabels?.releaseShowType !== false
+  const showYear = sectionLabels?.releaseShowYear !== false
+  const showDescription = sectionLabels?.releaseShowDescription !== false
+  const showTracks = sectionLabels?.releaseShowTracks !== false
+  const streamLabel = sectionLabels?.releaseStreamLabel ?? 'Stream & Download'
+  const infoLabel = sectionLabels?.releaseInfoLabel ?? '// RELEASE.INFO.STREAM'
+  const tracksLabel = sectionLabels?.releaseTracksLabel ?? 'Tracklist'
+  const statusLabel = sectionLabels?.releaseStatusLabel ?? '// MEDIA.STATUS: [AVAILABLE]'
+
   return (
     <motion.div
       className="mt-8"
@@ -38,12 +49,30 @@ export function ReleaseOverlayContent({ data }: ReleaseOverlayContentProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="data-label mb-2">// RELEASE.INFO.STREAM</div>
+            <div className="data-label mb-2">{infoLabel}</div>
             <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic crt-flash-in" data-text={data.title}>
               {data.title}
             </h2>
-            <p className="text-xl text-muted-foreground font-mono">{data.year}</p>
+            {showYear && (
+              <p className="text-xl text-muted-foreground font-mono">{data.year}</p>
+            )}
+            {showType && data.type && (
+              <span className="inline-block mt-1 px-2 py-0.5 text-xs font-mono uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
+                {data.type}
+              </span>
+            )}
           </motion.div>
+
+          {showDescription && data.description && (
+            <motion.div
+              className="cyber-grid p-4"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <p className="text-sm text-foreground/80 font-mono">{data.description}</p>
+            </motion.div>
+          )}
 
           <motion.div
             className="cyber-grid p-4"
@@ -51,7 +80,7 @@ export function ReleaseOverlayContent({ data }: ReleaseOverlayContentProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <div className="data-label mb-3">Stream &amp; Download</div>
+            <div className="data-label mb-3">{streamLabel}</div>
             <div className="flex flex-wrap gap-4">
               {data.spotify && (
                 <Button asChild variant="outline" className="font-mono">
@@ -115,16 +144,39 @@ export function ReleaseOverlayContent({ data }: ReleaseOverlayContentProps) {
             </div>
           </motion.div>
 
+          {showTracks && data.tracks && data.tracks.length > 0 && (
+            <motion.div
+              className="cyber-grid p-4"
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.35 }}
+            >
+              <div className="data-label mb-3">{tracksLabel}</div>
+              <ol className="space-y-1">
+                {data.tracks.map((track, i) => (
+                  <li key={i} className="flex items-center gap-3 text-sm font-mono text-foreground/80">
+                    <span className="text-primary/50 w-5 text-right shrink-0">{i + 1}.</span>
+                    <span className="flex-1">{track.title}</span>
+                    {track.duration && (
+                      <span className="text-muted-foreground text-xs">{track.duration}</span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </motion.div>
+          )}
+
           <motion.div
             className="pt-4 border-t border-border"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="data-label">// MEDIA.STATUS: [AVAILABLE]</div>
+            <div className="data-label">{statusLabel}</div>
           </motion.div>
         </div>
       </div>
     </motion.div>
   )
 }
+

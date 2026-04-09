@@ -16,6 +16,8 @@ export interface Gig {
   lineup?: string[]
   streetAddress?: string
   postalCode?: string
+  latitude?: string
+  longitude?: string
   soldOut?: boolean
   startsAt?: string
   description?: string
@@ -37,6 +39,8 @@ export interface Release {
   tidal?: string
   amazonMusic?: string
   type?: '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
+  description?: string
+  tracks?: Array<{ title: string; duration?: string }>
 }
 
 export interface Member {

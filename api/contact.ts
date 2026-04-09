@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis, isRedisConfigured } from './_redis.js'
+import { getRedis, getRedisOrNull, isRedisConfigured } from './_redis.js'
 const kv = new Proxy({} as ReturnType<typeof getRedis>, {
   get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
 })
@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto'
 import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'
 import { z } from 'zod'
+import { Resend } from 'resend'
 
 interface ContactMessage {
   id: string
@@ -19,6 +20,7 @@ interface ContactMessage {
 }
 
 const KV_KEY = 'contact-messages'
+const ADMIN_SETTINGS_KEY = 'admin:settings'
 const MAX_CONTACT_MESSAGES = 500 // Safety cap against storage exhaustion DoS
 
 /** HTML entity escaping to prevent XSS */
@@ -60,13 +62,60 @@ function validateContactInput(body: Record<string, unknown> | undefined): Valida
   }
 }
 
-/** Send email notification via Brevo transactional API */
-async function sendEmailNotification({ name, email, subject, message }: { name: string; email: string; subject: string; message: string }): Promise<void> {
-  const apiKey = process.env.BREVO_API_KEY
-  const toEmail = process.env.CONTACT_EMAIL_TO
-  if (!apiKey || !toEmail) return
+/** Resolve the recipient email: env > admin KV settings > not configured */
+async function resolveToEmail(): Promise<string | null> {
+  // Environment variable takes priority
+  const envEmail = process.env.CONTACT_EMAIL || process.env.CONTACT_EMAIL_TO
+  if (envEmail) return envEmail
+
+  // Fall back to admin-configured forwarding address in Redis
+  try {
+    const redis = getRedisOrNull()
+    if (redis) {
+      const settings = await redis.get<{ contactSettings?: { emailForwardTo?: string } }>(ADMIN_SETTINGS_KEY)
+      if (settings?.contactSettings?.emailForwardTo) {
+        return settings.contactSettings.emailForwardTo
+      }
+    }
+  } catch { /* non-fatal */ }
+
+  return null
+}
+
+/** Send email notification via Resend */
+async function sendEmailViaResend({ name, email, subject, message, toEmail }: { name: string; email: string; subject: string; message: string; toEmail: string }): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return false
 
   try {
+    const resend = new Resend(apiKey)
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const siteName = process.env.SITE_NAME || 'Website'
+    const { error } = await resend.emails.send({
+      from: `${siteName} Contact Form <${fromAddress}>`,
+      to: [toEmail],
+      replyTo: `${name} <${email}>`,
+      subject: `Contact Form: ${subject}`,
+      html: `<p><strong>From:</strong> ${esc(name)} &lt;${esc(email)}&gt;</p><p><strong>Subject:</strong> ${esc(subject)}</p><p>${esc(message).replace(/\n/g, '<br>')}</p>`,
+    })
+    if (error) {
+      console.error('Resend API error:', error)
+      return false
+    }
+    return true
+  } catch (err) {
+    console.error('Failed to send contact email via Resend:', err)
+    return false
+  }
+}
+
+/** Send email notification via Brevo transactional API */
+async function sendEmailViaBrevo({ name, email, subject, message, toEmail }: { name: string; email: string; subject: string; message: string; toEmail: string }): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY
+  if (!apiKey) return false
+
+  try {
+    const siteName = process.env.SITE_NAME ? `${process.env.SITE_NAME} Contact Form` : 'Contact Form'
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -75,7 +124,7 @@ async function sendEmailNotification({ name, email, subject, message }: { name: 
         'content-type': 'application/json',
       },
       body: JSON.stringify({
-        sender: { name: process.env.SITE_NAME ? `${process.env.SITE_NAME} Contact Form` : 'Contact Form', email: toEmail },
+        sender: { name: siteName, email: toEmail },
         to: [{ email: toEmail }],
         replyTo: { name, email },
         subject: `Contact Form: ${subject}`,
@@ -85,10 +134,28 @@ async function sendEmailNotification({ name, email, subject, message }: { name: 
     if (!response.ok) {
       const body = await response.text()
       console.error(`Brevo API error ${response.status}:`, body)
+      return false
     }
+    return true
   } catch (err) {
-    console.error('Failed to send contact email notification:', err)
+    console.error('Failed to send contact email via Brevo:', err)
+    return false
   }
+}
+
+/** Send email notification — tries Resend first, then Brevo as fallback */
+async function sendEmailNotification({ name, email, subject, message }: { name: string; email: string; subject: string; message: string }): Promise<void> {
+  const toEmail = await resolveToEmail()
+  if (!toEmail) return
+
+  // Try Resend first (preferred)
+  if (process.env.RESEND_API_KEY) {
+    await sendEmailViaResend({ name, email, subject, message, toEmail })
+    return
+  }
+
+  // Fall back to Brevo
+  await sendEmailViaBrevo({ name, email, subject, message, toEmail })
 }
 
 // OWASP A01:2021 – Broken Access Control: restrict CORS to the configured origin.

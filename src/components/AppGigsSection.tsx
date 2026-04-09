@@ -10,7 +10,24 @@ import type { Gig } from '@/lib/app-types'
 import { parseGigDate } from '@/lib/utils'
 import { useLocale } from '@/contexts/LocaleContext'
 
-const INITIAL_VISIBLE = 3
+/** Format the event identifier as DDMMYYYY-LAT-LON when coordinates are available,
+ * falling back to the raw gig id. */
+function formatEventBitz(gig: Gig): string {
+  let datePart: string | null = null
+  if (gig.date) {
+    const d = gig.date.replace(/-/g, '')
+    datePart = d.slice(6, 8) + d.slice(4, 6) + d.slice(0, 4)
+  }
+  if (datePart && gig.latitude && gig.longitude) {
+    const latNum = parseFloat(gig.latitude)
+    const lonNum = parseFloat(gig.longitude)
+    if (!isNaN(latNum) && !isNaN(lonNum)) {
+      return `${datePart}-${latNum.toFixed(4)}-${lonNum.toFixed(4)}`
+    }
+  }
+  if (datePart) return datePart
+  return gig.id
+}
 
 interface AppGigsSectionProps {
   gigs: Gig[]
@@ -162,7 +179,7 @@ export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, 
                       onClick={() => !editMode && onGigClick(gig)}
                     >
                       <div className="scan-line"></div>
-                      <div className="data-label mb-2">// EVENT.{gig.id}</div>
+                      <div className="data-label mb-2">// EVENT.{formatEventBitz(gig)}</div>
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="space-y-2">
                           <h3 className="text-xl font-bold uppercase font-mono hover-chromatic">{gig.venue}</h3>

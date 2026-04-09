@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { PencilSimple, Check, Plus, Trash } from '@phosphor-icons/react'
+import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash } from '@phosphor-icons/react'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { SectionLabels } from '@/lib/types'
@@ -11,7 +11,8 @@ interface CreditHighlightsSectionProps {
   sectionOrder: number
   visible: boolean
   sectionLabel: string
-  onLabelChange?: (key: keyof SectionLabels, value: string) => void
+  sectionLabels?: SectionLabels
+  onLabelChange?: (key: keyof SectionLabels, value: string | boolean) => void
   onUpdateSiteData?: (updater: SiteData | ((prev: SiteData) => SiteData)) => void
 }
 
@@ -21,11 +22,17 @@ export default function CreditHighlightsSection({
   sectionOrder,
   visible,
   sectionLabel,
+  sectionLabels,
   onLabelChange,
   onUpdateSiteData,
 }: CreditHighlightsSectionProps) {
   const [editingLabel, setEditingLabel] = useState(false)
   const [labelDraft, setLabelDraft] = useState('')
+  const [editingPrefix, setEditingPrefix] = useState(false)
+  const [prefixDraft, setPrefixDraft] = useState('')
+
+  const headingVisible = sectionLabels?.creditHighlightsHeadingVisible !== false
+  const headingPrefix = sectionLabels?.creditHighlightsPrefix ?? '//'
 
   const startEditLabel = () => {
     setLabelDraft(sectionLabel || 'CREDIT.HIGHLIGHTS')
@@ -35,6 +42,20 @@ export default function CreditHighlightsSection({
   const saveLabel = () => {
     onLabelChange?.('creditHighlights', labelDraft)
     setEditingLabel(false)
+  }
+
+  const startEditPrefix = () => {
+    setPrefixDraft(headingPrefix)
+    setEditingPrefix(true)
+  }
+
+  const savePrefix = () => {
+    onLabelChange?.('creditHighlightsPrefix', prefixDraft)
+    setEditingPrefix(false)
+  }
+
+  const toggleHeadingVisible = () => {
+    onLabelChange?.('creditHighlightsHeadingVisible', !headingVisible)
   }
 
   const addLogo = () => {
@@ -71,33 +92,79 @@ export default function CreditHighlightsSection({
           transition={{ duration: 0.8 }}
           className="text-center"
         >
-          {/* Editable data-label */}
-          <div className="data-label mb-6 flex items-center justify-center gap-2">
-            {editMode && editingLabel ? (
-              <>
-                <span className="opacity-70">//</span>
-                <input
-                  value={labelDraft}
-                  onChange={(e) => setLabelDraft(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') saveLabel() }}
-                  className="bg-transparent border-b border-accent/50 outline-none font-mono text-[10px] tracking-widest uppercase text-accent w-40 text-center"
-                  autoFocus
-                />
-                <button onClick={saveLabel} className="text-accent/70 hover:text-accent" aria-label="Save label">
-                  <Check size={12} />
-                </button>
-              </>
-            ) : (
-              <>
-                <span>// {sectionLabel || 'CREDIT.HIGHLIGHTS'}</span>
-                {editMode && (
-                  <button onClick={startEditLabel} className="opacity-40 hover:opacity-100" aria-label="Edit label">
-                    <PencilSimple size={10} />
+          {/* Editable data-label heading */}
+          {headingVisible && (
+            <div className="data-label mb-6 flex items-center justify-center gap-2">
+              {editMode && editingPrefix ? (
+                <>
+                  <input
+                    value={prefixDraft}
+                    onChange={(e) => setPrefixDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') savePrefix() }}
+                    className="bg-transparent border-b border-accent/50 outline-none font-mono text-[10px] tracking-widest uppercase text-accent w-10 text-center"
+                    autoFocus
+                    aria-label="Edit prefix"
+                  />
+                  <button onClick={savePrefix} className="text-accent/70 hover:text-accent" aria-label="Save prefix">
+                    <Check size={12} />
                   </button>
-                )}
-              </>
-            )}
-          </div>
+                </>
+              ) : editMode && editingLabel ? (
+                <>
+                  <span
+                    className="opacity-70 cursor-pointer hover:opacity-100"
+                    onClick={startEditPrefix}
+                    title="Click to edit prefix"
+                  >{headingPrefix}</span>
+                  <input
+                    value={labelDraft}
+                    onChange={(e) => setLabelDraft(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') saveLabel() }}
+                    className="bg-transparent border-b border-accent/50 outline-none font-mono text-[10px] tracking-widest uppercase text-accent w-40 text-center"
+                    autoFocus
+                    aria-label="Edit heading label"
+                  />
+                  <button onClick={saveLabel} className="text-accent/70 hover:text-accent" aria-label="Save label">
+                    <Check size={12} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span
+                    className={editMode ? 'cursor-pointer hover:text-primary/80 transition-colors' : ''}
+                    onClick={editMode ? startEditPrefix : undefined}
+                    title={editMode ? 'Click to edit prefix' : undefined}
+                  >{headingPrefix}</span>
+                  {' '}
+                  <span>{sectionLabel || 'CREDIT.HIGHLIGHTS'}</span>
+                  {editMode && (
+                    <>
+                      <button onClick={startEditLabel} className="opacity-40 hover:opacity-100" aria-label="Edit label">
+                        <PencilSimple size={10} />
+                      </button>
+                      <button onClick={toggleHeadingVisible} className="opacity-40 hover:opacity-100 ml-1" aria-label="Hide heading">
+                        <EyeSlash size={10} />
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Show heading toggle when heading is hidden */}
+          {editMode && !headingVisible && (
+            <div className="mb-4 flex items-center justify-center">
+              <button
+                onClick={toggleHeadingVisible}
+                className="flex items-center gap-1 text-xs font-mono text-muted-foreground/50 hover:text-primary/70 transition-colors"
+                aria-label="Show heading"
+              >
+                <Eye size={12} />
+                <span>Show heading</span>
+              </button>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 hover:opacity-90 transition-opacity duration-500">
             {siteData.creditHighlights.filter(logo => logo.src).map((logo, index) => (
@@ -137,6 +204,7 @@ export default function CreditHighlightsSection({
                     onChange={(e) => updateLogo(idx, 'src', e.target.value)}
                     placeholder="Image URL"
                     className="flex-1 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
+                    aria-label={`Credit ${idx + 1} image URL`}
                   />
                   <input
                     type="text"
@@ -144,6 +212,7 @@ export default function CreditHighlightsSection({
                     onChange={(e) => updateLogo(idx, 'alt', e.target.value)}
                     placeholder="Alt text"
                     className="w-32 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
+                    aria-label={`Credit ${idx + 1} alt text`}
                   />
                   <button onClick={() => removeLogo(idx)} className="text-destructive/70 hover:text-destructive" aria-label="Remove">
                     <Trash size={14} />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { X } from '@phosphor-icons/react'
@@ -97,6 +98,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
               className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[90vh] scanline-effect cyber-card"
+              style={{ borderRadius: 'var(--radius)' } as React.CSSProperties}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Corner decorations */}
@@ -167,7 +169,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                           )}
 
                           {overlay.type === 'release' && overlay.data && (
-                            <ReleaseOverlayContent data={overlay.data} />
+                            <ReleaseOverlayContent data={overlay.data} sectionLabels={adminSettings?.sectionLabels} />
                           )}
                         </>
                       )}
