@@ -134,7 +134,7 @@ const SEARCHABLE_ITEMS: SearchableItem[] = [
   { label: 'Hero Min Height', tab: 'layout', tabLabel: 'Layout', group: 'Hero' },
   { label: 'Hero Padding Top', tab: 'layout', tabLabel: 'Layout', group: 'Hero' },
   { label: 'Bio Text Size', tab: 'layout', tabLabel: 'Layout', group: 'Bio' },
-  { label: 'Bio Read More Height', tab: 'layout', tabLabel: 'Layout', group: 'Bio' },
+  { label: 'Bio Read More Max Height', tab: 'layout', tabLabel: 'Layout', group: 'Bio' },
   // Appearance (expert)
   { label: 'Heading Font Size', tab: 'appearance', tabLabel: 'Appearance', group: 'Typography' },
   { label: 'Heading Font Weight', tab: 'appearance', tabLabel: 'Appearance', group: 'Typography' },

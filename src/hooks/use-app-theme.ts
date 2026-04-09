@@ -168,7 +168,7 @@ export function useAppTheme(adminSettings: AdminSettings | undefined): void {
     link.href = faviconUrl
   }, [adminSettings?.faviconUrl])
 
-  // Effect 5: Effect colors, animation timings, CRT intensity
+  // Effect 5: Apply effect colors, animation timings, and CRT intensity settings
   useEffect(() => {
     const ec = adminSettings?.effectColors
     const at = adminSettings?.animationTimings
