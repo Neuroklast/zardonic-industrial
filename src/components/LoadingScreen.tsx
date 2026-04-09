@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useMemo, memo, useRef } from 'react'
 import { cacheImage } from '@/lib/image-cache'
 import type { LoaderTexts, LoadingScreenMode } from '@/lib/types'

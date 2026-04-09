@@ -51,6 +51,10 @@ interface Release {
   deezer?: string
   tidal?: string
   amazonMusic?: string
+  type?: '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
+  description?: string
+  tracks?: Array<{ title: string; duration?: string }>
+  trackCount?: number
 }
 
 interface SiteData {
@@ -61,6 +65,11 @@ interface SiteData {
 interface ITunesTrack {
   collectionId?: number
   collectionName?: string
+  trackName?: string
+  trackNumber?: number
+  trackTimeMillis?: number
+  wrapperType?: string
+  kind?: string
   artistName?: string
   collectionArtistName?: string
   artworkUrl100?: string
@@ -68,13 +77,26 @@ interface ITunesTrack {
   releaseDate?: string
   collectionViewUrl?: string
   trackViewUrl?: string
+  collectionExplicitness?: string
+  trackExplicitness?: string
 }
 
 interface OdesliLink {
   url: string
 }
 
+interface OdesliEntity {
+  id: string
+  type: string
+  title?: string
+  artistName?: string
+  thumbnailUrl?: string
+  apiProvider?: string
+}
+
 interface OdesliResponse {
+  entityUniqueId?: string
+  entitiesByUniqueId?: Record<string, OdesliEntity>
   linksByPlatform?: {
     spotify?: OdesliLink
     appleMusic?: OdesliLink
@@ -95,6 +117,70 @@ function delay(ms: number): Promise<void> {
 
 function odesliCacheKey(url: string): string {
   return `odesli:links:${url.replace(/^https?:\/\//, '').replace(/[^a-zA-Z0-9._/-]/g, '_').slice(0, 200)}`
+}
+
+/** Infer release type from the title text (for remix/compilation/mix keywords). */
+function inferTypeFromTitle(title: string): '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation' {
+  const lower = title.toLowerCase()
+  if (lower.includes('compilation') || lower.includes('best of') || lower.includes('greatest hits')) return 'compilation'
+  if (lower.includes('remix') || lower.includes('remixed') || lower.includes('remixes') || lower.includes('rmx')) return 'remix'
+  if (lower.includes(' mix') || lower.includes('mixed by') || lower.includes('dj mix') || lower.includes('continuous mix')) return 'remix'
+  return ''
+}
+
+/** Determine release type from entity type + track count + title heuristics.
+ *  Entity type 'album' from Odesli takes precedence; then we refine by track count. */
+function detectReleaseType(
+  title: string,
+  trackCount: number,
+  entityType: string | undefined,
+  artistName: string,
+): '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation' {
+  // First check title keywords
+  const fromTitle = inferTypeFromTitle(title)
+  if (fromTitle === 'remix' || fromTitle === 'compilation') return fromTitle
+
+  if (entityType === 'song' || trackCount <= 2) return 'single'
+  if (trackCount >= 3 && trackCount <= 6) return 'ep'
+  // 7+ tracks → album or compilation
+  const isMainArtist = artistName.toLowerCase().includes('zardonic')
+  return isMainArtist ? 'album' : 'compilation'
+}
+
+/** Format milliseconds to MM:SS */
+function msToTime(ms: number): string {
+  const totalSeconds = Math.round(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/** Fetch the tracklist for an iTunes collection. Returns empty array on failure. */
+async function fetchITunesTracklist(collectionId: string): Promise<Array<{ title: string; duration?: string }>> {
+  try {
+    const id = collectionId.replace(/^itunes-/, '')
+    const res = await fetchWithRetry(
+      `https://itunes.apple.com/lookup?id=${encodeURIComponent(id)}&entity=song&sort=trackNumber`
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+    const results: ITunesTrack[] = data.results || []
+    return results
+      .filter(t => t.wrapperType === 'track' && t.trackName)
+      .sort((a, b) => (a.trackNumber ?? 0) - (b.trackNumber ?? 0))
+      .map(t => ({
+        title: t.trackName ?? '',
+        duration: t.trackTimeMillis ? msToTime(t.trackTimeMillis) : undefined,
+      }))
+  } catch {
+    return []
+  }
+}
+
+/** Fetch track count for an iTunes collection (used for type detection without full tracklist). */
+async function fetchITunesTrackCount(collectionId: string): Promise<number> {
+  const tracks = await fetchITunesTracklist(collectionId)
+  return tracks.length
 }
 
 async function fetchITunesReleases(): Promise<Release[]> {
@@ -127,6 +213,9 @@ async function fetchITunesReleases(): Promise<Release[]> {
     const id = `itunes-${track.collectionId}`
     if (map.has(id)) continue
 
+    // Derive artist name for type detection
+    const mainArtist = track.collectionArtistName || track.artistName || ARTIST_NAME
+
     map.set(id, {
       id,
       title: track.collectionName,
@@ -137,6 +226,8 @@ async function fetchITunesReleases(): Promise<Release[]> {
         ? new Date(track.releaseDate).toISOString().split('T')[0]
         : undefined,
       appleMusic: track.collectionViewUrl || track.trackViewUrl || '',
+      // Store artist so handler can use it for type detection
+      description: mainArtist !== ARTIST_NAME ? `ft. ${mainArtist}` : undefined,
     })
   }
 
@@ -186,6 +277,13 @@ async function enrichWithOdesli(
 function extractLinks(data: OdesliResponse): Partial<Release> {
   const p = data.linksByPlatform
   if (!p) return {}
+
+  // Extract entity type from Odesli response to help with type detection
+  let entityType: string | undefined
+  if (data.entityUniqueId && data.entitiesByUniqueId) {
+    entityType = data.entitiesByUniqueId[data.entityUniqueId]?.type
+  }
+
   return {
     spotify: p.spotify?.url,
     appleMusic: p.appleMusic?.url,
@@ -195,11 +293,21 @@ function extractLinks(data: OdesliResponse): Partial<Release> {
     deezer: p.deezer?.url,
     tidal: p.tidal?.url,
     amazonMusic: p.amazon?.url,
-  }
+    // Expose entity type so the handler can store it (mapped through a temp property)
+    ...(entityType ? { _odesliEntityType: entityType } : {}),
+  } as Partial<Release> & { _odesliEntityType?: string }
 }
 
 function needsEnrichment(r: Release): boolean {
   return !r.spotify && !r.soundcloud && !r.youtube
+}
+
+function needsTypeDetection(r: Release): boolean {
+  return !r.type
+}
+
+function needsTracklist(r: Release): boolean {
+  return (r.type === 'album' || r.type === 'compilation') && (!r.tracks || r.tracks.length === 0)
 }
 
 // ─── Handler ──────────────────────────────────────────────────────────────────
@@ -239,7 +347,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     for (const fresh of iTunesReleases) {
       const current = existingById.get(fresh.id)
       if (current) {
-        // Update artwork and Apple Music URL, preserve existing streaming links
+        // Update artwork and Apple Music URL, preserve existing streaming links and type/tracks
         existingById.set(fresh.id, {
           ...current,
           artwork: fresh.artwork || current.artwork,
@@ -254,31 +362,76 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     // 4. Enrich releases that lack streaming links (with delay between each call)
     let enriched = 0
+    let typeDetected = 0
+    let tracklistsFetched = 0
     const releasesArray = Array.from(existingById.values())
     for (const release of releasesArray) {
-      if (!needsEnrichment(release)) continue
+      const shouldEnrich = needsEnrichment(release)
+      const shouldDetectType = needsTypeDetection(release)
+
+      if (!shouldEnrich && !shouldDetectType) continue
+
       try {
-        const links = await enrichWithOdesli(release, redis)
-        if (links.spotify || links.soundcloud || links.youtube) {
-          const updated: Release = { ...release }
-          if (links.spotify) updated.spotify = links.spotify
-          if (links.soundcloud) updated.soundcloud = links.soundcloud
-          if (links.youtube) updated.youtube = links.youtube
-          if (links.bandcamp) updated.bandcamp = links.bandcamp
-          if (links.deezer) updated.deezer = links.deezer
-          if (links.tidal) updated.tidal = links.tidal
-          if (links.amazonMusic) updated.amazonMusic = links.amazonMusic
-          existingById.set(release.id, updated)
-          enriched++
+        let updated: Release = { ...release }
+        let odesliEntityType: string | undefined
+
+        if (shouldEnrich) {
+          const linksRaw = await enrichWithOdesli(release, redis) as Partial<Release> & { _odesliEntityType?: string }
+          odesliEntityType = linksRaw._odesliEntityType
+          if (linksRaw.spotify || linksRaw.soundcloud || linksRaw.youtube) {
+            if (linksRaw.spotify) updated.spotify = linksRaw.spotify
+            if (linksRaw.soundcloud) updated.soundcloud = linksRaw.soundcloud
+            if (linksRaw.youtube) updated.youtube = linksRaw.youtube
+            if (linksRaw.bandcamp) updated.bandcamp = linksRaw.bandcamp
+            if (linksRaw.deezer) updated.deezer = linksRaw.deezer
+            if (linksRaw.tidal) updated.tidal = linksRaw.tidal
+            if (linksRaw.amazonMusic) updated.amazonMusic = linksRaw.amazonMusic
+            if (linksRaw.appleMusic) updated.appleMusic = linksRaw.appleMusic
+            enriched++
+          }
+          // Delay between Odesli calls to avoid rate limits
+          await delay(ODESLI_DELAY_MS)
         }
+
+        // Auto-detect release type if not set
+        if (shouldDetectType) {
+          const trackCount = await fetchITunesTrackCount(release.id)
+          updated.trackCount = trackCount
+          const detectedType = detectReleaseType(
+            release.title,
+            trackCount,
+            odesliEntityType,
+            ARTIST_NAME,
+          )
+          if (detectedType) {
+            updated.type = detectedType
+            typeDetected++
+          }
+        }
+
+        existingById.set(release.id, updated)
       } catch (e) {
         console.warn(`[releases-enrich] enrichment failed for "${release.title}":`, e)
       }
-      // Delay between Odesli calls to avoid rate limits
-      await delay(ODESLI_DELAY_MS)
     }
 
-    // 5. Persist updated releases back to band-data in Redis
+    // 5. Fetch tracklists for albums/compilations that don't have one yet
+    const releasesAfterEnrich = Array.from(existingById.values())
+    for (const release of releasesAfterEnrich) {
+      if (!needsTracklist(release)) continue
+      try {
+        const tracks = await fetchITunesTracklist(release.id)
+        if (tracks.length > 0) {
+          existingById.set(release.id, { ...release, tracks })
+          tracklistsFetched++
+        }
+        await delay(500) // small delay between iTunes calls
+      } catch (e) {
+        console.warn(`[releases-enrich] tracklist fetch failed for "${release.title}":`, e)
+      }
+    }
+
+    // 6. Persist updated releases back to band-data in Redis
     const updatedSiteData: SiteData = {
       ...(existing ?? {}),
       releases: Array.from(existingById.values()),
@@ -290,6 +443,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       synced: iTunesReleases.length,
       total: existingById.size,
       enriched,
+      typeDetected,
+      tracklistsFetched,
     })
   } catch (error) {
     console.error('[releases-enrich] Unexpected error:', error)

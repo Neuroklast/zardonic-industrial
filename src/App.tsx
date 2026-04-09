@@ -176,7 +176,7 @@ function App() {
     setKvAdminSettings(settings)
   }, [setKvAdminSettings])
 
-  const handleLabelChange = useCallback((key: keyof SectionLabels, value: string) => {
+  const handleLabelChange = useCallback((key: keyof SectionLabels, value: string | boolean) => {
     setAdminSettings(prev => {
       const next = { ...(prev ?? {}), sectionLabels: { ...(prev?.sectionLabels ?? {}), [key]: value } }
       setKvAdminSettings(next)
@@ -554,6 +554,7 @@ function App() {
         sectionOrder={getSectionOrder('creditHighlights')}
         visible={vis.creditHighlights !== false}
         sectionLabel={sectionLabels.creditHighlights || ''}
+        sectionLabels={sectionLabels}
         onLabelChange={editMode ? handleLabelChange : undefined}
         onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
       />

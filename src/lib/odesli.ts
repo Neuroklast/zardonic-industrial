@@ -3,6 +3,14 @@ interface OdesliPlatformLink {
   entityUniqueId: string
 }
 
+interface OdesliEntity {
+  id: string
+  type: string
+  title?: string
+  artistName?: string
+  thumbnailUrl?: string
+}
+
 interface OdesliResponse {
   entityUniqueId: string
   linksByPlatform: {
@@ -17,13 +25,7 @@ interface OdesliResponse {
     [key: string]: OdesliPlatformLink | undefined
   }
   entitiesByUniqueId: {
-    [key: string]: {
-      id: string
-      type: string
-      title?: string
-      artistName?: string
-      thumbnailUrl?: string
-    }
+    [key: string]: OdesliEntity
   }
 }
 
@@ -37,6 +39,7 @@ export interface OdesliResult {
   tidal?: string
   amazonMusic?: string
   artwork?: string
+  entityType?: string
 }
 
 export async function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
@@ -76,6 +79,17 @@ export async function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResu
     }
     if (data.linksByPlatform?.amazon) {
       result.amazonMusic = data.linksByPlatform.amazon.url
+    }
+
+    // Extract artwork and entity type from Odesli entity metadata
+    if (data.entityUniqueId && data.entitiesByUniqueId) {
+      const entity = data.entitiesByUniqueId[data.entityUniqueId]
+      if (entity?.thumbnailUrl) {
+        result.artwork = entity.thumbnailUrl
+      }
+      if (entity?.type) {
+        result.entityType = entity.type
+      }
     }
 
     return result

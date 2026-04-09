@@ -181,6 +181,18 @@ export interface SectionLabels {
   // Bio section labels
   bioReadMoreText?: string
   bioShowLessText?: string
+  // Credit Highlights section labels
+  creditHighlightsPrefix?: string
+  creditHighlightsHeadingVisible?: boolean
+  // Release card visibility toggles
+  releaseShowType?: boolean
+  releaseShowYear?: boolean
+  releaseShowDescription?: boolean
+  releaseShowTracks?: boolean
+  releaseStreamLabel?: string
+  releaseStatusLabel?: string
+  releaseInfoLabel?: string
+  releaseTracksLabel?: string
 }
 
 export interface ContactInfo {
