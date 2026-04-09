@@ -74,7 +74,7 @@
     "i18next-http-backend": "^3.0.4",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
-    "marked": "^15.0.12",
+    "marked": "^18.0.0",
     "octokit": "^4.1.4",
     "otpauth": "^9.5.0",
     "qrcode": "^1.5.4",
