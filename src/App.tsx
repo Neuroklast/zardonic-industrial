@@ -484,7 +484,7 @@ function App() {
         hasCustomBackground={Boolean(anim.backgroundImageUrl)}
       />
 
-      <div className="flex flex-col">
+      <div className="relative z-[3] flex flex-col">
 
       {siteData && (<>
       <SectionErrorBoundary sectionName="Biography">
