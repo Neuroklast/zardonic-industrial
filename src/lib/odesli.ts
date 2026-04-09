@@ -42,7 +42,44 @@ export interface OdesliResult {
   entityType?: string
 }
 
-export async function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
+// ---------------------------------------------------------------------------
+// Client-side request queue — serialises Odesli calls with a 400 ms gap to
+// avoid saturating the server-side rate limiter with parallel requests.
+// ---------------------------------------------------------------------------
+
+const ODESLI_INTER_REQUEST_DELAY_MS = 400
+
+interface QueueEntry {
+  run: () => Promise<OdesliResult | null>
+  resolve: (value: OdesliResult | null) => void
+}
+
+const odesliQueue: QueueEntry[] = []
+let odesliQueueRunning = false
+
+async function drainQueue(): Promise<void> {
+  if (odesliQueueRunning) return
+  odesliQueueRunning = true
+  while (odesliQueue.length > 0) {
+    const entry = odesliQueue.shift()!
+    entry.resolve(await entry.run())
+    if (odesliQueue.length > 0) {
+      await new Promise<void>((r) => setTimeout(r, ODESLI_INTER_REQUEST_DELAY_MS))
+    }
+  }
+  odesliQueueRunning = false
+}
+
+function enqueueOdesliRequest(
+  run: () => Promise<OdesliResult | null>,
+): Promise<OdesliResult | null> {
+  return new Promise<OdesliResult | null>((resolve) => {
+    odesliQueue.push({ run, resolve })
+    void drainQueue()
+  })
+}
+
+async function doFetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
   try {
     const response = await fetch(
       `/api/odesli?url=${encodeURIComponent(streamingUrl)}&userCountry=DE`
@@ -97,4 +134,8 @@ export async function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResu
     console.error('Error fetching Odesli links:', error)
     return null
   }
+}
+
+export function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
+  return enqueueOdesliRequest(() => doFetchOdesliLinks(streamingUrl))
 }

@@ -2121,3 +2121,29 @@ h1, h2, h3, h4, h5, h6 {
   filter: hue-rotate(var(--spotify-hue-rotate, -116deg)) saturate(0.85);
   border-radius: 0 !important;
 }
+
+/* Clip the Spotify iframe corners using the wrapper — Spotify's SDK ignores
+ * external border-radius on the iframe itself, so overflow:hidden on the
+ * parent is the only reliable way to honour the site's --radius token. */
+.spotify-player-wrapper,
+.spotify-ci-embed {
+  border-radius: var(--radius) !important;
+  overflow: hidden;
+}
+
+/* ── Global border-radius contract ──────────────────────────────────────────
+ * All card-like surfaces, overlays, dialogs, badges, inputs, and embed
+ * wrappers must derive their corner radius from the admin-configured
+ * --radius token.  Hardcoded Tailwind rounded-* classes are overridden here
+ * so that the admin's choice is always authoritative.
+ * rounded-full (circles) is intentionally excluded.
+ */
+.rounded-sm,
+.rounded,
+.rounded-md,
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+.rounded-3xl {
+  border-radius: var(--radius) !important;
+}
