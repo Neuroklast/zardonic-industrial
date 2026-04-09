@@ -61,7 +61,8 @@ async function drainQueue(): Promise<void> {
   if (odesliQueueRunning) return
   odesliQueueRunning = true
   while (odesliQueue.length > 0) {
-    const entry = odesliQueue.shift()!
+    const entry = odesliQueue.shift()
+    if (!entry) continue
     entry.resolve(await entry.run())
     if (odesliQueue.length > 0) {
       await new Promise<void>((r) => setTimeout(r, ODESLI_INTER_REQUEST_DELAY_MS))
