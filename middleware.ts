@@ -51,7 +51,7 @@ function getRedis(): Redis | null {
  * Hash an IP with SHA-256 + salt using the Web Crypto API (Edge-compatible).
  */
 async function hashIp(ip: string, salt: string): Promise<string> {
-  const data = new TextEncoder().encode(salt + ip)
+  const data = new TextEncoder().encode(`${salt}:${ip}`)
   const buf = await crypto.subtle.digest('SHA-256', data)
   return Array.from(new Uint8Array(buf))
     .map(b => b.toString(16).padStart(2, '0'))
