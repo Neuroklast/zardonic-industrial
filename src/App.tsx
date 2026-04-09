@@ -72,11 +72,11 @@ function resolveImageUrl(raw: string): string {
 
 function BackgroundLayer({ type, hudTexts, transparent, animSettings }: { type: BackgroundType | undefined; hudTexts?: HudTexts; transparent?: boolean; animSettings?: AnimationSettings }) {
   const bg = type ?? 'cloud-chamber'
-  if (bg === 'circuit') return <CircuitBackground />
+  if (bg === 'circuit') return <CircuitBackground speed={animSettings?.circuitSpeed} glow={animSettings?.circuitGlow} />
   if (bg === 'cyberpunk-hud') return <CyberpunkBackground hudTexts={hudTexts} />
-  if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain transparent={transparent} /></Suspense>
-  if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} /></Suspense>
-  if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground /></Suspense>
+  if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain transparent={transparent} speed={animSettings?.matrixSpeed} density={animSettings?.matrixDensity} color={animSettings?.matrixColor} /></Suspense>
+  if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} starCount={animSettings?.starCount} starSpeed={animSettings?.starSpeed} /></Suspense>
+  if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground glowColor={animSettings?.cloudGlowColor} /></Suspense>
   if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground transparent={transparent} gridSize={animSettings?.glitchGridSize} scanSpeed={animSettings?.glitchScanSpeed} glitchFrequency={animSettings?.glitchFrequency} /></Suspense>
   // 'minimal' – no decorative background
   return null

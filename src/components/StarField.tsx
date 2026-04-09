@@ -12,7 +12,15 @@ interface Star {
  * Stars fly towards the viewer giving a hyperspace feel.
  * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
  */
-const StarField = memo(function StarField({ transparent }: { transparent?: boolean }) {
+interface StarFieldProps {
+  transparent?: boolean
+  /** Number of stars (50–500). Default 200. */
+  starCount?: number
+  /** Speed multiplier (0.5–3). Default 1. */
+  starSpeed?: number
+}
+
+const StarField = memo(function StarField({ transparent, starCount = 200, starSpeed = 1 }: StarFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -25,7 +33,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const NUM_STARS = 200
+    const NUM_STARS = Math.max(50, Math.min(500, starCount))
     let animId: number
     let stars: Star[] = []
     let cx = 0
@@ -53,7 +61,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
     const handleResize = () => { resize(); initStars() }
     window.addEventListener('resize', handleResize)
 
-    const speed = 6
+    const baseSpeed = 6 * starSpeed
 
     let running = true
     const draw = () => {
@@ -78,7 +86,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
 
       stars.forEach(star => {
         star.pz = star.z
-        star.z -= speed
+        star.z -= baseSpeed
 
         if (star.z <= 0) {
           star.x = (Math.random() - 0.5) * canvas.width
@@ -117,7 +125,7 @@ const StarField = memo(function StarField({ transparent }: { transparent?: boole
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [transparent])
+  }, [transparent, starCount, starSpeed])
 
   return (
     <canvas

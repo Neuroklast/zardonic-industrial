@@ -5,7 +5,17 @@ import { useEffect, useRef, memo } from 'react'
  * Renders on a transparent canvas so the site background colour shows through.
  * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
  */
-const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boolean }) {
+interface MatrixRainProps {
+  transparent?: boolean
+  /** Speed multiplier: 0.5 (slow) – 3 (fast). Default 1. */
+  speed?: number
+  /** Character spawn density: 0.3 (sparse) – 1 (dense). Default 0.7. */
+  density?: number
+  /** Override colour (CSS colour string). Defaults to --primary CSS variable. */
+  color?: string
+}
+
+const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 0.7, color }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -34,22 +44,26 @@ const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boo
     const handleResize = () => resize()
     window.addEventListener('resize', handleResize)
 
-    const primaryColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--primary')
-      .trim() || 'oklch(0.50 0.22 25)'
+    // Resolve color: use prop override or CSS variable
+    const resolveColor = () =>
+      color ||
+      getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
+      'oklch(0.50 0.22 25)'
 
+    // Speed controls how often a drop advances: higher speed = advance more often
+    // We use a fractional frame accumulator so sub-1 speed works correctly.
     let frameCount = 0
+    // Threshold for skipping: speed=1 → every 2nd frame, speed=2 → every frame
+    const frameSkip = Math.max(1, Math.round(2 / speed))
+
     const draw = () => {
       frameCount++
-      // Only draw every other frame for performance
-      if (frameCount % 2 !== 0) {
+      if (frameCount % frameSkip !== 0) {
         animId = requestAnimationFrame(draw)
         return
       }
 
-      // Fade previous frame: in transparent (overlay) mode clear the canvas so
-      // the background image shows through; otherwise use a semi-transparent
-      // black fill to create the character trail/fade effect.
+      // Fade previous frame
       if (transparent) {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
       } else {
@@ -57,18 +71,19 @@ const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boo
         ctx.fillRect(0, 0, canvas.width, canvas.height)
       }
 
+      const primaryColor = resolveColor()
       ctx.font = `${fontSize}px monospace`
 
       drops.forEach((y, i) => {
         const char = chars[Math.floor(Math.random() * chars.length)]
         const x = i * fontSize
 
-        // Brightest (leading) character
         ctx.fillStyle = `color-mix(in srgb, ${primaryColor} 90%, white)`
         ctx.fillText(char, x, y * fontSize)
 
-        // Trail characters in primary colour, slightly dimmer
-        if (Math.random() > 0.975) {
+        // Density controls reset probability: higher density = less frequent resets
+        const resetThreshold = 1 - (density * 0.025)
+        if (Math.random() > resetThreshold) {
           drops[i] = 0
         } else {
           drops[i] += 1
@@ -94,7 +109,7 @@ const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boo
       window.removeEventListener('resize', handleResize)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [transparent])
+  }, [transparent, speed, density, color])
 
   return (
     <canvas

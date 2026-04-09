@@ -57,6 +57,11 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
   const [activeFilter, setActiveFilter] = useState<'' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'>('')
   const { t } = useLocale()
 
+  const handleSetFilter = (f: '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation') => {
+    setActiveFilter(f)
+    setShowAllReleases(false)
+  }
+
   const loadingLabel = sectionLabels?.releasesLoadingLabel ?? '// LOADING.ITUNES.RELEASES'
   const syncingText = sectionLabels?.releasesSyncingText ?? 'SYNCING...'
   const fetchingText = sectionLabels?.releasesFetchingText ?? 'FETCHING DISCOGRAPHY + STREAMING LINKS'
@@ -200,7 +205,7 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
                       {(['', 'album', 'ep', 'single', 'remix', 'compilation'] as const).map(f => (
                         <button
                           key={f}
-                          onClick={() => setActiveFilter(f)}
+                          onClick={() => handleSetFilter(f)}
                           className={`px-3 py-1 border font-mono text-xs uppercase tracking-wider transition-colors ${
                             activeFilter === f
                               ? 'border-primary bg-primary/10 text-primary'
