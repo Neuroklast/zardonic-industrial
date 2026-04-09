@@ -64,35 +64,12 @@ function BackgroundLayer({ type, hudTexts, transparent }: { type: BackgroundType
   return null
 }
 
-/** Background image with optional CSS parallax (background-attachment: fixed).
- *  Depth layer 0 – always the deepest visual layer. */
-function BackgroundImage({ url, fit, opacity, parallax }: {
+/** Fixed (non-scrolling) background image. */
+function FixedBackgroundImage({ url, fit, opacity }: {
   url: string
   fit?: 'cover' | 'contain' | 'fill' | 'none'
   opacity: number
-  parallax: boolean
 }) {
-  const { scrollYProgress } = useScroll()
-  // Move the image at 40 % of the scroll speed (positive = moves down slower than content)
-  const y = useTransform(scrollYProgress, [0, 1], ['0%', '40%'])
-
-  if (parallax) {
-    return (
-      <motion.div
-        className="fixed inset-0 pointer-events-none"
-        style={{ zIndex: 0, opacity, y, willChange: 'transform' }}
-        aria-hidden="true"
-      >
-        <img
-          src={url}
-          alt=""
-          className="w-full h-full"
-          style={{ objectFit: fit ?? 'cover', objectPosition: 'center', display: 'block' }}
-        />
-      </motion.div>
-    )
-  }
-
   return (
     <div
       className="fixed inset-0 pointer-events-none"
@@ -107,6 +84,44 @@ function BackgroundImage({ url, fit, opacity, parallax }: {
       />
     </div>
   )
+}
+
+/** Parallax background image — moves at 40% of the scroll speed so it
+ *  appears deeper than the page content. */
+function ParallaxBackgroundImage({ url, fit, opacity }: {
+  url: string
+  fit?: 'cover' | 'contain' | 'fill' | 'none'
+  opacity: number
+}) {
+  const { scrollYProgress } = useScroll()
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '40%'])
+  return (
+    <motion.div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0, opacity, y, willChange: 'transform' }}
+      aria-hidden="true"
+    >
+      <img
+        src={url}
+        alt=""
+        className="w-full h-full"
+        style={{ objectFit: fit ?? 'cover', objectPosition: 'center', display: 'block' }}
+      />
+    </motion.div>
+  )
+}
+
+/** Renders the background image in either fixed or parallax mode. Depth layer 0 – deepest. */
+function BackgroundImage({ url, fit, opacity, parallax }: {
+  url: string
+  fit?: 'cover' | 'contain' | 'fill' | 'none'
+  opacity: number
+  parallax: boolean
+}) {
+  if (parallax) {
+    return <ParallaxBackgroundImage url={url} fit={fit} opacity={opacity} />
+  }
+  return <FixedBackgroundImage url={url} fit={fit} opacity={opacity} />
 }
 
 // Code splitting for heavy components
