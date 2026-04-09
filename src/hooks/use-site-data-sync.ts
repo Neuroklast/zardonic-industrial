@@ -12,6 +12,10 @@ import { toast } from 'sonner'
 import type React from 'react'
 
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
+/** Delay between sequential Odesli API requests to respect rate limits. */
+const ODESLI_DELAY_MS = 2000
+/** Delay between sequential Nominatim geocoding requests (max 1 req/sec policy). */
+const NOMINATIM_DELAY_MS = 1000
 
 export function useSiteDataSync(
   siteData: SiteData | undefined,
@@ -67,8 +71,8 @@ export function useSiteDataSync(
             failedCount++
             console.error(`Odesli enrichment failed for ${release.title}:`, e)
           }
-          // Respect Odesli rate limits — 2s between each request
-          await new Promise<void>(r => setTimeout(r, 2000))
+          // Respect Odesli rate limits — sequential with delay between requests
+          await new Promise<void>(r => setTimeout(r, ODESLI_DELAY_MS))
         }
       }
 
@@ -103,7 +107,7 @@ export function useSiteDataSync(
           const match = iTunesReleases.find(s => s.id === existing.id)
           if (match) {
             updatedCount++
-            const inferredType = existing.type || inferReleaseTypeFromTitle(existing.title) || undefined
+            const inferredType = existing.type || inferReleaseTypeFromTitle(existing.title)
             return {
               ...existing,
               artwork: match.artwork || existing.artwork,
@@ -165,7 +169,7 @@ export function useSiteDataSync(
               geocodeFailed++
             }
             // Respect Nominatim's 1 req/sec policy
-            await new Promise<void>(r => setTimeout(r, 1000))
+            await new Promise<void>(r => setTimeout(r, NOMINATIM_DELAY_MS))
           }
         }
       }

@@ -26,9 +26,11 @@ export async function geocodeLocation(
       },
     })
     if (!response.ok) return null
-    const results: NominatimResult[] = await response.json() as NominatimResult[]
-    if (results.length === 0) return null
-    return { latitude: results[0].lat, longitude: results[0].lon }
+    const json: unknown = await response.json()
+    if (!Array.isArray(json) || json.length === 0) return null
+    const first = json[0] as NominatimResult
+    if (typeof first.lat !== 'string' || typeof first.lon !== 'string') return null
+    return { latitude: first.lat, longitude: first.lon }
   } catch {
     return null
   }
