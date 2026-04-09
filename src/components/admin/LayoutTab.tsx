@@ -201,7 +201,7 @@ export default function LayoutTab({ adminSettings, setAdminSettings, expertMode 
           Hero Section
         </h3>
         <div className="space-y-2">
-          <Label className="font-mono text-xs">Min Height Class</Label>
+          <Label className="font-mono text-xs">Hero Minimum Height</Label>
           <div className="grid grid-cols-1 gap-1.5">
             {(['min-h-screen', 'min-h-[80vh]', 'min-h-[60vh]', 'min-h-[50vh]'] as const).map((opt) => (
               <button

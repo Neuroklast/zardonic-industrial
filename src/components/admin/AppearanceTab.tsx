@@ -897,7 +897,7 @@ export default function AppearanceTab({
               />
             </div>
             <div className="space-y-2">
-              <Label className="font-mono text-xs">Scanline Height (px)</Label>
+              <Label className="font-mono text-xs">Scanline Height</Label>
               <div className="grid grid-cols-2 gap-1.5">
                 {[1, 2].map((v) => (
                   <button
