@@ -1,3 +1,4 @@
+import type React from 'react'
 import { useState, useMemo } from 'react'
 import { MagnifyingGlass, X } from '@phosphor-icons/react'
 
@@ -155,7 +156,7 @@ export function AdminSearch({ onNavigate }: AdminSearchProps) {
 
       {isOpen && (
         <div className="absolute top-full right-0 mt-1 w-72 bg-card border border-border rounded-sm shadow-lg overflow-hidden"
-          style={{ zIndex: 10 }}
+          style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
         >
           <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border">
             <MagnifyingGlass size={14} className="text-muted-foreground shrink-0" />

@@ -30,13 +30,17 @@ const DEFAULT_HACKING_TEXTS = [
   '> SYSTEM ONLINE // ACCESS GRANTED'
 ]
 
+/** Build version string from Vite defines */
+const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'
+const GIT_HASH = typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__ : 'dev'
+
 const DEFAULT_CODE_FRAGMENTS = [
   'fn init_renderer() -> Result<()> {',
   '  let theme = load_css_vars();',
   '  hud.render(metrics)?;',
   '  audio.connect(output)?;',
   '  events.sync(bandsintown)?;',
-  'const VERSION = __APP_VERSION__;',
+  `const VERSION = "${APP_VERSION}";`,
   'import { useRealMetrics } from hooks;',
   'export default App;',
   'syscall.exec("vite build")',
@@ -48,13 +52,13 @@ const DEFAULT_CODE_FRAGMENTS = [
   'BUILD: vite.config.ts [OK]',
   'SUBSYS: react-dom [OK]',
   'NODE: framer-motion v11',
-  `HASH: 0x${typeof __GIT_HASH__ !== 'undefined' ? __GIT_HASH__.toUpperCase().padEnd(8, '0') : 'DEV00000'}`,
+  `HASH: 0x${GIT_HASH.toUpperCase().padEnd(8, '0')}`,
   '██████░░░░ 60%',
   '> npm run build',
   'export NODE_ENV=production',
 ]
 
-const DEFAULT_BOOT_LABEL = `SYS [v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}] // BOOT SEQUENCE`
+const DEFAULT_BOOT_LABEL = `SYS [v${APP_VERSION}] // BOOT SEQUENCE`
 
 export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loaderTexts }: CyberpunkLoaderProps) {
   const hackingTexts = useMemo(

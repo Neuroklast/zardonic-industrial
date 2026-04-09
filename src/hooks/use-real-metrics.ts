@@ -77,8 +77,14 @@ function generateSessionId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID().replace(/-/g, '').slice(0, 8).toUpperCase()
   }
-  // Fallback
-  return Math.random().toString(16).slice(2, 10).toUpperCase()
+  // Fallback using crypto.getRandomValues when randomUUID is unavailable
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bytes = new Uint8Array(4)
+    crypto.getRandomValues(bytes)
+    return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase()
+  }
+  // Final fallback for environments without Web Crypto API (SSR)
+  return '00000000'
 }
 
 /** Get connection downlink speed in Mbps if available */

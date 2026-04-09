@@ -33,7 +33,7 @@ export function buildTemplateContext(
       browser: metrics.browser,
       os: metrics.os,
       platform: metrics.platform,
-      downlink: metrics.downlink != null ? `${metrics.downlink}` : '?',
+      downlink: metrics.downlink !== null ? `${metrics.downlink}` : '?',
       build: metrics.buildVersion,
       connection: metrics.connectionStatus,
     },
