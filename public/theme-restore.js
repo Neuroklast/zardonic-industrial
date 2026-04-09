@@ -6,7 +6,12 @@ try {
   var _t = localStorage.getItem('nk-theme-cache');
   if (_t) {
     var _vars = JSON.parse(_t);
-    var _root = document.documentElement;
-    for (var _k in _vars) { _root.style.setProperty(_k, _vars[_k]); }
+    if (_vars && typeof _vars === 'object') {
+      var _root = document.documentElement;
+      var _keys = Object.keys(_vars);
+      for (var _i = 0; _i < _keys.length; _i++) {
+        _root.style.setProperty(_keys[_i], _vars[_keys[_i]]);
+      }
+    }
   }
 } catch(e) { /* ignore – private browsing or parse error */ }
