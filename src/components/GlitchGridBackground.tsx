@@ -4,9 +4,17 @@ import { useEffect, useRef, memo } from 'react'
  * GlitchGridBackground – Dark grid/scanline background with glitch artifacts.
  * Matches the "DIGICIDE" visual aesthetic: deep black, fine crosshatch grid,
  * horizontal scan beam, chromatic aberration strips, and occasional pixel tears.
+ *
+ * When `transparent` is true (overlay mode over a background image) the solid
+ * black base fill is replaced with clearRect so the image behind shows through.
  */
-const GlitchGridBackground = memo(function GlitchGridBackground() {
+const GlitchGridBackground = memo(function GlitchGridBackground({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const transparentRef = useRef(transparent)
+
+  useEffect(() => {
+    transparentRef.current = transparent
+  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -49,9 +57,13 @@ const GlitchGridBackground = memo(function GlitchGridBackground() {
       const W = canvas.width
       const H = canvas.height
 
-      // Base: near-pure black
-      ctx.fillStyle = 'rgb(4, 4, 6)'
-      ctx.fillRect(0, 0, W, H)
+      // Base: near-pure black, or clear (transparent) when overlaying a background image
+      if (transparentRef.current) {
+        ctx.clearRect(0, 0, W, H)
+      } else {
+        ctx.fillStyle = 'rgb(4, 4, 6)'
+        ctx.fillRect(0, 0, W, H)
+      }
 
       // Fine crosshatch grid
       const gridSize = 28

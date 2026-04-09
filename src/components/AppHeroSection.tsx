@@ -22,6 +22,7 @@ interface AppHeroSectionProps {
   sectionVisibility?: SectionVisibility
   onUpdateSiteData?: (updater: SiteData | ((current: SiteData) => SiteData)) => void
   siteData?: SiteData
+  hasCustomBackground?: boolean
 }
 
 export default function AppHeroSection({
@@ -32,6 +33,7 @@ export default function AppHeroSection({
   sectionVisibility,
   onUpdateSiteData,
   siteData,
+  hasCustomBackground,
 }: AppHeroSectionProps) {
   const heroLinks = siteData?.heroLinks ?? DEFAULT_HERO_LINKS
   const [editingLinks, setEditingLinks] = useState(false)
@@ -51,7 +53,7 @@ export default function AppHeroSection({
 
   return (
     <section className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect">
-      <div className="absolute inset-0 bg-black" />
+      {!hasCustomBackground && <div className="absolute inset-0 bg-black" />}
       
       <div className="absolute inset-0 noise-effect" />
       

@@ -5,8 +5,13 @@ import { useEffect, useRef, memo } from 'react'
  * Renders on a transparent canvas so the site background colour shows through.
  * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
  */
-const MatrixRain = memo(function MatrixRain() {
+const MatrixRain = memo(function MatrixRain({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const transparentRef = useRef(transparent)
+
+  useEffect(() => {
+    transparentRef.current = transparent
+  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -47,8 +52,15 @@ const MatrixRain = memo(function MatrixRain() {
         return
       }
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      // Fade previous frame: in transparent (overlay) mode clear the canvas so
+      // the background image shows through; otherwise use a semi-transparent
+      // black fill to create the character trail/fade effect.
+      if (transparentRef.current) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+      } else {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
 
       ctx.font = `${fontSize}px monospace`
 

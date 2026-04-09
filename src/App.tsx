@@ -52,14 +52,14 @@ import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 
 /** Render the correct background component based on the configured type */
-function BackgroundLayer({ type, hudTexts }: { type: BackgroundType | undefined; hudTexts?: HudTexts }) {
+function BackgroundLayer({ type, hudTexts, transparent }: { type: BackgroundType | undefined; hudTexts?: HudTexts; transparent?: boolean }) {
   const bg = type ?? 'cloud-chamber'
   if (bg === 'circuit') return <CircuitBackground />
   if (bg === 'cyberpunk-hud') return <CyberpunkBackground hudTexts={hudTexts} />
-  if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain /></Suspense>
-  if (bg === 'stars') return <Suspense fallback={null}><StarField /></Suspense>
+  if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain transparent={transparent} /></Suspense>
+  if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} /></Suspense>
   if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground /></Suspense>
-  if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground /></Suspense>
+  if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground transparent={transparent} /></Suspense>
   // 'minimal' – no decorative background
   return null
 }
@@ -344,12 +344,15 @@ function App() {
         })()}
       </AnimatePresence>
 
-      <div className={`min-h-screen bg-background text-foreground relative${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}>
+      <div className={`min-h-screen${anim.backgroundImageUrl ? ' bg-transparent' : ' bg-background'} text-foreground relative${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}>
       {anim.crtEnabled !== false && <div className="crt-overlay" />}
       {anim.crtEnabled !== false && <div className="crt-vignette" />}
       {anim.scanlineEnabled !== false && <div className="crt-scanline-bg" />}
       {anim.noiseEnabled !== false && <div className="full-page-noise periodic-noise-glitch" />}
-      {/* Background image layer */}
+      {/* Background image layer – rendered at z-index 1 so it sits above the body
+          background but below the page content sections (which are transparent/semi-transparent).
+          Uses background-size: cover so the image fills the screen without distortion.
+          position: fixed keeps the image anchored during scrolling. */}
       {anim.backgroundImageUrl && (
         <div
           className="fixed inset-0 pointer-events-none"
@@ -362,6 +365,7 @@ function App() {
             className="w-full h-full"
             style={{
               objectFit: anim.backgroundImageFit ?? 'cover',
+              objectPosition: 'center',
               display: 'block',
             }}
           />
@@ -369,7 +373,11 @@ function App() {
       )}
       {/* Animated background effect: show when enabled and (no image, or overlay mode is on) */}
       {anim.circuitBackgroundEnabled !== false && (!anim.backgroundImageUrl || anim.backgroundImageOverlay === true) && (
-        <BackgroundLayer type={anim.backgroundType} hudTexts={adminSettings?.hudTexts} />
+        <BackgroundLayer
+          type={anim.backgroundType}
+          hudTexts={adminSettings?.hudTexts}
+          transparent={Boolean(anim.backgroundImageUrl && anim.backgroundImageOverlay)}
+        />
       )}
       <SystemMonitorHUD />
       
@@ -401,6 +409,7 @@ function App() {
         sectionVisibility={vis}
         onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
         siteData={siteData}
+        hasCustomBackground={Boolean(anim.backgroundImageUrl)}
       />
 
       <div className="flex flex-col">

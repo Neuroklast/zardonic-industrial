@@ -12,8 +12,13 @@ interface Star {
  * Stars fly towards the viewer giving a hyperspace feel.
  * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
  */
-const StarField = memo(function StarField() {
+const StarField = memo(function StarField({ transparent }: { transparent?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const transparentRef = useRef(transparent)
+
+  useEffect(() => {
+    transparentRef.current = transparent
+  }, [transparent])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -62,8 +67,15 @@ const StarField = memo(function StarField() {
         return
       }
 
-      ctx.fillStyle = 'rgba(0,0,0,0.15)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      // Clear or fade: in transparent (overlay) mode clear the canvas so the
+      // background image shows through; otherwise use a semi-transparent fill
+      // to create the motion-blur trail effect.
+      if (transparentRef.current) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+      } else {
+        ctx.fillStyle = 'rgba(0,0,0,0.15)'
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+      }
 
       const primaryColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary')
