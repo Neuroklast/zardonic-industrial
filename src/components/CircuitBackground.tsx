@@ -29,7 +29,15 @@ interface DataPulse {
   depth: number
 }
 
-export const CircuitBackground = memo(function CircuitBackground() {
+export const CircuitBackground = memo(function CircuitBackground({
+  speed = 1,
+  glow = 0.8,
+}: {
+  /** Pulse spawn speed multiplier: 0.5 (slow) – 3 (fast). Default 1. */
+  speed?: number
+  /** Glow intensity: 0–1. Default 0.8. */
+  glow?: number
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll()
   const [pulses, setPulses] = useState<DataPulse[]>([])
@@ -178,7 +186,10 @@ export const CircuitBackground = memo(function CircuitBackground() {
     if (mq.matches) return
 
     const scheduleNext = () => {
-      const delay = 3000 + Math.random() * 8000 // 3-11s random interval
+      // speed=1 → 3-11s; speed=2 → 1.5-5.5s; speed=0.5 → 6-22s
+      const base = 3000 / speed
+      const variance = 8000 / speed
+      const delay = base + Math.random() * variance
       return setTimeout(() => {
         spawnPulse()
         timerId = scheduleNext()
@@ -187,14 +198,14 @@ export const CircuitBackground = memo(function CircuitBackground() {
 
     let timerId = scheduleNext()
     return () => clearTimeout(timerId)
-  }, [spawnPulse])
+  }, [spawnPulse, speed])
 
   return (
     <>
       <motion.div 
         ref={containerRef}
         className="fixed inset-0 overflow-hidden pointer-events-none z-0"
-        style={{ y: layer3Y, willChange: 'transform' }}
+        style={{ y: layer3Y, willChange: 'transform', filter: `brightness(${0.5 + glow * 0.8})` }}
       >
         <div className="absolute inset-0 opacity-[0.15]">
           {depth3Lines.map((line) => (
