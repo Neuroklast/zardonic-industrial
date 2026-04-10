@@ -150,8 +150,10 @@ export function useSiteDataSync(
         ]
         if (failedCount > 0) parts.push(`(${failedCount} failed)`)
         toast.success(parts.join(' '))
-        updateReleasesSync(Date.now())
       }
+      // Always update the sync timestamp so the 24 h cache guard works correctly on
+      // the next page load, regardless of whether this was a manual or auto-load sync.
+      updateReleasesSync(Date.now())
     } catch (error) {
       if (!isAutoLoad) toast.error('Failed to fetch releases from iTunes')
       console.error(error)
@@ -246,8 +248,10 @@ export function useSiteDataSync(
         ]
         if (geocodeFailed > 0) parts.push(`(${geocodeFailed} failed)`)
         toast.success(parts.join(' '))
-        updateGigsSync(Date.now())
       }
+      // Always update the sync timestamp so the 24 h cache guard works correctly on
+      // the next page load, regardless of whether this was a manual or auto-load sync.
+      updateGigsSync(Date.now())
     } catch (error) {
       if (!isAutoLoad) toast.error('Failed to fetch events from Bandsintown')
       console.error(error)
