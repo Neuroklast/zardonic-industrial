@@ -444,20 +444,20 @@ export default function SectionConfigTab({
                 />
                 <Field
                   label="Impressum / Legal Notice"
-                  value={adminSettings?.legalContent?.impressum ?? ''}
+                  value={adminSettings?.legalContent?.impressumCustom ?? ''}
                   onChange={v => setAdminSettings?.({
                     ...(adminSettings ?? {}),
-                    legalContent: { ...(adminSettings?.legalContent ?? {}), impressum: v },
+                    legalContent: { ...(adminSettings?.legalContent ?? {}), impressumCustom: v },
                   })}
                   placeholder="Legal notice text..."
                   multiline
                 />
                 <Field
                   label="Privacy Policy (Datenschutz)"
-                  value={adminSettings?.legalContent?.datenschutz ?? ''}
+                  value={adminSettings?.legalContent?.privacyCustom ?? ''}
                   onChange={v => setAdminSettings?.({
                     ...(adminSettings ?? {}),
-                    legalContent: { ...(adminSettings?.legalContent ?? {}), datenschutz: v },
+                    legalContent: { ...(adminSettings?.legalContent ?? {}), privacyCustom: v },
                   })}
                   placeholder="Privacy policy text..."
                   multiline

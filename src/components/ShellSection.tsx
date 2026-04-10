@@ -40,7 +40,7 @@ export default function ShellSection({ setAdminSettings,
         >
           <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
             <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text={sectionLabel || 'SHELL'}>
-              <EditableHeading onChange={() => {}}  onChange={() => {}}  onChange={() => {}}
+              <EditableHeading onChange={() => {}}
                 text={sectionLabel || ''}
                 defaultText="SHELL"
                 editMode={editMode}

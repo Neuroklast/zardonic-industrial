@@ -2,6 +2,9 @@
 import { useState } from 'react'
 import { Separator } from '@/components/ui/separator'
 import { TabsContent } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import type { AdminSettings, SectionLabels, ContactInfo, LoaderTexts, DecorativeTexts } from '@/lib/types'
 import type { SiteData } from '@/App'
@@ -199,7 +202,7 @@ export default function ContentTab({
               <Input
                 value={localSocial[key] ?? ''}
                 onChange={(e) =>
-                  setLocalSocial((prev) => ({ ...prev, [key]: e.target.value }))
+                  setLocalSocial({ ...localSocial, [key]: e.target.value })
                 }
                 placeholder={placeholder}
                 className="bg-background border-border font-mono text-xs"

@@ -9,16 +9,16 @@ function makeTouchEvent(x: number, y: number): React.TouchEvent {
 }
 
 describe('useTouchSwipe', () => {
-  let onSwipeLeft: ReturnType<typeof vi.fn>
-  let onSwipeRight: ReturnType<typeof vi.fn>
-  let onSwipeUp: ReturnType<typeof vi.fn>
-  let onSwipeDown: ReturnType<typeof vi.fn>
+  let onSwipeLeft: () => void
+  let onSwipeRight: () => void
+  let onSwipeUp: () => void
+  let onSwipeDown: () => void
 
   beforeEach(() => {
-    onSwipeLeft = vi.fn()
-    onSwipeRight = vi.fn()
-    onSwipeUp = vi.fn()
-    onSwipeDown = vi.fn()
+    onSwipeLeft = vi.fn<() => void>()
+    onSwipeRight = vi.fn<() => void>()
+    onSwipeUp = vi.fn<() => void>()
+    onSwipeDown = vi.fn<() => void>()
   })
 
   it('returns touch handler functions', () => {

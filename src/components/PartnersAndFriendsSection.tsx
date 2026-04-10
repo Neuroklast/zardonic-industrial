@@ -1,5 +1,5 @@
 import { motion, useInView, AnimatePresence } from 'framer-motion'
-import { PencilSimple, User, Plus, Trash, InstagramLogo, FacebookLogo, SpotifyLogo, SoundcloudLogo, YoutubeLogo, MusicNote, Globe } from '@phosphor-icons/react'
+import { PencilSimple, User, Plus, Trash, InstagramLogo, FacebookLogo, SpotifyLogo, SoundcloudLogo, YoutubeLogo, MusicNote, Globe, type Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,7 +12,6 @@ import { useState, useRef, useMemo } from 'react'
 import { useTypingEffect } from '@/hooks/use-typing-effect'
 import { ChromaticText } from '@/components/ChromaticText'
 import type { Friend, SectionLabels } from '@/lib/types'
-import type { ComponentType, SVGAttributes } from 'react'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { buildFriendDataLines } from '@/lib/profile-data'
 import {
@@ -28,7 +27,7 @@ interface PartnersAndFriendsSectionProps {
   onLabelChange?: (key: keyof SectionLabels, value: string) => void
 }
 
-const friendSocialIcons: { key: keyof NonNullable<Friend['socials']>; icon: ComponentType<SVGAttributes<SVGSVGElement> & { size?: number; className?: string }>; label: string }[] = [
+const friendSocialIcons: { key: keyof NonNullable<Friend['socials']>; icon: PhosphorIcon; label: string }[] = [
   { key: 'instagram', icon: InstagramLogo, label: 'Instagram' },
   { key: 'facebook', icon: FacebookLogo, label: 'Facebook' },
   { key: 'spotify', icon: SpotifyLogo, label: 'Spotify' },

@@ -3,7 +3,7 @@ import { CheckCircle, Clock, AlertCircle } from 'lucide-react'
 type PublishStatus = 'draft' | 'published' | 'autosaved' | 'unknown'
 
 interface CmsLayoutProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   currentRoute: string
   onNavigate: (route: string) => void
   publishStatus?: PublishStatus

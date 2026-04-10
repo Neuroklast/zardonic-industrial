@@ -102,7 +102,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
   // Memoize messages to prevent recreation
   const messages = useMemo(() => {
     if (loaderTexts?.stageMessages?.length === 5) return loaderTexts.stageMessages
-    return DEFAULT_MESSAGES as string[]
+    return DEFAULT_MESSAGES as unknown as string[]
   }, [loaderTexts?.stageMessages])
 
   const systemCheckLabels: [string, string, string] = [

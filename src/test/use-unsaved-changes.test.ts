@@ -18,13 +18,13 @@ describe('useUnsavedChanges', () => {
 
   it('does not add beforeunload listener when not dirty', () => {
     renderHook(() => useUnsavedChanges(false))
-    const calls = addSpy.mock.calls.filter(([type]) => type === 'beforeunload')
+    const calls = addSpy.mock.calls.filter(([type]: [string, ...unknown[]]) => type === 'beforeunload')
     expect(calls).toHaveLength(0)
   })
 
   it('adds beforeunload listener when dirty', () => {
     renderHook(() => useUnsavedChanges(true))
-    const calls = addSpy.mock.calls.filter(([type]) => type === 'beforeunload')
+    const calls = addSpy.mock.calls.filter(([type]: [string, ...unknown[]]) => type === 'beforeunload')
     expect(calls.length).toBeGreaterThan(0)
   })
 
@@ -32,7 +32,7 @@ describe('useUnsavedChanges', () => {
     const { unmount } = renderHook(() => useUnsavedChanges(true))
     removeSpy.mockClear()
     unmount()
-    const calls = removeSpy.mock.calls.filter(([type]) => type === 'beforeunload')
+    const calls = removeSpy.mock.calls.filter(([type]: [string, ...unknown[]]) => type === 'beforeunload')
     expect(calls.length).toBeGreaterThan(0)
   })
 
@@ -43,7 +43,7 @@ describe('useUnsavedChanges', () => {
     )
     removeSpy.mockClear()
     rerender({ isDirty: false })
-    const removeCalls = removeSpy.mock.calls.filter(([type]) => type === 'beforeunload')
+    const removeCalls = removeSpy.mock.calls.filter(([type]: [string, ...unknown[]]) => type === 'beforeunload')
     expect(removeCalls.length).toBeGreaterThan(0)
   })
 
@@ -54,13 +54,13 @@ describe('useUnsavedChanges', () => {
     )
     addSpy.mockClear()
     rerender({ isDirty: true })
-    const addCalls = addSpy.mock.calls.filter(([type]) => type === 'beforeunload')
+    const addCalls = addSpy.mock.calls.filter(([type]: [string, ...unknown[]]) => type === 'beforeunload')
     expect(addCalls.length).toBeGreaterThan(0)
   })
 
   it('beforeunload handler calls preventDefault and sets returnValue', () => {
     renderHook(() => useUnsavedChanges(true))
-    const [, handler] = addSpy.mock.calls.find(([type]) => type === 'beforeunload') ?? []
+    const [, handler] = addSpy.mock.calls.find(([type]: [string, ...unknown[]]) => type === 'beforeunload') ?? []
     const mockEvent = { preventDefault: vi.fn(), returnValue: '' }
     if (handler) (handler as (e: BeforeUnloadEvent) => void)(mockEvent as unknown as BeforeUnloadEvent)
     expect(mockEvent.preventDefault).toHaveBeenCalled()

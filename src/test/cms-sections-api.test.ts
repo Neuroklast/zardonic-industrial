@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelResponse } from '@vercel/node'
 
 process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io'
 process.env.UPSTASH_REDIS_REST_TOKEN = 'test-token'
@@ -26,14 +27,7 @@ vi.mock('../../api/auth.ts', () => ({
   validateSession: vi.fn().mockResolvedValue(true),
 }))
 
-type MockRes = {
-  status: ReturnType<typeof vi.fn>
-  json: ReturnType<typeof vi.fn>
-  setHeader: ReturnType<typeof vi.fn>
-  end: ReturnType<typeof vi.fn>
-}
-
-function mockRes(): MockRes {
+function mockRes(): VercelResponse {
   const res: any = {
     status: vi.fn(),
     json: vi.fn(),
@@ -44,7 +38,7 @@ function mockRes(): MockRes {
   res.json.mockReturnValue(res)
   res.setHeader.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 const { default: handler } = await import('../../api/cms/sections.ts')

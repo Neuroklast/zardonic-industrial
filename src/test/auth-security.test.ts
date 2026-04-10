@@ -222,7 +222,7 @@ describe('Auth security: client fingerprint binding', () => {
       headers: { cookie: 'nk-session=valid-token', 'user-agent': 'DifferentBrowser' },
     } as unknown as VercelRequest, res)
 
-    const jsonCall = res.json.mock.calls[0][0]
+    const jsonCall = (res.json as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
     // Session should be invalid due to fingerprint mismatch
     expect(jsonCall.authenticated).toBe(false)
   })

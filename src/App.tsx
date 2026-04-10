@@ -13,7 +13,7 @@ import { useSiteDataSync } from '@/hooks/use-site-data-sync'
 import { LocaleProvider } from '@/contexts/LocaleContext'
 import type { SiteData, CyberpunkOverlayState } from '@/lib/app-types'
 import { DEFAULT_SITE_DATA } from '@/lib/app-types'
-import { DEFAULT_SECTION_ORDER } from '@/lib/config'
+import { DEFAULT_SECTION_ORDER, type SectionKey } from '@/lib/config'
 export type { SiteData } from '@/lib/app-types'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
@@ -236,8 +236,8 @@ function App() {
 
   const sectionOrder = adminSettings?.sectionOrder ?? DEFAULT_SECTION_ORDER
   const getSectionOrder = useCallback((section: string) => {
-    const idx = sectionOrder.indexOf(section)
-    return idx >= 0 ? idx : DEFAULT_SECTION_ORDER.indexOf(section)
+    const idx = sectionOrder.indexOf(section as SectionKey)
+    return idx >= 0 ? idx : DEFAULT_SECTION_ORDER.indexOf(section as SectionKey)
   }, [sectionOrder])
 
   useAppTheme(adminSettings)
@@ -685,7 +685,7 @@ function App() {
           id: f.id,
           name: f.name,
           url: f.url,
-          type: f.type === 'image' || f.type === 'pdf' || f.type === 'zip' ? 'download' as const : (f.type as 'audio' | 'youtube' | 'download' | undefined),
+          type: f.type,
           description: f.size,
         })) || []}
         sectionOrder={getSectionOrder('media')}
@@ -701,7 +701,7 @@ function App() {
             id: f.id,
             name: f.name,
             url: f.url,
-            type: f.type === 'audio' || f.type === 'youtube' ? f.type : 'download' as const,
+            type: (f.type ?? 'download') as 'audio' | 'youtube' | 'download',
             size: f.description ?? '',
           })),
         })) : undefined}

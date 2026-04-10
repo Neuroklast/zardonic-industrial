@@ -209,7 +209,8 @@ describe('Rate limit utility: getClientIp logic', () => {
   })
 
   it('falls back to 127.0.0.1 when no forwarded header', () => {
-    const forwarded: string | undefined = undefined
+    // Cast prevents TypeScript from narrowing to the literal undefined type
+    const forwarded = undefined as unknown as string | undefined
     const ip = typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : '127.0.0.1'
     expect(ip).toBe('127.0.0.1')
   })

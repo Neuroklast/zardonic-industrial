@@ -13,6 +13,8 @@ export const siteConfigSchema = z.object({
   })).max(20).optional(),
 })
 
+export type SiteConfig = z.infer<typeof siteConfigSchema>
+
 export const heroSchema = z.object({
   backgroundImageUrl: z.string().max(2000).optional(),
   headline: z.string().max(200),

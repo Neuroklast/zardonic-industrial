@@ -81,11 +81,8 @@ describe('Security: timingSafeEqual constant-time comparison', () => {
   })
 
   it('returns false for non-string inputs', () => {
-    // @ts-expect-error testing runtime guard
     expect(timingSafeEqual(null, 'abc')).toBe(false)
-    // @ts-expect-error testing runtime guard
     expect(timingSafeEqual('abc', undefined)).toBe(false)
-    // @ts-expect-error testing runtime guard
     expect(timingSafeEqual(123, 456)).toBe(false)
   })
 })
@@ -506,7 +503,7 @@ describe('Security: Zod input validation schemas', () => {
     it('returns { success: false, error } for invalid input', () => {
       const result = validate(kvKeySchema, '')
       expect(result.success).toBe(false)
-      expect(typeof result.error).toBe('string')
+      expect(typeof (result as { success: false; error: string }).error).toBe('string')
     })
   })
 })

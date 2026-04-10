@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelResponse } from '@vercel/node'
 
 // Provide env vars so getRedis() doesn't throw before the Redis mock is used
 process.env.UPSTASH_REDIS_REST_URL = 'https://test.upstash.io'
@@ -28,15 +29,13 @@ vi.mock('../../api/auth.ts', () => ({
   validateSession: vi.fn().mockResolvedValue(true),
 }))
 
-type MockRes = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> }
-
-function mockRes(): MockRes {
+function mockRes() {
   const res: any = { status: vi.fn(), json: vi.fn(), setHeader: vi.fn(), end: vi.fn() }
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
   res.setHeader.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 const { default: handler } = await import('../../api/cms/autosave.ts')
