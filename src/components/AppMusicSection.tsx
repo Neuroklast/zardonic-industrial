@@ -5,6 +5,26 @@ import EditableHeading from '@/components/EditableHeading'
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 
+/** Convert a Spotify profile URL to a `spotify:type:id` URI.
+ *  e.g. "https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n" → "spotify:artist:7BqEidErPMNiUXCRE0dV2n"
+ *  Returns null when the URL is not a recognisable Spotify URL. */
+function spotifyUrlToUri(url: string): string | null {
+  try {
+    const { hostname, pathname } = new URL(url)
+    if (!hostname.includes('spotify.com')) return null
+    // pathname is like /artist/7BqEidErPMNiUXCRE0dV2n or /track/...
+    const parts = pathname.replace(/^\//, '').split('/')
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+      return `spotify:${parts[0]}:${parts[1]}`
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+const FALLBACK_SPOTIFY_URI = 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
+
 interface AppMusicSectionProps {
   sectionOrder: number
   visible: boolean
@@ -13,6 +33,8 @@ interface AppMusicSectionProps {
   adminSettings: AdminSettings | undefined
   sectionLabels?: SectionLabels
   onLabelChange?: (key: keyof SectionLabels, value: string) => void
+  /** Artist Spotify profile URL from siteData.social.spotify */
+  spotifyUrl?: string
 }
 
 export default function AppMusicSection({
@@ -23,10 +45,12 @@ export default function AppMusicSection({
   adminSettings,
   sectionLabels,
   onLabelChange,
+  spotifyUrl,
 }: AppMusicSectionProps) {
 
-
   if (!visible) return null
+
+  const spotifyUri = (spotifyUrl ? spotifyUrlToUri(spotifyUrl) : null) ?? FALLBACK_SPOTIFY_URI
 
   const headingPrefix = sectionLabels?.headingPrefix
   const streamLabel = sectionLabels?.musicStreamLabel ?? '// SPOTIFY.STREAM.INTERFACE'
@@ -72,7 +96,7 @@ export default function AppMusicSection({
               </div>
               <div className="spotify-player-wrapper spotify-ci-embed bg-card">
                 <SpotifyEmbed
-                  uri="spotify:artist:7BqEidErPMNiUXCRE0dV2n"
+                  uri={spotifyUri}
                   width="100%"
                   height={352}
                   theme="0"

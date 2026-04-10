@@ -17,10 +17,11 @@ import { DEFAULT_SECTION_ORDER } from '@/lib/config'
 export type { SiteData } from '@/lib/app-types'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
-import { SwipeableGallery } from '@/components/SwipeableGallery'
 import { LoadingScreen } from '@/components/LoadingScreen'
 const MinimalBarLoader = React.lazy(() => import('@/components/MinimalBarLoader'))
 const GlitchDecodeLoader = React.lazy(() => import('@/components/GlitchDecodeLoader'))
+const SwipeableGallery = React.lazy(() => import('@/components/SwipeableGallery').then(m => ({ default: m.SwipeableGallery })))
+const CyberpunkOverlay = React.lazy(() => import('@/components/CyberpunkOverlay'))
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import EditControls from '@/components/EditControls'
 const ConfigEditorDialog = React.lazy(() => import('@/components/ConfigEditorDialog'))
@@ -40,7 +41,6 @@ import AppMusicSection from '@/components/AppMusicSection'
 import AppGigsSection from '@/components/AppGigsSection'
 import AppReleasesSection from '@/components/AppReleasesSection'
 import AppSocialSection from '@/components/AppSocialSection'
-import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import { StructuredData } from '@/components/StructuredData'
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { useDocumentTitle } from '@/hooks/use-document-title'
@@ -355,11 +355,13 @@ function App() {
           <>
             <AnimatePresence>
               {galleryIndex !== null && siteData && (
-                <SwipeableGallery
-                  images={siteData.gallery}
-                  initialIndex={galleryIndex}
-                  onClose={() => setGalleryIndex(null)}
-                />
+                <Suspense fallback={null}>
+                  <SwipeableGallery
+                    images={siteData.gallery}
+                    initialIndex={galleryIndex}
+                    onClose={() => setGalleryIndex(null)}
+                  />
+                </Suspense>
               )}
             </AnimatePresence>
 
@@ -378,12 +380,14 @@ function App() {
               <StatsDashboard open={showStats} onClose={() => setShowStats(false)} />
             </Suspense>
 
-            <CyberpunkOverlay
-              overlay={cyberpunkOverlay}
-              onClose={() => setCyberpunkOverlay(null)}
-              adminSettings={adminSettings}
-              artistName={siteData?.artistName}
-            />
+            <Suspense fallback={null}>
+              <CyberpunkOverlay
+                overlay={cyberpunkOverlay}
+                onClose={() => setCyberpunkOverlay(null)}
+                adminSettings={adminSettings}
+                artistName={siteData?.artistName}
+              />
+            </Suspense>
 
             {isOwner && (
               <EditControls
@@ -480,7 +484,7 @@ function App() {
                 }
                 if (lsType === 'minimal-bar') {
                   return (
-                    <Suspense fallback={null}>
+                    <Suspense key="minimal-bar" fallback={null}>
                       <MinimalBarLoader
                         onLoadComplete={() => setLoading(false)}
                         precacheUrls={precacheUrls}
@@ -493,7 +497,7 @@ function App() {
                 }
                 if (lsType === 'glitch-decode') {
                   return (
-                    <Suspense fallback={null}>
+                    <Suspense key="glitch-decode" fallback={null}>
                       <GlitchDecodeLoader
                         onLoadComplete={() => setLoading(false)}
                         precacheUrls={precacheUrls}
@@ -507,6 +511,7 @@ function App() {
                 // default: 'cyberpunk'
                 return (
                   <LoadingScreen
+                    key="cyberpunk"
                     onLoadComplete={() => setLoading(false)}
                     precacheUrls={precacheUrls}
                     loaderTexts={adminSettings?.loaderTexts}
@@ -599,6 +604,7 @@ function App() {
         adminSettings={adminSettings}
         sectionLabels={sectionLabels}
         onLabelChange={editMode ? handleLabelChange : undefined}
+        spotifyUrl={siteData?.social?.spotify}
       />
       </SectionErrorBoundary>
 
