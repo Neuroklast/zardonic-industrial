@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion'
 import { YoutubeLogo } from '@phosphor-icons/react'
-import { extractYouTubeId } from '@/lib/youtube'
 
 interface YouTubeEmbedProps {
   videoId: string

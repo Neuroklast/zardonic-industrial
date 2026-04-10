@@ -116,7 +116,7 @@ describe('Terminal API handler', () => {
     mockKvGet.mockResolvedValue(BAND_DATA_WITH_COMMANDS)
     const res = mockRes()
     await handler({ method: 'POST', body: { command: 'help' }, headers: {} } as unknown as VercelRequest, res)
-    const response = res.json.mock.calls[0][0]
+    const response = (res.json as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(response.found).toBe(true)
     expect(response.listing).toHaveLength(2)
     expect(response.listing[0]).toEqual({ name: 'status', description: 'System status' })

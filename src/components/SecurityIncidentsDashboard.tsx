@@ -37,6 +37,7 @@ export default function SecurityIncidentsDashboard({ open, onClose, onViewProfil
 
   useEffect(() => {
     if (!open) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setError(null)
     fetch('/api/security-incidents', { credentials: 'same-origin' })

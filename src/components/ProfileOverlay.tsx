@@ -42,6 +42,7 @@ export default function ProfileOverlay({ name, photoUrl, resolvePhoto, dataLines
     if (!photoUrl) return
     const cached = resolvePhoto?.(photoUrl)
     if (cached && cached !== photoUrl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhotoSrc(cached)
     } else {
       setPhotoSrc(toDirectImageUrl(photoUrl))

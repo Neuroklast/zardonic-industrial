@@ -184,7 +184,7 @@ export function Terminal({ isOpen, onClose, customCommands = [], editMode = fals
         return
       }
     }
-  }, [history, customCommands, onClose, typeOutput])
+  }, [history, customCommands, onClose, typeOutput, artistName])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && input && !isTyping) {

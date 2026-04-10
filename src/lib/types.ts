@@ -385,6 +385,15 @@ export interface ContactSettings {
   emailForwardTo?: string
   successMessage?: string
   showSection?: boolean
+  formNameLabel?: string
+  formNamePlaceholder?: string
+  formEmailLabel?: string
+  formEmailPlaceholder?: string
+  formSubjectLabel?: string
+  formSubjectPlaceholder?: string
+  formMessageLabel?: string
+  formMessagePlaceholder?: string
+  formButtonText?: string
 }
 
 export interface Member {

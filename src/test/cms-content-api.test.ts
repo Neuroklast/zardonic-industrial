@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { VercelRequest, VercelResponse } from '@vercel/node'
 
 const mockKvGet = vi.fn()
 const mockKvSet = vi.fn()
@@ -33,15 +34,15 @@ function mockRes() {
   res.json.mockReturnValue(res)
   res.setHeader.mockReturnValue(res)
   res.end.mockReturnValue(res)
-  return res
+  return res as unknown as VercelResponse
 }
 
 function mockReq(overrides: Record<string, unknown> = {}) {
-  return { method: 'GET', query: {}, body: {}, headers: {}, ...overrides }
+  return { method: 'GET', query: {}, body: {}, headers: {}, ...overrides } as unknown as VercelRequest
 }
 
 describe('cms/content handler', () => {
-  let handler: (req: unknown, res: unknown) => Promise<void>
+  let handler: (req: VercelRequest, res: VercelResponse) => Promise<any>
 
   beforeEach(async () => {
     vi.resetModules()

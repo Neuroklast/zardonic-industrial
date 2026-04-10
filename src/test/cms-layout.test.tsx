@@ -18,7 +18,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/dashboard',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
         publishStatus: 'unknown',
       }, React.createElement('div', {}, 'Content'))
     )
@@ -29,7 +29,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', {}, 'Hero Editor'))
     )
     expect(screen.getByText('Inhalte › Hero')).toBeInTheDocument()
@@ -39,7 +39,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/dashboard',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', {}, 'Dashboard'))
     )
     // The breadcrumb separator should not be present for dashboard
@@ -47,7 +47,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
   })
 
   it('navigates to dashboard when CMS breadcrumb is clicked', () => {
-    const onNavigate = vi.fn()
+    const onNavigate = vi.fn() as unknown as (route: string) => void
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
@@ -62,7 +62,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/dashboard',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', { 'data-testid': 'child-content' }, 'Hello World'))
     )
     expect(screen.getByTestId('child-content')).toBeInTheDocument()
@@ -73,7 +73,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
         publishStatus: 'published',
       }, React.createElement('div', {}, 'x'))
     )
@@ -84,7 +84,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
         publishStatus: 'draft',
       }, React.createElement('div', {}, 'x'))
     )
@@ -95,7 +95,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
         publishStatus: 'autosaved',
       }, React.createElement('div', {}, 'x'))
     )
@@ -106,7 +106,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/content/hero',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
         isTransitioning: true,
       }, React.createElement('div', { 'data-testid': 'child' }, 'Hidden'))
     )
@@ -118,7 +118,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/site-config',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', {}, 'x'))
     )
     expect(screen.getByText('Site-Konfiguration')).toBeInTheDocument()
@@ -128,7 +128,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/media',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', {}, 'x'))
     )
     expect(screen.getByText('Medienbibliothek')).toBeInTheDocument()
@@ -138,7 +138,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
     render(
       React.createElement(CmsLayout, {
         currentRoute: 'cms/dashboard',
-        onNavigate: vi.fn(),
+        onNavigate: vi.fn() as (route: string) => void,
       }, React.createElement('div', {}, 'x'))
     )
     expect(document.getElementById('cms-main-content')).toBeInTheDocument()

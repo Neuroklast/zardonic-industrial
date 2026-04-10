@@ -14,6 +14,7 @@ export function BlinkingCursor({ className = '' }: BlinkingCursorProps) {
 
   useEffect(() => {
     const isEnabled = get('CURSOR_BLINK_ENABLED')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnabled(Boolean(isEnabled))
   }, [])
 

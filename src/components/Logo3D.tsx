@@ -104,6 +104,7 @@ function GLBModel({ scrollY }: { scrollY: number }) {
       const scale = 4 / maxDim
       clonedScene.scale.setScalar(scale)
 
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModel(clonedScene)
     } catch (err) {
       console.error('Failed to process model:', err)

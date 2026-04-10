@@ -18,17 +18,17 @@ vi.mock('../../api/_ratelimit.js', () => ({
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn> }
+type Res = { status: (...args: any[]) => any; json: (...args: any[]) => any; setHeader: (...args: any[]) => any }
 
 function mockRes() {
-  const res: Res = {
+  const res: any = {
     status: vi.fn(),
     json: vi.fn(),
     setHeader: vi.fn(),
   }
   res.status.mockReturnValue(res)
   res.json.mockReturnValue(res)
-  return res as unknown as unknown as VercelResponse
+  return res as unknown as VercelResponse
 }
 
 const { default: handler } = await import('../../api/drive-folder.js')
@@ -61,7 +61,7 @@ describe('Drive folder API (Google Drive v3)', () => {
   })
 
   it('blocks requests when rate limited', async () => {
-    (mockApplyRateLimit as ReturnType<typeof vi.fn>).mockImplementation(async (_req: unknown, res: Res) => {
+    vi.mocked(mockApplyRateLimit).mockImplementation(async (_req: unknown, res: Res) => {
       res.status(429).json({ error: 'Too Many Requests' })
       return false
     })
@@ -104,7 +104,7 @@ describe('Drive folder API (Google Drive v3)', () => {
     await handler({ method: 'GET', query: { folderId: 'testFolder123' }, headers: {} } as unknown as VercelRequest, res)
 
     expect(res.json).toHaveBeenCalledTimes(1)
-    const { images } = res.json.mock.calls[0][0]
+    const { images } = (res.json as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(images).toHaveLength(2)
 
     // Check structure
@@ -171,7 +171,7 @@ describe('Drive folder API (Google Drive v3)', () => {
     })
     const res = mockRes()
     await handler({ method: 'GET', query: { folderId: 'abc123' }, headers: {} } as unknown as VercelRequest, res)
-    const { images } = res.json.mock.calls[0][0]
+    const { images } = (res.json as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(images[0].caption).toBe('my.photo')
   })
 

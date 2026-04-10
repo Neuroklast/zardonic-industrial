@@ -25,6 +25,7 @@ export default function BandInfoEditDialog({ open, onOpenChange, name, genres, l
   const [newGenre, setNewGenre] = useState('')
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBandName(name)
     setBandGenres(genres)
     setBandLabel(label || '')

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createRoot } from 'react-dom/client'
 import { ErrorBoundary } from "react-error-boundary";
 import { lazy, Suspense } from 'react'

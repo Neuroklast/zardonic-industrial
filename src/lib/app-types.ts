@@ -56,7 +56,7 @@ export interface Member {
 export interface MediaFile {
   id: string
   name: string
-  type: 'image' | 'pdf' | 'zip'
+  type: 'audio' | 'youtube' | 'download'
   url: string
   size: string
 }

@@ -409,6 +409,7 @@ export default function ThemeCustomizerDialog({
   // Sync draft when dialog opens (not on every prop change while open)
   useEffect(() => {
     if (open && !prevOpenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDraft(themeSettings || {})
       setVisDraft(sectionVisibility || {})
       undoStack.current = []

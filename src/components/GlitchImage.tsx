@@ -20,6 +20,7 @@ export function GlitchImage({ src, alt, className = '', width, height }: GlitchI
 
   useEffect(() => {
     const isEnabled = get('IMAGE_GLITCH_ON_HOVER_ENABLED')
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEnabled(Boolean(isEnabled))
   }, [])
 

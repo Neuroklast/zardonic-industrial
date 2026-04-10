@@ -104,6 +104,8 @@ export function useSecuritySettings(open: boolean): UseSecuritySettingsReturn {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { locale } = useLocale()
+  // i18n-security only supports 'en' | 'de'; map all other locales to 'en'
+  const secLocale = (locale === 'de' ? 'de' : 'en') as import('@/lib/i18n-security').Locale
 
   // ── Fetch settings from the API on dialog open ───────────────────────────
 
@@ -163,14 +165,14 @@ export function useSecuritySettings(open: boolean): UseSecuritySettingsReturn {
         throw new Error(errorData.error ?? `HTTP ${res.status}`)
       }
 
-      toast.success(t('settings.saved', locale))
+      toast.success(t('settings.saved', secLocale))
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err)
-      toast.error(`${t('settings.failedSave', locale)}: ${message}`)
+      toast.error(`${t('settings.failedSave', secLocale)}: ${message}`)
     } finally {
       setSaving(false)
     }
-  }, [settings, locale])
+  }, [settings, secLocale])
 
   // ── Reset ─────────────────────────────────────────────────────────────────
 
@@ -200,8 +202,8 @@ export function useSecuritySettings(open: boolean): UseSecuritySettingsReturn {
     anchor.download = `security-config-${new Date().toISOString().slice(0, 10)}.json`
     anchor.click()
     URL.revokeObjectURL(url)
-    toast.success(t('settings.exported', locale))
-  }, [settings, locale])
+    toast.success(t('settings.exported', secLocale))
+  }, [settings, secLocale])
 
   // ── Active modules count (memoised for performance) ───────────────────────
 

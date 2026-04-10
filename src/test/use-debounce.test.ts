@@ -55,7 +55,7 @@ describe('useDebounce', () => {
   it('passes arguments to the callback', () => {
     const callback = vi.fn()
     const { result } = renderHook(() =>
-      useDebounce(callback as (a: string, b: number) => void, 300)
+      useDebounce(callback as unknown as (...args: unknown[]) => unknown, 300)
     )
     act(() => { result.current('hello', 42) })
     act(() => { vi.advanceTimersByTime(300) })

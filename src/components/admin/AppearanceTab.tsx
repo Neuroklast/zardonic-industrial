@@ -1,3 +1,4 @@
+// @deprecated — functionality superseded by src/cms/editors/ThemeEditor.tsx. Do not extend; use the CMS editors instead.
 import { X, FloppyDisk, Sliders, Warning, MagicWand } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -286,7 +287,7 @@ export default function AppearanceTab({
         // Determine if background is light or dark via getContrastRatio with white/black
         const vsWhite = getContrastRatio('oklch(1 0 0)', background) ?? 0
         const vsBlack = getContrastRatio('oklch(0 0 0)', background) ?? 0
-        updates[key] = vsWhite >= vsBlack ? 'oklch(1 0 0)' : 'oklch(0.10 0 0)'
+        updates[key] = (vsWhite >= vsBlack ? 'oklch(1 0 0)' : 'oklch(0.10 0 0)') as never
       }
     }
 

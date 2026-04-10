@@ -87,7 +87,7 @@ describe('iTunes handler – 429 retry via fetchWithRetry', () => {
 
     expect(mockFetchWithRetry).toHaveBeenCalledTimes(2)
     expect(res.status).toHaveBeenCalledWith(200)
-    const combined = res.json.mock.calls[0][0]
+    const combined = (res.json as unknown as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(combined.resultCount).toBe(2)
     expect(combined.results).toHaveLength(2)
   })

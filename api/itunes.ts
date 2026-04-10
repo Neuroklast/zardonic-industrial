@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
             }
           } catch { /* ignore */ }
         }
-        return res.status(429).json({ error: 'rate_limited', retryAfter: parseInt(retryAfter, 10) })
+        res.status(429).json({ error: 'rate_limited', retryAfter: parseInt(retryAfter, 10) }); return
       }
       if (!songsRes.ok) throw new Error(`iTunes songs API responded with ${songsRes.status}`)
       if (!albumsRes.ok) throw new Error(`iTunes albums API responded with ${albumsRes.status}`)
@@ -95,7 +95,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         } catch { /* ignore */ }
       }
-      return res.status(429).json({ error: 'rate_limited', retryAfter: 60 })
+      res.status(429).json({ error: 'rate_limited', retryAfter: 60 }); return
     }
     if (!response.ok) throw new Error(`iTunes API responded with ${response.status}`)
 

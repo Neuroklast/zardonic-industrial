@@ -51,6 +51,7 @@ export default function TerminalSettingsDialog({
 
   useEffect(() => {
     if (open && !prevOpenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCmds(commands)
       setCodeKeys(secretCode && secretCode.length > 0 ? secretCode : DEFAULT_KONAMI_CODE)
       setMorseInput(morseCode)

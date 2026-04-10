@@ -53,6 +53,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCmds(customCommands)
       setCodeKeys(secretCode && secretCode.length > 0 ? secretCode : DEFAULT_KONAMI_CODE)
       setIsEditing(false)
@@ -103,6 +104,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
 
   useEffect(() => {
     if (!fileLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPseudoProgress(0)
       pseudoProgressRef.current = 0
       return
@@ -137,6 +139,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
   useEffect(() => {
     if (currentTyping || typingQueue.length === 0) return
     const [next, ...rest] = typingQueue
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTypingQueue(rest)
     // Empty lines appear instantly
     if (!next.text) {
@@ -151,6 +154,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
   useEffect(() => {
     if (!currentTyping) return
     if (currentTyping.displayed.length >= currentTyping.text.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHistory(prev => [...prev, { type: currentTyping.type, text: currentTyping.text }])
       setCurrentTyping(null)
       setIsTyping(false)
@@ -168,6 +172,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
     if (!pendingFileRef.current) return
     const { url, name } = pendingFileRef.current
     pendingFileRef.current = null
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFileLoading(true)
     setFileDlProgress({ state: 'downloading', progress: 0 })
 

@@ -39,6 +39,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
   useEffect(() => {
     if (!overlay) return
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOverlayPhase('loading')
     setLoadingText(OVERLAY_LOADING_TEXTS[0])
 

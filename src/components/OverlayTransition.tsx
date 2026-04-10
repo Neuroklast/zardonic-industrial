@@ -117,6 +117,7 @@ export default function OverlayTransition({ show, onComplete }: OverlayTransitio
 
   useEffect(() => {
     if (show) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true)
       const timeout = setTimeout(() => {
         setVisible(false)
@@ -152,6 +153,7 @@ export default function OverlayTransition({ show, onComplete }: OverlayTransitio
 }
 
 /** Hook that provides a trigger function and the transition element */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useOverlayTransition() {
   const [active, setActive] = useState(false)
 

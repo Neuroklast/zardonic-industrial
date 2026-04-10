@@ -362,7 +362,6 @@ describe('timingSafeEqual', () => {
   })
 
   it('returns false when a is not a string', () => {
-    // @ts-expect-error testing runtime guard
     expect(timingSafeEqual(123, 'abc')).toBe(false)
   })
 

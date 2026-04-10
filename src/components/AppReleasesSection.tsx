@@ -72,7 +72,7 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
 
   if (!visible) return null
 
-  const handleSaveRelease = (release: Release) => {
+  const handleSaveRelease = (release: FullRelease) => {
     if (editingRelease === 'new') {
       onAddRelease?.(release)
     } else {

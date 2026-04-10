@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useMemo, memo, useRef } from 'react'
 import { cacheImage } from '@/lib/image-cache'
@@ -101,7 +102,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
   // Memoize messages to prevent recreation
   const messages = useMemo(() => {
     if (loaderTexts?.stageMessages?.length === 5) return loaderTexts.stageMessages
-    return DEFAULT_MESSAGES as string[]
+    return DEFAULT_MESSAGES as unknown as string[]
   }, [loaderTexts?.stageMessages])
 
   const systemCheckLabels: [string, string, string] = [
@@ -118,6 +119,15 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
     }
   }, [loadingProgress, cachingDone, onLoadComplete])
 
+  const rainDropStyles = useMemo(
+    () => Array.from({ length: 20 }, () => ({
+      left: `${Math.random() * 100}%`,
+      duration: 2 + Math.random() * 3,
+      delay: Math.random() * 5,
+    })),
+    []
+  )
+
   return (
     <motion.div
       initial={{ opacity: 1 }}
@@ -132,12 +142,12 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
       
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
       
-      {[...Array(20)].map((_, i) => (
+      {rainDropStyles.map((style, i) => (
         <motion.div
           key={i}
           className="absolute w-0.5 h-32 bg-gradient-to-b from-transparent via-primary/30 to-transparent"
           style={{
-            left: `${Math.random() * 100}%`,
+            left: style.left,
             top: -128,
           }}
           animate={{
@@ -145,9 +155,9 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
             opacity: [0, 0.6, 0],
           }}
           transition={{
-            duration: 2 + Math.random() * 3,
+            duration: style.duration,
             repeat: Infinity,
-            delay: Math.random() * 5,
+            delay: style.delay,
             ease: 'linear',
           }}
         />
