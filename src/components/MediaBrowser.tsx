@@ -121,7 +121,6 @@ function MediaOverlay({ file, onClose }: { file: MediaFile; onClose: () => void 
         )}
 
         {isAudio && (
-          // eslint-disable-next-line jsx-a11y/media-has-caption
           <audio controls src={file.url} className="w-full mb-4" />
         )}
 

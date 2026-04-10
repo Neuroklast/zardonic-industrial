@@ -6,12 +6,16 @@ const inputClass = 'bg-[#1a1a1a] border border-zinc-700 text-zinc-100 rounded px
 export default function StorageEditor() {
   const [folderId, setFolderId] = useState('')
 
-  const driveUrl = folderId
-    ? `https://drive.google.com/drive/folders/${folderId}`
+  // Only allow characters that appear in real Google Drive folder IDs (alphanumeric, hyphens, underscores).
+  // This prevents potential XSS if a malicious string were pasted into the field.
+  const safeFolderId = folderId.replace(/[^a-zA-Z0-9_-]/g, '')
+
+  const driveUrl = safeFolderId
+    ? `https://drive.google.com/drive/folders/${safeFolderId}`
     : null
 
-  const previewUrl = folderId
-    ? `/api/drive-folder?folderId=${encodeURIComponent(folderId)}`
+  const previewUrl = safeFolderId
+    ? `/api/drive-folder?folderId=${encodeURIComponent(safeFolderId)}`
     : null
 
   return (
