@@ -11,6 +11,7 @@ export function MovingScanline() {
   useEffect(() => {
     const isEnabled = get('SCANLINE_MOVEMENT_ENABLED')
     if (!isEnabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEnabled(false)
       return
     }

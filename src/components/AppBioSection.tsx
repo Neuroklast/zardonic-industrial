@@ -21,7 +21,7 @@ interface AppBioSectionProps {
   onUpdate?: (bio: string) => void
 }
 
-export default function AppBioSection({ bio, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, sectionLabels, onLabelChange, onUpdate }: AppBioSectionProps) {
+export default function AppBioSection({ bio, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, sectionLabels, onLabelChange: _onLabelChange, onUpdate }: AppBioSectionProps) {
   const [bioExpanded, setBioExpanded] = useState(false)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(bio)

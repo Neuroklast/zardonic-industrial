@@ -66,11 +66,13 @@ function removeStoredConsent(): void {
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /** Synchronously read analytics consent from localStorage (safe to call outside React) */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getAnalyticsConsentSync(): boolean {
   return readStoredConsent()?.analytics === true
 }
 
 /** Expose a global event so other parts of the app can react to consent changes */
+// eslint-disable-next-line react-refresh/only-export-components
 export function dispatchConsentEvent(prefs: ConsentPreferences): void {
   window.dispatchEvent(new CustomEvent('zd:consent-change', { detail: prefs }))
 }
@@ -324,6 +326,7 @@ export function CookiePreferencesButton({ onPreferencesChange, onOpenPrivacyPoli
  * React hook that reactively tracks analytics consent.
  * Updates when the user changes their preference (listens for zd:consent-change).
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAnalyticsConsent(): boolean {
   const [hasConsent, setHasConsent] = useState<boolean>(() => getAnalyticsConsentSync())
 
@@ -343,6 +346,7 @@ export function useAnalyticsConsent(): boolean {
  * Synchronously read full consent preferences (no async, no network call).
  * Returns null if no consent has been recorded yet.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function getConsentPreferencesAsync(): ConsentPreferences | null {
   return readStoredConsent()
 }

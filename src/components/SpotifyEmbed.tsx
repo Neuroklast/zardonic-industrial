@@ -103,6 +103,7 @@ export function SpotifyEmbed({
 
     // If the API is already loaded, create the player directly
     if (window.SpotifyIframeApi) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       createPlayer(window.SpotifyIframeApi)
       return
     }

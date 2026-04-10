@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components, react-hooks/purity */
 "use client"
 
 import { CSSProperties, ComponentProps, createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"

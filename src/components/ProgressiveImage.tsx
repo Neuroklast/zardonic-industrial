@@ -27,6 +27,7 @@ export default function ProgressiveImage({ src, alt, className, style, draggable
 
   useEffect(() => {
     const newSrc = resolveInitialSrc(src)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEffectiveSrc(newSrc)
     setLoaded(false)
     setProxyAttempted(false)

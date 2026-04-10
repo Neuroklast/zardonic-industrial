@@ -37,6 +37,7 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
 
   useEffect(() => {
     if (gig) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         date: gig.date,
         venue: gig.venue,

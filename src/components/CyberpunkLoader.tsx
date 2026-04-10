@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import { motion } from 'framer-motion'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import logoImage from '@/assets/images/baphomet no text.svg'

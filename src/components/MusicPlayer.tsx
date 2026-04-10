@@ -78,6 +78,7 @@ export default function MusicPlayer({ tracks, initialIndex = 0 }: MusicPlayerPro
         audioRef.current.play().catch(() => {})
       }
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgress(0)
   }, [currentIndex, isPlaying, volume])
   

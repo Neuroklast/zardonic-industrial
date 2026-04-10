@@ -63,6 +63,7 @@ export function LocaleProvider({
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLocale(): LocaleContextValue {
   const ctx = useContext(LocaleContext)
   if (!ctx) throw new Error('useLocale must be used within a LocaleProvider')

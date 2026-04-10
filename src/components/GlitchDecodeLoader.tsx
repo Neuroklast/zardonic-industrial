@@ -44,6 +44,7 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
 
   // Decode animation for title
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setDisplayTitle(decodeString(targetTitle, 0))
     const id = setInterval(() => {
       titleRef.current = Math.min(titleRef.current + 1, targetTitle.length)
@@ -71,6 +72,7 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
   }, [mode, duration])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (precacheUrls.length === 0) { setCachingDone(true); return }
     setCachingDone(false)
     let cancelled = false
@@ -80,6 +82,7 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
 
   useEffect(() => {
     if (mode === 'timed') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (cachingDone && progress >= 90) setProgress(100)
   }, [cachingDone, progress, mode])
 

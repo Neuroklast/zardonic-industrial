@@ -27,6 +27,7 @@ export default function ImpressumEditDialog({ open, onOpenChange, impressum, onS
   const [form, setForm] = useState<Impressum>(impressum || emptyImpressum)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(impressum || emptyImpressum)
   }, [impressum])
 

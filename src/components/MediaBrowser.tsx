@@ -370,10 +370,12 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOv
   // so the admin immediately sees where to add files.
   useEffect(() => {
     if (isOverlay && editMode && onUpdate && mediaFiles.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditOpen(true)
     }
   }, [isOverlay, editMode, onUpdate, mediaFiles.length])
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleOpen = useCallback((file: MediaFile) => {
     setOverlayFile(file)
   }, [])

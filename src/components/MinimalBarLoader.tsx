@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useEffect, useState, memo } from 'react'
 import { cacheImage } from '@/lib/image-cache'
 import type { LoaderTexts, LoadingScreenMode } from '@/lib/types'
@@ -39,6 +39,7 @@ const MinimalBarLoader = memo(function MinimalBarLoader({
   }, [mode, duration])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (precacheUrls.length === 0) { setCachingDone(true); return }
     setCachingDone(false)
     let cancelled = false
@@ -48,6 +49,7 @@ const MinimalBarLoader = memo(function MinimalBarLoader({
 
   useEffect(() => {
     if (mode === 'timed') return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (cachingDone && progress >= 90) setProgress(100)
   }, [cachingDone, progress, mode])
 

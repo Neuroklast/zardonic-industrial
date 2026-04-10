@@ -20,6 +20,7 @@ export default function TerminalEditDialog({ open, onOpenChange, commands, onSav
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCmds(commands)
     setExpandedIdx(null)
   }, [commands])

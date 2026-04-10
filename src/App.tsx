@@ -6,7 +6,7 @@ import { useKonami } from '@/hooks/use-konami'
 import { trackPageView, trackHeatmapClick } from '@/hooks/use-analytics'
 import { useAnalyticsConsent, CookieConsent } from '@/components/CookieConsent'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
-import type { AdminSettings, SectionLabels, Release as FullRelease, TerminalCommand, AnimationSettings } from '@/lib/types'
+import type { AdminSettings, SectionLabels, Release as FullRelease, TerminalCommand } from '@/lib/types'
 import { fullReleaseToStored, mergeFullReleaseIntoStored } from '@/lib/release-adapters'
 import { useAppTheme } from '@/hooks/use-app-theme'
 import { useSiteDataSync } from '@/hooks/use-site-data-sync'
@@ -91,6 +91,7 @@ function App() {
 
   useEffect(() => {
     if (konamiActivated) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTerminalOpen(true)
       toast.success('Terminal activated!')
     }
@@ -99,6 +100,7 @@ function App() {
   // Open setup dialog when auth check confirms no password exists and user requested setup
   useEffect(() => {
     if (wantsSetup && needsSetup) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowSetupDialog(true)
     }
   }, [wantsSetup, needsSetup])
@@ -116,7 +118,6 @@ function App() {
       trackPageView()
     }
   // Only run once on mount; analyticsConsent may become true later (after banner)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [analyticsConsent])
 
   // Track heatmap clicks globally — guard with consent
@@ -151,12 +152,14 @@ function App() {
 
   useEffect(() => {
     if (isSiteDataLoaded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSiteData(kvSiteData)
     }
   }, [kvSiteData, isSiteDataLoaded])
 
   useEffect(() => {
     if (isAdminSettingsLoaded && kvAdminSettings) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAdminSettings(kvAdminSettings)
     }
   }, [kvAdminSettings, isAdminSettingsLoaded])
@@ -209,7 +212,6 @@ function App() {
   const anim = adminSettings?.animations ?? {}
   const sectionLabels = adminSettings?.sectionLabels ?? {}
   const terminalCommands = adminSettings?.terminalCommands ?? []
-  const contactSettings = adminSettings?.contactSettings ?? {}
 
   // Persist the loading screen type to localStorage so it can be read synchronously
   // on the next page load, preventing a FOUC from the default 'cyberpunk' loader.
@@ -245,9 +247,9 @@ function App() {
   // When loading screen type is 'none', skip loading immediately
   useEffect(() => {
     if (effectiveLoaderType === 'none') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveLoaderType])
 
   // Collect image URLs for precaching during loading screen
