@@ -80,6 +80,30 @@ function isValidColor(value: string): boolean {
   return false
 }
 
+/** Image preview with fallback message when the URL loads an image that fails. */
+function ImagePreview({ src }: { src: string }) {
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  if (loadFailed) {
+    return (
+      <div className="w-full h-16 flex items-center justify-center rounded border border-border bg-muted/30">
+        <span className="font-mono text-[10px] text-muted-foreground">Image could not be loaded</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative w-full h-16 overflow-hidden rounded border border-border">
+      <img
+        src={src}
+        alt="Preview"
+        className="w-full h-full object-cover"
+        onError={() => setLoadFailed(true)}
+      />
+    </div>
+  )
+}
+
 /**
  * Inner component — always mounted when the field is visible, so hooks are safe.
  */
@@ -253,16 +277,7 @@ function FieldContent({
           <p className="font-mono text-[10px] text-destructive">Invalid URL</p>
         )}
         {stringValue && !isInvalidUrl && (
-          <div className="relative w-full h-16 overflow-hidden rounded border border-border">
-            <img
-              src={stringValue}
-              alt="Preview"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                ;(e.target as HTMLImageElement).style.display = 'none'
-              }}
-            />
-          </div>
+          <ImagePreview src={stringValue} />
         )}
       </div>
     )

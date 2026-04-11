@@ -100,7 +100,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
         label: 'Profile Photo URL',
         type: 'image',
         placeholder: 'https://...',
-        description: 'URL of the member\'s profile photo.',
+        description: "URL of the member's profile photo.",
         disclosure: 'basic',
       },
       {
