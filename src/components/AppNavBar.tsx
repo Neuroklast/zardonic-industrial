@@ -45,7 +45,7 @@ export default function AppNavBar({
     .filter((s) => s.showInNav)
     .map((s) => ({
       id: s.id,
-      label: sectionLabels?.[s.labelKey] || t(`nav.${s.id}`),
+      label: (typeof sectionLabels?.[s.labelKey] === 'string' ? sectionLabels![s.labelKey] as string : undefined) || t(`nav.${s.id}`),
     }))
     .filter(({ id }) => isSectionVisible(adminSettings, id))
 

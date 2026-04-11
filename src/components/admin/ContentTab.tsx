@@ -249,7 +249,7 @@ export default function ContentTab({
           size="sm"
           className="font-mono text-xs"
           onClick={() => {
-            setAdminSettings?.({ ...(adminSettings ?? {}), sectionLabels: localSectionLabels })
+            setAdminSettings?.({ ...(adminSettings ?? {}), labels: localSectionLabels })
             toast.success('Section labels saved')
           }}
           disabled={!setAdminSettings}
@@ -284,7 +284,7 @@ export default function ContentTab({
           size="sm"
           className="font-mono text-xs"
           onClick={() => {
-            setAdminSettings?.({ ...adminSettings, contactInfo: localContactInfo })
+            setAdminSettings?.({ ...adminSettings, contact: localContactInfo })
             toast.success('Contact info saved')
           }}
           disabled={!setAdminSettings}
@@ -509,7 +509,7 @@ function DecorativeTextsSection({
     if (!setAdminSettings) return
     setAdminSettings({
       ...adminSettings,
-      decorativeTexts: { ...decorativeTexts, [key]: value || undefined },
+      decorative: { ...decorativeTexts, [key]: value || undefined },
     })
   }
 

@@ -309,7 +309,7 @@ export default function AdminPanel({
       return (
         <SectionPanel
           sectionId={page}
-          adminSettings={adminSettings}
+          adminSettings={adminSettings ?? undefined}
           setAdminSettings={setAdminSettings}
           siteData={siteData}
           onUpdateSiteData={onUpdateSiteData}
@@ -395,14 +395,20 @@ export default function AdminPanel({
             onOpenSecurityIncidents={onOpenSecurityIncidents}
             onOpenSecuritySettings={onOpenSecuritySettings}
             onOpenBlocklist={onOpenBlocklist}
-            onOpenContactInbox={onOpenContactInbox}
             onOpenSubscriberList={onOpenSubscriberList}
-            onOpenStats={onOpenStats}
+            onClose={onClose}
+            onOpenPasswordDialog={() => setShowPasswordDialog(true)}
           />
         )
       }
       if (page === 'analytics') {
-        return <AnalyticsTab />
+        return (
+          <AnalyticsTab
+            onOpenStats={onOpenStats}
+            onOpenContactInbox={onOpenContactInbox}
+            onClose={onClose}
+          />
+        )
       }
       if (page === 'data') {
         return (
@@ -423,7 +429,7 @@ export default function AdminPanel({
           <TranslationsTab
             adminSettings={adminSettings}
             setAdminSettings={setAdminSettings}
-            importRef={translationImportRef}
+            translationImportRef={translationImportRef}
           />
         )
       }
@@ -598,7 +604,7 @@ export default function AdminPanel({
             <AdminLoginDialog
               open={showPasswordDialog}
               onOpenChange={setShowPasswordDialog}
-              mode="change"
+              mode="setup"
               onSetPassword={onSetPassword}
               onChangePassword={onChangePassword}
             />

@@ -53,26 +53,26 @@ export default function SectionConfigTab({
 
   const labels: SectionLabels = adminSettings?.labels ?? {}
   const contactInfo: ContactInfo = adminSettings?.contact ?? {}
-  const contactSettings: ContactSettings = adminSettings?.contactSettings ?? {}
+  const contactSettings: ContactSettings = adminSettings?.contact ?? {}
 
   const updateLabel = (key: keyof SectionLabels, value: string | boolean) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
-      sectionLabels: { ...labels, [key]: value },
+      labels: { ...labels, [key]: value },
     })
   }
 
   const updateContactInfo = (key: keyof ContactInfo, value: string) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
-      contactInfo: { ...contactInfo, [key]: value },
+      contact: { ...adminSettings?.contact, [key]: value },
     })
   }
 
   const updateContactSettings = (key: keyof ContactSettings, value: string | boolean) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
-      contactSettings: { ...contactSettings, [key]: value },
+      contact: { ...adminSettings?.contact, [key]: value },
     })
   }
 

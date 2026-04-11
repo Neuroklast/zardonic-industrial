@@ -24,7 +24,7 @@ export default function BackgroundTab({
   const updateAnim = (patch: Partial<AnimationSettings>) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
-      animations: { ...anim, ...patch },
+      background: { ...anim, ...patch },
     })
   }
 
