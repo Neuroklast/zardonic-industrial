@@ -139,6 +139,7 @@ export default function AdminPanel({
     media: 'Media',
     connect: 'Connect / Social',
     contact: 'Contact Form',
+    sponsoring: 'Sponsoring',
   }
 
   const moveSectionUp = useCallback(

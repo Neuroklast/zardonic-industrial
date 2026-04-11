@@ -28,6 +28,7 @@ const sectionItems: { key: keyof SectionVisibility; label: string }[] = [
   { key: 'media', label: 'Media' },
   { key: 'connect', label: 'Connect / Social' },
   { key: 'creditHighlights', label: 'Credit Highlights' },
+  { key: 'sponsoring', label: 'Sponsoring' },
   { key: 'contact', label: 'Contact Form' },
 ]
 

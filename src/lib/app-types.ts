@@ -79,6 +79,7 @@ export interface SiteData {
   members: Member[]
   mediaFiles: MediaFile[]
   creditHighlights: CreditHighlight[]
+  sponsoring?: CreditHighlight[]
   heroLinks?: HeroLink[]
   social: {
     instagram?: string
