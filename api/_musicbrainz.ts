@@ -131,8 +131,11 @@ export async function searchMusicBrainz(title: string, artistName = 'Zardonic'):
   const cleanTitle = title
     .replace(/\s*-\s*(single|ep|album|remix|remixes|deluxe edition|special edition)\s*$/i, '')
     .trim()
+    .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"')
-  const safeArtist = artistName.replace(/"/g, '\\"')
+  const safeArtist = artistName
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
 
   // Try with artist filter first
   const query1 = `release:"${cleanTitle}" AND artist:${safeArtist}`
