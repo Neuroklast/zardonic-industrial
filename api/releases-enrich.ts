@@ -130,6 +130,11 @@ function cleanAppleMusicUrl(url: string): string {
   if (!url) return url
   try {
     const u = new URL(url)
+    // Normalize geo redirect domains to music.apple.com
+    if (u.hostname === 'geo.music.apple.com' || u.hostname.endsWith('.music.apple.com')) {
+      u.hostname = 'music.apple.com'
+    }
+    // Strip all query params (affiliate noise: uo=4, at=..., ct=..., etc.)
     return `${u.origin}${u.pathname}`
   } catch { return url }
 }
