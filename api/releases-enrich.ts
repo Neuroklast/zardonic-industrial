@@ -12,8 +12,7 @@
  * 4. Completely OVERWRITE the releases array in KV — no merge with old data,
  *    no isEnriched flag.  Each run is a fresh, authoritative snapshot.
  *
- * Cron calls must supply `Authorization: Bearer <CRON_SECRET>`.
- * Admin can also trigger it manually (requires valid session).
+ * Cron calls must supply `Authorization: Bearer <CRON_SECRET>`.\n * Admin can also trigger it manually (requires valid session).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getRedisOrNull, isRedisConfigured } from './_redis.js'
@@ -122,9 +121,13 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * Strip all query parameters from an Apple Music / iTunes URL.
- * iTunes returns affiliate-decorated URLs like `?uo=4&at=...&ct=...` that
- * Odesli cannot reliably resolve. We only keep origin + pathname.
+ * Strip all query parameters from an Apple Music / iTunes URL AND normalise
+ * geo redirect domains (geo.music.apple.com → music.apple.com).
+ *
+ * MUST be called on EVERY Apple Music URL before it is stored — whether the
+ * URL comes from iTunes directly or from an Odesli response.  Odesli itself
+ * returns geo.music.apple.com URLs in its linksByPlatform.appleMusic field,
+ * so cleaning at storage time is the only reliable guarantee.
  */
 function cleanAppleMusicUrl(url: string): string {
   if (!url) return url
@@ -222,6 +225,9 @@ async function fetchITunesReleases(artistName: string): Promise<Release[]> {
     if (map.has(id)) continue
 
     const mainArtist = track.collectionArtistName || track.artistName || artistName
+    // IMPORTANT: cleanAppleMusicUrl is called here at the point of first storage.
+    // This guarantees that geo.music.apple.com URLs and affiliate params are NEVER
+    // written to Redis — they are cleaned before the Release object is even created.
     const appleUrl = cleanAppleMusicUrl(track.collectionViewUrl || track.trackViewUrl || '')
     const streamingLinks: StreamingLink[] = appleUrl ? [{ platform: 'appleMusic', url: appleUrl }] : []
 
@@ -327,7 +333,7 @@ interface OdesliEnrichedLinks {
 
 async function enrichWithOdesli(
   url: string,
-  redis: NonNullable<ReturnType<typeof getRedisOrNull>>,
+  redis: NonNullable<ReturnType<typeof getRedisOrNull>>, 
 ): Promise<OdesliEnrichedLinks> {
   if (!url) return { links: {}, fromCache: false }
 
@@ -368,7 +374,10 @@ function extractLinks(data: OdesliResponse): Omit<OdesliEnrichedLinks, 'fromCach
   return {
     links: {
       spotify: p.spotify?.url,
-      appleMusic: p.appleMusic?.url,
+      // IMPORTANT: clean the appleMusic URL from Odesli — Odesli itself returns
+      // geo.music.apple.com URLs in linksByPlatform.appleMusic. We must clean here
+      // so the stored URL is always a canonical music.apple.com URL.
+      appleMusic: p.appleMusic?.url ? cleanAppleMusicUrl(p.appleMusic.url) : undefined,
       soundcloud: p.soundcloud?.url,
       youtube: p.youtube?.url,
       bandcamp: p.bandcamp?.url,
@@ -415,8 +424,8 @@ function applyMBMetadata(release: Release, mbMap: Map<string, MbReleaseData>): R
  */
 async function enrichRelease(
   release: Release,
-  redis: NonNullable<ReturnType<typeof getRedisOrNull>>,
-  mbMap: Map<string, MbReleaseData>,
+  redis: NonNullable<ReturnType<typeof getRedisOrNull>>, 
+  mbMap: Map<string, MbReleaseData>, 
   artistName = 'Zardonic',
 ): Promise<{ release: Release; enriched: boolean; typeDetected: boolean; tracklistFetched: boolean }> {
   const updated: Release = { ...release }
@@ -425,8 +434,10 @@ async function enrichRelease(
   let tracklistFetched = false
 
   // ── Step 1: Odesli — use iTunes Apple Music URL as primary search term ──
-  // Strip affiliate query params before passing to Odesli (iTunes returns URLs
-  // like `?uo=4&at=...&ct=...` that Odesli cannot reliably resolve).
+  // cleanAppleMusicUrl is called here as a safety net in case any dirty URL
+  // survived from a previous Redis write (e.g. pre-fix data). At this point
+  // the URL should already be clean (set by fetchITunesReleases), but we
+  // apply it again defensively.
   const rawAppleUrl = (release.streamingLinks ?? []).find(l => l.platform === 'appleMusic')?.url
   const currentAppleUrl = rawAppleUrl ? cleanAppleMusicUrl(rawAppleUrl) : undefined
   const currentSpotifyUrl = (release.streamingLinks ?? []).find(l => l.platform === 'spotify')?.url
@@ -450,7 +461,8 @@ async function enrichRelease(
   updateLink('deezer', links.deezer)
   updateLink('tidal', links.tidal)
   updateLink('amazonMusic', links.amazonMusic)
-  updateLink('appleMusic', links.appleMusic)
+  // appleMusic URL is already cleaned inside extractLinks() — safe to store directly
+  updateLink('appleMusic', links.appleMusic ? cleanAppleMusicUrl(links.appleMusic) : undefined)
 
   updated.streamingLinks = newLinks
   enriched = Object.values(links).some(Boolean)
@@ -525,7 +537,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   if (!isRedisConfigured()) {
-    res.status(503).json({ error: 'Redis not configured' }); return
+    res.status(503).json({ error: 'Redis not configured' }); return }
   }
 
   const redis = getRedisOrNull()!
