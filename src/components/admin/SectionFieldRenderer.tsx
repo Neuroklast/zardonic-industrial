@@ -25,7 +25,7 @@ function getSiteDataValue(siteData: SiteData | undefined, path: string): unknown
   // path starts with 'siteData.' — strip that prefix
   const localPath = path.replace(/^siteData\./, '')
   const parts = localPath.split('.')
-  let current: Record<string, unknown> = siteData as Record<string, unknown>
+  let current: Record<string, unknown> = siteData as unknown as Record<string, unknown>
   for (const part of parts) {
     if (current === undefined || current === null) return undefined
     current = current[part] as Record<string, unknown>
@@ -53,7 +53,7 @@ function setSiteDataValue(
       node = node[key] as Record<string, unknown>
     }
     node[parts[parts.length - 1]] = value
-    return result as SiteData
+    return result as unknown as SiteData
   })
 }
 
