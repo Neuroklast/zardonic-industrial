@@ -8,7 +8,7 @@
  */
 import { fetchWithRetry } from './_fetch-retry.js'
 
-export const MB_USER_AGENT = 'ZardonicWebsite/1.0 (https://zardonic.net)'
+export const MB_USER_AGENT = `ZardonicWebsite/1.0 (${process.env.SITE_URL || 'https://zardonic.com'})`
 
 // ─── MusicBrainz API types ────────────────────────────────────────────────────
 
@@ -127,12 +127,29 @@ export function inferTypeFromTitle(title: string): '' | 'album' | 'ep' | 'single
 
 /** Search MusicBrainz for a release by title + artist name "Zardonic". */
 export async function searchMusicBrainz(title: string, artistName = 'Zardonic'): Promise<MbSearchRelease | null> {
-  const query = `release:"${title}" AND artist:${artistName}`
-  const url = `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(query)}&fmt=json&limit=5`
-  const res = await fetchWithRetry(url, { headers: { 'User-Agent': MB_USER_AGENT } })
-  if (!res.ok) return null
-  const data: MbSearchResponse = await res.json()
-  return data.releases?.[0] ?? null
+  // Strip common iTunes title suffixes that MusicBrainz doesn't use
+  const cleanTitle = title
+    .replace(/\s*-\s*(single|ep|album|remix|remixes|deluxe edition|special edition)\s*$/i, '')
+    .trim()
+    .replace(/"/g, '\\"')
+  const safeArtist = artistName.replace(/"/g, '\\"')
+
+  // Try with artist filter first
+  const query1 = `release:"${cleanTitle}" AND artist:${safeArtist}`
+  const url1 = `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(query1)}&fmt=json&limit=5`
+  const res1 = await fetchWithRetry(url1, { headers: { 'User-Agent': MB_USER_AGENT } })
+  if (res1.ok) {
+    const data1: MbSearchResponse = await res1.json()
+    if (data1.releases && data1.releases.length > 0) return data1.releases[0]
+  }
+
+  // Fallback: search by title only (no artist filter) — catches featured/collab releases
+  const query2 = `release:"${cleanTitle}"`
+  const url2 = `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(query2)}&fmt=json&limit=5`
+  const res2 = await fetchWithRetry(url2, { headers: { 'User-Agent': MB_USER_AGENT } })
+  if (!res2.ok) return null
+  const data2: MbSearchResponse = await res2.json()
+  return data2.releases?.[0] ?? null
 }
 
 /** Fetch the full MusicBrainz release (with recordings + url-rels). */
