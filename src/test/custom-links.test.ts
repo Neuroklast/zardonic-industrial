@@ -3,10 +3,9 @@ import { mergeWithExistingReleases, type MergeableRelease } from '../../api/_rel
 
 function makeRelease(overrides: Partial<MergeableRelease> & { id: string }): MergeableRelease {
   return {
-    id: overrides.id,
-    title: overrides.title ?? `Release ${overrides.id}`,
-    artwork: overrides.artwork ?? '',
-    year: overrides.year ?? '2023',
+    title: `Release ${overrides.id}`,
+    artwork: '',
+    year: '2023',
     ...overrides,
   }
 }
