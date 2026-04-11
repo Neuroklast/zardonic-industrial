@@ -71,7 +71,7 @@ vi.mock('../../api/_musicbrainz.js', () => ({
   lookupArtistMbid: (...args: unknown[]) => mockLookupArtistMbid(...args),
   searchMusicBrainz: (...args: unknown[]) => mockSearchMusicBrainz(...args),
   fetchMusicBrainzRelease: (...args: unknown[]) => mockFetchMusicBrainzRelease(...args),
-  msToTime: (ms: number) => `${Math.floor(ms / 60000)}:${String(Math.round((ms % 60000) / 1000)).padStart(2, '0')}`,
+  msToTime: (_ms: number) => '3:30',
   mbTypeToReleaseType: () => '',
   inferTypeFromTitle: () => '',
   MB_USER_AGENT: 'ZardonicWebsite/1.0 (https://zardonic.com)',
