@@ -163,7 +163,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       if (fromTitle && !updated.type) updated.type = fromTitle
     }
 
-    const odesliLookupUrl = mbSpotifyUrl ?? mbAppleMusicUrl ?? existingAppleUrl
+    const odesliLookupUrl = existingAppleUrl ?? mbSpotifyUrl ?? mbAppleMusicUrl
     if (odesliLookupUrl) {
       const odesli = await fetchOdesliLinks(odesliLookupUrl, redis)
       if (odesli?.linksByPlatform) {

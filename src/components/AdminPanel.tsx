@@ -60,6 +60,8 @@ interface AdminPanelProps {
   onOpenSubscriberList?: () => void
   onFetchBandsintown?: () => Promise<void>
   onFetchITunes?: () => Promise<void>
+  onResetReleases?: () => Promise<void>
+  onResetGigs?: () => Promise<void>
   editMode: boolean
   onToggleEdit: () => void
   hasPassword: boolean
@@ -86,6 +88,8 @@ export default function AdminPanel({
   onOpenSubscriberList,
   onFetchBandsintown,
   onFetchITunes,
+  onResetReleases,
+  onResetGigs,
   editMode,
   onToggleEdit,
   hasPassword,
@@ -511,6 +515,8 @@ export default function AdminPanel({
                 onImportClick={() => importInputRef.current?.click()}
                 onFetchBandsintown={onFetchBandsintown}
                 onFetchITunes={onFetchITunes}
+                onResetReleases={onResetReleases}
+                onResetGigs={onResetGigs}
               />
 
               <TranslationsTab
