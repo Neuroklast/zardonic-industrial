@@ -72,7 +72,6 @@ export function AdminDialogManager({
   setShowLoginDialog,
   showSetupDialog,
   setShowSetupDialog,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   terminalCommands: _terminalCommands,
 }: AdminDialogManagerProps) {
   const [showConfigEditor, setShowConfigEditor] = useState(false)

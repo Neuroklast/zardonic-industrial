@@ -61,7 +61,6 @@ function App() {
     handleUpdateAdminSettings,
     handleLabelChange,
     handleSaveTerminalCommands,
-    refetchAdminSettings,
     isOwner,
     needsSetup,
     handleAdminLogin,
