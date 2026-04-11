@@ -606,7 +606,6 @@ export default function AdminPanel({
               onOpenChange={setShowPasswordDialog}
               mode="setup"
               onSetPassword={onSetPassword}
-              onChangePassword={onChangePassword}
             />
           )}
         </>
