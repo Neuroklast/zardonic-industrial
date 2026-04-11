@@ -34,6 +34,7 @@ import AppNavBar from '@/components/AppNavBar'
 import AppHeroSection from '@/components/AppHeroSection'
 import ShellSection from '@/components/ShellSection'
 import CreditHighlightsSection from '@/components/CreditHighlightsSection'
+import SponsoringSection from '@/components/SponsoringSection'
 import GallerySection from '@/components/GallerySection'
 import AppFooter from '@/components/AppFooter'
 import AppBioSection from '@/components/AppBioSection'
@@ -680,6 +681,28 @@ function App() {
           }))
         } : undefined}
         onRefreshReleases={editMode ? handleFetchITunesReleases : undefined}
+        onSyncRelease={editMode ? async (id: string) => {
+          const resp = await fetch('/api/releases-enrich-single', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ id }),
+          })
+          if (resp.ok) {
+            const data = await resp.json()
+            if (data.release) {
+              handleUpdateSiteData(prev => ({
+                ...prev,
+                releases: prev.releases.map(r =>
+                  r.id === id ? data.release : r
+                ),
+              }))
+            }
+          } else {
+            const err = await resp.json().catch(() => ({}))
+            throw new Error(err.error ?? `HTTP ${resp.status}`)
+          }
+        } : undefined}
       />
       </SectionErrorBoundary>
 
@@ -735,6 +758,19 @@ function App() {
         headingPrefix={sectionLabels.headingPrefix}
         adminSettings={adminSettings}
         onContactClick={() => setCyberpunkOverlay({ type: 'contact' })}
+      />
+      </SectionErrorBoundary>
+
+      <SectionErrorBoundary sectionName="Sponsoring">
+      <SponsoringSection
+        siteData={siteData}
+        editMode={editMode}
+        sectionOrder={getSectionOrder('sponsoring')}
+        visible={vis.sponsoring !== false}
+        sectionLabel={sectionLabels.sponsoring || ''}
+        sectionLabels={sectionLabels}
+        onLabelChange={editMode ? handleLabelChange : undefined}
+        onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
       />
       </SectionErrorBoundary>
 

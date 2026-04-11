@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,8 @@ import { MusicNote, CaretDown, CaretUp, PencilSimple, Plus, Trash, ArrowsClockwi
 import type { AdminSettings, SectionLabels, Release as FullRelease } from '@/lib/types'
 import type { Release } from '@/lib/app-types'
 import { useLocale } from '@/contexts/LocaleContext'
+
+const SYNC_DELAY_MS = 1_500  // 1.5 seconds between releases to respect rate limits
 
 interface AppReleasesSectionProps {
   releases: Release[]
@@ -28,6 +30,8 @@ interface AppReleasesSectionProps {
   onDeleteRelease?: (id: string) => void
   onAddRelease?: (release: FullRelease) => void
   onRefreshReleases?: () => void
+  /** Sync a single release with MusicBrainz + Odesli and update its card data */
+  onSyncRelease?: (id: string) => Promise<void>
 }
 
 /** Convert an app-types Release (streamingLinks array) to the richer types.ts Release for the edit dialog */
@@ -47,16 +51,54 @@ function toFullRelease(r: Release): FullRelease {
   }
 }
 
-export default function AppReleasesSection({ releases, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, iTunesFetching, hasAutoLoaded, syncProgress, sectionLabels, onLabelChange, onReleaseClick, onUpdateRelease, onDeleteRelease, onAddRelease, onRefreshReleases }: AppReleasesSectionProps) {
+export default function AppReleasesSection({ releases, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, iTunesFetching, hasAutoLoaded, syncProgress, sectionLabels, onLabelChange, onReleaseClick, onUpdateRelease, onDeleteRelease, onAddRelease, onRefreshReleases, onSyncRelease }: AppReleasesSectionProps) {
   const [showAllReleases, setShowAllReleases] = useState(false)
   const [editingRelease, setEditingRelease] = useState<FullRelease | null | 'new'>(null)
   const [activeFilter, setActiveFilter] = useState<'' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'>('')
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [bulkSyncing, setBulkSyncing] = useState(false)
+  const [bulkSyncProgress, setBulkSyncProgress] = useState<{ current: number; total: number } | null>(null)
+  const abortBulkRef = useRef(false)
   const { t } = useLocale()
 
   const handleSetFilter = (f: '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation') => {
     setActiveFilter(f)
     setShowAllReleases(false)
   }
+
+  const handleSyncSingle = useCallback(async (id: string) => {
+    if (!onSyncRelease || syncingId) return
+    setSyncingId(id)
+    try {
+      await onSyncRelease(id)
+    } finally {
+      setSyncingId(null)
+    }
+  }, [onSyncRelease, syncingId])
+
+  const handleSyncAll = useCallback(async (sortedReleases: Release[]) => {
+    if (!onSyncRelease || bulkSyncing) return
+    abortBulkRef.current = false
+    setBulkSyncing(true)
+    setBulkSyncProgress({ current: 0, total: sortedReleases.length })
+    for (let i = 0; i < sortedReleases.length; i++) {
+      if (abortBulkRef.current) break
+      const release = sortedReleases[i]
+      setSyncingId(release.id)
+      try {
+        await onSyncRelease(release.id)
+      } catch (err) {
+        console.error(`[ReleasesSync] Failed to sync "${release.title}":`, err)
+      }
+      setBulkSyncProgress({ current: i + 1, total: sortedReleases.length })
+      if (i < sortedReleases.length - 1 && !abortBulkRef.current) {
+        await new Promise(r => setTimeout(r, SYNC_DELAY_MS))
+      }
+    }
+    setSyncingId(null)
+    setBulkSyncing(false)
+    setBulkSyncProgress(null)
+  }, [onSyncRelease, bulkSyncing])
 
   const loadingLabel = sectionLabels?.releasesLoadingLabel ?? '// LOADING.ITUNES.RELEASES'
   const syncingText = sectionLabels?.releasesSyncingText ?? 'SYNCING...'
@@ -108,11 +150,32 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
                       size="sm"
                       variant="outline"
                       onClick={() => onRefreshReleases()}
-                      disabled={iTunesFetching}
+                      disabled={iTunesFetching || bulkSyncing}
                       className="gap-2 border-primary/30 font-mono tracking-wider text-xs shrink-0"
                     >
                       <ArrowsClockwise className={`w-4 h-4 ${iTunesFetching ? 'animate-spin' : ''}`} />
                       {t('releases.syncItunes')}
+                    </Button>
+                  )}
+                  {onSyncRelease && releases.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const sorted = [...releases].sort((a, b) => {
+                          const yearA = a.releaseDate ? new Date(a.releaseDate).getTime() : parseInt(a.year) || 0
+                          const yearB = b.releaseDate ? new Date(b.releaseDate).getTime() : parseInt(b.year) || 0
+                          return yearB - yearA
+                        })
+                        void handleSyncAll(sorted)
+                      }}
+                      disabled={bulkSyncing || !!syncingId || iTunesFetching}
+                      className="gap-2 border-accent/30 font-mono tracking-wider text-xs shrink-0"
+                    >
+                      <ArrowsClockwise className={`w-4 h-4 ${bulkSyncing ? 'animate-spin' : ''}`} />
+                      {bulkSyncing && bulkSyncProgress
+                        ? `Syncing ${bulkSyncProgress.current}/${bulkSyncProgress.total}…`
+                        : 'Sync All Enrichment'}
                     </Button>
                   )}
                   {onAddRelease && (
@@ -234,57 +297,85 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
                       ))}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                      {visibleReleases.map((release, index) => (
-                        <motion.div
-                          key={release.id}
-                          initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
-                          whileInView={{ opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
-                          viewport={{ once: true }}
-                          transition={{
-                            duration: 0.6,
-                            delay: index * 0.08,
-                            ease: [0.25, 0.46, 0.45, 0.94]
-                          }}
-                        >
-                          <Card
-                            className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer cyber-card hover-noise relative"
-                            onClick={() => !editMode && onReleaseClick(release)}
+                      {visibleReleases.map((release, index) => {
+                        const isSyncing = syncingId === release.id
+                        return (
+                          <motion.div
+                            key={release.id}
+                            initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
+                            whileInView={{ opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
+                            viewport={{ once: true }}
+                            transition={{
+                              duration: 0.6,
+                              delay: index * 0.08,
+                              ease: [0.25, 0.46, 0.45, 0.94]
+                            }}
                           >
-                            <div className="data-label absolute top-2 left-2 z-10" data-theme-color="data-label">// REL.{release.year}</div>
-                            {editMode && (
-                              <div className="absolute top-2 right-2 z-10 flex gap-1">
-                                {onUpdateRelease && (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); setEditingRelease(toFullRelease(release)) }}
-                                    className="p-1 bg-black/60 hover:bg-primary/80 text-foreground hover:text-primary-foreground rounded transition-colors"
-                                    aria-label={`Edit ${release.title}`}
-                                  >
-                                    <PencilSimple className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                                {onDeleteRelease && (
-                                  <button
-                                    onClick={(e) => { e.stopPropagation(); onDeleteRelease(release.id) }}
-                                    className="p-1 bg-black/60 hover:bg-destructive/80 text-foreground hover:text-destructive-foreground rounded transition-colors"
-                                    aria-label={`Delete ${release.title}`}
-                                  >
-                                    <Trash className="w-3.5 h-3.5" />
-                                  </button>
+                            <Card
+                              className="overflow-hidden bg-card border-border hover:border-primary/50 transition-all cursor-pointer cyber-card hover-noise relative"
+                              onClick={() => !editMode && onReleaseClick(release)}
+                            >
+                              {/* Per-card sync loading bar */}
+                              {isSyncing && (
+                                <div
+                                  className="absolute top-0 left-0 right-0 h-1 bg-border/30 overflow-hidden"
+                                  style={{ zIndex: 'var(--z-hud)' } as React.CSSProperties}
+                                >
+                                  <motion.div
+                                    className="absolute inset-y-0 left-0 bg-primary"
+                                    animate={{ x: ['-100%', '100%'] }}
+                                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                    style={{ width: '50%' }}
+                                  />
+                                </div>
+                              )}
+                              <div className="data-label absolute top-2 left-2 z-10" data-theme-color="data-label">// REL.{release.year}</div>
+                              {editMode && (
+                                <div className="absolute top-2 right-2 z-10 flex gap-1">
+                                  {onSyncRelease && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); void handleSyncSingle(release.id) }}
+                                      disabled={isSyncing || bulkSyncing}
+                                      className="p-1 bg-black/60 hover:bg-accent/80 text-foreground hover:text-accent-foreground rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                                      aria-label={`Sync ${release.title}`}
+                                      title="Sync with MusicBrainz + Odesli"
+                                    >
+                                      <ArrowsClockwise className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                                    </button>
+                                  )}
+                                  {onUpdateRelease && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); setEditingRelease(toFullRelease(release)) }}
+                                      className="p-1 bg-black/60 hover:bg-primary/80 text-foreground hover:text-primary-foreground rounded transition-colors"
+                                      aria-label={`Edit ${release.title}`}
+                                    >
+                                      <PencilSimple className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                  {onDeleteRelease && (
+                                    <button
+                                      onClick={(e) => { e.stopPropagation(); onDeleteRelease(release.id) }}
+                                      className="p-1 bg-black/60 hover:bg-destructive/80 text-foreground hover:text-destructive-foreground rounded transition-colors"
+                                      aria-label={`Delete ${release.title}`}
+                                    >
+                                      <Trash className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                              <div className="aspect-square bg-muted relative">
+                                {release.artwork && (
+                                  <img src={release.artwork} alt={release.title} className="w-full h-full object-cover glitch-image hover-chromatic-image" loading="lazy" decoding="async" />
                                 )}
                               </div>
-                            )}
-                            <div className="aspect-square bg-muted relative">
-                              {release.artwork && (
-                                <img src={release.artwork} alt={release.title} className="w-full h-full object-cover glitch-image hover-chromatic-image" loading="lazy" decoding="async" />
-                              )}
-                            </div>
-                            <div className="p-4">
-                              <h3 className="font-bold uppercase text-sm mb-1 truncate font-mono hover-chromatic">{release.title}</h3>
-                              <p className="text-xs text-muted-foreground mb-3 font-mono">{release.year}</p>
-                            </div>
-                          </Card>
-                        </motion.div>
-                      ))}
+                              <div className="p-4">
+                                <h3 className="font-bold uppercase text-sm mb-1 truncate font-mono hover-chromatic">{release.title}</h3>
+                                <p className="text-xs text-muted-foreground mb-3 font-mono">{release.year}</p>
+                              </div>
+                            </Card>
+                          </motion.div>
+                        )
+                      })}
                     </div>
                     {filtered.length > 8 && (
                       <motion.div

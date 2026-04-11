@@ -6,6 +6,7 @@ export interface SectionVisibility {
   gallery?: boolean
   connect?: boolean
   creditHighlights?: boolean
+  sponsoring?: boolean
   shell?: boolean
   contact?: boolean
   news?: boolean
@@ -190,6 +191,10 @@ export interface SectionLabels {
   // Credit Highlights section labels
   creditHighlightsPrefix?: string
   creditHighlightsHeadingVisible?: boolean
+  // Sponsoring section labels
+  sponsoring?: string
+  sponsoringPrefix?: string
+  sponsoringHeadingVisible?: boolean
   // Release card visibility toggles
   releaseShowType?: boolean
   releaseShowYear?: boolean

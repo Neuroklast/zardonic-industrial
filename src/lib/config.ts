@@ -43,6 +43,7 @@ export const DEFAULT_SECTION_ORDER = [
   'media',
   'connect',
   'contact',
+  'sponsoring',
 ] as const
 
 export type SectionKey = (typeof DEFAULT_SECTION_ORDER)[number]
