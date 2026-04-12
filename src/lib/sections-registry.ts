@@ -522,3 +522,154 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     ],
   },
 ]
+
+/**
+ * Registry entry for a global design/layout setting group (not a page section).
+ * Used by DesignPanel to render schema-driven form groups in the Layout tab.
+ */
+export interface DesignRegistryEntry {
+  /** Unique identifier used to look up this group, e.g. 'layout', 'navigation', 'footer' */
+  id: string
+  /** Human-readable group heading shown in the admin panel */
+  label: string
+  /** Icon name from @phosphor-icons/react */
+  icon: string
+  /** Config fields for this design group */
+  configFields: SectionConfigField[]
+}
+
+/**
+ * Single source of truth for global design/layout settings that are NOT tied to a specific
+ * page section. All fields use dot-notation paths inside AdminSettings (e.g. 'design.layout.*').
+ * DesignPanel iterates this registry to render the Layout tab without manual JSX.
+ */
+export const DESIGN_REGISTRY: DesignRegistryEntry[] = [
+  {
+    id: 'layout',
+    label: 'Layout & Spacing',
+    icon: 'Ruler',
+    configFields: [
+      {
+        path: 'design.layout.sectionPaddingY',
+        label: 'Section Padding Y',
+        type: 'text',
+        placeholder: '6rem',
+        description: 'Vertical padding applied to every page section (CSS value, e.g. 6rem).',
+        disclosure: 'basic',
+      },
+      {
+        path: 'design.layout.sectionPaddingX',
+        label: 'Section Padding X',
+        type: 'text',
+        placeholder: '1rem',
+        description: 'Horizontal padding applied to every page section.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.layout.containerMaxWidth',
+        label: 'Container Max Width',
+        type: 'text',
+        placeholder: '56rem',
+        description: 'Maximum width of the standard content container.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.layout.containerMaxWidthWide',
+        label: 'Container Max Width (Wide)',
+        type: 'text',
+        placeholder: '72rem',
+        description: 'Maximum width of the wide content container.',
+        disclosure: 'advanced',
+      },
+    ],
+  },
+  {
+    id: 'navigation',
+    label: 'Navigation Styling',
+    icon: 'NavigationArrow',
+    configFields: [
+      {
+        path: 'design.navigation.backgroundOpacity',
+        label: 'Background Opacity',
+        type: 'slider',
+        min: 0,
+        max: 100,
+        step: 1,
+        defaultValue: 98,
+        description: 'Opacity of the navigation bar background (0 = transparent, 100 = fully opaque).',
+        disclosure: 'basic',
+      },
+      {
+        path: 'design.navigation.backdropBlur',
+        label: 'Backdrop Blur',
+        type: 'toggle',
+        defaultValue: true,
+        description: 'Enable CSS backdrop-filter blur on the navigation bar.',
+        disclosure: 'basic',
+      },
+      {
+        path: 'design.navigation.logoHeight',
+        label: 'Logo Height',
+        type: 'text',
+        placeholder: '2.5rem',
+        description: 'Height of the logo in the navigation bar.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.navigation.itemGap',
+        label: 'Item Gap',
+        type: 'text',
+        placeholder: '1.5rem',
+        description: 'Gap between navigation items.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.navigation.height',
+        label: 'Nav Height',
+        type: 'text',
+        placeholder: '4rem',
+        description: 'Height of the navigation bar.',
+        disclosure: 'advanced',
+      },
+    ],
+  },
+  {
+    id: 'footer',
+    label: 'Footer Styling',
+    icon: 'AlignBottom',
+    configFields: [
+      {
+        path: 'design.footer.paddingY',
+        label: 'Padding Y',
+        type: 'text',
+        placeholder: '3rem',
+        description: 'Vertical padding of the footer.',
+        disclosure: 'basic',
+      },
+      {
+        path: 'design.footer.paddingX',
+        label: 'Padding X',
+        type: 'text',
+        placeholder: '1rem',
+        description: 'Horizontal padding of the footer.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.footer.textColor',
+        label: 'Text Color',
+        type: 'color',
+        placeholder: 'oklch(0.55 0 0)',
+        description: 'Default text colour for footer content.',
+        disclosure: 'advanced',
+      },
+      {
+        path: 'design.footer.linkColor',
+        label: 'Link Color',
+        type: 'color',
+        placeholder: 'oklch(0.50 0.22 25)',
+        description: 'Colour for links in the footer.',
+        disclosure: 'advanced',
+      },
+    ],
+  },
+]
