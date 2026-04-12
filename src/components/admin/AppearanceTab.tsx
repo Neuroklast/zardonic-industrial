@@ -247,6 +247,14 @@ function ContrastBadge({ fg, bg, largeText = false }: { fg: string; bg: string; 
   )
 }
 
+/** Safely parse a numeric value out of a CSS string like "2.5rem" or "1.6".
+ *  Returns `fallback` when the string is undefined, empty, or not a number.
+ *  Uses an explicit isNaN check so that zero values are preserved correctly. */
+function parseSliderValue(v: string | undefined, fallback: number): number {
+  const n = parseFloat(v ?? '')
+  return isNaN(n) ? fallback : n
+}
+
 export default function AppearanceTab({
   adminSettings,
   setAdminSettings,
@@ -803,54 +811,164 @@ export default function AppearanceTab({
             <h3 className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
               Typography Details
             </h3>
+
+            {/* Heading Font Size — slider */}
             <div className="space-y-2">
-              <Label className="font-mono text-xs">Heading Font Size</Label>
-              <Input
-                className="font-mono text-xs h-8"
-                placeholder="e.g. 3rem"
-                value={adminSettings?.design?.typography?.headingFontSize ?? ''}
-                onChange={(e) => setAdminSettings?.({
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Heading Font Size</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.headingFontSize ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.headingFontSize, 2.5)]}
+                min={1}
+                max={6}
+                step={0.1}
+                onValueChange={([v]) => setAdminSettings?.({
                   ...(adminSettings ?? {}),
-                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), headingFontSize: e.target.value || undefined } },
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), headingFontSize: `${v}rem` } },
                 })}
               />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>1rem</span><span>3.5rem</span><span>6rem</span>
+              </div>
             </div>
+
+            {/* Body Font Size — slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Body Font Size</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.bodyFontSize ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.bodyFontSize, 1)]}
+                min={0.75}
+                max={1.5}
+                step={0.05}
+                onValueChange={([v]) => setAdminSettings?.({
+                  ...(adminSettings ?? {}),
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), bodyFontSize: `${v}rem` } },
+                })}
+              />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>0.75rem</span><span>1.125rem</span><span>1.5rem</span>
+              </div>
+            </div>
+
+            {/* Mono Font Size — slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Mono Font Size</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.monoFontSize ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.monoFontSize, 0.875)]}
+                min={0.7}
+                max={1.2}
+                step={0.05}
+                onValueChange={([v]) => setAdminSettings?.({
+                  ...(adminSettings ?? {}),
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), monoFontSize: `${v}rem` } },
+                })}
+              />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>0.7rem</span><span>0.95rem</span><span>1.2rem</span>
+              </div>
+            </div>
+
+            {/* Heading Font Weight — select */}
             <div className="space-y-2">
               <Label className="font-mono text-xs">Heading Font Weight</Label>
-              <Input
-                className="font-mono text-xs h-8"
-                placeholder="e.g. 700"
+              <select
                 value={adminSettings?.design?.typography?.headingFontWeight ?? ''}
                 onChange={(e) => setAdminSettings?.({
                   ...(adminSettings ?? {}),
                   design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), headingFontWeight: e.target.value || undefined } },
                 })}
-              />
+                className="w-full bg-background text-foreground border border-border rounded-md px-3 py-2 font-mono text-xs"
+                aria-label="Heading font weight"
+              >
+                <option value="">Default (700)</option>
+                {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((w) => (
+                  <option key={w} value={String(w)}>{w}</option>
+                ))}
+              </select>
             </div>
+
+            {/* Heading Line Height — slider */}
             <div className="space-y-2">
-              <Label className="font-mono text-xs">Body Font Size</Label>
-              <Input
-                className="font-mono text-xs h-8"
-                placeholder="e.g. 1rem"
-                value={adminSettings?.design?.typography?.bodyFontSize ?? ''}
-                onChange={(e) => setAdminSettings?.({
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Heading Line Height</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.headingLineHeight ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.headingLineHeight, 1.1)]}
+                min={1}
+                max={2}
+                step={0.05}
+                onValueChange={([v]) => setAdminSettings?.({
                   ...(adminSettings ?? {}),
-                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), bodyFontSize: e.target.value || undefined } },
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), headingLineHeight: String(v) } },
                 })}
               />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>1.0</span><span>1.5</span><span>2.0</span>
+              </div>
             </div>
+
+            {/* Body Line Height — slider */}
             <div className="space-y-2">
-              <Label className="font-mono text-xs">Body Line Height</Label>
-              <Input
-                className="font-mono text-xs h-8"
-                placeholder="e.g. 1.6"
-                value={adminSettings?.design?.typography?.bodyLineHeight ?? ''}
-                onChange={(e) => setAdminSettings?.({
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Body Line Height</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.bodyLineHeight ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.bodyLineHeight, 1.6)]}
+                min={1}
+                max={2}
+                step={0.05}
+                onValueChange={([v]) => setAdminSettings?.({
                   ...(adminSettings ?? {}),
-                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), bodyLineHeight: e.target.value || undefined } },
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), bodyLineHeight: String(v) } },
                 })}
               />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>1.0</span><span>1.5</span><span>2.0</span>
+              </div>
             </div>
+
+            {/* Heading Letter Spacing — slider */}
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Heading Letter Spacing</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {adminSettings?.design?.typography?.headingLetterSpacing ?? 'default'}
+                </span>
+              </div>
+              <Slider
+                value={[parseSliderValue(adminSettings?.design?.typography?.headingLetterSpacing, 0)]}
+                min={-0.05}
+                max={0.3}
+                step={0.01}
+                onValueChange={([v]) => setAdminSettings?.({
+                  ...(adminSettings ?? {}),
+                  design: { ...(adminSettings?.design ?? {}), typography: { ...(adminSettings?.design?.typography ?? {}), headingLetterSpacing: `${v}em` } },
+                })}
+              />
+              <div className="flex justify-between font-mono text-[10px] text-muted-foreground">
+                <span>−0.05em</span><span>0.125em</span><span>0.3em</span>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between">
               <Label className="font-mono text-xs">Heading Text Shadow</Label>
               <Switch
