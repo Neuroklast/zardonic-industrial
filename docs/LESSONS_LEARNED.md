@@ -88,3 +88,4 @@ const headingClasses = [
 ].filter(Boolean).join(' ');
 ```
 This ensures a robust default display that can still be elegantly replaced by global variable rules when configured.
+- Fixed Track Artist Extraction and Deduplication in ReleaseOverlayContent
