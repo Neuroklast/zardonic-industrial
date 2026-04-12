@@ -4,6 +4,7 @@ import { SpotifyLogo, YoutubeLogo, ApplePodcastsLogo } from '@phosphor-icons/rea
 import type { Release } from '@/lib/app-types'
 import type { SectionLabels } from '@/lib/types'
 import { formatReleaseDate } from '@/lib/format-release-date'
+import { parseTrackTitle } from '@/lib/track-parser'
 
 interface ReleaseOverlayContentProps {
   data: Release
@@ -247,14 +248,18 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             >
               <div className="data-label mb-3">{tracksLabel}</div>
               <ol className="space-y-1">
-                {data.tracks.map((track, i) => (
+                {data.tracks.map((track, i) => {
+                  const { cleanTitle, extractedArtists } = parseTrackTitle(track.title)
+                  const allFeaturedArtists = [...(track.featuredArtists || []), ...extractedArtists]
+
+                  return (
                   <li key={i} className="flex items-start gap-3 text-sm font-mono text-foreground/80">
                     <span className="text-primary/50 w-5 text-right shrink-0 mt-0.5">{i + 1}.</span>
                     <div className="flex-1 min-w-0">
-                      <span className="block">{track.title}</span>
+                      <span className="block">{cleanTitle}</span>
                       {(() => {
-                        const artistLine = buildTrackArtistLine(track.artist, track.featuredArtists, mainArtistName)
-                        if (!artistLine) return null
+                        const artistLine = buildTrackArtistLine(track.artist, allFeaturedArtists, mainArtistName)
+                        if (!artistLine || artistLine.length === 0) return null
                         return (
                           <span className="flex flex-wrap gap-x-0.5 text-xs mt-0.5">
                             {artistLine.map((artist, ai) => (
@@ -275,7 +280,8 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
                       <span className="text-muted-foreground text-xs shrink-0 mt-0.5">{track.duration}</span>
                     )}
                   </li>
-                ))}
+                  )
+                })}
               </ol>
             </motion.div>
           )}

@@ -31,6 +31,26 @@ export default function AppBioSection({ bio, sectionOrder, visible, editMode, se
   const showLessText = sectionLabels?.bioShowLessText ?? 'Show Less'
   const bioTextSize = getBioBodyFontSize(adminSettings)
 
+  const typography = adminSettings?.design?.typography
+  const hasCustomHeadingSize = !!typography?.headingFontSize
+  const hasCustomHeadingWeight = !!typography?.headingFontWeight
+  const hasCustomHeadingLetterSpacing = !!typography?.headingLetterSpacing
+  const hasCustomBodyLineHeight = !!typography?.bodyLineHeight
+
+  const headingClasses = [
+    'text-foreground hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt uppercase',
+    !hasCustomHeadingSize ? 'text-4xl md:text-6xl' : '',
+    !hasCustomHeadingWeight ? 'font-bold' : '',
+    !hasCustomHeadingLetterSpacing ? 'tracking-tighter' : ''
+  ].filter(Boolean).join(' ')
+
+  const bodyClasses = [
+    bioTextSize,
+    'text-muted-foreground overflow-hidden font-light',
+    !hasCustomBodyLineHeight ? 'leading-relaxed' : '',
+    !bioExpanded ? 'max-h-[280px]' : 'max-h-[2000px]'
+  ].filter(Boolean).join(' ')
+
   const handleSave = useCallback(() => {
     onUpdate?.(draft)
     setEditing(false)
@@ -62,7 +82,7 @@ export default function AppBioSection({ bio, sectionOrder, visible, editMode, se
             className="relative"
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
-              <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'BIOGRAPHY'}`}>
+              <h2 className={headingClasses} data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'BIOGRAPHY'}`}>
                 {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
                 <EditableHeading onChange={() => {}}
                   text={sectionLabel}
@@ -114,9 +134,7 @@ export default function AppBioSection({ bio, sectionOrder, visible, editMode, se
                     The CSS variable --font-body is set by useAppTheme and restored on
                     every page load by theme-restore.js. */}
                 <div
-                  className={`${bioTextSize} leading-relaxed text-muted-foreground font-light overflow-hidden ${
-                    !bioExpanded ? 'max-h-[280px]' : 'max-h-[2000px]'
-                  }`}
+                  className={bodyClasses}
                   style={{
                     fontFamily: 'var(--font-body)',
                     maskImage: !bioExpanded ? 'linear-gradient(to bottom, black 60%, transparent 100%)' : 'none',

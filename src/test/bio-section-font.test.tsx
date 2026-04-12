@@ -113,5 +113,46 @@ describe('AppBioSection — font binding', () => {
     const bioText = container.querySelector('.text-lg')
     expect(bioText).not.toBeNull()
   })
-})
+  it('bio section h2 provides fallback classes when adminSettings typography is unset', async () => {
+    const { container } = await renderBioSection(undefined)
+    const heading = container.querySelector('h2')
+    expect(heading).not.toBeNull()
+    expect(heading!.classList.contains('text-4xl')).toBe(true)
+    expect(heading!.classList.contains('md:text-6xl')).toBe(true)
+    expect(heading!.classList.contains('font-bold')).toBe(true)
+    expect(heading!.classList.contains('tracking-tighter')).toBe(true)
+  })
 
+  it('bio section h2 removes fallback sizing classes when headingFontSize is configured', async () => {
+    const { container } = await renderBioSection({
+      design: { typography: { headingFontSize: '5rem' } }
+    })
+    const heading = container.querySelector('h2')
+    expect(heading!.classList.contains('text-4xl')).toBe(false)
+    expect(heading!.classList.contains('md:text-6xl')).toBe(false)
+  })
+
+  it('bio section h2 removes fallback font-weight when headingFontWeight is configured', async () => {
+    const { container } = await renderBioSection({
+      design: { typography: { headingFontWeight: '300' } }
+    })
+    const heading = container.querySelector('h2')
+    expect(heading!.classList.contains('font-bold')).toBe(false)
+  })
+
+  it('bio text provides fallback classes when adminSettings typography is unset', async () => {
+    const { container } = await renderBioSection(undefined)
+    const bioText = container.querySelector('[style*="font-family"]')
+    expect(bioText!.classList.contains('font-light')).toBe(true)
+    expect(bioText!.classList.contains('leading-relaxed')).toBe(true)
+  })
+
+  it('bio text removes fallback leading-relaxed class when bodyLineHeight is configured', async () => {
+    const { container } = await renderBioSection({
+      design: { typography: { bodyLineHeight: '2.0' } }
+    })
+    const bioText = container.querySelector('[style*="font-family"]')
+    expect(bioText!.classList.contains('leading-relaxed')).toBe(false)
+  })
+
+})
