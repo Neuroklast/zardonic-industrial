@@ -224,4 +224,48 @@ export function useAppTheme(adminSettings: AdminSettings | undefined): void {
       root.style.removeProperty('--noise-frequency')
     }
   }, [adminSettings?.design?.effects, adminSettings?.design?.timings, adminSettings?.design?.crt])
+
+  // Effect 6: Typography detail settings — wires design.typography to CSS custom
+  // properties consumed by index.css heading / body / code rules.
+  // Uses removeProperty (not the value itself) so that unset fields never leave
+  // a stale CSS variable that overrides Tailwind utility classes.
+  useEffect(() => {
+    const ty = adminSettings?.design?.typography
+    const root = document.documentElement
+
+    const setOrRemove = (prop: string, value: string | undefined) => {
+      if (value) root.style.setProperty(prop, value)
+      else root.style.removeProperty(prop)
+    }
+
+    setOrRemove('--heading-font-size', ty?.headingFontSize)
+    setOrRemove('--heading-font-weight', ty?.headingFontWeight)
+    setOrRemove('--heading-line-height', ty?.headingLineHeight)
+    setOrRemove('--heading-letter-spacing', ty?.headingLetterSpacing)
+    setOrRemove('--body-font-size', ty?.bodyFontSize)
+    setOrRemove('--body-line-height', ty?.bodyLineHeight)
+    setOrRemove('--mono-font-size', ty?.monoFontSize)
+
+    if (typeof ty?.headingTextShadow === 'boolean') {
+      root.style.setProperty(
+        '--heading-text-shadow',
+        ty.headingTextShadow
+          ? '0.5px 0 0 rgba(255,255,255,0.15),-0.5px 0 0 rgba(200,200,200,0.15)'
+          : 'none',
+      )
+    } else {
+      root.style.removeProperty('--heading-text-shadow')
+    }
+
+    return () => {
+      root.style.removeProperty('--heading-font-size')
+      root.style.removeProperty('--heading-font-weight')
+      root.style.removeProperty('--heading-line-height')
+      root.style.removeProperty('--heading-letter-spacing')
+      root.style.removeProperty('--heading-text-shadow')
+      root.style.removeProperty('--body-font-size')
+      root.style.removeProperty('--body-line-height')
+      root.style.removeProperty('--mono-font-size')
+    }
+  }, [adminSettings?.design?.typography])
 }
