@@ -659,7 +659,7 @@ export const DESIGN_REGISTRY: DesignRegistryEntry[] = [
         label: 'Text Color',
         type: 'color',
         placeholder: 'oklch(0.55 0 0)',
-        description: 'Default text colour for footer content.',
+        description: 'Default text color for footer content.',
         disclosure: 'advanced',
       },
       {
@@ -667,7 +667,7 @@ export const DESIGN_REGISTRY: DesignRegistryEntry[] = [
         label: 'Link Color',
         type: 'color',
         placeholder: 'oklch(0.50 0.22 25)',
-        description: 'Colour for links in the footer.',
+        description: 'Color for links in the footer.',
         disclosure: 'advanced',
       },
     ],
