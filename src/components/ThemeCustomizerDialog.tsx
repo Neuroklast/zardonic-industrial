@@ -6,6 +6,7 @@ import { X, ArrowCounterClockwise, Export, ArrowSquareIn, FloppyDisk, Eye, EyeSl
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import type { ThemeSettings, SectionVisibility, OverlayEffect } from '@/lib/types'
+import { loadGoogleFont } from '@/lib/font-loader'
 
 /* ─── Theme presets ─── */
 interface ThemePreset {
@@ -141,18 +142,6 @@ const FONT_OPTIONS = [
   { label: 'Bruno Ace', value: "'Bruno Ace', sans-serif", google: true },
   { label: 'Electrolize', value: "'Electrolize', sans-serif", google: true },
 ]
-
-/** Load Google Fonts by injecting a stylesheet link */
-const loadedFonts = new Set<string>()
-function loadGoogleFont(fontLabel: string) {
-  if (loadedFonts.has(fontLabel)) return
-  loadedFonts.add(fontLabel)
-  const family = fontLabel.replace(/ /g, '+')
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@400;500;700&display=swap`
-  document.head.appendChild(link)
-}
 
 /** Pre-load all Google Fonts for preview */
 function loadAllGoogleFonts() {
