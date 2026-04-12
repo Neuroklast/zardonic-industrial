@@ -332,7 +332,7 @@ async function fetchDiscogsReleases(artistName: string): Promise<Release[]> {
   if (masterItems.length === 0) return []
 
   // Step 4a — bulk iTunes search so we can match titles without N individual calls
-  let itunesMap: Map<string, { artwork: string; appleUrl: string; releaseDate?: string }> = new Map()
+  const itunesMap: Map<string, { artwork: string; appleUrl: string; releaseDate?: string }> = new Map()
   try {
     const [songsRes, albumsRes] = await Promise.all([
       fetchWithRetry(`https://itunes.apple.com/search?term=${encodeURIComponent(artistName)}&entity=song&limit=200`),
@@ -361,7 +361,7 @@ async function fetchDiscogsReleases(artistName: string): Promise<Release[]> {
   }
 
   // Step 4b — bulk Spotify search for Spotify links
-  let spotifyMap: Map<string, string> = new Map()
+  const spotifyMap: Map<string, string> = new Map()
   try {
     const spotifyToken = await getSpotifyAccessToken()
     if (spotifyToken) {
