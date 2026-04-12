@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 
 import type { AdminSettings, DisclosureLevel } from '@/lib/types'
-import { isFieldVisible, getBioBodyFontSize } from '@/lib/admin-settings'
+import { isFieldVisible } from '@/lib/admin-settings'
 
 interface LayoutTabProps {
   adminSettings: AdminSettings | null | undefined
@@ -19,8 +19,6 @@ export default function LayoutTab({ adminSettings, setAdminSettings, disclosureL
   const layoutSpacing = adminSettings?.design?.layout ?? {}
   const navStyling = adminSettings?.design?.navigation ?? {}
   const footerStyling = adminSettings?.design?.footer ?? {}
-  const heroSection = adminSettings?.sections?.styleOverrides?.hero ?? {}
-  const bioSection = adminSettings?.sections?.styleOverrides?.bio ?? {}
 
   const updateLayoutSpacing = (patch: Record<string, string | undefined>) => {
     setAdminSettings?.({ ...(adminSettings ?? {}), design: { ...(adminSettings?.design ?? {}), layout: { ...layoutSpacing, ...patch } } })
@@ -30,12 +28,6 @@ export default function LayoutTab({ adminSettings, setAdminSettings, disclosureL
   }
   const updateFooterStyling = (patch: Record<string, string | undefined>) => {
     setAdminSettings?.({ ...(adminSettings ?? {}), design: { ...(adminSettings?.design ?? {}), footer: { ...footerStyling, ...patch } } })
-  }
-  const updateHeroSection = (patch: Record<string, string | number | undefined>) => {
-    setAdminSettings?.({ ...(adminSettings ?? {}), sections: { ...(adminSettings?.sections ?? {}), styleOverrides: { ...(adminSettings?.sections?.styleOverrides ?? {}), hero: { ...heroSection, ...patch } } } })
-  }
-  const updateBioSection = (patch: Record<string, string | undefined>) => {
-    setAdminSettings?.({ ...(adminSettings ?? {}), sections: { ...(adminSettings?.sections ?? {}), styleOverrides: { ...(adminSettings?.sections?.styleOverrides ?? {}), bio: { ...bioSection, ...patch } } } })
   }
 
   return (
@@ -193,114 +185,6 @@ export default function LayoutTab({ adminSettings, setAdminSettings, disclosureL
               />
             </div>
           </>
-        )}
-      </section>
-
-      <Separator />
-
-      {/* Hero Section */}
-      <section className="space-y-3">
-        <h3 className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
-          Hero Section
-        </h3>
-        <div className="space-y-2">
-          <Label className="font-mono text-xs">Hero Minimum Height</Label>
-          <div className="grid grid-cols-1 gap-1.5">
-            {(['min-h-screen', 'min-h-[80vh]', 'min-h-[60vh]', 'min-h-[50vh]'] as const).map((opt) => (
-              <button
-                key={opt}
-                onClick={() => updateHeroSection({ minHeight: opt })}
-                className={`text-left px-3 py-2 border rounded font-mono text-xs transition-colors ${
-                  (heroSection.minHeight ?? 'min-h-screen') === opt
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <Label className="font-mono text-xs">Hero Image Opacity</Label>
-            <span className="font-mono text-xs text-muted-foreground">
-              {Math.round((heroSection.heroImageOpacity ?? 0.5) * 100)}%
-            </span>
-          </div>
-          <Slider
-            value={[(heroSection.heroImageOpacity ?? 0.5) * 100]}
-            min={0}
-            max={100}
-            step={5}
-            onValueChange={([v]) => updateHeroSection({ heroImageOpacity: v / 100 })}
-          />
-        </div>
-        {isAdvanced && (
-          <>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <Label className="font-mono text-xs">Hero Image Blur</Label>
-                <span className="font-mono text-xs text-muted-foreground">
-                  {heroSection.heroImageBlur ?? 0}px
-                </span>
-              </div>
-              <Slider
-                value={[heroSection.heroImageBlur ?? 0]}
-                min={0}
-                max={20}
-                step={1}
-                onValueChange={([v]) => updateHeroSection({ heroImageBlur: v })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="font-mono text-xs">Padding Top</Label>
-              <Input
-                className="font-mono text-xs h-8"
-                placeholder="5rem"
-                value={heroSection.paddingTop ?? ''}
-                onChange={(e) => updateHeroSection({ paddingTop: e.target.value || undefined })}
-              />
-            </div>
-          </>
-        )}
-      </section>
-
-      <Separator />
-
-      {/* Bio Section */}
-      <section className="space-y-3">
-        <h3 className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
-          Bio Section
-        </h3>
-        <div className="space-y-2">
-          <Label className="font-mono text-xs">Text Size</Label>
-          <div className="grid grid-cols-1 gap-1.5">
-            {(['text-sm', 'text-base', 'text-lg', 'text-xl'] as const).map((opt) => (
-              <button
-                key={opt}
-                onClick={() => updateBioSection({ bodyFontSize: opt })}
-                className={`text-left px-3 py-2 border rounded font-mono text-xs transition-colors ${
-                  (getBioBodyFontSize(adminSettings)) === opt
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
-        {isAdvanced && (
-          <div className="space-y-2">
-            <Label className="font-mono text-xs">Read More Max Height</Label>
-            <Input
-              className="font-mono text-xs h-8"
-              placeholder="17.5rem"
-              value={bioSection.readMoreMaxHeight ?? ''}
-              onChange={(e) => updateBioSection({ readMoreMaxHeight: e.target.value || undefined })}
-            />
-          </div>
         )}
       </section>
     </div>

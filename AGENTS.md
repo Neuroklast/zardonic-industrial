@@ -105,6 +105,7 @@ All admin and CMS form fields MUST be defined in schema registries — never har
 
 *   **New CMS field** → add a `FieldMeta` entry to `FIELD_REGISTRY` in `src/cms/schemas.ts`. Never render a CMS field without an entry here.
 *   **New admin section field** → add a `SectionConfigField` to the appropriate entry in `SECTION_REGISTRY`. The `SectionFieldRenderer` and `SectionPanel` consume this automatically.
+*   **Hero section settings** are in `SECTION_REGISTRY` under id `'hero'` (artistName, heroImage, heroImageOpacity, minHeight, heroImageBlur, paddingTop). Do NOT add hero style controls to `LayoutTab.tsx` — use `SECTION_REGISTRY` instead.
 *   **Generic CMS form rendering** → use `<SchemaFormRenderer fields={getFieldsForSchema('hero')} values={...} onChange={...} />` from `src/cms/components/SchemaFormRenderer.tsx`. This is the canonical way to render CMS fields in the sidebar.
 *   **Progressive disclosure**: set `advanced: true` on `FieldMeta` (CMS) or `disclosure: 'advanced' | 'expert'` on `SectionConfigField` (admin panel). Never build custom show/hide logic for field visibility.
 
