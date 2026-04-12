@@ -16,6 +16,7 @@ interface ReleaseEditDialogProps {
 
 export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseEditDialogProps) {
   const [formData, setFormData] = useState({
+    artists: '',
     title: '',
     type: '' as '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation',
     artwork: '',
@@ -47,6 +48,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         releaseDate: release.releaseDate || '',
         description: release.description || '',
         featured: release.featured || false,
+        artists: release.artists?.join(', ') || '',
         spotify: links.spotify || '',
         soundcloud: links.soundcloud || '',
         bandcamp: links.bandcamp || '',
@@ -180,6 +182,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         releaseDate: formData.releaseDate || undefined,
         description: formData.description || undefined,
         featured: formData.featured || undefined,
+        artists: formData.artists ? formData.artists.split(',').map(a => a.trim()).filter(Boolean) : undefined,
         streamingLinks: Object.keys(streamingLinks).length > 0 ? streamingLinks : undefined,
         tracks: tracks.length > 0 ? tracks : undefined,
         customLinks: customLinks.length > 0 ? customLinks : undefined,
@@ -206,6 +209,17 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
               required
               className="bg-secondary border-input"
               placeholder="Track/Album Name"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="artists">Release Artists (comma separated)</Label>
+            <Input
+              id="artists"
+              value={formData.artists || ''}
+              onChange={(e) => setFormData({ ...formData, artists: e.target.value })}
+              className="bg-secondary border-input"
+              placeholder="e.g. Zardonic, Freqax"
             />
           </div>
 
@@ -395,8 +409,8 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             <div className="space-y-2">
               {tracks.map((track, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Input value={track.title} disabled className="flex-1 bg-secondary border-input text-sm" />
-                  <Input value={track.duration || '—'} disabled className="w-20 bg-secondary border-input text-sm text-center" />
+                  <Input value={track.title} onChange={(e) => { const newTracks = [...tracks]; newTracks[index] = { ...newTracks[index], title: e.target.value }; setTracks(newTracks); }} className="flex-1 bg-secondary border-input text-sm" />
+                  <Input value={track.duration || ''} onChange={(e) => { const newTracks = [...tracks]; newTracks[index] = { ...newTracks[index], duration: e.target.value }; setTracks(newTracks); }} className="w-20 bg-secondary border-input text-sm text-center" />
                   <Button type="button" variant="ghost" size="icon" onClick={() => removeTrack(index)}>
                     <X size={16} />
                   </Button>

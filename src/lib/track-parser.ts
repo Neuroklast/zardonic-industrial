@@ -1,12 +1,10 @@
 export function parseTrackTitle(title: string) {
-  const match = title.match(/^(.*?)\s*\(\s*f(?:ea)?t\.\s+(.+?)\)\s*$/i)
+  const regex = /^(.*?)\s*(?:\(\s*)?f(?:ea)?t\.?\s+([^()\[\]]+?)(?:\))?(\s*\[.*?\]|\s*\(.*?\))?\s*$/i
+  const match = title.match(regex)
   if (match) {
-    // Split by comma or " & " or " and "
+    const cleanTitle = (match[1] + (match[3] || '')).trim()
     const artists = match[2].split(/\s*(?:,|\s+&\s+|\s+and\s+)\s*/i).map(s => s.trim()).filter(Boolean)
-    return {
-      cleanTitle: match[1].trim(),
-      extractedArtists: artists
-    }
+    return { cleanTitle, extractedArtists: artists }
   }
   return { cleanTitle: title, extractedArtists: [] }
 }

@@ -17,12 +17,13 @@ interface ReleaseOverlayContentProps {
  * description = "ft. OtherArtist" means the release involves OtherArtist.
  * Returns an array of artists with mainArtistName always first (if provided).
  */
-function parseReleaseArtists(description: string | undefined, mainArtistName: string): string[] {
-  if (!mainArtistName) return []
-  if (!description?.startsWith('ft.')) return [mainArtistName]
-  const featured = description.slice(3).trim()
-  if (!featured) return [mainArtistName]
-  return [mainArtistName, featured]
+function parseReleaseArtists(release: { artists?: string[], description?: string, title: string }, mainArtistName: string): string[] {
+  const { extractedArtists } = parseTrackTitle(release.title)
+  const baseArtists = release.artists && release.artists.length > 0 ? release.artists : [mainArtistName, ...extractedArtists]
+
+  // Deduplicate and filter empty strings
+  const uniqueArtists = Array.from(new Set(baseArtists.map(a => a.trim()).filter(Boolean)))
+  return uniqueArtists
 }
 
 /**
@@ -74,8 +75,9 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
   const getLink = (platform: string) =>
     data.streamingLinks?.find(l => l.platform === platform)?.url
 
-  const releaseArtists = parseReleaseArtists(data.description, mainArtistName)
-  const showReleaseArtists = releaseArtists.length > 1
+  const releaseArtists = parseReleaseArtists(data, mainArtistName)
+  const { cleanTitle: cleanReleaseTitle } = parseTrackTitle(data.title)
+  const showReleaseArtists = releaseArtists.length > 0
 
   return (
     <motion.div
@@ -109,8 +111,8 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             transition={{ delay: 0.2 }}
           >
             <div className="data-label mb-2">{infoLabel}</div>
-            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic crt-flash-in" data-text={data.title}>
-              {data.title}
+            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic crt-flash-in" data-text={cleanReleaseTitle}>
+              {cleanReleaseTitle}
             </h2>
             {showReleaseArtists && (
               <p className="text-sm font-mono mt-1">
