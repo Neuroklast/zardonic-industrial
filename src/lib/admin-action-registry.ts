@@ -85,7 +85,9 @@ function register<TSchema extends z.ZodTypeAny>(
     label: def.label,
     schema: def.schema,
     minDisclosure: def.minDisclosure,
-    execute: (validatedInput, ctx) => def.execute(validatedInput as z.infer<TSchema>, ctx),
+    execute: (validatedInput, ctx) =>
+      // Safe cast: dispatchAdminAction always calls schema.safeParse before invoking this
+      def.execute(validatedInput as z.infer<TSchema>, ctx),
   }
 }
 

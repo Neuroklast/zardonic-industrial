@@ -97,7 +97,7 @@ describe('SchemaFormRenderer', () => {
     const { container } = render(
       <SchemaFormRenderer fields={[]} values={{}} onChange={vi.fn()} />,
     )
-    expect(container.firstChild).toBeTruthy() // the root div is still rendered
+    expect(container.firstChild).toBeInstanceOf(HTMLDivElement)
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
@@ -234,7 +234,7 @@ describe('SchemaFormRenderer', () => {
         onChange={vi.fn()}
       />,
     )
-    const advancedBtn = screen.getByRole('button', { name: /advanced/i })
+    const advancedBtn = screen.getByRole('button', { name: /show advanced settings/i })
     fireEvent.click(advancedBtn)
     expect(screen.getByLabelText('Overlay Opacity')).toBeTruthy()
   })
@@ -262,11 +262,13 @@ describe('SchemaFormRenderer', () => {
         onChange={vi.fn()}
       />,
     )
-    const btn = screen.getByRole('button', { name: /advanced/i })
+    const btn = screen.getByRole('button', { name: /show advanced settings/i })
     expect(btn.textContent).toMatch(/advanced/i)
     fireEvent.click(btn)
+    expect(btn.getAttribute('aria-label')).toMatch(/hide advanced settings/i)
     expect(btn.textContent).toMatch(/less/i)
     fireEvent.click(btn)
+    expect(btn.getAttribute('aria-label')).toMatch(/show advanced settings/i)
     expect(btn.textContent).toMatch(/advanced/i)
   })
 

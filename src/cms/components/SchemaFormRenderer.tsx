@@ -260,6 +260,7 @@ export function SchemaFormRenderer({
             className="flex items-center gap-1 text-[10px] font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
             aria-expanded={showAdvanced}
             aria-controls="schema-form-advanced"
+            aria-label={showAdvanced ? 'Hide advanced settings' : 'Show advanced settings'}
           >
             <SlidersHorizontal size={10} />
             {showAdvanced ? 'Less' : 'Advanced'}
