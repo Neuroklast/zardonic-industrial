@@ -1262,7 +1262,6 @@ code, kbd, samp, pre {
   animation: cyber2077-data-corrupt-anim 8s ease-in-out infinite;
   transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: filter;
 }
 
 @keyframes cyber2077-data-corrupt-anim {
@@ -1303,7 +1302,6 @@ code, kbd, samp, pre {
   animation: cyber2077-crt-interference-anim 12s ease-in-out infinite;
   transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: filter;
 }
 
 @keyframes cyber2077-crt-interference-anim {
