@@ -78,3 +78,13 @@ This document records lessons learned during development sessions. Every coding 
 ---
 
 *This log is permanent. Do not delete old entries. Superseded lessons should be marked with a note rather than deleted.*
+
+## Typography Binding and Tailwind Conflict Mitigation
+When attempting to dynamically bind CSS custom properties (set via an admin panel) to UI elements styled with Tailwind, hardcoded Tailwind typography classes (like `text-4xl`, `font-bold`) will often take specificity precedence and override the injected variables. However, simply removing these classes blindly removes necessary structural styling when the dynamic settings aren't set. The correct pattern is conditional application:
+```tsx
+const hasCustomHeadingSize = !!typography?.headingFontSize;
+const headingClasses = [
+  !hasCustomHeadingSize ? 'text-4xl md:text-6xl' : ''
+].filter(Boolean).join(' ');
+```
+This ensures a robust default display that can still be elegantly replaced by global variable rules when configured.
