@@ -152,6 +152,7 @@ code, kbd, samp, pre {
 
 /* Disable glitch effects when toggled off */
 .no-glitch .hover-glitch:hover,
+.no-glitch .zardonic-theme-hover-glitch:hover,
 .no-glitch .logo-glitch,
 .no-glitch .glitch-text::before,
 .no-glitch .glitch-text::after {
@@ -162,8 +163,10 @@ code, kbd, samp, pre {
 
 /* Disable chromatic effects when toggled off */
 .no-chromatic .hover-chromatic,
+.no-chromatic .zardonic-theme-hover-chromatic,
 .no-chromatic .chromatic-aberration,
 .no-chromatic .hover-chromatic-image,
+.no-chromatic .zardonic-theme-hover-chromatic-image,
 .no-chromatic .text-chromatic {
   text-shadow: none !important;
   filter: none !important;
@@ -193,12 +196,12 @@ code, kbd, samp, pre {
   background: oklch(0.7 0 0);
 }
 
-.scanline-effect {
+:is(.scanline-effect, .zardonic-theme-scanline-effect) {
   position: relative;
   isolation: isolate;
 }
 
-.scanline-effect::before {
+:is(.scanline-effect, .zardonic-theme-scanline-effect)::before {
   content: '';
   position: absolute;
   top: 0;
@@ -214,7 +217,7 @@ code, kbd, samp, pre {
     rgba(0, 0, 0, 0.1) 4px
   );
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-section-fx);
   opacity: 0.8;
   animation: scanline-drift 8s linear infinite;
   will-change: transform;
@@ -338,7 +341,7 @@ code, kbd, samp, pre {
     transparent 2px
   );
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-section-fx);
   opacity: 0.6;
   animation: crt-scanline-move 8s linear infinite;
   will-change: transform;
@@ -351,7 +354,7 @@ code, kbd, samp, pre {
   inset: 0;
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-section-fx);
   transform: translateZ(0);
 }
 
@@ -360,7 +363,7 @@ code, kbd, samp, pre {
   100% { transform: translateZ(0) translateY(2px); }
 }
 
-.crt-overlay {
+:is(.crt-overlay, .zardonic-theme-crt-overlay) {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -380,7 +383,7 @@ code, kbd, samp, pre {
   contain: strict;
 }
 
-.crt-vignette {
+:is(.crt-vignette, .zardonic-theme-crt-vignette) {
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -435,12 +438,12 @@ code, kbd, samp, pre {
   100% { opacity: calc(var(--crt-overlay-opacity, 0.6) - 0.02); }
 }
 
-.noise-effect {
+:is(.noise-effect, .zardonic-theme-noise-effect) {
   position: relative;
   isolation: isolate;
 }
 
-.noise-effect::before {
+:is(.noise-effect, .zardonic-theme-noise-effect)::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -543,15 +546,15 @@ code, kbd, samp, pre {
   z-index: var(--z-bg-animated);
 }
 
-.hover-glitch {
+:is(.hover-glitch, .zardonic-theme-hover-glitch) {
   position: relative;
 }
 
-.hover-chromatic {
+:is(.hover-chromatic, .zardonic-theme-hover-chromatic) {
   position: relative;
 }
 
-.hover-chromatic:hover {
+:is(.hover-chromatic, .zardonic-theme-hover-chromatic):hover {
   text-shadow: 
     2px 0 0 rgba(255, 0, 100, 0.5),
     -2px 0 0 rgba(0, 255, 255, 0.5);
@@ -572,11 +575,11 @@ code, kbd, samp, pre {
   }
 }
 
-.hover-chromatic-image {
+:is(.hover-chromatic-image, .zardonic-theme-hover-chromatic-image) {
   position: relative;
 }
 
-.hover-chromatic-image:hover {
+:is(.hover-chromatic-image, .zardonic-theme-hover-chromatic-image):hover {
   filter: 
     drop-shadow(2px 0 0 rgba(255, 0, 100, 0.4))
     drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.4));
@@ -597,11 +600,11 @@ code, kbd, samp, pre {
   }
 }
 
-.hover-noise {
+:is(.hover-noise, .zardonic-theme-hover-noise) {
   position: relative;
 }
 
-.hover-noise::after {
+:is(.hover-noise, .zardonic-theme-hover-noise)::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -609,21 +612,21 @@ code, kbd, samp, pre {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
-  z-index: 1;
+  z-index: var(--z-section-fx);
 }
 
-.hover-noise:hover::after {
+:is(.hover-noise, .zardonic-theme-hover-noise):hover::after {
   opacity: 1;
 }
 
-.cyber-border {
+:is(.cyber-border, .zardonic-theme-cyber-border) {
   position: relative;
-  border: 1px solid oklch(0.25 0 0);
+  border: 1px solid var(--border);
   transition: all 0.3s ease;
 }
 
-.cyber-border::before,
-.cyber-border::after {
+:is(.cyber-border, .zardonic-theme-cyber-border)::before,
+:is(.cyber-border, .zardonic-theme-cyber-border)::after {
   content: '';
   position: absolute;
   width: 8px;
@@ -633,43 +636,43 @@ code, kbd, samp, pre {
   transition: all 0.3s ease;
 }
 
-.cyber-border::before {
+:is(.cyber-border, .zardonic-theme-cyber-border)::before {
   top: -1px;
   left: -1px;
   border-right: none;
   border-bottom: none;
 }
 
-.cyber-border::after {
+:is(.cyber-border, .zardonic-theme-cyber-border)::after {
   bottom: -1px;
   right: -1px;
   border-left: none;
   border-top: none;
 }
 
-.cyber-border:hover {
+:is(.cyber-border, .zardonic-theme-cyber-border):hover {
   border-color: color-mix(in srgb, var(--hover-color, var(--accent)) 50%, transparent);
   box-shadow: 
     0 0 20px color-mix(in srgb, var(--hover-color, var(--accent)) 20%, transparent),
     inset 0 0 20px color-mix(in srgb, var(--hover-color, var(--accent)) 5%, transparent);
 }
 
-.cyber-border:hover::before,
-.cyber-border:hover::after {
+:is(.cyber-border, .zardonic-theme-cyber-border):hover::before,
+:is(.cyber-border, .zardonic-theme-cyber-border):hover::after {
   opacity: 1;
 }
 
-.scan-line {
+:is(.scan-line, .zardonic-theme-scan-line) {
   position: absolute;
   width: 100%;
   height: 2px;
   background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--hover-color, var(--accent)) 50%, transparent), transparent);
   opacity: 0;
   pointer-events: none;
-  z-index: 10;
+  z-index: var(--z-section-fx);
 }
 
-.hover-scan:hover .scan-line {
+:is(.hover-scan, .zardonic-theme-hover-scan):hover :is(.scan-line, .zardonic-theme-scan-line) {
   animation: scan-line-move 1s linear;
 }
 
@@ -1131,7 +1134,7 @@ code, kbd, samp, pre {
     0 0 40px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.5);
   animation: cyber2077-scan-build-anim 2s ease-out forwards;
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-section-fx);
 }
 
 @keyframes cyber2077-scan-build-anim {
@@ -1257,6 +1260,8 @@ code, kbd, samp, pre {
 /* Low-frequency Cyberpunk 2077 data-corruption glitch — fires ~once every 8s */
 .cyber2077-data-corrupt {
   animation: cyber2077-data-corrupt-anim 8s ease-in-out infinite;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes cyber2077-data-corrupt-anim {
@@ -1295,6 +1300,8 @@ code, kbd, samp, pre {
 /* Low-frequency CRT interference — fires ~once every 12s */
 .cyber2077-crt-interference {
   animation: cyber2077-crt-interference-anim 12s ease-in-out infinite;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes cyber2077-crt-interference-anim {
@@ -1320,7 +1327,7 @@ code, kbd, samp, pre {
   }
 }
 
-.full-page-noise {
+:is(.full-page-noise, .zardonic-theme-full-page-noise) {
   position: fixed;
   top: 0;
   left: 0;
@@ -1356,7 +1363,7 @@ code, kbd, samp, pre {
   opacity: 1;
 }
 
-.data-label {
+:is(.data-label, .zardonic-theme-data-label) {
   font-family: var(--data-label-font-family, 'Share Tech Mono', monospace);
   font-size: var(--data-label-font-size, 10px);
   text-transform: uppercase;
@@ -1365,14 +1372,14 @@ code, kbd, samp, pre {
   opacity: 0.7;
 }
 
-.cyber-card {
+:is(.cyber-card, .zardonic-theme-cyber-card) {
   position: relative;
-  background: oklch(0.15 0 0);
-  border: 1px solid oklch(0.25 0 0);
+  background: var(--card);
+  border: 1px solid var(--border);
   transition: all 0.3s ease;
 }
 
-.cyber-card::before {
+:is(.cyber-card, .zardonic-theme-cyber-card)::before {
   content: '';
   position: absolute;
   top: -1px;
@@ -1385,7 +1392,7 @@ code, kbd, samp, pre {
   transition: opacity 0.3s ease;
 }
 
-.cyber-card::after {
+:is(.cyber-card, .zardonic-theme-cyber-card)::after {
   content: '';
   position: absolute;
   bottom: -1px;
@@ -1398,12 +1405,12 @@ code, kbd, samp, pre {
   transition: opacity 0.3s ease;
 }
 
-.cyber-card:hover::before,
-.cyber-card:hover::after {
+:is(.cyber-card, .zardonic-theme-cyber-card):hover::before,
+:is(.cyber-card, .zardonic-theme-cyber-card):hover::after {
   opacity: 1;
 }
 
-.cyber-card:hover {
+:is(.cyber-card, .zardonic-theme-cyber-card):hover {
   border-color: color-mix(in srgb, var(--hover-color, var(--accent)) 30%, transparent);
   box-shadow: 
     0 0 15px color-mix(in srgb, var(--hover-color, var(--accent)) 10%, transparent),
@@ -1531,7 +1538,7 @@ code, kbd, samp, pre {
   100% { height: 100%; opacity: 0; }
 }
 
-.periodic-noise-glitch {
+:is(.periodic-noise-glitch, .zardonic-theme-periodic-noise-glitch) {
   animation: periodic-noise 12s ease-in-out infinite;
 }
 
@@ -1751,14 +1758,6 @@ code, kbd, samp, pre {
 }
 
 /* Hover chromatic aberration for all images — instant off, fast on */
-.hover-chromatic-image {
-  /* no transition on mouseout — prevents wobble */
-}
-
-.hover-chromatic-image:hover {
-  filter: drop-shadow(2px 0 0 rgba(255, 0, 0, 0.4)) drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.4));
-  transition: filter 0.08s ease;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .hero-logo-glitch .hero-logo-r,
@@ -1773,19 +1772,19 @@ code, kbd, samp, pre {
 
 /* Reduce heavy effects on mobile for better scroll performance */
 @media (max-width: 768px) {
-  .full-page-noise {
+  :is(.full-page-noise, .zardonic-theme-full-page-noise) {
     display: none;
   }
 
-  .crt-overlay {
+  :is(.crt-overlay, .zardonic-theme-crt-overlay) {
     display: none;
   }
 
-  .scanline-effect::before {
+  :is(.scanline-effect, .zardonic-theme-scanline-effect)::before {
     display: none;
   }
 
-  .noise-effect::before {
+  :is(.noise-effect, .zardonic-theme-noise-effect)::before {
     display: none;
   }
 
@@ -1793,7 +1792,7 @@ code, kbd, samp, pre {
     animation: none;
   }
 
-  .periodic-noise-glitch {
+  :is(.periodic-noise-glitch, .zardonic-theme-periodic-noise-glitch) {
     animation: none;
   }
 }

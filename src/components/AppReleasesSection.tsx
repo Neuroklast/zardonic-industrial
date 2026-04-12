@@ -160,7 +160,7 @@ export default function AppReleasesSection({ releases, sectionOrder, visible, ed
   return (
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
-      <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect crt-effect">
+      <section id="releases" className="py-24 px-4 bg-card/50 scanline-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
