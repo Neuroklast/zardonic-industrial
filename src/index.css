@@ -214,7 +214,7 @@ code, kbd, samp, pre {
     rgba(0, 0, 0, 0.1) 4px
   );
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-section-fx);
   opacity: 0.8;
   animation: scanline-drift 8s linear infinite;
   will-change: transform;
@@ -338,7 +338,7 @@ code, kbd, samp, pre {
     transparent 2px
   );
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-section-fx);
   opacity: 0.6;
   animation: crt-scanline-move 8s linear infinite;
   will-change: transform;
@@ -351,7 +351,7 @@ code, kbd, samp, pre {
   inset: 0;
   background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.4) 100%);
   pointer-events: none;
-  z-index: 1;
+  z-index: var(--z-section-fx);
   transform: translateZ(0);
 }
 
@@ -1131,7 +1131,7 @@ code, kbd, samp, pre {
     0 0 40px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.5);
   animation: cyber2077-scan-build-anim 2s ease-out forwards;
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-section-fx);
 }
 
 @keyframes cyber2077-scan-build-anim {

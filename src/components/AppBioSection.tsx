@@ -48,7 +48,7 @@ export default function AppBioSection({ bio, sectionOrder, visible, editMode, se
     bioTextSize,
     'text-muted-foreground overflow-hidden font-light',
     !hasCustomBodyLineHeight ? 'leading-relaxed' : '',
-    !bioExpanded ? 'max-h-[280px]' : 'max-h-[2000px]'
+    !bioExpanded ? 'max-h-[280px]' : 'max-h-none'
   ].filter(Boolean).join(' ')
 
   const handleSave = useCallback(() => {

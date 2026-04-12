@@ -72,7 +72,7 @@ export default function AppGigsSection({ gigs, sectionOrder, visible, editMode, 
   return (
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
-      <section id="gigs" className="py-24 px-4 noise-effect crt-effect">
+      <section id="gigs" className="py-24 px-4 noise-effect">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}

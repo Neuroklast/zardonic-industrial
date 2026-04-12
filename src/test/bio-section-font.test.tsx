@@ -15,7 +15,7 @@
  *     from adminSettings (via getBioBodyFontSize helper).
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import React from 'react'
 import type { AdminSettings } from '@/lib/types'
 
@@ -152,6 +152,27 @@ describe('AppBioSection — font binding', () => {
     })
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText!.classList.contains('leading-relaxed')).toBe(false)
+  })
+
+  it('collapsed bio text has max-h-[280px] class', async () => {
+    const { container } = await renderBioSection(undefined)
+    const bioText = container.querySelector('[style*="font-family"]')
+    expect(bioText).not.toBeNull()
+    expect(bioText!.classList.contains('max-h-[280px]')).toBe(true)
+    // Must NOT be in the expanded state
+    expect(bioText!.classList.contains('max-h-none')).toBe(false)
+  })
+
+  it('expanded bio uses max-h-none — never max-h-[2000px] — so long bios are never cut off', async () => {
+    const { container, getByText } = await renderBioSection(undefined)
+    // Click the "Read More" button to expand the bio
+    fireEvent.click(getByText('Read More'))
+    const bioText = container.querySelector('[style*="font-family"]')
+    expect(bioText).not.toBeNull()
+    // After expansion the height constraint must be removed entirely
+    expect(bioText!.classList.contains('max-h-none')).toBe(true)
+    // The old hard-coded 2000px cap must no longer be used
+    expect(bioText!.classList.contains('max-h-[2000px]')).toBe(false)
   })
 
 })
