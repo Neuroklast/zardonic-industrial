@@ -19,6 +19,7 @@ import type {
   DisclosureLevel,
 } from '@/lib/types'
 import { isFieldVisible } from '@/lib/admin-settings'
+import { loadGoogleFont, extractGoogleFontName } from '@/lib/font-loader'
 
 const BUILTIN_PRESETS: { name: string; theme: Partial<ThemeCustomization> }[] = [
   {
@@ -313,32 +314,6 @@ const fontOptions: {
   },
 ]
 
-/** Extract the first font-family name for Google Fonts loading. */
-function extractFontName(fontValue: string): string | null {
-  const systemFonts = new Set([
-    'system-ui', 'ui-monospace', 'ui-sans-serif', 'ui-serif',
-    'monospace', 'sans-serif', 'serif',
-    'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Courier New', 'Courier',
-    'Georgia', 'Cambria', 'Times New Roman', 'Times', 'Arial', 'Helvetica',
-  ])
-  const first = fontValue.replace(/['"]/g, '').split(',')[0].trim()
-  if (!first || systemFonts.has(first)) return null
-  return first
-}
-
-const _loadedFontsTab = new Set<string>()
-
-/** Load a Google Font by injecting a stylesheet link (deduplicated). */
-function loadGoogleFontTab(fontName: string): void {
-  if (_loadedFontsTab.has(fontName)) return
-  _loadedFontsTab.add(fontName)
-  const family = fontName.replace(/ /g, '+')
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@300;400;500;700;900&display=swap`
-  document.head.appendChild(link)
-}
-
 
 /** Shows a WCAG contrast warning when foreground/background ratio is too low. */
 function ContrastBadge({ fg, bg, largeText = false }: { fg: string; bg: string; largeText?: boolean }) {
@@ -601,8 +576,8 @@ export default function AppearanceTab({
                 onChange={(e) => {
                   if (e.target.value) {
                     updateTheme(key, e.target.value)
-                    const name = extractFontName(e.target.value)
-                    if (name) loadGoogleFontTab(name)
+                    const name = extractGoogleFontName(e.target.value)
+                    if (name) loadGoogleFont(name)
                   }
                 }}
                 className="w-full bg-background text-foreground border border-border rounded-md px-3 py-2 font-mono text-xs"
