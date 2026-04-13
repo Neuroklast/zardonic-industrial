@@ -22,8 +22,12 @@ interface SoundTabProps {
 export default function SoundTab({ adminSettings, setAdminSettings }: SoundTabProps) {
   const [data, setData] = useState<SoundSettings>(adminSettings?.sound ?? {})
 
-  // Keep local copy in sync when adminSettings changes externally (e.g. undo)
+  // Keep local copy in sync when adminSettings changes externally (e.g. undo).
+  // Calling setState synchronously is intentional here — this mirrors an external
+  // state change (undo/redo) back into the local form copy, which is the approved
+  // pattern for controlled forms that track external state.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setData(adminSettings?.sound ?? {})
   }, [adminSettings?.sound])
 

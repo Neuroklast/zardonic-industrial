@@ -51,6 +51,9 @@ export const LAYERS = {
   OVERLAY: 50,
   /** System-level UI – loading screen, cookie consent, toasts. */
   SYSTEM: 60,
+  /** Full-screen glitch transition FX played when an overlay opens/closes.
+   *  MUST be above SYSTEM. MUST be pointer-events: none. */
+  TRANSITION_FX: 70,
 } as const
 
 export type LayerKey = keyof typeof LAYERS
@@ -70,6 +73,9 @@ export const LAYER_INVARIANTS = {
   OVERLAY_ABOVE_GLOBAL_FX: LAYERS.OVERLAY > LAYERS.GLOBAL_FX,
   /** Modal backdrop must be below its overlay panel. */
   MODAL_BACKDROP_BELOW_OVERLAY: LAYERS.MODAL_BACKDROP < LAYERS.OVERLAY,
-  /** System is the topmost layer. */
+  /** System is above interactive overlays. */
   SYSTEM_TOPMOST: LAYERS.SYSTEM > LAYERS.OVERLAY,
+  /** Transition FX is above everything, including system UI, so the glitch
+   *  effect plays over loading screens. Must be pointer-events: none. */
+  TRANSITION_FX_ABOVE_SYSTEM: LAYERS.TRANSITION_FX > LAYERS.SYSTEM,
 } as const

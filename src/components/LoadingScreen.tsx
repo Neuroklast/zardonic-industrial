@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/purity */
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { useEffect, useState, useMemo, memo, useRef } from 'react'
+import type React from 'react'
 import { cacheImage } from '@/lib/image-cache'
 import type { LoaderTexts, LoadingScreenMode } from '@/lib/types'
 
@@ -133,7 +134,8 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
       initial={{ opacity: 1 }}
       exit={{ opacity: prefersReducedMotion ? 1 : 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.5 }}
-      className="fixed inset-0 z-[9999] bg-background flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 bg-background flex items-center justify-center overflow-hidden"
+      style={{ zIndex: 'var(--z-system)' } as React.CSSProperties}
     >
       <div className="full-page-noise periodic-noise-glitch" />
       <div className="scanline-effect absolute inset-0" />

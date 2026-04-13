@@ -311,7 +311,8 @@ export default function AppHeroSection({
       {/* Edit hero links dialog */}
       {editingLinks && (
         <div
-          className="fixed inset-0 z-[300] bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4"
+          style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
           onClick={() => setEditingLinks(false)}
         >
           <div

@@ -66,4 +66,8 @@
 
   /* System — loading screen, cookie consent, toasts */
   --z-system:        60;
+
+  /* Full-screen transition FX — glitch effects played on overlay open/close.
+     Must be above everything, including system UI. pointer-events: none required. */
+  --z-transition-fx: 70;
 }

@@ -122,7 +122,7 @@ export default function TerminalSettingsDialog({
   }
 
   return (
-    <CyberModalBackdrop open={open} zIndex="z-[10001]" bgClass="bg-background/95 backdrop-blur-sm">
+    <CyberModalBackdrop open={open} bgClass="bg-background/95 backdrop-blur-sm">
       <motion.div
         initial={{ scale: 0.9, y: 20, opacity: 0 }}
         animate={{ scale: 1, y: 0, opacity: 1 }}

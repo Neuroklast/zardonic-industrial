@@ -45,8 +45,13 @@ describe('LAYERS z-index contract invariants', () => {
     expect(LAYERS.OVERLAY).toBeGreaterThan(LAYERS.GLOBAL_FX)
   })
 
-  it('SYSTEM is the topmost layer', () => {
+  it('SYSTEM is above interactive overlays', () => {
     expect(LAYERS.SYSTEM).toBeGreaterThan(LAYERS.OVERLAY)
+  })
+
+  it('TRANSITION_FX is above SYSTEM (pointer-events:none glitch effect)', () => {
+    expect(LAYERS.TRANSITION_FX).toBeGreaterThan(LAYERS.SYSTEM)
+    expect(LAYERS.TRANSITION_FX).toBe(70)
   })
 
   it('all LAYER_INVARIANTS are true', () => {

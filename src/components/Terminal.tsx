@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Terminal as TerminalIcon, PencilSimple, Plus, Trash, CaretDown, CaretUp } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -269,7 +270,8 @@ export function Terminal({ isOpen, onClose, customCommands = [], editMode = fals
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 bg-black/90 z-[100] backdrop-blur-sm cyberpunk-overlay-bg"
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm cyberpunk-overlay-bg"
+            style={{ zIndex: 'var(--z-modal-backdrop)' } as React.CSSProperties}
             onClick={onClose}
           />
 
@@ -278,8 +280,8 @@ export function Terminal({ isOpen, onClose, customCommands = [], editMode = fals
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none"
-            style={{ perspective: '1000px' }}
+            className="fixed inset-0 flex items-center justify-center p-4 md:p-8 pointer-events-none"
+            style={{ zIndex: 'var(--z-overlay)', perspective: '1000px' } as React.CSSProperties}
           >
             <motion.div
               initial={{ boxShadow: '0 0 0px rgba(180, 50, 50, 0)' }}
