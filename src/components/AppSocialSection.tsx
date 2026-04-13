@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
@@ -14,8 +14,11 @@ import {
   ApplePodcastsLogo,
   MusicNote,
   Envelope,
+  Link,
+  Plus,
+  Trash,
 } from '@phosphor-icons/react'
-import type { AdminSettings } from '@/lib/types'
+import type { AdminSettings, CustomSocialLink, SectionLabels } from '@/lib/types'
 import type { SiteData } from '@/lib/app-types'
 import { useLocale } from '@/contexts/LocaleContext'
 
@@ -28,12 +31,35 @@ interface AppSocialSectionProps {
   headingPrefix?: string
   adminSettings: AdminSettings | undefined
   onContactClick: () => void
+  sectionLabels?: SectionLabels
+  onLabelChange?: (key: keyof SectionLabels, value: string | boolean) => void
+  setAdminSettings?: (s: AdminSettings) => void
 }
 
-export default function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, onContactClick }: AppSocialSectionProps) {
+export default function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabel, headingPrefix, adminSettings, onContactClick, setAdminSettings }: AppSocialSectionProps) {
   const { t } = useLocale()
   const prefersReducedMotion = useReducedMotion()
+  const [newLinkLabel, setNewLinkLabel] = useState('')
+  const [newLinkUrl, setNewLinkUrl] = useState('')
   if (!visible) return null
+
+  const customLinks: CustomSocialLink[] = adminSettings?.customSocialLinks ?? []
+
+  const addCustomLink = () => {
+    if (!newLinkLabel.trim() || !newLinkUrl.trim()) return
+    const link: CustomSocialLink = {
+      id: Date.now().toString(),
+      label: newLinkLabel.trim(),
+      url: newLinkUrl.trim(),
+    }
+    setAdminSettings?.({ ...(adminSettings ?? {}), customSocialLinks: [...customLinks, link] })
+    setNewLinkLabel('')
+    setNewLinkUrl('')
+  }
+
+  const removeCustomLink = (id: string) => {
+    setAdminSettings?.({ ...(adminSettings ?? {}), customSocialLinks: customLinks.filter(l => l.id !== id) })
+  }
 
   return (
     <div style={{ order: sectionOrder }}>
@@ -95,7 +121,73 @@ export default function AppSocialSection({ social, sectionOrder, visible, editMo
                   </motion.a>
                 ) : null
               ))}
+
+              {/* Custom social links */}
+              {customLinks.map((link, index) => (
+                <motion.div
+                  key={link.id}
+                  className="relative group"
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+                >
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:text-primary transition-colors hover-glitch hover-chromatic relative flex flex-col items-center gap-1"
+                    title={link.label}
+                  >
+                    <Link className="w-12 h-12" weight="fill" />
+                    <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">{link.label}</span>
+                  </a>
+                  {editMode && (
+                    <button
+                      onClick={() => removeCustomLink(link.id)}
+                      className="absolute -top-2 -right-2 bg-destructive/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label={`Remove custom link ${link.label}`}
+                    >
+                      <Trash size={10} className="text-white" />
+                    </button>
+                  )}
+                </motion.div>
+              ))}
             </div>
+
+            {/* Edit mode: add custom links */}
+            {editMode && setAdminSettings && (
+              <div className="mt-8 max-w-md mx-auto space-y-2">
+                <p className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-wider text-center">Add custom social link</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newLinkLabel}
+                    onChange={(e) => setNewLinkLabel(e.target.value)}
+                    placeholder="Label (e.g. Patreon)"
+                    className="flex-1 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
+                    aria-label="New custom link label"
+                  />
+                  <input
+                    type="url"
+                    value={newLinkUrl}
+                    onChange={(e) => setNewLinkUrl(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') addCustomLink() }}
+                    placeholder="https://..."
+                    className="flex-1 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
+                    aria-label="New custom link URL"
+                  />
+                  <button
+                    onClick={addCustomLink}
+                    disabled={!newLinkLabel.trim() || !newLinkUrl.trim()}
+                    className="text-primary/50 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Add custom link"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}

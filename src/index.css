@@ -601,6 +601,47 @@ code, kbd, samp, pre {
   }
 }
 
+/* ── Logo white + chromatic aberration hover ─────────────────────────────── */
+/* Used by SponsoringSection and CreditHighlightsSection.
+   brightness(0) invert(1) makes any logo white.
+   --logo-brightness allows per-instance brightness tuning via inline style.
+   On hover the chromatic aberration drop-shadows are appended and the
+   chromatic-pulse-image keyframes give the classic RGB-split blink. */
+
+.logo-white {
+  filter: brightness(0) invert(1) brightness(var(--logo-brightness, 1));
+  transition: filter 0.08s ease, opacity 0.2s ease;
+}
+
+.logo-white:hover {
+  filter:
+    brightness(0) invert(1) brightness(var(--logo-brightness, 1))
+    drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
+    drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
+  animation: chromatic-pulse-logo 0.15s ease;
+}
+
+@keyframes chromatic-pulse-logo {
+  0%, 100% {
+    filter:
+      brightness(0) invert(1) brightness(var(--logo-brightness, 1))
+      drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
+      drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
+  }
+  50% {
+    filter:
+      brightness(0) invert(1) brightness(var(--logo-brightness, 1))
+      drop-shadow(3px 0 0 rgba(255, 0, 100, 0.75))
+      drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.75));
+  }
+}
+
+/* Respect the global .no-chromatic toggle */
+.no-chromatic .logo-white:hover {
+  filter: brightness(0) invert(1) brightness(var(--logo-brightness, 1));
+  animation: none;
+}
+
 :is(.hover-noise) {
   position: relative;
 }

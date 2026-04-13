@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash } from '@phosphor-icons/react'
+import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown } from '@phosphor-icons/react'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
@@ -87,6 +87,16 @@ export default function CreditHighlightsSection({
       ...prev,
       creditHighlights: prev.creditHighlights.map((c, i) => i === idx ? { ...c, [field]: value } : c),
     }))
+  }
+
+  const moveLogo = (idx: number, dir: 'up' | 'down') => {
+    onUpdateSiteData?.((prev) => {
+      const arr = [...prev.creditHighlights]
+      const target = dir === 'up' ? idx - 1 : idx + 1
+      if (target < 0 || target >= arr.length) return prev
+      ;[arr[idx], arr[target]] = [arr[target], arr[idx]]
+      return { ...prev, creditHighlights: arr }
+    })
   }
 
   return (
@@ -181,20 +191,18 @@ export default function CreditHighlightsSection({
           )}
 
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 hover:opacity-90 transition-opacity duration-500">
-            {(() => {
-              const filterBase = `brightness(0) invert(1) brightness(${logoBrightness})`
-              const filterHover = `brightness(0) invert(1) brightness(${logoBrightness}) drop-shadow(2px 0 0 rgba(255,0,100,0.5)) drop-shadow(-2px 0 0 rgba(0,255,255,0.5))`
-              return siteData.creditHighlights.filter(logo => logo.src).map((logo, index) => (
+            {siteData.creditHighlights.filter(logo => logo.src).map((logo, index) => (
               <div key={`credit-${index}`} className="relative group">
                 <motion.img
                   src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
                   alt={logo.alt}
-                  className="h-10 md:h-14 w-auto object-contain"
-                  initial={{ opacity: 0, y: 10, filter: filterBase }}
-                  whileInView={{ opacity: 0.7, y: 0, filter: filterBase }}
+                  className="logo-white h-10 md:h-14 w-auto object-contain"
+                  style={{ '--logo-brightness': logoBrightness } as React.CSSProperties}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 0.7, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
-                  whileHover={{ opacity: 1, filter: filterHover }}
+                  whileHover={{ opacity: 1 }}
                   loading="lazy"
                 />
                 {editMode && (
@@ -207,8 +215,7 @@ export default function CreditHighlightsSection({
                   </button>
                 )}
               </div>
-              ))
-            })()}
+            ))}
           </div>
 
           {/* Edit mode: show all entries (including those without src) */}
@@ -216,6 +223,24 @@ export default function CreditHighlightsSection({
             <div className="mt-6 space-y-2 max-w-2xl mx-auto text-left">
               {siteData.creditHighlights.map((logo, idx) => (
                 <div key={idx} className="flex gap-2 items-center">
+                  <div className="flex flex-col gap-0.5 shrink-0">
+                    <button
+                      onClick={() => moveLogo(idx, 'up')}
+                      disabled={idx === 0}
+                      className="text-muted-foreground/50 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      aria-label={`Move credit ${idx + 1} up`}
+                    >
+                      <ArrowUp size={12} />
+                    </button>
+                    <button
+                      onClick={() => moveLogo(idx, 'down')}
+                      disabled={idx === siteData.creditHighlights.length - 1}
+                      className="text-muted-foreground/50 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                      aria-label={`Move credit ${idx + 1} down`}
+                    >
+                      <ArrowDown size={12} />
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={logo.src}
