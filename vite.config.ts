@@ -48,6 +48,41 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks(id: string) {
+            if (id.includes('/node_modules/@react-three/fiber') || id.includes('/node_modules/@react-three/drei')) return 'vendor-three-react'
+            if (
+              id.includes('/node_modules/@radix-ui/react-accordion') ||
+              id.includes('/node_modules/@radix-ui/react-alert-dialog') ||
+              id.includes('/node_modules/@radix-ui/react-aspect-ratio') ||
+              id.includes('/node_modules/@radix-ui/react-avatar') ||
+              id.includes('/node_modules/@radix-ui/react-checkbox') ||
+              id.includes('/node_modules/@radix-ui/react-collapsible') ||
+              id.includes('/node_modules/@radix-ui/react-context-menu') ||
+              id.includes('/node_modules/@radix-ui/react-dropdown-menu') ||
+              id.includes('/node_modules/@radix-ui/react-hover-card') ||
+              id.includes('/node_modules/@radix-ui/react-label') ||
+              id.includes('/node_modules/@radix-ui/react-menubar') ||
+              id.includes('/node_modules/@radix-ui/react-navigation-menu') ||
+              id.includes('/node_modules/@radix-ui/react-popover') ||
+              id.includes('/node_modules/@radix-ui/react-progress') ||
+              id.includes('/node_modules/@radix-ui/react-radio-group') ||
+              id.includes('/node_modules/@radix-ui/react-scroll-area') ||
+              id.includes('/node_modules/@radix-ui/react-select') ||
+              id.includes('/node_modules/@radix-ui/react-slider') ||
+              id.includes('/node_modules/@radix-ui/react-switch') ||
+              id.includes('/node_modules/@radix-ui/react-tabs') ||
+              id.includes('/node_modules/@radix-ui/react-toggle') ||
+              id.includes('/node_modules/@radix-ui/react-toggle-group') ||
+              id.includes('/node_modules/@radix-ui/react-tooltip') ||
+              id.includes('/node_modules/@radix-ui/colors')
+            ) return 'vendor-radix'
+            if (
+              id.includes('/node_modules/i18next') ||
+              id.includes('/node_modules/react-i18next') ||
+              id.includes('/node_modules/i18next-browser-languagedetector') ||
+              id.includes('/node_modules/i18next-http-backend')
+            ) return 'vendor-i18n'
+            if (id.includes('/node_modules/embla-carousel')) return 'vendor-embla'
+            if (id.includes('/node_modules/dompurify') || id.includes('/node_modules/marked')) return 'vendor-content'
             if (id.includes('/node_modules/react') || id.includes('/node_modules/react-dom')) return 'vendor-react'
             if (id.includes('/node_modules/framer-motion')) return 'vendor-motion'
             if (id.includes('/node_modules/three')) return 'vendor-three'
@@ -78,6 +113,12 @@ export default defineConfig(() => {
         'react-dom',
         'framer-motion',
         '@phosphor-icons/react',
+        '@tanstack/react-query',
+        'sonner',
+        'clsx',
+        'tailwind-merge',
+        'date-fns',
+        'zod',
       ],
     },
     server: {

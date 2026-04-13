@@ -19,27 +19,31 @@ const MinimalBarLoader = React.lazy(() => import('@/components/MinimalBarLoader'
 const GlitchDecodeLoader = React.lazy(() => import('@/components/GlitchDecodeLoader'))
 const SwipeableGallery = React.lazy(() => import('@/components/SwipeableGallery'))
 const CyberpunkOverlay = React.lazy(() => import('@/components/CyberpunkOverlay'))
-import AppMediaSection from '@/components/AppMediaSection'
-import { SystemMonitorHUD } from '@/components/SystemMonitorHUD'
 import AppNavBar from '@/components/AppNavBar'
 import AppHeroSection from '@/components/AppHeroSection'
-import ShellSection from '@/components/ShellSection'
-import CreditHighlightsSection from '@/components/CreditHighlightsSection'
-import SponsoringSection from '@/components/SponsoringSection'
-import GallerySection from '@/components/GallerySection'
-import AppFooter from '@/components/AppFooter'
-import AppBioSection from '@/components/AppBioSection'
-import AppMusicSection from '@/components/AppMusicSection'
-import AppGigsSection from '@/components/AppGigsSection'
-import AppReleasesSection from '@/components/AppReleasesSection'
-import AppSocialSection from '@/components/AppSocialSection'
 import { StructuredData } from '@/components/StructuredData'
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { PageLayout } from '@/layouts/PageLayout'
 import { BackgroundStack } from '@/components/BackgroundStack'
 import { GlobalEffects } from '@/components/GlobalEffects'
-import { AdminDialogManager } from '@/components/AdminDialogManager'
+const AppBioSection = React.lazy(() => import('@/components/AppBioSection'))
+const AppMusicSection = React.lazy(() => import('@/components/AppMusicSection'))
+const AppGigsSection = React.lazy(() => import('@/components/AppGigsSection'))
+const AppReleasesSection = React.lazy(() => import('@/components/AppReleasesSection'))
+const AppSocialSection = React.lazy(() => import('@/components/AppSocialSection'))
+const CreditHighlightsSection = React.lazy(() => import('@/components/CreditHighlightsSection'))
+const SponsoringSection = React.lazy(() => import('@/components/SponsoringSection'))
+const AppMediaSection = React.lazy(() => import('@/components/AppMediaSection'))
+const GallerySection = React.lazy(() => import('@/components/GallerySection'))
+const ShellSection = React.lazy(() => import('@/components/ShellSection'))
+const AppFooter = React.lazy(() => import('@/components/AppFooter'))
+const AdminDialogManager = React.lazy(() =>
+  import('@/components/AdminDialogManager').then(m => ({ default: m.AdminDialogManager }))
+)
+const SystemMonitorHUD = React.lazy(() =>
+  import('@/components/SystemMonitorHUD').then(m => ({ default: m.SystemMonitorHUD }))
+)
 
 // Code splitting for heavy components
 const Terminal = React.lazy(() => import('@/components/Terminal').then(m => ({ default: m.Terminal })))
@@ -148,14 +152,16 @@ function App() {
           />
         }
         footer={
-          <AppFooter
-            artistName={siteData?.artistName || ''}
-            isOwner={isOwner}
-            hasPassword={!needsSetup}
-            setShowLoginDialog={setShowLoginDialog}
-            setShowSetupDialog={setShowSetupDialog}
-            setCyberpunkOverlay={setCyberpunkOverlay}
-          />
+          <Suspense fallback={null}>
+            <AppFooter
+              artistName={siteData?.artistName || ''}
+              isOwner={isOwner}
+              hasPassword={!needsSetup}
+              setShowLoginDialog={setShowLoginDialog}
+              setShowSetupDialog={setShowSetupDialog}
+              setCyberpunkOverlay={setCyberpunkOverlay}
+            />
+          </Suspense>
         }
         globalEffects={
           <GlobalEffects
@@ -198,32 +204,34 @@ function App() {
               />
             </Suspense>
 
-            <AdminDialogManager
-              isOwner={isOwner}
-              needsSetup={needsSetup}
-              editMode={editMode}
-              onToggleEdit={() => setEditMode(!editMode)}
-              adminSettings={adminSettings}
-              setAdminSettings={handleUpdateAdminSettings}
-              siteData={siteData}
-              onImportData={(data) => handleUpdateSiteData(data as SiteData)}
-              onRefreshSiteData={refetchSiteData}
-              onUpdateSiteData={handleUpdateSiteData}
-              onLogout={handleLogout}
-              onFetchBandsintown={handleFetchBandsintownEvents}
-              onFetchITunes={handleFetchITunesReleases}
-              onResetReleases={handleResetReleases}
-              onResetGigs={handleResetGigs}
-              onChangePassword={handleSetAdminPassword}
-              onSetPassword={handleSetAdminPassword}
-              onAdminLogin={handleAdminLogin}
-              onSetupAdminPassword={handleSetupAdminPassword}
-              showLoginDialog={showLoginDialog}
-              setShowLoginDialog={setShowLoginDialog}
-              showSetupDialog={showSetupDialog}
-              setShowSetupDialog={setShowSetupDialog}
-              terminalCommands={terminalCommands}
-            />
+            <Suspense fallback={null}>
+              <AdminDialogManager
+                isOwner={isOwner}
+                needsSetup={needsSetup}
+                editMode={editMode}
+                onToggleEdit={() => setEditMode(!editMode)}
+                adminSettings={adminSettings}
+                setAdminSettings={handleUpdateAdminSettings}
+                siteData={siteData}
+                onImportData={(data) => handleUpdateSiteData(data as SiteData)}
+                onRefreshSiteData={refetchSiteData}
+                onUpdateSiteData={handleUpdateSiteData}
+                onLogout={handleLogout}
+                onFetchBandsintown={handleFetchBandsintownEvents}
+                onFetchITunes={handleFetchITunesReleases}
+                onResetReleases={handleResetReleases}
+                onResetGigs={handleResetGigs}
+                onChangePassword={handleSetAdminPassword}
+                onSetPassword={handleSetAdminPassword}
+                onAdminLogin={handleAdminLogin}
+                onSetupAdminPassword={handleSetupAdminPassword}
+                showLoginDialog={showLoginDialog}
+                setShowLoginDialog={setShowLoginDialog}
+                showSetupDialog={showSetupDialog}
+                setShowSetupDialog={setShowSetupDialog}
+                terminalCommands={terminalCommands}
+              />
+            </Suspense>
           </>
         }
         system={
@@ -274,15 +282,17 @@ function App() {
               onOpenPrivacyPolicy={() => setCyberpunkOverlay({ type: 'privacy' })}
             />
             <Toaster />
-            <SystemMonitorHUD
-              decorativeTexts={adminSettings?.decorative}
-              dataCounts={siteData ? {
-                releases: siteData.releases?.length ?? 0,
-                gigs: siteData.gigs?.length ?? 0,
-                tracks: siteData.tracks?.length ?? 0,
-                members: siteData.members?.length ?? 0,
-              } : undefined}
-            />
+            <Suspense fallback={null}>
+              <SystemMonitorHUD
+                decorativeTexts={adminSettings?.decorative}
+                dataCounts={siteData ? {
+                  releases: siteData.releases?.length ?? 0,
+                  gigs: siteData.gigs?.length ?? 0,
+                  tracks: siteData.tracks?.length ?? 0,
+                  members: siteData.members?.length ?? 0,
+                } : undefined}
+              />
+            </Suspense>
           </>
         }
       >
@@ -304,6 +314,7 @@ function App() {
 
       {siteData && (<>
       <SectionErrorBoundary sectionName="Biography">
+      <Suspense fallback={null}>
       <AppBioSection
         bio={siteData.bio}
         sectionOrder={getSectionOrder('bio')}
@@ -316,9 +327,11 @@ function App() {
         onLabelChange={editMode ? handleLabelChange : undefined}
         onUpdate={(bio) => handleUpdateSiteData(prev => ({ ...(prev ?? DEFAULT_SITE_DATA), bio }))}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Shell">
+      <Suspense fallback={null}>
       <ShellSection
         editMode={editMode}
         adminSettings={adminSettings}
@@ -327,9 +340,11 @@ function App() {
         visible={vis.shell !== false}
         sectionLabel={sectionLabels.shell || ''}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Credit Highlights">
+      <Suspense fallback={null}>
       <CreditHighlightsSection
         siteData={siteData}
         editMode={editMode}
@@ -341,9 +356,11 @@ function App() {
         onLabelChange={editMode ? handleLabelChange : undefined}
         onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Music">
+      <Suspense fallback={null}>
       <AppMusicSection
         sectionOrder={getSectionOrder('music')}
         visible={vis.music !== false}
@@ -354,9 +371,11 @@ function App() {
         onLabelChange={editMode ? handleLabelChange : undefined}
         spotifyUrl={siteData?.social?.spotify}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Gigs">
+      <Suspense fallback={null}>
       <AppGigsSection
         gigs={siteData.gigs}
         sectionOrder={getSectionOrder('gigs')}
@@ -371,9 +390,11 @@ function App() {
         onGigClick={(gig) => setCyberpunkOverlay({ type: 'gig', data: gig })}
         onRefresh={editMode ? handleFetchBandsintownEvents : undefined}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Releases">
+      <Suspense fallback={null}>
       <AppReleasesSection
         releases={siteData.releases}
         sectionOrder={getSectionOrder('releases')}
@@ -410,9 +431,11 @@ function App() {
         } : undefined}
         onRefreshReleases={editMode ? handleFetchITunesReleases : undefined}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Gallery">
+      <Suspense fallback={null}>
       <GallerySection
         siteData={siteData}
         editMode={editMode}
@@ -423,9 +446,11 @@ function App() {
         setGalleryIndex={setGalleryIndex}
         adminSettings={adminSettings}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Media">
+      <Suspense fallback={null}>
       <AppMediaSection
         mediaFiles={siteData.mediaFiles?.map(f => ({
           id: f.id,
@@ -452,9 +477,11 @@ function App() {
           })),
         })) : undefined}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Connect">
+      <Suspense fallback={null}>
       <AppSocialSection
         social={siteData.social}
         sectionOrder={getSectionOrder('connect')}
@@ -465,9 +492,11 @@ function App() {
         adminSettings={adminSettings}
         onContactClick={() => setCyberpunkOverlay({ type: 'contact' })}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       <SectionErrorBoundary sectionName="Sponsoring">
+      <Suspense fallback={null}>
       <SponsoringSection
         siteData={siteData}
         editMode={editMode}
@@ -479,6 +508,7 @@ function App() {
         onLabelChange={editMode ? handleLabelChange : undefined}
         onUpdateSiteData={editMode ? handleUpdateSiteData : undefined}
       />
+      </Suspense>
       </SectionErrorBoundary>
 
       </>)}
