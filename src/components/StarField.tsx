@@ -82,7 +82,11 @@ const StarField = memo(function StarField({ transparent, starCount = 200, starSp
 
       const primaryColor = getComputedStyle(document.documentElement)
         .getPropertyValue('--primary')
-        .trim() || 'oklch(0.50 0.22 25)'
+        .trim() || '#cc3300'
+
+      // color-mix() with oklch() is unsupported in older Firefox — detect once
+      const supportsColorMix = typeof CSS !== 'undefined' &&
+        CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')
 
       stars.forEach(star => {
         star.pz = star.z
@@ -105,7 +109,9 @@ const StarField = memo(function StarField({ transparent, starCount = 200, starSp
         ctx.beginPath()
         ctx.moveTo(px, py)
         ctx.lineTo(sx, sy)
-        ctx.strokeStyle = `color-mix(in srgb, ${primaryColor} 60%, white)`
+        ctx.strokeStyle = supportsColorMix
+          ? `color-mix(in srgb, ${primaryColor} 60%, white)`
+          : primaryColor
         ctx.lineWidth = size
         ctx.globalAlpha = (1 - star.z / canvas.width) * 0.8
         ctx.stroke()

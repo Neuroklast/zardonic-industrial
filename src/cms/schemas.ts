@@ -221,7 +221,7 @@ export const FIELD_REGISTRY: Record<string, FieldMeta> = {
     { value: 'ep', label: 'EP' },
     { value: 'single', label: 'Single' },
     { value: 'remix', label: 'Remix' },
-    { value: 'compilation', label: 'Compilation' },
+    { value: 'compilation', label: 'Appears On' },
   ], group: 'Core', tooltip: 'Release format. Controls the badge shown on the release card.' },
   'release.description':      { label: 'Description', widget: 'textarea', group: 'Core', advanced: true, tooltip: 'Optional notes or liner text shown in the release detail overlay.' },
 

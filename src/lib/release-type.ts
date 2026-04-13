@@ -3,6 +3,16 @@
 type ReleaseType = 'remix' | 'compilation' | 'ep' | 'single'
 
 /**
+ * Maps an internal release type value to its user-facing display label.
+ * 'compilation' is shown as 'Appears On' to reflect that the main artist
+ * appears on a compilation rather than releasing it themselves.
+ */
+export function displayReleaseType(type: string): string {
+  if (type === 'compilation') return 'Appears On'
+  return type
+}
+
+/**
  * Infers a release type from the given title string using keyword matching.
  * Returns undefined when no recognisable keyword is found — callers should
  * NOT fall back to 'album'; that requires track-count data only available

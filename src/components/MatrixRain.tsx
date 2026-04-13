@@ -44,11 +44,29 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
     const handleResize = () => resize()
     window.addEventListener('resize', handleResize)
 
-    // Resolve color: use prop override or CSS variable
-    const resolveColor = () =>
-      color ||
-      getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() ||
-      'oklch(0.50 0.22 25)'
+    // Resolve color: use prop override or CSS variable.
+    // Fall back to a safe hex color when color-mix() with oklch() is not
+    // supported (older Firefox) — an unsupported fillStyle is silently ignored
+    // which makes the canvas blank.
+    const supportsColorMix = typeof CSS !== 'undefined' &&
+      CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')
+
+    const resolveColor = (): string => {
+      if (color) return color
+      const raw = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()
+      if (!raw) return '#cc3300'
+      // If color-mix is unsupported we can't use oklch() inside it — return
+      // the raw value as-is and skip color-mix usage below.
+      return raw
+    }
+
+    const applyColor = (ctx2d: CanvasRenderingContext2D, base: string, baseColorRatio = 0.9) => {
+      if (supportsColorMix) {
+        ctx2d.fillStyle = `color-mix(in srgb, ${base} ${Math.round(baseColorRatio * 100)}%, white)`
+      } else {
+        ctx2d.fillStyle = base
+      }
+    }
 
     // Speed controls how often a drop advances: higher speed = advance more often
     // We use a fractional frame accumulator so sub-1 speed works correctly.
@@ -78,7 +96,7 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
         const char = chars[Math.floor(Math.random() * chars.length)]
         const x = i * fontSize
 
-        ctx.fillStyle = `color-mix(in srgb, ${primaryColor} 90%, white)`
+        applyColor(ctx, primaryColor, 0.9)
         ctx.fillText(char, x, y * fontSize)
 
         // Density controls reset probability: higher density = less frequent resets

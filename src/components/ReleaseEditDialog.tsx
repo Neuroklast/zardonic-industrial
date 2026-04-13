@@ -222,7 +222,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
               <option value="ep">EP</option>
               <option value="single">Single</option>
               <option value="remix">Remix</option>
-              <option value="compilation">Compilation</option>
+              <option value="compilation">Appears On</option>
             </select>
           </div>
 
