@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import {
   OVERLAY_GLITCH_PHASE_DELAY_MS,
   OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
-import { getRandomOverlayAnimation, getAllOverlayAnimations } from '@/lib/overlay-animations'
+import { getRandomOverlayAnimation } from '@/lib/overlay-animations'
 import { getRandomProgressiveMode } from '@/lib/progressive-overlay-modes'
 import { ImpressumOverlayContent } from '@/components/overlays/ImpressumOverlayContent'
 import { PrivacyOverlayContent } from '@/components/overlays/PrivacyOverlayContent'
@@ -35,16 +35,17 @@ interface CyberpunkOverlayProps {
 export default function CyberpunkOverlay({ overlay, onClose, adminSettings, artistName = '' }: CyberpunkOverlayProps) {
   const [overlayPhase, setOverlayPhase] = useState<'loading' | 'glitch' | 'revealed'>('loading')
   const [loadingText, setLoadingText] = useState(OVERLAY_LOADING_TEXTS[0])
-  const [anim, setAnim] = useState(() => getAllOverlayAnimations()[0])
   const [progressiveMode, setProgressiveMode] = useState(() => getRandomProgressiveMode())
   const decorativeTexts = adminSettings?.decorative
+
+  // Compute the animation synchronously during render so Framer Motion receives the
+  // correct initial/animate values on the very first render where motion.div mounts.
+  // useMemo recalculates whenever `overlay` changes (new overlay = new animation).
+  const anim = useMemo(() => getRandomOverlayAnimation(), [overlay])
   const systemLabel = decorativeTexts?.overlaySystemLabel ?? `// ${artistName ? `${artistName.toUpperCase()}.NET` : 'SYSTEM.INTERFACE'} // v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}`
 
   useEffect(() => {
     if (!overlay) return
-    // Pick a new random animation each time an overlay opens
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAnim(getRandomOverlayAnimation())
     // Pick a new random progressive content reveal mode
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgressiveMode(getRandomProgressiveMode(adminSettings?.progressiveOverlayModes))
