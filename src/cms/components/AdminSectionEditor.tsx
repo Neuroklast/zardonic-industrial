@@ -20,6 +20,7 @@ import { useState, useCallback, useMemo } from 'react'
 import {
   FloppyDisk,
   ArrowCounterClockwise,
+  ArrowClockwise,
   Trash,
   Warning,
   CheckCircle,
@@ -31,9 +32,12 @@ import { toast } from 'sonner'
 import '@/cms/section-schemas'
 import { getSection } from '@/lib/admin-schema-registry'
 import { SectionEditorFactory } from '@/cms/components/SectionEditorFactory'
+import { LoadingState, ErrorState, EmptyState } from '@/cms/components/states'
 import { useCmsContent } from '@/cms/hooks/useCmsContent'
 import { useAutoSave } from '@/cms/hooks/useAutoSave'
 import { useUnsavedChanges } from '@/cms/hooks/useUnsavedChanges'
+import { useUndoRedo } from '@/cms/hooks/useUndoRedo'
+import { useAdminKeyboardShortcuts } from '@/cms/hooks/useAdminKeyboardShortcuts'
 import { SchemaIcon } from './SchemaIcon'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -121,11 +125,16 @@ function EditorInner({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [disclosure, setDisclosure] = useState<DisclosureLevel>('basic')
   const [showDisclosureMenu, setShowDisclosureMenu] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
 
   // Use draftData if the user has made changes; otherwise fall back to savedData/defaultData
   const effectiveData: Record<string, unknown> = draftData ?? savedData ?? defaultData
 
   const isDirty = draftData !== null
+
+  // ── Undo / Redo ────────────────────────────────────────────────────────────
+  const { push: pushHistory, undo, redo, canUndo, canRedo, historyIndex, historySize } =
+    useUndoRedo<Record<string, unknown>>(effectiveData)
 
   // ── Hooks ──────────────────────────────────────────────────────────────────
   useAutoSave(sectionId, effectiveData, isDirty)
@@ -138,8 +147,9 @@ function EditorInner({
       setDraftData(data)
       setValidationErrors({})
       onPreviewDataChange?.(data)
+      pushHistory(data)
     },
-    [onPreviewDataChange],
+    [onPreviewDataChange, pushHistory],
   )
 
   const handleSave = useCallback(async () => {
@@ -181,6 +191,30 @@ function EditorInner({
     }
   }, [schema, save, onPreviewDataChange])
 
+  const handleUndoAction = useCallback(() => {
+    const prev = undo()
+    if (prev) {
+      setDraftData(prev)
+      onPreviewDataChange?.(prev)
+    }
+  }, [undo, onPreviewDataChange])
+
+  const handleRedoAction = useCallback(() => {
+    const next = redo()
+    if (next) {
+      setDraftData(next)
+      onPreviewDataChange?.(next)
+    }
+  }, [redo, onPreviewDataChange])
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  useAdminKeyboardShortcuts({
+    onSave: useCallback(() => { void handleSave() }, [handleSave]),
+    onUndo: handleUndoAction,
+    onRedo: handleRedoAction,
+    onEscape: useCallback(() => setShowDisclosureMenu(false), []),
+  })
+
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isLoading) {
     return (
@@ -190,6 +224,10 @@ function EditorInner({
           isDirty={false}
           isDraft={false}
           isSaving={false}
+          canUndo={false}
+          canRedo={false}
+          historyIndex={0}
+          historySize={0}
           disclosure={disclosure}
           showDisclosureMenu={showDisclosureMenu}
           onDisclosureToggle={() => setShowDisclosureMenu(v => !v)}
@@ -197,12 +235,10 @@ function EditorInner({
           onSave={() => void handleSave()}
           onDiscard={handleDiscard}
           onReset={() => void handleReset()}
+          onUndo={handleUndoAction}
+          onRedo={handleRedoAction}
         />
-        <div className="flex-1 p-6 space-y-4 animate-pulse" aria-busy="true" aria-label="Loading">
-          <div className="bg-zinc-800 rounded h-10 w-full max-w-lg" />
-          <div className="bg-zinc-800 rounded h-6 w-full max-w-md" />
-          <div className="bg-zinc-800 rounded h-32 w-full max-w-2xl mt-6" />
-        </div>
+        <LoadingState label={schema.label} icon={schema.icon} />
       </div>
     )
   }
@@ -210,24 +246,30 @@ function EditorInner({
   // ── Error state ────────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 p-8">
-        <Warning size={40} className="text-red-500/60" />
-        <div className="text-center space-y-1">
-          <p className="text-zinc-400 font-mono text-sm">Failed to load section data</p>
-          <p className="text-zinc-600 text-xs font-mono">{error.message}</p>
-        </div>
-      </div>
+      <ErrorState
+        message="Failed to load section data. Check your connection and try again."
+        variant="network"
+        detail={error.message}
+        onRetry={() => setRetryKey(k => k + 1)}
+      />
     )
   }
 
+  // Empty: data loaded but no saved content and user hasn't started editing
+  const isEmpty = !isLoading && savedData === null && draftData === null
+
   return (
-    <div className="flex flex-col h-full min-h-0">
+    <div className="flex flex-col h-full min-h-0 admin-content-fade" key={`${sectionId}-${retryKey}`}>
       {/* Editor header with action buttons */}
       <SectionEditorHeader
         schema={schema}
         isDirty={isDirty}
         isDraft={isDraft}
         isSaving={false}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        historyIndex={historyIndex}
+        historySize={historySize}
         disclosure={disclosure}
         showDisclosureMenu={showDisclosureMenu}
         onDisclosureToggle={() => setShowDisclosureMenu(v => !v)}
@@ -235,6 +277,8 @@ function EditorInner({
         onSave={() => void handleSave()}
         onDiscard={handleDiscard}
         onReset={() => void handleReset()}
+        onUndo={handleUndoAction}
+        onRedo={handleRedoAction}
       />
 
       {/* Unsaved changes banner */}
@@ -243,6 +287,9 @@ function EditorInner({
           <Warning size={14} className="text-amber-400 flex-shrink-0" />
           <span className="text-amber-400 text-xs font-mono">
             You have unsaved changes.
+          </span>
+          <span className="text-amber-600 text-[10px] font-mono ml-auto hidden sm:inline">
+            Ctrl+S to save · Ctrl+Z to undo
           </span>
         </div>
       )}
@@ -259,7 +306,7 @@ function EditorInner({
 
       {/* Validation errors summary */}
       {Object.keys(validationErrors).length > 0 && (
-        <div className="flex flex-col gap-1 px-4 py-3 bg-red-900/10 border-b border-red-700/20 flex-shrink-0">
+        <div className="flex flex-col gap-1 px-4 py-3 bg-red-900/10 border-b border-red-700/20 flex-shrink-0 admin-error-in">
           <span className="text-red-400 text-xs font-mono font-semibold">
             Validation errors:
           </span>
@@ -271,16 +318,31 @@ function EditorInner({
         </div>
       )}
 
-      {/* Schema-driven form */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <SectionEditorFactory
-          schema={schema}
-          data={effectiveData}
-          onChange={handleChange}
-          disclosure={disclosure}
-          errors={validationErrors}
+      {/* Empty state — no data yet */}
+      {isEmpty ? (
+        <EmptyState
+          label={schema.label}
+          description={schema.description}
+          icon={schema.icon}
+          fieldCount={schema.fields.length}
+          onStartEditing={() => {
+            // Prime the draft so the form appears
+            setDraftData(defaultData)
+            pushHistory(defaultData)
+          }}
         />
-      </div>
+      ) : (
+        /* Schema-driven form */
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <SectionEditorFactory
+            schema={schema}
+            data={effectiveData}
+            onChange={handleChange}
+            disclosure={disclosure}
+            errors={validationErrors}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -292,6 +354,10 @@ interface SectionEditorHeaderProps {
   isDirty: boolean
   isDraft: boolean
   isSaving: boolean
+  canUndo: boolean
+  canRedo: boolean
+  historyIndex: number
+  historySize: number
   disclosure: DisclosureLevel
   showDisclosureMenu: boolean
   onDisclosureToggle: () => void
@@ -299,12 +365,18 @@ interface SectionEditorHeaderProps {
   onSave: () => void
   onDiscard: () => void
   onReset: () => void
+  onUndo: () => void
+  onRedo: () => void
 }
 
 function SectionEditorHeader({
   schema,
   isDirty,
   isSaving,
+  canUndo,
+  canRedo,
+  historyIndex,
+  historySize,
   disclosure,
   showDisclosureMenu,
   onDisclosureToggle,
@@ -312,6 +384,8 @@ function SectionEditorHeader({
   onSave,
   onDiscard,
   onReset,
+  onUndo,
+  onRedo,
 }: SectionEditorHeaderProps) {
   return (
     <header className="flex items-center gap-3 px-4 py-3 border-b border-zinc-800 bg-[#111] flex-shrink-0">
@@ -370,7 +444,7 @@ function SectionEditorHeader({
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 flex-shrink-0">
+      <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Reset to defaults */}
         <button
           type="button"
@@ -396,6 +470,30 @@ function SectionEditorHeader({
           </button>
         )}
 
+        {/* Undo */}
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="flex items-center gap-1 p-1.5 rounded border border-zinc-800 text-zinc-600 hover:text-zinc-300 hover:border-zinc-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Undo (Ctrl+Z)"
+          title={canUndo ? `Undo — step ${historyIndex}/${historySize}` : 'Nothing to undo'}
+        >
+          <ArrowCounterClockwise size={12} />
+        </button>
+
+        {/* Redo */}
+        <button
+          type="button"
+          onClick={onRedo}
+          disabled={!canRedo}
+          className="flex items-center gap-1 p-1.5 rounded border border-zinc-800 text-zinc-600 hover:text-zinc-300 hover:border-zinc-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Redo (Ctrl+Shift+Z)"
+          title={canRedo ? 'Redo' : 'Nothing to redo'}
+        >
+          <ArrowClockwise size={12} />
+        </button>
+
         {/* Save */}
         <button
           type="button"
@@ -406,7 +504,8 @@ function SectionEditorHeader({
               ? 'bg-red-600 hover:bg-red-700 text-white border border-red-600'
               : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700'
           } disabled:opacity-50 disabled:cursor-not-allowed`}
-          aria-label="Save changes"
+          aria-label="Save changes (Ctrl+S)"
+          title="Save changes (Ctrl+S)"
         >
           <FloppyDisk size={13} />
           <span>{isSaving ? 'Saving…' : 'Save'}</span>
