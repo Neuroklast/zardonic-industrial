@@ -42,6 +42,13 @@ export interface SectionRegistryEntry {
   showInNav: boolean
   /** Config fields shown in the admin panel for this section */
   configFields: SectionConfigField[]
+  /**
+   * Optional reference to the `AdminSectionSchema.sectionId` in the AdminSchemaRegistry.
+   * When set, the admin UI can use `getSection(adminSchemaId)` to retrieve the full
+   * schema definition and render a schema-driven editor form via `SectionEditorFactory`.
+   * This bridges the frontend section registry with the Phase 1 admin schema layer.
+   */
+  adminSchemaId?: string
 }
 
 const FONT_SIZE_OPTIONS: SelectOption[] = [
@@ -59,6 +66,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'hero',
     icon: 'House',
     showInNav: false,
+    adminSchemaId: 'hero',
     configFields: [
       {
         path: 'siteData.artistName',
@@ -130,6 +138,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'biography',
     icon: 'FileText',
     showInNav: true,
+    adminSchemaId: 'bio',
     configFields: [
       { path: 'labels.biography', label: 'Section Heading', type: 'text', placeholder: 'BIOGRAPHY', disclosure: 'basic' },
       { path: 'siteData.bio', label: 'Bio Text', type: 'textarea', disclosure: 'basic', targetSiteData: true },
@@ -172,6 +181,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'shell',
     icon: 'User',
     showInNav: false,
+    adminSchemaId: 'shell',
     configFields: [
       { path: 'labels.shell', label: 'Section Heading', type: 'text', placeholder: 'SHELL', disclosure: 'basic' },
       { path: 'shell.name', label: 'Member Name', type: 'text', disclosure: 'basic' },
@@ -231,6 +241,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'creditHighlights',
     icon: 'Star',
     showInNav: false,
+    adminSchemaId: 'creditHighlights',
     configFields: [
       { path: 'labels.creditHighlights', label: 'Section Heading', type: 'text', placeholder: 'CREDITS', disclosure: 'basic' },
       {
@@ -256,6 +267,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'musicPlayer',
     icon: 'MusicNote',
     showInNav: true,
+    adminSchemaId: 'music',
     configFields: [
       { path: 'labels.musicPlayer', label: 'Section Heading', type: 'text', placeholder: 'MUSIC', disclosure: 'basic' },
       { path: 'labels.musicStreamLabel', label: 'Stream Label', type: 'text', disclosure: 'advanced' },
@@ -294,6 +306,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'upcomingGigs',
     icon: 'CalendarBlank',
     showInNav: true,
+    adminSchemaId: 'gigs',
     configFields: [
       { path: 'labels.upcomingGigs', label: 'Section Heading', type: 'text', placeholder: 'UPCOMING GIGS', disclosure: 'basic' },
       { path: 'labels.gigsNoShowsText', label: 'No Shows Text', type: 'text', disclosure: 'advanced' },
@@ -319,6 +332,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'releases',
     icon: 'Vinyl',
     showInNav: true,
+    adminSchemaId: 'releases',
     configFields: [
       { path: 'labels.releases', label: 'Section Heading', type: 'text', placeholder: 'RELEASES', disclosure: 'basic' },
       { path: 'labels.releaseShowType', label: 'Show Release Type Badge', type: 'toggle', disclosure: 'basic' },
@@ -412,6 +426,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'gallery',
     icon: 'Images',
     showInNav: true,
+    adminSchemaId: 'gallery',
     configFields: [
       { path: 'labels.gallery', label: 'Section Heading', type: 'text', placeholder: 'GALLERY', disclosure: 'basic' },
       {
@@ -474,6 +489,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'media',
     icon: 'FilmSlate',
     showInNav: false,
+    adminSchemaId: 'media',
     configFields: [
       { path: 'labels.media', label: 'Section Heading', type: 'text', placeholder: 'MEDIA', disclosure: 'basic' },
       {
@@ -506,6 +522,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'connect',
     icon: 'Share',
     showInNav: true,
+    adminSchemaId: 'connect',
     configFields: [
       { path: 'labels.connect', label: 'Section Heading', type: 'text', placeholder: 'CONNECT', disclosure: 'basic' },
       { path: 'siteData.social.instagram', label: 'Instagram', type: 'url', placeholder: 'https://instagram.com/...', disclosure: 'basic', targetSiteData: true },
@@ -532,6 +549,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'contact',
     icon: 'Envelope',
     showInNav: false,
+    adminSchemaId: 'contact',
     configFields: [
       { path: 'labels.contact', label: 'Section Heading', type: 'text', placeholder: 'CONTACT', disclosure: 'basic' },
       { path: 'contact.enabled', label: 'Enable Contact Section', type: 'toggle', defaultValue: true, disclosure: 'basic' },
@@ -559,6 +577,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
     labelKey: 'sponsoring',
     icon: 'Handshake',
     showInNav: false,
+    adminSchemaId: 'sponsoring',
     configFields: [
       { path: 'labels.sponsoring', label: 'Section Heading', type: 'text', placeholder: 'SPONSORING', disclosure: 'basic' },
       {
