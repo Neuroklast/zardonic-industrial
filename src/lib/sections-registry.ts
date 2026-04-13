@@ -153,7 +153,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
         max: 1,
         step: 0.05,
         defaultValue: 0,
-        description: 'Opacity of the section background (0 = transparent, 1 = fully opaque).',
+        description: 'Opacity of the section background (0 = transparent — default for bio, 1 = fully opaque card).',
         disclosure: 'advanced',
       },
       {
@@ -306,7 +306,7 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
         max: 1,
         step: 0.05,
         defaultValue: 0,
-        description: 'Opacity of the section background (0 = transparent, 1 = fully opaque).',
+        description: 'Opacity of the section background (0 = transparent — default for gigs, 1 = fully opaque card).',
         disclosure: 'advanced',
       },
       { path: 'labels.gigsFetchingText', label: 'Fetching Text', type: 'text', disclosure: 'expert' },
