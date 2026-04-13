@@ -132,8 +132,10 @@ describe('AdminDashboard', () => {
 
     fireEvent.change(searchInput, { target: { value: 'Test' } })
 
-    expect(screen.getByText('Test Section')).toBeInTheDocument()
-    expect(screen.queryByText('Another Section')).not.toBeInTheDocument()
+    // The search highlights matching text — match by the card button's aria-label
+    // since the text may be split across <span>/<mark> elements for highlighting.
+    expect(screen.getByRole('button', { name: /edit test section/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /edit another section/i })).not.toBeInTheDocument()
   })
 
   it('shows "no sections match" message when search has no results', () => {
@@ -203,7 +205,7 @@ describe('LivePreviewPane', () => {
       <LivePreviewPane sectionId="gigs" supportsPreview={false} />,
     )
     expect(screen.getByText('Preview not available')).toBeInTheDocument()
-    expect(screen.getByText(/This section does not support live preview/i)).toBeInTheDocument()
+    expect(screen.getByText(/Save your changes and visit the site/i)).toBeInTheDocument()
   })
 
   it('still renders the toolbar when supportsPreview is false', () => {
@@ -290,6 +292,7 @@ describe('AdminSectionEditor', () => {
 
     render(<AdminSectionEditor sectionId="save-test" />)
 
-    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument()
+    // Use the specific aria-label to avoid ambiguity with "Start editing <label>" buttons
+    expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument()
   })
 })

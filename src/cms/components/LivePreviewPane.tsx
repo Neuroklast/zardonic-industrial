@@ -19,7 +19,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { Desktop, DeviceTablet, DeviceMobile, ArrowsClockwise, ArrowSquareOut } from '@phosphor-icons/react'
+import { Desktop, DeviceTablet, DeviceMobile, ArrowsClockwise, ArrowSquareOut, MagnifyingGlassMinus, MagnifyingGlassPlus } from '@phosphor-icons/react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +59,9 @@ const DEVICE_OPTIONS: DeviceOption[] = [
   },
 ]
 
+const ZOOM_LEVELS = [50, 75, 100] as const
+type ZoomLevel = (typeof ZOOM_LEVELS)[number]
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 export interface LivePreviewPaneProps {
@@ -79,9 +82,15 @@ export interface LivePreviewPaneProps {
 export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: LivePreviewPaneProps) {
   const [device, setDevice] = useState<DeviceSize>('desktop')
   const [refreshKey, setRefreshKey] = useState(0)
+  const [zoom, setZoom] = useState<ZoomLevel>(100)
+  // Track the key of the iframe that has finished loading
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const currentDevice = DEVICE_OPTIONS.find(d => d.id === device) ?? DEVICE_OPTIONS[0]
+
+  const iframeKey = `${sectionId}:${refreshKey}`
+  const isIframeLoading = loadedKey !== iframeKey
 
   // Scroll iframe to the section being edited whenever sectionId changes
   useEffect(() => {
@@ -108,9 +117,19 @@ export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: 
     scrollToSection()
     const timer = setTimeout(scrollToSection, 800)
     return () => clearTimeout(timer)
-  }, [sectionId, refreshKey])
+  }, [sectionId, iframeKey])
 
   const handleRefresh = () => setRefreshKey(k => k + 1)
+
+  const cycleZoomDown = () => {
+    const idx = ZOOM_LEVELS.indexOf(zoom)
+    if (idx > 0) setZoom(ZOOM_LEVELS[idx - 1])
+  }
+
+  const cycleZoomUp = () => {
+    const idx = ZOOM_LEVELS.indexOf(zoom)
+    if (idx < ZOOM_LEVELS.length - 1) setZoom(ZOOM_LEVELS[idx + 1])
+  }
 
   const iframeSrc = `/?cms-preview=1#${sectionId}`
 
@@ -122,18 +141,30 @@ export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: 
       >
         <PreviewToolbar
           device={device}
+          zoom={zoom}
           onDeviceChange={setDevice}
           onRefresh={handleRefresh}
+          onZoomDown={cycleZoomDown}
+          onZoomUp={cycleZoomUp}
           iframeSrc={iframeSrc}
         />
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-8 text-center">
           <Desktop size={40} className="text-zinc-700" />
-          <div className="space-y-1">
+          <div className="space-y-2 max-w-xs">
             <p className="text-zinc-400 font-mono text-sm">Preview not available</p>
-            <p className="text-zinc-600 text-xs">
-              This section does not support live preview.
+            <p className="text-zinc-600 text-xs leading-relaxed">
+              This section doesn&apos;t support live preview. Save your changes and visit the site to see them.
             </p>
           </div>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-xs font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+          >
+            <ArrowSquareOut size={13} />
+            Open site in new tab
+          </a>
         </div>
       </aside>
     )
@@ -146,24 +177,44 @@ export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: 
     >
       <PreviewToolbar
         device={device}
+        zoom={zoom}
         onDeviceChange={setDevice}
         onRefresh={handleRefresh}
+        onZoomDown={cycleZoomDown}
+        onZoomUp={cycleZoomUp}
         iframeSrc={iframeSrc}
       />
 
       {/* Iframe container */}
-      <div className="flex-1 overflow-auto flex justify-center items-start bg-zinc-900/50 p-3">
+      <div className="flex-1 overflow-auto flex justify-center items-start bg-zinc-900/50 p-3 relative">
+        {/* Loading indicator overlay */}
+        {isIframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-10 pointer-events-none">
+            <div className="flex items-center gap-2 text-zinc-500 text-xs font-mono">
+              <div className="w-3 h-3 border-2 border-zinc-600 border-t-red-500 rounded-full animate-spin" />
+              Loading preview…
+            </div>
+          </div>
+        )}
+
         <div
           className="h-full bg-white rounded shadow-2xl overflow-hidden transition-all duration-300"
-          style={{ width: currentDevice.width, minWidth: device !== 'desktop' ? currentDevice.width : undefined, minHeight: '100%' }}
+          style={{
+            width: currentDevice.width,
+            minWidth: device !== 'desktop' ? currentDevice.width : undefined,
+            minHeight: '100%',
+            transformOrigin: 'top center',
+            transform: zoom !== 100 ? `scale(${zoom / 100})` : undefined,
+          }}
         >
           <iframe
             ref={iframeRef}
-            key={refreshKey}
+            key={iframeKey}
             src={iframeSrc}
             title={`Preview: ${sectionId}`}
             className="w-full border-0"
             style={{ minHeight: '600px', height: '100%' }}
+            onLoad={() => setLoadedKey(iframeKey)}
           />
         </div>
       </div>
@@ -175,12 +226,15 @@ export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: 
 
 interface PreviewToolbarProps {
   device: DeviceSize
+  zoom: ZoomLevel
   onDeviceChange: (d: DeviceSize) => void
   onRefresh: () => void
+  onZoomDown: () => void
+  onZoomUp: () => void
   iframeSrc: string
 }
 
-function PreviewToolbar({ device, onDeviceChange, onRefresh, iframeSrc }: PreviewToolbarProps) {
+function PreviewToolbar({ device, zoom, onDeviceChange, onRefresh, onZoomDown, onZoomUp, iframeSrc }: PreviewToolbarProps) {
   return (
     <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-800 bg-[#111] flex-shrink-0">
       {/* Device toggles */}
@@ -202,6 +256,33 @@ function PreviewToolbar({ device, onDeviceChange, onRefresh, iframeSrc }: Previe
             <span className="hidden sm:inline">{opt.label}</span>
           </button>
         ))}
+      </div>
+
+      {/* Zoom controls */}
+      <div className="flex items-center gap-0.5 bg-[#1a1a1a] rounded p-0.5">
+        <button
+          type="button"
+          onClick={onZoomDown}
+          disabled={zoom === ZOOM_LEVELS[0]}
+          className="p-1 rounded text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Zoom out"
+          title="Zoom out"
+        >
+          <MagnifyingGlassMinus size={13} />
+        </button>
+        <span className="text-[10px] font-mono text-zinc-600 tabular-nums px-1 min-w-[2.5rem] text-center">
+          {zoom}%
+        </span>
+        <button
+          type="button"
+          onClick={onZoomUp}
+          disabled={zoom === ZOOM_LEVELS[ZOOM_LEVELS.length - 1]}
+          className="p-1 rounded text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label="Zoom in"
+          title="Zoom in"
+        >
+          <MagnifyingGlassPlus size={13} />
+        </button>
       </div>
 
       <div className="flex-1" />

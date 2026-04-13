@@ -28,8 +28,8 @@
  * Note: This component does NOT handle save/publish — wire those in the parent.
  */
 
-import { useState, useCallback } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { ChevronDown } from 'lucide-react'
 import type { AdminSectionSchema, AdminFieldDefinition, AdminFieldGroup } from '@/lib/admin-section-schema'
 import {
   TextField,
@@ -295,53 +295,99 @@ interface FieldGroupPanelProps {
   errors: Record<string, string>
   onFieldChange: (key: string, val: unknown) => void
   disabled?: boolean
+  /** Force expanded state from parent (for expand/collapse all). */
+  forceExpanded?: boolean
 }
 
-function FieldGroupPanel({ group, fields, data, errors, onFieldChange, disabled }: FieldGroupPanelProps) {
-  const [expanded, setExpanded] = useState(group.defaultExpanded ?? false)
+function FieldGroupPanel({ group, fields, data, errors, onFieldChange, disabled, forceExpanded }: FieldGroupPanelProps) {
+  const [localExpanded, setLocalExpanded] = useState(group.defaultExpanded ?? false)
+
+  // When forceExpanded changes externally, sync the local state
+  const expanded = forceExpanded !== undefined ? forceExpanded : localExpanded
 
   if (fields.length === 0) return null
 
+  // Count configured (non-empty) fields for the summary
+  const configuredCount = fields.filter(f => {
+    const val = data[f.key]
+    return val !== undefined && val !== null && val !== '' &&
+      !(Array.isArray(val) && val.length === 0)
+  }).length
+
+  // Whether any field in this group has an error
+  const hasErrors = fields.some(f => Boolean(errors[f.key]))
+
   return (
-    <div className="border border-zinc-800 rounded overflow-hidden">
+    <div
+      className={`border rounded overflow-hidden transition-colors ${
+        hasErrors
+          ? 'border-red-700/50'
+          : 'border-zinc-800'
+      }`}
+    >
       {/* Group header */}
       <button
         type="button"
-        onClick={() => setExpanded(v => !v)}
-        className="flex items-center gap-2 w-full px-3 py-2 bg-zinc-900/60 hover:bg-zinc-900 transition-colors text-left"
+        onClick={() => setLocalExpanded(v => !v)}
+        className={`flex items-center gap-2 w-full px-3 py-2 transition-colors text-left ${
+          hasErrors
+            ? 'bg-red-900/10 hover:bg-red-900/20'
+            : 'bg-zinc-900/60 hover:bg-zinc-900'
+        }`}
         aria-expanded={expanded}
         aria-label={`${expanded ? 'Collapse' : 'Expand'} ${group.label}`}
       >
-        {expanded ? (
-          <ChevronDown size={12} className="text-zinc-600 shrink-0" />
-        ) : (
-          <ChevronRight size={12} className="text-zinc-600 shrink-0" />
-        )}
-        <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400">
+        <ChevronDown
+          size={12}
+          className={`text-zinc-600 shrink-0 transition-transform duration-200 ${
+            expanded ? '' : '-rotate-90'
+          }`}
+        />
+        <span className="text-[10px] font-mono uppercase tracking-widest text-zinc-400 flex-1">
           {group.label}
         </span>
-        {group.description && (
-          <span className="text-[10px] font-mono text-zinc-700 ml-auto truncate">
-            {group.description}
+
+        {/* Error indicator */}
+        {hasErrors && (
+          <span className="text-[9px] font-mono text-red-400 px-1.5 py-0.5 rounded bg-red-900/20 border border-red-700/30">
+            errors
+          </span>
+        )}
+
+        {/* Field count / configured summary */}
+        {!expanded && (
+          <span className="text-[9px] font-mono text-zinc-700 ml-1 hidden sm:inline">
+            {configuredCount}/{fields.length}
+          </span>
+        )}
+        {expanded && (
+          <span className="text-[9px] font-mono text-zinc-700 ml-1 hidden sm:inline">
+            {fields.length} {fields.length === 1 ? 'field' : 'fields'}
           </span>
         )}
       </button>
 
-      {/* Group fields */}
-      {expanded && (
-        <div className="px-3 py-3 space-y-4 bg-zinc-950/20">
-          {fields.map(fieldDef => (
-            <FieldRenderer
-              key={fieldDef.key}
-              fieldDef={fieldDef}
-              value={data[fieldDef.key]}
-              onChange={val => onFieldChange(fieldDef.key, val)}
-              error={errors[fieldDef.key]}
-              disabled={disabled}
-            />
-          ))}
+      {/* Group fields — smooth height animation via CSS grid trick */}
+      <div
+        className="cms-group-content"
+        data-open={String(expanded)}
+        aria-hidden={!expanded}
+      >
+        <div>
+          <div className="px-3 py-3 space-y-4 bg-zinc-950/20">
+            {fields.map(fieldDef => (
+              <FieldRenderer
+                key={fieldDef.key}
+                fieldDef={fieldDef}
+                value={data[fieldDef.key]}
+                onChange={val => onFieldChange(fieldDef.key, val)}
+                error={errors[fieldDef.key]}
+                disabled={disabled}
+              />
+            ))}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
@@ -355,6 +401,9 @@ function FieldGroupPanel({ group, fields, data, errors, onFieldChange, disabled 
  * - Fields without a matching group land in an implicit "General" group.
  * - Respects `disclosure` to hide advanced/expert fields at basic level.
  * - Runs inline validation on every change.
+ * - Provides expand/collapse all toggle.
+ * - Shows field count per group.
+ * - Highlights groups with validation errors.
  */
 export function SectionEditorFactory<T extends Record<string, unknown>>({
   schema,
@@ -366,6 +415,8 @@ export function SectionEditorFactory<T extends Record<string, unknown>>({
   className,
 }: SectionEditorFactoryProps<T>) {
   const [internalErrors, setInternalErrors] = useState<Record<string, string>>({})
+  // null = each group controls itself, true = all expanded, false = all collapsed
+  const [allExpanded, setAllExpanded] = useState<boolean | null>(null)
 
   const handleFieldChange = useCallback(
     (key: string, val: unknown) => {
@@ -391,29 +442,60 @@ export function SectionEditorFactory<T extends Record<string, unknown>>({
   const visibleFields = schema.fields.filter(f => isFieldVisible(f.disclosure, disclosure))
 
   // Resolve groups — use schema.fieldGroups if provided, else derive from field groups
-  const resolvedGroups: AdminFieldGroup[] = schema.fieldGroups && schema.fieldGroups.length > 0
-    ? schema.fieldGroups
-    : Array.from(
-        new Set(visibleFields.map(f => f.group ?? 'General')),
-      ).map((id, i) => ({
-        id,
-        label: id,
-        defaultExpanded: i === 0,
-      }))
+  const resolvedGroups: AdminFieldGroup[] = useMemo(
+    () =>
+      schema.fieldGroups && schema.fieldGroups.length > 0
+        ? schema.fieldGroups
+        : Array.from(new Set(visibleFields.map(f => f.group ?? 'General'))).map(
+            (id, i) => ({ id, label: id, defaultExpanded: i === 0 }),
+          ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [schema.fieldGroups, disclosure],
+  )
 
   // Fields without a matching group go into "General"
-  const groupedFields = (groupId: string): AdminFieldDefinition[] =>
-    visibleFields.filter(f => {
-      const fieldGroup = f.group ?? 'General'
-      return fieldGroup === groupId
-    })
+  const groupedFields = useCallback(
+    (groupId: string): AdminFieldDefinition[] =>
+      visibleFields.filter(f => (f.group ?? 'General') === groupId),
+    [visibleFields],
+  )
 
   // Ungrouped fields (no matching group in resolvedGroups)
   const allGroupIds = new Set(resolvedGroups.map(g => g.id))
-  const ungroupedFields = visibleFields.filter(f => !allGroupIds.has(f.group ?? 'General') && !f.group)
+  const ungroupedFields = visibleFields.filter(
+    f => !allGroupIds.has(f.group ?? 'General') && !f.group,
+  )
+
+  // Whether at least one group has visible fields
+  const hasGroups = resolvedGroups.some(g => groupedFields(g.id).length > 0)
 
   return (
     <div className={`space-y-2 ${className ?? ''}`} role="form" aria-label={`${schema.label} editor`}>
+      {/* Expand / Collapse All — only shown when there are multiple groups */}
+      {hasGroups && resolvedGroups.length > 1 && (
+        <div className="flex justify-end mb-1">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setAllExpanded(true)}
+              className="text-[10px] font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+              aria-label="Expand all field groups"
+            >
+              Expand all
+            </button>
+            <span className="text-zinc-800 text-[10px]">·</span>
+            <button
+              type="button"
+              onClick={() => setAllExpanded(false)}
+              className="text-[10px] font-mono text-zinc-600 hover:text-zinc-400 transition-colors"
+              aria-label="Collapse all field groups"
+            >
+              Collapse all
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Ungrouped fields rendered at the top */}
       {ungroupedFields.length > 0 && (
         <div className="space-y-4 px-1">
@@ -443,6 +525,7 @@ export function SectionEditorFactory<T extends Record<string, unknown>>({
             errors={mergedErrors}
             onFieldChange={handleFieldChange}
             disabled={disabled}
+            forceExpanded={allExpanded !== null ? allExpanded : undefined}
           />
         )
       })}
