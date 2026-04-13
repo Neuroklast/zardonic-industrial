@@ -1,3 +1,4 @@
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useCallback } from 'react'
 
@@ -123,7 +124,15 @@ export default function OverlayTransition({ show, onComplete }: OverlayTransitio
         setVisible(false)
         onComplete?.()
       }, TRANSITION_DURATION_MS)
-      return () => clearTimeout(timeout)
+      return () => {
+        clearTimeout(timeout)
+        // If `show` becomes false before the timeout fires (e.g., overlay was
+        // dismissed early), ensure the transition element is removed immediately
+        // rather than staying stuck on screen.
+        setVisible(false)
+      }
+    } else {
+      setVisible(false)
     }
   }, [show, onComplete])
 
@@ -133,7 +142,8 @@ export default function OverlayTransition({ show, onComplete }: OverlayTransitio
     <AnimatePresence>
       {visible && (
         <motion.div
-          className="fixed inset-0 z-[99999] pointer-events-none overflow-hidden"
+          className="fixed inset-0 pointer-events-none overflow-hidden"
+          style={{ zIndex: 'var(--z-transition-fx)' } as React.CSSProperties}
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.12 }}

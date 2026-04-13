@@ -345,7 +345,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
   }
 
   return (
-    <CyberModalBackdrop open={isOpen} zIndex="z-[10000]" bgClass="bg-background/95 backdrop-blur-sm">
+    <CyberModalBackdrop open={isOpen} bgClass="bg-background/95 backdrop-blur-sm">
           <motion.div
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}

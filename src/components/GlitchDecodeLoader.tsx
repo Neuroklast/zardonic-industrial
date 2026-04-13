@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useRef, memo } from 'react'
+import type React from 'react'
 import { cacheImage } from '@/lib/image-cache'
 import type { LoaderTexts, LoadingScreenMode } from '@/lib/types'
 
@@ -102,7 +103,8 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, filter: 'blur(8px)' }}
       transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-[9999] bg-background flex flex-col items-center justify-center overflow-hidden"
+      className="fixed inset-0 bg-background flex flex-col items-center justify-center overflow-hidden"
+      style={{ zIndex: 'var(--z-system)' } as React.CSSProperties}
     >
       {/* Scanline */}
       <div className="scanline-effect absolute inset-0 pointer-events-none" />

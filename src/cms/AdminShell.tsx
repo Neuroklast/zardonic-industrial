@@ -22,7 +22,7 @@
  *   Used by `CmsApp.tsx` as the top-level layout after authentication.
  */
 
-import { useState, useCallback, useEffect, lazy, Suspense } from 'react'
+import { useState, useCallback, lazy, Suspense } from 'react'
 import {
   List,
   X,
@@ -125,19 +125,17 @@ export function AdminShell({ logout }: AdminShellProps) {
 
   const handleNavigate = useCallback((newRoute: string) => {
     navigate(newRoute)
+    // Close preview when navigating away from a section editor so it
+    // doesn't stay open when the user lands on the dashboard or CMS routes.
+    if (!isAdminRoute(newRoute) || newRoute === 'admin' || newRoute === 'admin/dashboard') {
+      setPreviewOpen(false)
+    }
   }, [navigate])
 
   const handlePreviewDataChange = useCallback((_data: Record<string, unknown>) => {
     // Reserved for future real-time preview support.
     // The iframe-based LivePreviewPane currently shows the live published site.
   }, [])
-
-  // Close preview when navigating away from a section
-  useEffect(() => {
-    if (!activeSectionId) {
-      setPreviewOpen(false)
-    }
-  }, [activeSectionId])
 
   // Determine main content
   const showAdminSection = isAdminRoute(route) && activeSectionId !== null

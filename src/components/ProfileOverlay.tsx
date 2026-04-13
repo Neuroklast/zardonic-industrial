@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import type React from 'react'
 import { User } from '@phosphor-icons/react'
 import CyberCloseButton from '@/components/CyberCloseButton'
 import ConsoleLines from '@/components/ConsoleLines'
@@ -83,7 +84,8 @@ export default function ProfileOverlay({ name, photoUrl, resolvePhoto, dataLines
   return (
     <motion.div
       key="profile-overlay"
-      className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md overflow-y-auto flex items-center justify-center p-4 md:p-6"
+      className="fixed inset-0 bg-black/95 backdrop-blur-md overflow-y-auto flex items-center justify-center p-4 md:p-6"
+      style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

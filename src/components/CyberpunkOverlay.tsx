@@ -38,16 +38,16 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
   const [progressiveMode, setProgressiveMode] = useState(() => getRandomProgressiveMode())
   const decorativeTexts = adminSettings?.decorative
 
-  // Compute the animation synchronously during render so Framer Motion receives the
-  // correct initial/animate values on the very first render where motion.div mounts.
-  // useMemo recalculates whenever `overlay` changes (new overlay = new animation).
+  // Pick a new random animation each time the overlay opens (overlay goes null→truthy).
+  // NOTE: `overlay` is intentionally in the dep array even though getRandomOverlayAnimation()
+  // does not close over it — we rely on the reference change to trigger a new random pick.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const anim = useMemo(() => getRandomOverlayAnimation(), [overlay])
   const systemLabel = decorativeTexts?.overlaySystemLabel ?? `// ${artistName ? `${artistName.toUpperCase()}.NET` : 'SYSTEM.INTERFACE'} // v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}`
 
   useEffect(() => {
     if (!overlay) return
     // Pick a new random progressive content reveal mode
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setProgressiveMode(getRandomProgressiveMode(adminSettings?.progressiveOverlayModes))
 
     setOverlayPhase('loading')
@@ -75,7 +75,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
       clearTimeout(glitchTimer)
       clearTimeout(revealTimer)
     }
-  }, [overlay])
+  }, [overlay, adminSettings?.progressiveOverlayModes])
 
   return (
     <AnimatePresence>
@@ -87,7 +87,8 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
             animate={anim.backdrop.animate}
             exit={anim.backdrop.exit}
             transition={anim.backdrop.transition ?? { duration: 0.3 }}
-            className="fixed inset-0 bg-black/90 z-[100] backdrop-blur-sm cyberpunk-overlay-bg"
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm cyberpunk-overlay-bg"
+            style={{ zIndex: 'var(--z-modal-backdrop)' } as React.CSSProperties}
             onClick={onClose}
           />
 
@@ -97,8 +98,8 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
             animate={anim.modal.animate}
             exit={anim.modal.exit}
             transition={anim.modal.transition ?? { duration: 0.3 }}
-            className="fixed inset-0 z-[101] flex items-center justify-center p-4 md:p-8 pointer-events-none"
-            style={{ perspective: '1000px' }}
+            className="fixed inset-0 flex items-center justify-center p-4 md:p-8 pointer-events-none"
+            style={{ zIndex: 'var(--z-overlay)', perspective: '1000px' } as React.CSSProperties}
           >
             <motion.div
               initial={{ boxShadow: '0 0 0px rgba(180, 50, 50, 0)' }}

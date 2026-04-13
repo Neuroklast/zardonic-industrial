@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { DownloadSimple, FolderOpen, File, X, Plus, Trash, PencilSimple, Check, ArrowSquareOut, MusicNote, YoutubeLogo } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -81,7 +82,8 @@ function MediaOverlay({ file, onClose }: { file: MediaFile; onClose: () => void 
 
   return (
     <motion.div
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -202,7 +204,8 @@ function EditPanel({
 
   return (
     <motion.div
-      className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+      style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -397,7 +400,8 @@ export function MediaBrowser({ mediaFiles = [], editMode = false, onUpdate, isOv
   if (isOverlay) {
     return (
       <motion.div
-        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+        style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}

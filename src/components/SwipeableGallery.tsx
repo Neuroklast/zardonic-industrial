@@ -1,4 +1,5 @@
 import { useState, useCallback, memo } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence, PanInfo } from 'framer-motion'
 import { CaretLeft, CaretRight, X } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -41,11 +42,19 @@ export const SwipeableGallery = memo(function SwipeableGallery({ images, initial
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/95 z-[100] backdrop-blur-sm cyberpunk-overlay-bg"
+        className="fixed inset-0 bg-black/95 backdrop-blur-sm cyberpunk-overlay-bg"
+        style={{ zIndex: 'var(--z-modal-backdrop)' } as React.CSSProperties}
         onClick={onClose}
       />
 
-      <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+      {/* Content container: motion.div ensures exit animation plays when gallery closes */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 flex items-center justify-center p-4"
+        style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -105,7 +114,7 @@ export const SwipeableGallery = memo(function SwipeableGallery({ images, initial
             />
           ))}
         </div>
-      </div>
+      </motion.div>
     </>
   )
 })

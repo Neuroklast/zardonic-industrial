@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trash, Eye, CursorClick, X, ArrowSquareOut, DeviceMobile, Desktop, Globe, Browser } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
@@ -295,7 +296,8 @@ export default function StatsDashboard({ open, onClose }: StatsDashboardProps) {
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[10000] bg-background/95 backdrop-blur-sm flex items-start justify-center p-4 pt-8 overflow-y-auto font-mono"
+          className="fixed inset-0 bg-background/95 backdrop-blur-sm flex items-start justify-center p-4 pt-8 overflow-y-auto font-mono"
+          style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

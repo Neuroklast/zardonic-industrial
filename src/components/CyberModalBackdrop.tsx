@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 /**
@@ -13,15 +14,19 @@ import { motion, AnimatePresence } from 'framer-motion'
  *    its own entry/exit animation, max-width, flex-col layout, etc.).
  *
  * Usage:
- *   <CyberModalBackdrop open={open} zIndex="z-[9999]">
+ *   <CyberModalBackdrop open={open}>
  *     <motion.div className="w-full max-w-5xl flex flex-col …">…</motion.div>
  *   </CyberModalBackdrop>
  */
 interface CyberModalBackdropProps {
   open: boolean
   children: ReactNode
-  /** Tailwind z-index class, e.g. "z-[9999]". Defaults to "z-[9999]". */
-  zIndex?: string
+  /**
+   * CSS z-index value (CSS custom property string or number).
+   * Defaults to `var(--z-overlay)` — use `var(--z-system)` for UI that must
+   * sit above regular overlays (e.g. system-level dialogs).
+   */
+  zIndexStyle?: React.CSSProperties['zIndex']
   /** Tailwind background + backdrop classes. Defaults to "bg-black/95 backdrop-blur-md". */
   bgClass?: string
 }
@@ -29,18 +34,18 @@ interface CyberModalBackdropProps {
 export default function CyberModalBackdrop({
   open,
   children,
-  zIndex = 'z-[9999]',
+  zIndexStyle = 'var(--z-overlay)',
   bgClass = 'bg-black/95 backdrop-blur-md',
 }: CyberModalBackdropProps) {
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className={`fixed inset-0 ${zIndex} ${bgClass} overflow-y-auto`}
+          className={`fixed inset-0 ${bgClass} overflow-y-auto`}
+          style={{ zIndex: zIndexStyle, boxShadow: 'inset 0 0 80px var(--modal-glow-color, transparent)' } as React.CSSProperties}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          style={{ boxShadow: 'inset 0 0 80px var(--modal-glow-color, transparent)' }}
         >
           <div className="min-h-full flex items-center justify-center p-4 md:p-6">
             {children}
