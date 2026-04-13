@@ -23,8 +23,8 @@ export function parseTrackTitle(title: string): { cleanTitle: string; extractedA
 
   // Patterns to strip (in order). Each captures the artists string in group 1.
   const patterns: RegExp[] = [
-    // [feat. X], [ft. X], [featuring X]
-    /\[\s*(?:feat\.|ft\.|featuring)\s+([^\]]+)\]/gi,
+    // [feat. X], [ft. X], [featuring X], [with X]
+    /\[\s*(?:feat\.|ft\.|featuring|with)\s+([^\]]+)\]/gi,
     // (feat. X), (ft. X), (featuring X), (with X)
     /\(\s*(?:feat\.|ft\.|featuring|with)\s+([^)]+)\)/gi,
     // trailing: feat. X / ft. X / featuring X (not inside brackets)
