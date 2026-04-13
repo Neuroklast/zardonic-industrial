@@ -8,6 +8,7 @@ import { fullReleaseToStored, mergeFullReleaseIntoStored } from '@/lib/release-a
 import { useAppTheme } from '@/hooks/use-app-theme'
 import { useSiteDataSync } from '@/hooks/use-site-data-sync'
 import { useAppState } from '@/hooks/use-app-state'
+import { useSound } from '@/hooks/use-sound'
 import { LocaleProvider } from '@/contexts/LocaleContext'
 import type { SiteData, CyberpunkOverlayState } from '@/lib/app-types'
 import { DEFAULT_SITE_DATA } from '@/lib/app-types'
@@ -94,6 +95,7 @@ function App() {
   } = useAppState()
 
   useAppTheme(adminSettings)
+  useSound(adminSettings?.sound)
   const { iTunesFetching, bandsintownFetching, hasAutoLoaded, iTunesProgress, handleFetchBandsintownEvents, handleFetchITunesReleases } = useSiteDataSync(siteData, isSiteDataLoaded, refetchSiteData, isOwner)
   useDocumentTitle(siteData?.artistName ?? '')
 
@@ -491,6 +493,7 @@ function App() {
         headingPrefix={sectionLabels.headingPrefix}
         adminSettings={adminSettings}
         onContactClick={() => setCyberpunkOverlay({ type: 'contact' })}
+        setAdminSettings={editMode ? handleUpdateAdminSettings : undefined}
       />
       </Suspense>
       </SectionErrorBoundary>
