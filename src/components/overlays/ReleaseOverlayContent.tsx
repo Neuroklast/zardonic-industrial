@@ -1,10 +1,10 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { SpotifyLogo, YoutubeLogo, ApplePodcastsLogo } from '@phosphor-icons/react'
 import type { Release } from '@/lib/app-types'
 import type { SectionLabels } from '@/lib/types'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { parseTrackTitle } from '@/lib/track-parser'
+import { displayReleaseType } from '@/lib/release-type'
 
 interface ReleaseOverlayContentProps {
   data: Release
@@ -116,7 +116,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
     >
       <div className="grid md:grid-cols-[300px_1fr] gap-8">
         <motion.div
-          className="aspect-square bg-muted relative cyber-card"
+          className="aspect-square bg-muted relative cyber-card border border-primary/30"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -161,7 +161,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             )}
             {showType && data.type && (
               <span className="inline-block mt-1 px-2 py-0.5 text-xs font-mono uppercase tracking-wider bg-primary/10 text-primary border border-primary/20">
-                {data.type}
+                {displayReleaseType(data.type)}
               </span>
             )}
           </motion.div>
@@ -188,7 +188,6 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               {getLink('spotify') && (
                 <Button asChild variant="outline" className="font-mono">
                   <a href={getLink('spotify')} target="_blank" rel="noopener noreferrer">
-                    <SpotifyLogo className="w-5 h-5 mr-2" weight="fill" />
                     <span className="hover-chromatic">Spotify</span>
                   </a>
                 </Button>
@@ -196,7 +195,6 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               {getLink('youtube') && (
                 <Button asChild variant="outline" className="font-mono">
                   <a href={getLink('youtube')} target="_blank" rel="noopener noreferrer">
-                    <YoutubeLogo className="w-5 h-5 mr-2" weight="fill" />
                     <span className="hover-chromatic">YouTube</span>
                   </a>
                 </Button>
@@ -218,7 +216,6 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               {getLink('appleMusic') && (
                 <Button asChild variant="outline" className="font-mono">
                   <a href={getLink('appleMusic')} target="_blank" rel="noopener noreferrer">
-                    <ApplePodcastsLogo className="w-5 h-5 mr-2" weight="fill" />
                     <span className="hover-chromatic">Apple Music</span>
                   </a>
                 </Button>
@@ -292,7 +289,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
                           <span className="flex flex-wrap gap-x-0.5 text-xs mt-0.5">
                             {artistLine.map((artist, ai) => (
                               <span key={artist}>
-                                {ai === 0 ? (
+                                {artist.trim().toLowerCase() === mainArtistName.trim().toLowerCase() ? (
                                   <span className="text-primary font-semibold">{artist}</span>
                                 ) : (
                                   <span className="text-muted-foreground">{artist}</span>

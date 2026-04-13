@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card'
 import { ArrowsClockwise, PencilSimple, Trash } from '@phosphor-icons/react'
 import type { Release } from '@/lib/app-types'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { displayReleaseType } from '@/lib/release-type'
 
 export type ReleaseCardVariant = 'default' | 'square-minimal' | 'square-titled' | 'compact' | 'square-cover'
 export type ReleaseHoverEffect = 'default' | 'zoom' | 'glow' | 'lift' | 'scan' | 'chromatic' | 'flip'
@@ -280,7 +281,7 @@ function CompactCard({
         <div className="px-3 py-2 flex flex-col justify-center min-w-0">
           <h3 className="font-bold uppercase text-xs truncate font-mono leading-tight">{release.title}</h3>
           <p className="text-xs text-muted-foreground font-mono">{release.year}</p>
-          {release.type && <p className="text-xs text-primary/70 font-mono uppercase">{release.type}</p>}
+          {release.type && <p className="text-xs text-primary/70 font-mono uppercase">{displayReleaseType(release.type)}</p>}
         </div>
       </div>
     </Card>
@@ -383,7 +384,7 @@ function FlipCard({
           <h3 className="font-bold uppercase text-sm font-mono leading-tight mb-1">{release.title}</h3>
           <p className="font-mono text-xs text-primary">{release.year}</p>
           {release.type && (
-            <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{release.type}</p>
+            <p className="font-mono text-xs text-muted-foreground uppercase tracking-wider">{displayReleaseType(release.type)}</p>
           )}
           {streamingPlatforms.length > 0 && (
             <div className="mt-2">
