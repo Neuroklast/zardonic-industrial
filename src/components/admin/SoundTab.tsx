@@ -102,7 +102,7 @@ export default function SoundTab({ adminSettings, setAdminSettings }: SoundTabPr
           <Input
             value={data.loadingFinishedSound ?? ''}
             onChange={(e) => setData({ ...data, loadingFinishedSound: e.target.value || undefined })}
-            placeholder="Default: laodingfinished.mp3"
+            placeholder="Default: loadingfinished.mp3"
             className="font-mono text-xs"
           />
           <p className="text-[10px] text-muted-foreground font-mono">Plays when page finishes loading</p>
