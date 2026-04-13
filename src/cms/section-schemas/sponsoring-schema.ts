@@ -20,7 +20,7 @@ interface SponsoringSectionData {
   headingVisible: boolean
 }
 
-const sponoringSectionSchema: AdminSectionSchema<SponsoringSectionData> = {
+const sponsoringSectionSchema: AdminSectionSchema<SponsoringSectionData> = {
   sectionId: 'sponsoring',
   label: 'Sponsoring',
   icon: 'Star',
@@ -108,6 +108,6 @@ const sponoringSectionSchema: AdminSectionSchema<SponsoringSectionData> = {
   }),
 }
 
-registerAdminSection(sponoringSectionSchema)
+registerAdminSection(sponsoringSectionSchema)
 
-export { sponoringSectionSchema }
+export { sponsoringSectionSchema }
