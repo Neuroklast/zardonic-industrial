@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { Play, Warning } from '@phosphor-icons/react'
+import { cn } from '@/lib/utils'
 
 declare global {
   interface Window {
@@ -203,7 +204,7 @@ export function SpotifyEmbed({
   }
 
   return (
-    <div className={`relative ${className ?? ''}`} style={{ width, height }}>
+    <div className={cn('relative', className)} style={{ width, height }}>
       {/* Skeleton loader shown until the Spotify controller fires its callback */}
       {!isPlayerReady && (
         <div

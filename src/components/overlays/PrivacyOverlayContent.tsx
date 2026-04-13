@@ -119,7 +119,7 @@ export function PrivacyOverlayContent({ adminSettings, artistName, decorativeTex
                 <div className="space-y-3 font-mono text-sm leading-relaxed">
                   <p className="font-bold text-primary">Image Proxy Service</p>
                   <p>To improve loading speed and visual quality, images on this website are delivered through the image CDN proxy service <strong>wsrv.nl</strong> (Images.weserv.nl). When your browser loads an image, a request is sent to wsrv.nl servers, which may process and temporarily log your IP address to deliver the image content.</p>
-                  <p>wsrv.nl is a free, open-source image proxy service. No personal tracking is performed and no cookies are set by this service. For more information, see: <a href="https://wsrv.nl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://wsrv.nl</a></p>
+                  <p>wsrv.nl is a free, open-source image proxy service. No personal tracking is performed and no cookies are set by this service. For more information, see: <a href="https://wsrv.nl" target="_blank" rel="noopener noreferrer" aria-label="wsrv.nl information (opens in new tab)" className="text-primary hover:underline">https://wsrv.nl</a></p>
                   <p>The use of wsrv.nl is based on Art. 6(1)(f) GDPR. We have a legitimate interest in fast and reliable image delivery. No data is transferred to third parties for marketing purposes.</p>
                 </div>
               </motion.div>
@@ -129,7 +129,7 @@ export function PrivacyOverlayContent({ adminSettings, artistName, decorativeTex
                 <div className="space-y-3 font-mono text-sm leading-relaxed">
                   <p className="font-bold text-primary">Spotify Player</p>
                   <p>This website may embed a Spotify music player. The Spotify player is NOT loaded automatically — it only loads after you explicitly click the &quot;Load Spotify Player&quot; button. By doing so, you provide your consent for external content to be loaded from Spotify&apos;s servers.</p>
-                  <p>When you activate the Spotify player, your IP address and browser data are transmitted to Spotify AB, Regeringsgatan 19, SE-111 53 Stockholm, Sweden. This may also involve the transfer of data to the USA. The legal basis for this processing is Art. 6(1)(a) GDPR (your explicit consent via the two-click method). For Spotify&apos;s privacy policy, see: <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.spotify.com/legal/privacy-policy/</a></p>
+                  <p>When you activate the Spotify player, your IP address and browser data are transmitted to Spotify AB, Regeringsgatan 19, SE-111 53 Stockholm, Sweden. This may also involve the transfer of data to the USA. The legal basis for this processing is Art. 6(1)(a) GDPR (your explicit consent via the two-click method). For Spotify&apos;s privacy policy, see: <a href="https://www.spotify.com/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" aria-label="Spotify Privacy Policy (opens in new tab)" className="text-primary hover:underline">https://www.spotify.com/legal/privacy-policy/</a></p>
                 </div>
               </motion.div>
             </div>
@@ -188,7 +188,7 @@ export function PrivacyOverlayContent({ adminSettings, artistName, decorativeTex
                 <div className="space-y-3 font-mono text-sm leading-relaxed">
                   <p className="font-bold text-primary">Bild-Proxy-Dienst</p>
                   <p>Um die Ladegeschwindigkeit und visuelle Qualität zu verbessern, werden Bilder auf dieser Website über den Bild-CDN-Proxydienst <strong>wsrv.nl</strong> (Images.weserv.nl) ausgeliefert. Wenn Ihr Browser ein Bild lädt, wird eine Anfrage an die Server von wsrv.nl gesendet, die Ihre IP-Adresse zur Auslieferung des Bildinhalts verarbeiten und vorübergehend protokollieren können.</p>
-                  <p>wsrv.nl ist ein kostenloser, quelloffener Bild-Proxy-Dienst. Es wird kein personenbezogenes Tracking durchgeführt und vom Dienst werden keine Cookies gesetzt. Weitere Informationen finden Sie unter: <a href="https://wsrv.nl" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://wsrv.nl</a></p>
+                  <p>wsrv.nl ist ein kostenloser, quelloffener Bild-Proxy-Dienst. Es wird kein personenbezogenes Tracking durchgeführt und vom Dienst werden keine Cookies gesetzt. Weitere Informationen finden Sie unter: <a href="https://wsrv.nl" target="_blank" rel="noopener noreferrer" aria-label="wsrv.nl Informationen (öffnet in neuem Tab)" className="text-primary hover:underline">https://wsrv.nl</a></p>
                   <p>Die Nutzung von wsrv.nl erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO. Wir haben ein berechtigtes Interesse an einer schnellen und zuverlässigen Bildauslieferung. Es erfolgt keine Weitergabe von Daten zu Marketingzwecken an Dritte.</p>
                 </div>
               </motion.div>
@@ -198,7 +198,7 @@ export function PrivacyOverlayContent({ adminSettings, artistName, decorativeTex
                 <div className="space-y-3 font-mono text-sm leading-relaxed">
                   <p className="font-bold text-primary">Spotify-Player</p>
                   <p>Diese Website kann einen eingebetteten Spotify-Musikplayer enthalten. Der Spotify-Player wird NICHT automatisch geladen – er wird erst nach Ihrem ausdrücklichen Klick auf die Schaltfläche „Spotify Player laden" aktiviert. Damit erteilen Sie Ihre Einwilligung zum Laden externer Inhalte von den Spotify-Servern.</p>
-                  <p>Wenn Sie den Spotify-Player aktivieren, werden Ihre IP-Adresse und Browser-Daten an die Spotify AB, Regeringsgatan 19, SE-111 53 Stockholm, Schweden, übermittelt. Dies kann auch eine Übermittlung von Daten in die USA beinhalten. Rechtsgrundlage für diese Verarbeitung ist Art. 6 Abs. 1 lit. a DSGVO (Ihre ausdrückliche Einwilligung über das Zwei-Klick-Verfahren). Zur Datenschutzerklärung von Spotify: <a href="https://www.spotify.com/de/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">https://www.spotify.com/de/legal/privacy-policy/</a></p>
+                  <p>Wenn Sie den Spotify-Player aktivieren, werden Ihre IP-Adresse und Browser-Daten an die Spotify AB, Regeringsgatan 19, SE-111 53 Stockholm, Schweden, übermittelt. Dies kann auch eine Übermittlung von Daten in die USA beinhalten. Rechtsgrundlage für diese Verarbeitung ist Art. 6 Abs. 1 lit. a DSGVO (Ihre ausdrückliche Einwilligung über das Zwei-Klick-Verfahren). Zur Datenschutzerklärung von Spotify: <a href="https://www.spotify.com/de/legal/privacy-policy/" target="_blank" rel="noopener noreferrer" aria-label="Spotify Datenschutzerklärung (öffnet in neuem Tab)" className="text-primary hover:underline">https://www.spotify.com/de/legal/privacy-policy/</a></p>
                 </div>
               </motion.div>
             </div>
