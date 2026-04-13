@@ -25,6 +25,7 @@ import AppearanceTab from '@/components/admin/AppearanceTab'
 import BackgroundTab from '@/components/admin/BackgroundTab'
 import LayoutTab from '@/components/admin/LayoutTab'
 import SectionsTab from '@/components/admin/SectionsTab'
+import SoundTab from '@/components/admin/SoundTab'
 import SectionPanel from '@/components/admin/SectionPanel'
 import OverviewTab from '@/components/admin/OverviewTab'
 import SecurityTab from '@/components/admin/SecurityTab'
@@ -303,6 +304,7 @@ export default function AdminPanel({
         { id: 'colors', label: 'Appearance' },
         { id: 'background', label: 'Background' },
         { id: 'layout', label: 'Layout' },
+        { id: 'sound', label: 'Sound' },
       ],
     },
     {
@@ -377,6 +379,14 @@ export default function AdminPanel({
             adminSettings={adminSettings}
             setAdminSettings={setAdminSettingsWithUndo}
             disclosureLevel={disclosureLevel}
+          />
+        )
+      }
+      if (page === 'sound') {
+        return (
+          <SoundTab
+            adminSettings={adminSettings}
+            setAdminSettings={setAdminSettingsWithUndo}
           />
         )
       }

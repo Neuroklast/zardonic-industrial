@@ -11,6 +11,7 @@ import {
   OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
 import { getRandomOverlayAnimation, getAllOverlayAnimations } from '@/lib/overlay-animations'
+import { getRandomProgressiveMode } from '@/lib/progressive-overlay-modes'
 import { ImpressumOverlayContent } from '@/components/overlays/ImpressumOverlayContent'
 import { PrivacyOverlayContent } from '@/components/overlays/PrivacyOverlayContent'
 import { ContactOverlayContent } from '@/components/overlays/ContactOverlayContent'
@@ -35,6 +36,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
   const [overlayPhase, setOverlayPhase] = useState<'loading' | 'glitch' | 'revealed'>('loading')
   const [loadingText, setLoadingText] = useState(OVERLAY_LOADING_TEXTS[0])
   const [anim, setAnim] = useState(() => getAllOverlayAnimations()[0])
+  const [progressiveMode, setProgressiveMode] = useState(() => getRandomProgressiveMode())
   const decorativeTexts = adminSettings?.decorative
   const systemLabel = decorativeTexts?.overlaySystemLabel ?? `// ${artistName ? `${artistName.toUpperCase()}.NET` : 'SYSTEM.INTERFACE'} // v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}`
 
@@ -43,6 +45,9 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
     // Pick a new random animation each time an overlay opens
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAnim(getRandomOverlayAnimation())
+    // Pick a new random progressive content reveal mode
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setProgressiveMode(getRandomProgressiveMode(adminSettings?.progressiveOverlayModes))
 
     setOverlayPhase('loading')
     setLoadingText(OVERLAY_LOADING_TEXTS[0])
@@ -155,7 +160,13 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
 
                     <AnimatePresence mode="wait">
                       {overlayPhase === 'revealed' && (
-                        <>
+                        <motion.div
+                          key={overlay.type}
+                          className={progressiveMode.className}
+                          initial={progressiveMode.containerVariants.loading}
+                          animate={progressiveMode.containerVariants.loaded}
+                          transition={progressiveMode.transition}
+                        >
                           {overlay.type === 'impressum' && (
                             <ImpressumOverlayContent adminSettings={adminSettings} onClose={onClose} decorativeTexts={decorativeTexts} />
                           )}
@@ -179,7 +190,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                           {overlay.type === 'release' && overlay.data && (
                             <ReleaseOverlayContent data={overlay.data} sectionLabels={adminSettings?.labels} mainArtistName={artistName} />
                           )}
-                        </>
+                        </motion.div>
                       )}
                     </AnimatePresence>
                   </div>

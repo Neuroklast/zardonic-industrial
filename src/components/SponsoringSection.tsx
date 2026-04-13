@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash } from '@phosphor-icons/react'
+import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown } from '@phosphor-icons/react'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
@@ -90,6 +90,16 @@ export default function SponsoringSection({
       ...prev,
       sponsoring: (prev.sponsoring ?? []).map((c, i) => i === idx ? { ...c, [field]: value } : c),
     }))
+  }
+
+  const moveLogo = (idx: number, dir: 'up' | 'down') => {
+    onUpdateSiteData?.((prev) => {
+      const arr = [...(prev.sponsoring ?? [])]
+      const target = dir === 'up' ? idx - 1 : idx + 1
+      if (target < 0 || target >= arr.length) return prev
+      ;[arr[idx], arr[target]] = [arr[target], arr[idx]]
+      return { ...prev, sponsoring: arr }
+    })
   }
 
   return (
@@ -184,54 +194,59 @@ export default function SponsoringSection({
           )}
 
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60 hover:opacity-90 transition-opacity duration-500">
-            {(() => {
-              const filterBase = `brightness(0) invert(1) brightness(${logoBrightness})`
-              const filterHover = `brightness(0) invert(1) brightness(${logoBrightness}) drop-shadow(2px 0 0 rgba(255,0,100,0.5)) drop-shadow(-2px 0 0 rgba(0,255,255,0.5))`
-              return logos.filter(logo => logo.src).map((logo, index) => {
-                const imgMotionProps = {
-                  initial: { opacity: 0, y: 10, filter: filterBase },
-                  whileInView: { opacity: 0.7, y: 0, filter: filterBase },
-                  viewport: { once: true } as const,
-                  transition: { duration: 0.5, delay: index * 0.1 },
-                  whileHover: { opacity: 1, filter: filterHover },
-                  loading: 'lazy' as const,
-                  src: toDirectImageUrl(logo.src, { w: 300 }) || logo.src,
-                  alt: logo.alt,
-                  className: 'h-10 md:h-14 w-auto object-contain',
-                }
-                return (
-                <div key={`sponsor-${index}`} className="relative group flex flex-col items-center gap-1">
-                  {logo.url ? (
-                    <a
-                      href={logo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={logo.alt || logo.caption || 'Sponsor'}
-                      className="block"
-                    >
-                      <motion.img {...imgMotionProps} className="h-10 md:h-14 w-auto object-contain cursor-pointer" />
-                    </a>
-                  ) : (
-                    <motion.img {...imgMotionProps} />
-                  )}
-                  {logo.caption && (
-                    <span className="font-mono text-[10px] text-muted-foreground/70 text-center leading-tight max-w-[120px]">
-                      {logo.caption}
-                    </span>
-                  )}
-                  {editMode && (
-                    <button
-                      onClick={() => removeLogo(index)}
-                      className="absolute -top-2 -right-2 bg-destructive/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label="Remove sponsor logo"
-                    >
-                      <Trash size={10} className="text-white" />
-                    </button>
-                  )}
-                </div>
-                )
-              })
-            })()}
+            {logos.filter(logo => logo.src).map((logo, index) => (
+              <div key={`sponsor-${index}`} className="relative group flex flex-col items-center gap-1">
+                {logo.url ? (
+                  <a
+                    href={logo.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={logo.alt || logo.caption || 'Sponsor'}
+                    className="block"
+                  >
+                    <motion.img
+                      src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
+                      alt={logo.alt}
+                      className="logo-white h-10 md:h-14 w-auto object-contain cursor-pointer"
+                      style={{ '--logo-brightness': logoBrightness } as React.CSSProperties}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 0.7, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ opacity: 1 }}
+                      loading="lazy"
+                    />
+                  </a>
+                ) : (
+                  <motion.img
+                    src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
+                    alt={logo.alt}
+                    className="logo-white h-10 md:h-14 w-auto object-contain"
+                    style={{ '--logo-brightness': logoBrightness } as React.CSSProperties}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 0.7, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ opacity: 1 }}
+                    loading="lazy"
+                  />
+                )}
+                {logo.caption && (
+                  <span className="font-mono text-[10px] text-muted-foreground/70 text-center leading-tight max-w-[120px]">
+                    {logo.caption}
+                  </span>
+                )}
+                {editMode && (
+                  <button
+                    onClick={() => removeLogo(index)}
+                    className="absolute -top-2 -right-2 bg-destructive/80 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Remove sponsor logo"
+                  >
+                    <Trash size={10} className="text-white" />
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
 
           {/* Edit mode: show all entries (including those without src) */}
@@ -240,6 +255,24 @@ export default function SponsoringSection({
               {logos.map((logo, idx) => (
                 <div key={idx} className="space-y-1 border border-primary/10 p-2 rounded">
                   <div className="flex gap-2 items-center">
+                    <div className="flex flex-col gap-0.5 shrink-0">
+                      <button
+                        onClick={() => moveLogo(idx, 'up')}
+                        disabled={idx === 0}
+                        className="text-muted-foreground/50 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        aria-label={`Move sponsor ${idx + 1} up`}
+                      >
+                        <ArrowUp size={12} />
+                      </button>
+                      <button
+                        onClick={() => moveLogo(idx, 'down')}
+                        disabled={idx === logos.length - 1}
+                        className="text-muted-foreground/50 hover:text-primary disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+                        aria-label={`Move sponsor ${idx + 1} down`}
+                      >
+                        <ArrowDown size={12} />
+                      </button>
+                    </div>
                     <input
                       type="text"
                       value={logo.src}
