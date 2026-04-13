@@ -33,7 +33,7 @@ export function useKV<T>(key: string, defaultValue: T): [T, (updater: T | ((curr
     initializedRef.current = true
 
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 8000)
+    const timeoutId = setTimeout(() => controller.abort(), 3500)
 
     fetch(`/api/kv?key=${encodeURIComponent(key)}`, { signal: controller.signal })
       .then(res => res.ok ? res.json() : null)
