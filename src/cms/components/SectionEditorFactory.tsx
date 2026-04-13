@@ -441,7 +441,9 @@ export function SectionEditorFactory<T extends Record<string, unknown>>({
   // Visible fields after disclosure filtering
   const visibleFields = schema.fields.filter(f => isFieldVisible(f.disclosure, disclosure))
 
-  // Resolve groups — use schema.fieldGroups if provided, else derive from field groups
+  // Resolve groups — use schema.fieldGroups if provided, else derive from field groups.
+  // visibleFields is derived from schema.fields + disclosure — including it in the dep
+  // array is safe and avoids the eslint exhaustive-deps warning.
   const resolvedGroups: AdminFieldGroup[] = useMemo(
     () =>
       schema.fieldGroups && schema.fieldGroups.length > 0
@@ -449,8 +451,7 @@ export function SectionEditorFactory<T extends Record<string, unknown>>({
         : Array.from(new Set(visibleFields.map(f => f.group ?? 'General'))).map(
             (id, i) => ({ id, label: id, defaultExpanded: i === 0 }),
           ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [schema.fieldGroups, disclosure],
+    [schema.fieldGroups, visibleFields],
   )
 
   // Fields without a matching group go into "General"

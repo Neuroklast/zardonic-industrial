@@ -65,6 +65,13 @@ export function useAdminKeyboardShortcuts({
         return
       }
 
+      // Ctrl/Cmd+Z — Undo (must be checked before Ctrl+Shift+Z / Redo)
+      if (ctrlOrMeta && !e.shiftKey && e.key === 'z') {
+        e.preventDefault()
+        onUndo?.()
+        return
+      }
+
       // Ctrl/Cmd+Shift+Z or Ctrl+Y — Redo
       if (ctrlOrMeta && e.shiftKey && e.key === 'z') {
         e.preventDefault()
@@ -74,13 +81,6 @@ export function useAdminKeyboardShortcuts({
       if (e.ctrlKey && !e.shiftKey && e.key === 'y') {
         e.preventDefault()
         onRedo?.()
-        return
-      }
-
-      // Ctrl/Cmd+Z — Undo
-      if (ctrlOrMeta && !e.shiftKey && e.key === 'z') {
-        e.preventDefault()
-        onUndo?.()
         return
       }
 

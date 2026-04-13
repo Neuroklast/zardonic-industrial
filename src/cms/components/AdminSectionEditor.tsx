@@ -193,12 +193,18 @@ function EditorInner({
 
   const handleUndoAction = useCallback(() => {
     const prev = undo()
-    if (prev) { setDraftData(prev); onPreviewDataChange?.(prev) }
+    if (prev) {
+      setDraftData(prev)
+      onPreviewDataChange?.(prev)
+    }
   }, [undo, onPreviewDataChange])
 
   const handleRedoAction = useCallback(() => {
     const next = redo()
-    if (next) { setDraftData(next); onPreviewDataChange?.(next) }
+    if (next) {
+      setDraftData(next)
+      onPreviewDataChange?.(next)
+    }
   }, [redo, onPreviewDataChange])
 
   // ── Keyboard shortcuts ─────────────────────────────────────────────────────
