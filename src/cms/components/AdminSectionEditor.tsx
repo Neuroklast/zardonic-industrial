@@ -155,8 +155,9 @@ function EditorInner({
       setDraftData(null)
       setValidationErrors({})
       toast.success(`${schema.label} saved.`)
-    } catch {
-      // Error toast is handled inside useCmsContent
+    } catch (err) {
+      // Primary error toast is shown by useCmsContent; this is a safety net.
+      toast.error(err instanceof Error ? err.message : 'Save failed. Please try again.')
     }
   }, [effectiveData, schema, save])
 
@@ -174,8 +175,9 @@ function EditorInner({
       setValidationErrors({})
       onPreviewDataChange?.(fresh)
       toast.success(`${schema.label} reset to defaults.`)
-    } catch {
-      // Error toast handled in useCmsContent
+    } catch (err) {
+      // Primary error toast is shown by useCmsContent; this is a safety net.
+      toast.error(err instanceof Error ? err.message : 'Reset failed. Please try again.')
     }
   }, [schema, save, onPreviewDataChange])
 

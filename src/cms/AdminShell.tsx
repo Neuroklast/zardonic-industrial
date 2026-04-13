@@ -357,8 +357,8 @@ function AdminShellSidebar({
             Z
           </div>
           <div>
-            <div className="text-zinc-100 font-mono text-xs font-semibold leading-tight">Zardonic</div>
-            <div className="text-zinc-600 font-mono text-[9px] uppercase tracking-widest">Admin</div>
+            <div className="text-zinc-100 font-mono text-xs font-semibold leading-tight">CMS Admin</div>
+            <div className="text-zinc-600 font-mono text-[9px] uppercase tracking-widest">Content Manager</div>
           </div>
         </div>
         <button

@@ -94,8 +94,13 @@ export function LivePreviewPane({ sectionId, supportsPreview, className = '' }: 
           { type: 'cms:scroll-to', section: sectionId },
           window.location.origin,
         )
-      } catch {
-        // Ignore cross-origin errors
+      } catch (err) {
+        // postMessage can throw SecurityError when the iframe has a cross-origin
+        // URL (e.g. during redirects). This is expected and safe to ignore.
+        if (!(err instanceof DOMException && err.name === 'SecurityError')) {
+          // Unexpected error — log it so it's visible during development.
+          console.warn('[LivePreviewPane] Unexpected postMessage error:', err)
+        }
       }
     }
 
