@@ -68,7 +68,7 @@ export interface ThemeCustomization {
   spotifyBrightness?: number
 }
 
-export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal' | 'cloud-chamber' | 'glitch-grid'
+export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal' | 'cloud-chamber' | 'glitch-grid' | 'video'
 
 export type LoadingScreenType = 'cyberpunk' | 'minimal-bar' | 'glitch-decode' | 'none'
 export type LoadingScreenMode = 'timed' | 'real'
@@ -112,6 +112,10 @@ export interface AnimationSettings {
   glitchGridSize?: number
   glitchScanSpeed?: number
   glitchFrequency?: number
+  // Video background options
+  backgroundVideoUrl?: string
+  backgroundVideoFallbackImageUrl?: string
+  backgroundVideoOpacity?: number
 }
 
 export interface LoaderTexts {

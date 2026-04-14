@@ -81,7 +81,10 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* scroll-behavior is intentionally omitted here — Lenis handles smooth scroll
+     globally. Having both scroll-behavior:smooth and Lenis active causes
+     double-smoothing jank. The reduced-motion rule below still enforces
+     scroll-behavior:auto for users who prefer no animation. */
 }
 
 /* Global keyboard focus ring — ensures consistent, accessible focus indication
