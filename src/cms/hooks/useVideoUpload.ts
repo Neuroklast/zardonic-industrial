@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { upload as blobUpload } from '@vercel/blob/client'
 import { toast } from 'sonner'
 
 interface VideoUploadResponse {
@@ -29,7 +28,7 @@ export function useVideoUpload(): UseVideoUploadResult {
     }
   }, [])
 
-  const upload = useCallback(async (file: File): Promise<VideoUploadResponse | null> => {
+  const upload = useCallback((file: File): Promise<VideoUploadResponse | null> => {
     // Cancel any pending progress reset before starting a new upload
     if (progressResetTimerRef.current !== null) {
       clearTimeout(progressResetTimerRef.current)
@@ -39,39 +38,98 @@ export function useVideoUpload(): UseVideoUploadResult {
     setIsUploading(true)
     setProgress(0)
 
-    try {
-      // Sanitise filename — keep only safe characters; include a timestamp to avoid collisions
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
-      const pathname = `videos/${Date.now()}-${safeName}`
+    // Sanitise filename — keep only safe characters; include a timestamp to avoid collisions
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
+    const pathname = `videos/${Date.now()}-${safeName}`
 
-      const blob = await blobUpload(pathname, file, {
-        access: 'public',
-        handleUploadUrl: '/api/cms/video-upload-token',
-        onUploadProgress: ({ percentage }) => {
-          setProgress(Math.round(percentage))
-        },
+    return new Promise<VideoUploadResponse | null>((resolve) => {
+      const xhr = new XMLHttpRequest()
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          setProgress(Math.round((e.loaded / e.total) * 100))
+        }
       })
 
-      setProgress(100)
-      toast.success(`"${file.name}" uploaded.`)
-      return {
-        url: blob.url,
-        fileName: safeName,
-        mimeType: file.type,
-        size: file.size,
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Upload failed.'
-      toast.error(message)
-      return null
-    } finally {
-      setIsUploading(false)
-      // Reset progress after a short delay so the UI can show 100%
-      progressResetTimerRef.current = setTimeout(() => {
-        setProgress(0)
-        progressResetTimerRef.current = null
-      }, 800)
-    }
+      xhr.addEventListener('load', () => {
+        setIsUploading(false)
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          let data: { url: string; pathname: string }
+          try {
+            data = JSON.parse(xhr.responseText) as { url: string; pathname: string }
+          } catch {
+            toast.error('Upload failed: invalid response from server.')
+            progressResetTimerRef.current = setTimeout(() => {
+              setProgress(0)
+              progressResetTimerRef.current = null
+            }, 800)
+            resolve(null)
+            return
+          }
+
+          setProgress(100)
+          toast.success(`"${file.name}" uploaded.`)
+
+          progressResetTimerRef.current = setTimeout(() => {
+            setProgress(0)
+            progressResetTimerRef.current = null
+          }, 800)
+
+          resolve({
+            url: data.url,
+            fileName: safeName,
+            mimeType: file.type,
+            size: file.size,
+          })
+        } else {
+          let message = 'Upload failed.'
+          try {
+            const errData = JSON.parse(xhr.responseText) as { error?: string }
+            if (errData.error) message = errData.error
+          } catch {
+            // use default message
+          }
+          toast.error(message)
+
+          progressResetTimerRef.current = setTimeout(() => {
+            setProgress(0)
+            progressResetTimerRef.current = null
+          }, 800)
+
+          resolve(null)
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        setIsUploading(false)
+        toast.error('Upload failed: network error.')
+
+        progressResetTimerRef.current = setTimeout(() => {
+          setProgress(0)
+          progressResetTimerRef.current = null
+        }, 800)
+
+        resolve(null)
+      })
+
+      xhr.addEventListener('abort', () => {
+        setIsUploading(false)
+
+        progressResetTimerRef.current = setTimeout(() => {
+          setProgress(0)
+          progressResetTimerRef.current = null
+        }, 800)
+
+        resolve(null)
+      })
+
+      xhr.open('POST', '/api/cms/video-upload')
+      xhr.withCredentials = true
+      xhr.setRequestHeader('x-blob-pathname', pathname)
+      xhr.setRequestHeader('Content-Type', file.type)
+      xhr.send(file)
+    })
   }, [])
 
   return { upload, progress, isUploading }
