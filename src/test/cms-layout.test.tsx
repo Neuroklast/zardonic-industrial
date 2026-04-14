@@ -22,7 +22,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
         publishStatus: 'unknown',
       }, React.createElement('div', {}, 'Content'))
     )
-    expect(screen.getByLabelText('Zum Dashboard')).toBeInTheDocument()
+    expect(screen.getByLabelText('Go to Dashboard')).toBeInTheDocument()
   })
 
   it('shows route breadcrumb for non-dashboard routes', () => {
@@ -54,7 +54,7 @@ describe('CmsLayout — breadcrumb and status badge', () => {
         onNavigate,
       }, React.createElement('div', {}, 'Hero'))
     )
-    fireEvent.click(screen.getByLabelText('Zum Dashboard'))
+    fireEvent.click(screen.getByLabelText('Go to Dashboard'))
     expect(onNavigate).toHaveBeenCalledWith('cms/dashboard')
   })
 

@@ -67,7 +67,7 @@ export function useCmsContent<T>(key: string): UseCmsContentResult<T> {
       saveContent(key, value, asDraft),
     onSuccess: (_, { asDraft }) => {
       void queryClient.invalidateQueries({ queryKey })
-      toast.success(asDraft ? 'Draft saved.' : 'Content published.')
+      toast.success(asDraft ? 'Draft saved.' : 'Published successfully.')
     },
     onError: (err: Error) => {
       toast.error(`Save failed: ${err.message}`)
@@ -78,7 +78,7 @@ export function useCmsContent<T>(key: string): UseCmsContentResult<T> {
     mutationFn: () => publishContent(key, false),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
-      toast.success('Content published.')
+      toast.success('Published successfully.')
     },
     onError: (err: Error) => {
       toast.error(`Publish failed: ${err.message}`)
@@ -89,7 +89,7 @@ export function useCmsContent<T>(key: string): UseCmsContentResult<T> {
     mutationFn: () => publishContent(key, true),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey })
-      toast.success('Draft reverted.')
+      toast.success('Reverted to published version.')
     },
     onError: (err: Error) => {
       toast.error(`Revert failed: ${err.message}`)

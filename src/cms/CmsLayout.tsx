@@ -91,7 +91,7 @@ export function CmsLayout({
                 type="button"
                 onClick={() => onNavigate('cms/dashboard')}
                 className="text-zinc-500 hover:text-zinc-300 font-mono text-xs transition-colors"
-                aria-label="Zum Dashboard"
+                aria-label="Go to Dashboard"
               >
                 CMS
               </button>
