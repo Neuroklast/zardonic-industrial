@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { CircuitBackground } from '@/components/CircuitBackground'
 import CyberpunkBackground from '@/components/CyberpunkBackground'
+import VideoBackground from '@/components/VideoBackground'
 import type { BackgroundType, HudTexts, AnimationSettings } from '@/lib/types'
 import React from 'react'
 import { toDirectImageUrl } from '@/lib/image-cache'
@@ -95,6 +96,16 @@ function AnimatedBackgroundLayer({ type, hudTexts, transparent, animSettings }: 
   if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} starCount={animSettings?.starCount} starSpeed={animSettings?.starSpeed} /></Suspense>
   if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground glowColor={animSettings?.cloudGlowColor} /></Suspense>
   if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground transparent={transparent} gridSize={animSettings?.glitchGridSize} scanSpeed={animSettings?.glitchScanSpeed} glitchFrequency={animSettings?.glitchFrequency} /></Suspense>
+  if (bg === 'video') {
+    if (!animSettings?.backgroundVideoUrl) return null
+    return (
+      <VideoBackground
+        videoUrl={animSettings.backgroundVideoUrl}
+        fallbackImageUrl={animSettings.backgroundVideoFallbackImageUrl}
+        opacity={animSettings.backgroundVideoOpacity ?? 1}
+      />
+    )
+  }
   // 'minimal' – no decorative background
   return null
 }
@@ -106,7 +117,7 @@ interface BackgroundStackProps {
   backgroundImageParallax?: boolean
   backgroundImageOverlay?: boolean
   backgroundType?: BackgroundType
-  /** Controls all animated backgrounds (matrix, stars, circuit, etc.).
+  /** Controls all animated backgrounds (matrix, stars, circuit, video, etc.).
    * Mapped from AnimationSettings.circuitBackgroundEnabled which is kept for backwards compatibility with stored settings. */
   animatedBackgroundEnabled?: boolean
   hudTexts?: HudTexts
@@ -118,9 +129,13 @@ interface BackgroundStackProps {
  *
  * Rendering order (bottom to top):
  *   1. Background image (--z-bg-image = 0)  — parallax-optional static photo
- *   2. Animated overlay (--z-bg-animated = 1) — MatrixRain, CircuitBg, etc.
+ *   2. Animated overlay (--z-bg-animated = 1) — MatrixRain, CircuitBg, VideoBackground, etc.
  *
  * All elements are `position: fixed; pointer-events: none`.
+ *
+ * For the 'video' background type, the VideoBackground component manages its
+ * own z-index (--z-bg-animated) and fallback logic internally, so it is
+ * rendered directly rather than inside the wrapper div used by canvas/svg bgs.
  */
 export function BackgroundStack({
   backgroundImageUrl,
@@ -133,6 +148,8 @@ export function BackgroundStack({
   hudTexts,
   animSettings,
 }: BackgroundStackProps) {
+  const isVideoBg = backgroundType === 'video'
+
   return (
     <>
       {/* Depth layer --z-bg-image — background image (deepest). */}
@@ -144,19 +161,27 @@ export function BackgroundStack({
           parallax={backgroundImageParallax}
         />
       )}
-      {/* Depth layer --z-bg-animated — animated overlay (above image, below content). */}
+      {/* Depth layer --z-bg-animated — animated overlay (above image, below content).
+          VideoBackground manages its own positioning/z-index; other types need the wrapper div. */}
       {animatedBackgroundEnabled && (!backgroundImageUrl || backgroundImageOverlay) && (
-        <div
-          className="fixed inset-0 pointer-events-none"
-          style={{ zIndex: 'var(--z-bg-animated)' as React.CSSProperties['zIndex'] }}
-        >
+        isVideoBg ? (
           <AnimatedBackgroundLayer
             type={backgroundType}
-            hudTexts={hudTexts}
-            transparent={Boolean(backgroundImageUrl && backgroundImageOverlay)}
             animSettings={animSettings}
           />
-        </div>
+        ) : (
+          <div
+            className="fixed inset-0 pointer-events-none"
+            style={{ zIndex: 'var(--z-bg-animated)' as React.CSSProperties['zIndex'] }}
+          >
+            <AnimatedBackgroundLayer
+              type={backgroundType}
+              hudTexts={hudTexts}
+              transparent={Boolean(backgroundImageUrl && backgroundImageOverlay)}
+              animSettings={animSettings}
+            />
+          </div>
+        )
       )}
     </>
   )

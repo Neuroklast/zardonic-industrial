@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import App from './App.tsx'
 import { ErrorFallback } from './ErrorFallback.tsx'
+import { LenisProvider } from './contexts/LenisContext'
 
 import "./main.css"
 import "./styles/theme.css"
@@ -45,11 +46,15 @@ function Root() {
     )
   }
   return (
-    <QueryClientProvider client={queryClient}>
-      <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <App />
-      </ErrorBoundary>
-    </QueryClientProvider>
+    // LenisProvider initialises smooth scroll for the main site only.
+    // The CMS route (#cms) doesn't need Lenis — it has its own scrollable panels.
+    <LenisProvider>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
+          <App />
+        </ErrorBoundary>
+      </QueryClientProvider>
+    </LenisProvider>
   )
 }
 

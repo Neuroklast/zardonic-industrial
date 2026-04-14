@@ -10,6 +10,7 @@ import { useSiteDataSync } from '@/hooks/use-site-data-sync'
 import { useAppState } from '@/hooks/use-app-state'
 import { useSound } from '@/hooks/use-sound'
 import { LocaleProvider } from '@/contexts/LocaleContext'
+import { useLenisContext } from '@/contexts/LenisContext'
 import type { SiteData, CyberpunkOverlayState } from '@/lib/app-types'
 import { DEFAULT_SITE_DATA } from '@/lib/app-types'
 export type { SiteData } from '@/lib/app-types'
@@ -107,14 +108,15 @@ function App() {
     }
   }, [konamiActivated])
 
+  const { scrollTo: lenisScrollTo } = useLenisContext()
+
   const scrollToSection = (id: string) => {
     setMobileMenuOpen(false)
     setTimeout(() => {
       const element = document.getElementById(id)
       if (element) {
         const navHeight = document.querySelector('nav')?.getBoundingClientRect().height ?? 80
-        const y = element.getBoundingClientRect().top + window.scrollY - navHeight
-        window.scrollTo({ top: y, behavior: 'smooth' })
+        lenisScrollTo(element, { offset: -navHeight })
       }
     }, 100)
   }

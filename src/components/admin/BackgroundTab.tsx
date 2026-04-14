@@ -43,6 +43,7 @@ export default function BackgroundTab({
             { value: 'stars', label: 'Star Field', desc: 'Warp-speed star field' },
             { value: 'cloud-chamber', label: 'Cloud Chamber', desc: 'Radiation cloud chamber with noise, terminal glow & particles' },
             { value: 'glitch-grid', label: 'Glitch Grid', desc: 'Dark crosshatch grid with glitch artifacts & scan beam (DIGICIDE)' },
+            { value: 'video', label: 'Video Loop', desc: 'Looping video file — falls back to a static image on low-end devices' },
             { value: 'minimal', label: 'Minimal', desc: 'No decorative background' },
           ] as { value: BackgroundType; label: string; desc: string }[]).map(opt => (
             <button
@@ -280,6 +281,55 @@ export default function BackgroundTab({
             </div>
             <Slider value={[(anim.glitchFrequency ?? 0.4) * 100]} min={0} max={100} step={5}
               onValueChange={([v]) => updateAnim({ glitchFrequency: v / 100 })} />
+          </div>
+        </section>
+      )}
+
+      {/* Video background options */}
+      {currentBg === 'video' && (
+        <section className="space-y-3">
+          <h3 className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
+            Video Background Options
+          </h3>
+          <p className="font-mono text-xs text-muted-foreground">
+            Upload or link a looping video file (MP4 recommended). On low-end devices or
+            when the user prefers reduced motion, the fallback image is shown instead.
+          </p>
+          <div className="space-y-1">
+            <Label className="font-mono text-xs text-muted-foreground">Video URL (MP4 / WebM)</Label>
+            <Input
+              value={anim.backgroundVideoUrl ?? ''}
+              onChange={e => updateAnim({ backgroundVideoUrl: e.target.value || undefined })}
+              className="font-mono text-xs"
+              placeholder="https://example.com/background.mp4"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="font-mono text-xs text-muted-foreground">Fallback Image URL</Label>
+            <p className="font-mono text-[10px] text-muted-foreground/60">
+              Shown while video loads (poster) and on low-end / reduced-motion devices.
+            </p>
+            <Input
+              value={anim.backgroundVideoFallbackImageUrl ?? ''}
+              onChange={e => updateAnim({ backgroundVideoFallbackImageUrl: e.target.value || undefined })}
+              className="font-mono text-xs"
+              placeholder="https://example.com/poster.jpg"
+            />
+          </div>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label className="font-mono text-xs">Opacity</Label>
+              <span className="font-mono text-xs text-muted-foreground">
+                {Math.round((anim.backgroundVideoOpacity ?? 1) * 100)}%
+              </span>
+            </div>
+            <Slider
+              value={[(anim.backgroundVideoOpacity ?? 1) * 100]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={([v]) => updateAnim({ backgroundVideoOpacity: v / 100 })}
+            />
           </div>
         </section>
       )}
