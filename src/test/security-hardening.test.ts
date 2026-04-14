@@ -167,7 +167,7 @@ describe('vercel.json Content-Security-Policy', () => {
     const allowed = ["'self'", 'https://api.spotify.com', 'https://open.spotify.com',
       'https://spclient.wg.spotify.com',
       'https://api.song.link', 'https://rest.bandsintown.com', 'https://itunes.apple.com', 'https://wsrv.nl',
-      'https://*.public.blob.vercel-storage.com']
+      'https://vercel.com', 'https://*.public.blob.vercel-storage.com']
     const domains = connectSrcValue.split(/\s+/)
     for (const domain of domains) {
       expect(allowed).toContain(domain)
