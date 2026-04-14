@@ -53,11 +53,15 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
 
     const resolveColor = (): string => cachedColor
 
-    // Refresh the cached color whenever the theme CSS variable changes.
+    // Refresh the cached color whenever the --primary theme CSS variable changes.
     // MutationObserver on <html> style attribute detects setProperty() calls
-    // from useAppTheme without polling.
+    // from useAppTheme without polling. We check whether --primary actually
+    // changed to avoid redundant work on unrelated style mutations.
     const observer = new MutationObserver(() => {
-      cachedColor = getColor()
+      const newColor = getColor()
+      if (newColor !== cachedColor) {
+        cachedColor = newColor
+      }
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
 

@@ -186,15 +186,18 @@ code, kbd, samp, pre {
   --font-body:    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-mono:    'Share Tech Mono', ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Monaco, Consolas, 'Courier New', monospace;
 
-  /* Neutralise all typography size / weight overrides (guaranteed-invalid resets) */
-  --heading-font-size: ;
-  --heading-font-weight: ;
-  --heading-line-height: ;
-  --heading-letter-spacing: ;
+  /* Neutralise all typography size / weight overrides.
+     The trailing space after the colon is intentional CSS "guaranteed-invalid" syntax:
+     it makes any var(--property) that references these variables silently fail/be ignored,
+     which lets the element's own Tailwind size utilities take over unimpeded. */
+  --heading-font-size: ;   /* guaranteed-invalid → var() callers skip this declaration */
+  --heading-font-weight: ; /* guaranteed-invalid */
+  --heading-line-height: ; /* guaranteed-invalid */
+  --heading-letter-spacing: ; /* guaranteed-invalid */
   --heading-text-shadow: none;
-  --body-font-size: ;
-  --body-line-height: ;
-  --mono-font-size: ;
+  --body-font-size: ;      /* guaranteed-invalid */
+  --body-line-height: ;    /* guaranteed-invalid */
+  --mono-font-size: ;      /* guaranteed-invalid */
 
   /* Hard-reset the inherited body font-size so even a site-wide override can't
      bleed in: 1rem is relative to <html>, not <body>, so it stays at the browser

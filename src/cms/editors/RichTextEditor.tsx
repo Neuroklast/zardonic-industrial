@@ -111,7 +111,7 @@ export function RichTextEditor({ content, onChange, placeholder, onImageInsert }
             type="url"
             value={linkInputValue}
             onChange={e => setLinkInputValue(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') confirmLink(); if (e.key === 'Escape') cancelLink() }}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); confirmLink() } if (e.key === 'Escape') cancelLink() }}
             placeholder="https://…"
             autoFocus
             className="flex-1 bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-red-500"
