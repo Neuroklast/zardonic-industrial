@@ -109,8 +109,8 @@ export default function PreviewFrame() {
 
       <div className="flex-1 overflow-auto flex justify-center bg-zinc-900 p-4">
         <div
-          className="h-full transition-all duration-300 bg-white rounded shadow-2xl overflow-hidden"
-          style={{ width: currentViewport.width, minHeight: '100%' }}
+          className="h-full transition-[width] duration-300 bg-white rounded shadow-2xl overflow-hidden"
+          style={{ width: currentViewport.width, minHeight: '100%', willChange: 'width' }}
         >
           <iframe
             ref={iframeRef}
