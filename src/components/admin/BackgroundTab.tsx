@@ -35,12 +35,12 @@ export default function BackgroundTab({
   const [isCheckingVideo, setIsCheckingVideo] = useState(false)
   const videoCheckRef = useRef<HTMLVideoElement | null>(null)
 
-  const updateAnim = (patch: Partial<AnimationSettings>) => {
+  const updateAnim = useCallback((patch: Partial<AnimationSettings>) => {
     setAdminSettings?.({
       ...(adminSettings ?? {}),
       background: { ...anim, ...patch },
     })
-  }
+  }, [adminSettings, anim, setAdminSettings])
 
   const handleVideoUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -48,8 +48,7 @@ export default function BackgroundTab({
     const result = await uploadVideo(file)
     if (result) updateAnim({ backgroundVideoUrl: result.url })
     e.target.value = ''
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadVideo])
+  }, [uploadVideo, updateAnim])
 
   const handleFallbackImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -57,8 +56,7 @@ export default function BackgroundTab({
     const result = await uploadImage(file)
     if (result) updateAnim({ backgroundVideoFallbackImageUrl: result.url })
     e.target.value = ''
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadImage])
+  }, [uploadImage, updateAnim])
 
   const handleCheckVideo = useCallback(async () => {
     const url = anim.backgroundVideoUrl

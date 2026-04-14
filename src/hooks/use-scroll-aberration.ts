@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useLenisContext } from '@/contexts/LenisContext'
 
 export const useScrollAberration = () => {
@@ -6,37 +6,46 @@ export const useScrollAberration = () => {
   const [aberrationIntensity, setAberrationIntensity] = useState(0)
   const { lenis, isLiteMode } = useLenisContext()
 
+  // Use a ref to track intensity so the decay RAF loop avoids setState-in-updater side effects
+  const intensityRef = useRef(0)
+
   useEffect(() => {
     let rafId: number
     let decayRafId: number
-    let lastScrollY = window.scrollY
+
+    const setIntensity = (val: number) => {
+      intensityRef.current = val
+      setAberrationIntensity(val)
+    }
 
     const startDecay = () => {
       cancelAnimationFrame(decayRafId)
       const decay = () => {
-        setAberrationIntensity((prev) => {
-          if (prev < 0.001) return 0
-          const next = prev * 0.9
-          decayRafId = requestAnimationFrame(decay)
-          return next
-        })
+        const prev = intensityRef.current
+        if (prev < 0.001) {
+          setIntensity(0)
+          return
+        }
+        const next = prev * 0.9
+        setIntensity(next)
+        decayRafId = requestAnimationFrame(decay)
       }
       decayRafId = requestAnimationFrame(decay)
     }
 
     if (!isLiteMode && lenis) {
       // Lenis mode: subscribe to Lenis scroll events
+      let lastLenisY = 0
       const handleLenisScroll = (e: { scroll: number; velocity: number }) => {
-        const scrollDelta = Math.abs(e.scroll - lastScrollY)
+        const scrollDelta = Math.abs(e.scroll - lastLenisY)
         const intensity = Math.min(scrollDelta / 100, 1)
-        lastScrollY = e.scroll
+        lastLenisY = e.scroll
 
         cancelAnimationFrame(rafId)
-        cancelAnimationFrame(decayRafId)
         rafId = requestAnimationFrame(() => {
           setScrollY(e.scroll)
           if (intensity > 0) {
-            setAberrationIntensity(intensity)
+            setIntensity(intensity)
             startDecay()
           }
         })
@@ -52,6 +61,7 @@ export const useScrollAberration = () => {
     }
 
     // Lite mode / no Lenis: fall back to native scroll event
+    let lastScrollY = window.scrollY
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       const scrollDelta = Math.abs(currentScrollY - lastScrollY)
@@ -60,11 +70,10 @@ export const useScrollAberration = () => {
       lastScrollY = currentScrollY
 
       cancelAnimationFrame(rafId)
-      cancelAnimationFrame(decayRafId)
       rafId = requestAnimationFrame(() => {
         setScrollY(currentScrollY)
         if (intensity > 0) {
-          setAberrationIntensity(intensity)
+          setIntensity(intensity)
           startDecay()
         }
       })

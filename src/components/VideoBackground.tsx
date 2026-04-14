@@ -114,26 +114,17 @@ const VideoBackground = memo(function VideoBackground({
     })
   }, [scrollY, scrollMode, useFallback])
 
-  // ── Scroll mode: canplay handler ─────────────────────────────────────────
+  // ── Scroll mode: error handler ───────────────────────────────────────────
   useEffect(() => {
     if (!scrollMode || useFallback) return
     const video = videoRef.current
     if (!video) return
 
-    const handleError = () => {
-      setUseFallback(true)
-    }
-    const handleCanPlayThrough = () => { /* ready for full playback */ }
-
+    const handleError = () => setUseFallback(true)
     video.addEventListener('error', handleError)
-    video.addEventListener('canplaythrough', handleCanPlayThrough)
-    const handleCanPlay = () => { /* scrubbing enabled */ }
-    video.addEventListener('canplay', handleCanPlay)
 
     return () => {
       video.removeEventListener('error', handleError)
-      video.removeEventListener('canplaythrough', handleCanPlayThrough)
-      video.removeEventListener('canplay', handleCanPlay)
     }
   }, [scrollMode, useFallback])
 
