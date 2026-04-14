@@ -40,9 +40,9 @@ export function useVideoUpload(): UseVideoUploadResult {
     setProgress(0)
 
     try {
-      // Sanitise filename — keep only safe characters
+      // Sanitise filename — keep only safe characters; include a timestamp to avoid collisions
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
-      const pathname = `videos/${safeName}`
+      const pathname = `videos/${Date.now()}-${safeName}`
 
       const blob = await blobUpload(pathname, file, {
         access: 'public',

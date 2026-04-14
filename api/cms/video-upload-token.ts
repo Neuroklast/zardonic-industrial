@@ -28,6 +28,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       request: req,
       body: req.body,
       onBeforeGenerateToken: async (_pathname) => {
+        // pathname is the client-provided destination path; we ignore it here because
+        // the client already sets it to `videos/<timestamp>-<safeName>` and
+        // addRandomSuffix:true guarantees uniqueness on the Vercel Blob side.
         return {
           allowedContentTypes: ALLOWED_VIDEO_TYPES,
           maximumSizeInBytes: MAX_VIDEO_SIZE,
