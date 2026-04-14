@@ -299,7 +299,7 @@ function App() {
         }
       >
         {siteData?.tracks && siteData.tracks.length > 0 && siteData.tracks[0]?.url && (
-          <audio src={siteData.tracks[0].url} aria-label="Background music player" />
+          <audio src={siteData.tracks[0].url} aria-hidden="true" />
         )}
         <AppHeroSection
           contentLoaded={contentLoaded}
