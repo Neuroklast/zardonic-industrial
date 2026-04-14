@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleUpload } from '@vercel/blob/client'
+import { handleUpload, type HandleUploadBody } from '@vercel/blob'
 import { applyRateLimit } from '../_ratelimit.js'
 import { validateSession } from '../auth.js'
 
@@ -26,19 +26,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const jsonResponse = await handleUpload({
       request: req,
-      body: req.body,
+      body: req.body as HandleUploadBody,
       onBeforeGenerateToken: async (_pathname) => {
-        // pathname is the client-provided destination path; we ignore it here because
-        // the client already sets it to `videos/<timestamp>-<safeName>` and
-        // addRandomSuffix:true guarantees uniqueness on the Vercel Blob side.
         return {
           allowedContentTypes: ALLOWED_VIDEO_TYPES,
           maximumSizeInBytes: MAX_VIDEO_SIZE,
-          addRandomSuffix: true,
         }
       },
       onUploadCompleted: async ({ blob }) => {
-        // Nothing to do here — the client receives the blob URL directly
         console.log('[cms/video-upload-token] upload completed:', blob.url)
       },
     })
