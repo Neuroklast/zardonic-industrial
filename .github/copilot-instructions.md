@@ -21,10 +21,24 @@ Violating the Feature Sync Rule will be treated as a blocking review issue.
 
 ## File Upload (Vercel Blob)
 
-- **Client-side upload**: use `upload()` from `@vercel/blob/client` (e.g. in `src/cms/hooks/useVideoUpload.ts`).
-- **Server-side token endpoint**: use `handleUpload` from `@vercel/blob/client` (NOT from `@vercel/blob`).
-  - `handleUpload` and `HandleUploadBody` are exported by `@vercel/blob/client`, not by the main `@vercel/blob` package.
-  - Example: `import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'`
+- **Server-side streaming upload**: use `put()` from `@vercel/blob` (NOT `/client`) in `api/cms/video-upload.ts`.
+  - The endpoint streams the raw request body directly to Blob storage — no buffering, supports large files.
+  - Client sends the file as the raw `POST` body via `XMLHttpRequest` with custom headers:
+    - `x-blob-pathname` — the desired storage path (e.g. `videos/timestamp-filename.mp4`)
+    - `Content-Type` — the video MIME type (`video/mp4` or `video/webm`)
+  - The API endpoint requires `export const config = { api: { bodyParser: false } }` to disable Vercel's body parser.
+  - Example server call: `put(pathname, req, { access: 'public', contentType, token: process.env.BLOB_READ_WRITE_TOKEN })`
+  - Example client call (in `src/cms/hooks/useVideoUpload.ts`):
+    ```typescript
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', '/api/cms/video-upload')
+    xhr.withCredentials = true
+    xhr.setRequestHeader('x-blob-pathname', pathname)
+    xhr.setRequestHeader('Content-Type', file.type)
+    xhr.send(file)
+    ```
+  - This eliminates all CORS issues — the upload goes through the project's own API (`'self'`), not `vercel.com/api/blob/`.
+  - Do **NOT** use `@vercel/blob/client`'s `upload()` — it routes uploads through `vercel.com/api/blob/` which causes CORS errors.
 
 ## TypeScript Strict Mode
 
