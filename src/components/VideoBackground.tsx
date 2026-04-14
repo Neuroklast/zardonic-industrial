@@ -86,7 +86,6 @@ const VideoBackground = memo(function VideoBackground({
     objectFit: fit,
     objectPosition: 'center',
     pointerEvents: 'none',
-    zIndex: 'var(--z-bg-animated)' as React.CSSProperties['zIndex'],
     opacity,
     display: 'block',
   }

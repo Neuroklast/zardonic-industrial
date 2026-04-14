@@ -132,10 +132,6 @@ interface BackgroundStackProps {
  *   2. Animated overlay (--z-bg-animated = 1) — MatrixRain, CircuitBg, VideoBackground, etc.
  *
  * All elements are `position: fixed; pointer-events: none`.
- *
- * For the 'video' background type, the VideoBackground component manages its
- * own z-index (--z-bg-animated) and fallback logic internally, so it is
- * rendered directly rather than inside the wrapper div used by canvas/svg bgs.
  */
 export function BackgroundStack({
   backgroundImageUrl,
@@ -148,8 +144,6 @@ export function BackgroundStack({
   hudTexts,
   animSettings,
 }: BackgroundStackProps) {
-  const isVideoBg = backgroundType === 'video'
-
   return (
     <>
       {/* Depth layer --z-bg-image — background image (deepest). */}
@@ -162,26 +156,20 @@ export function BackgroundStack({
         />
       )}
       {/* Depth layer --z-bg-animated — animated overlay (above image, below content).
-          VideoBackground manages its own positioning/z-index; other types need the wrapper div. */}
+          All animated background types (including VideoBackground) render inside this
+          wrapper so z-index is managed in one place. */}
       {animatedBackgroundEnabled && (!backgroundImageUrl || backgroundImageOverlay) && (
-        isVideoBg ? (
+        <div
+          className="fixed inset-0 pointer-events-none"
+          style={{ zIndex: 'var(--z-bg-animated)' as React.CSSProperties['zIndex'] }}
+        >
           <AnimatedBackgroundLayer
             type={backgroundType}
+            hudTexts={hudTexts}
+            transparent={Boolean(backgroundImageUrl && backgroundImageOverlay)}
             animSettings={animSettings}
           />
-        ) : (
-          <div
-            className="fixed inset-0 pointer-events-none"
-            style={{ zIndex: 'var(--z-bg-animated)' as React.CSSProperties['zIndex'] }}
-          >
-            <AnimatedBackgroundLayer
-              type={backgroundType}
-              hudTexts={hudTexts}
-              transparent={Boolean(backgroundImageUrl && backgroundImageOverlay)}
-              animSettings={animSettings}
-            />
-          </div>
-        )
+        </div>
       )}
     </>
   )
