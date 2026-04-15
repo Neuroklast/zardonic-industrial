@@ -57,10 +57,9 @@ const sharedMediaStyle: React.CSSProperties = {
  * 2. Video `onError` or `onStalled` → switch from video to `<img>`
  * 3. No fallback image provided → render nothing when video is not available
  *
- * The fallback image is rendered as a true `<img>` element directly behind the
- * `<video>` inside the same wrapper. Opacity is applied only to the video, so
- * reducing video opacity reveals the fallback image — not a separate background
- * layer.
+ * The fallback image is **only** rendered when video is not possible (lite mode,
+ * error, or autoplay blocked). When the video is playing, the fallback image is
+ * never rendered — reducing video opacity does not reveal a background image.
  *
  * Videos must be uploaded to Vercel Blob for reliable playback and seeking support.
  */
@@ -172,7 +171,6 @@ const VideoBackground = memo(function VideoBackground({
   if (scrollMode) {
     return (
       <div aria-hidden="true" style={wrapperStyle}>
-        {fallbackImgNode}
         <video
           ref={videoRef}
           src={activeVideoUrl}
@@ -193,7 +191,6 @@ const VideoBackground = memo(function VideoBackground({
 
   return (
     <div aria-hidden="true" style={wrapperStyle}>
-      {fallbackImgNode}
       <video
         ref={videoRef}
         src={activeVideoUrl}
