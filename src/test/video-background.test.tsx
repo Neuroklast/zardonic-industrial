@@ -45,17 +45,16 @@ describe('VideoBackground — capable device', () => {
     expect(video.playsInline).toBe(true)
   })
 
-  it('renders fallback <img> behind video when fallbackImageUrl is provided', () => {
+  it('does NOT render fallback <img> alongside video when video is active', () => {
     const { container } = render(
       <VideoBackground
         videoUrl="https://example.com/bg.mp4"
         fallbackImageUrl="https://example.com/poster.jpg"
       />
     )
-    const img = container.querySelector('img') as HTMLImageElement
-    expect(img).not.toBeNull()
-    expect(img.src).toContain('poster.jpg')
-    // The video must also be present
+    // Fallback image must NOT be present while the video is playing
+    expect(container.querySelector('img')).toBeNull()
+    // The video must still be present
     expect(container.querySelector('video')).not.toBeNull()
   })
 
@@ -133,7 +132,7 @@ describe('VideoBackground — opacity prop', () => {
     expect(wrapper.style.opacity).toBe('')
   })
 
-  it('fallback image always has opacity 1 regardless of video opacity', () => {
+  it('fallback image is NOT rendered alongside video regardless of video opacity', () => {
     const { container } = render(
       <VideoBackground
         videoUrl="https://example.com/bg.mp4"
@@ -141,8 +140,8 @@ describe('VideoBackground — opacity prop', () => {
         opacity={0.2}
       />
     )
-    const img = container.querySelector('img') as HTMLImageElement
-    expect(img.style.opacity).toBe('1')
+    // Fallback image must NOT be rendered while video is active
+    expect(container.querySelector('img')).toBeNull()
     const video = container.querySelector('video') as HTMLVideoElement
     expect(video.style.opacity).toBe('0.2')
   })
