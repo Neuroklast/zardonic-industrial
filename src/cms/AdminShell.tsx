@@ -46,6 +46,7 @@ import {
 import '@/cms/section-schemas'
 import { getSections } from '@/lib/admin-schema-registry'
 import type { AdminSectionSchema } from '@/lib/admin-section-schema'
+import { ADMIN_SECTION_GROUP_CONFIG } from '@/lib/admin-section-schema'
 import { useCmsRoute } from '@/cms/hooks/useCmsRoute'
 import { SchemaIcon } from '@/cms/components/SchemaIcon'
 import { AdminDashboard } from '@/cms/components/AdminDashboard'
@@ -67,21 +68,6 @@ export interface AdminShellProps {
   /** Called when the user logs out. */
   logout: () => Promise<void>
 }
-
-// ─── Section grouping ─────────────────────────────────────────────────────────
-
-interface SidebarGroup {
-  id: string
-  label: string
-  sectionIds: string[]
-}
-
-const SIDEBAR_GROUPS: SidebarGroup[] = [
-  { id: 'content', label: 'Content', sectionIds: ['hero', 'bio', 'music', 'releases', 'gigs', 'connect', 'contact'] },
-  { id: 'media', label: 'Media', sectionIds: ['gallery', 'media'] },
-  { id: 'configuration', label: 'Configuration', sectionIds: ['shell', 'collabs', 'sponsoring', 'creditHighlights'] },
-  { id: 'legal', label: 'Legal', sectionIds: ['footer', 'impressum'] },
-]
 
 // ─── Route helpers ────────────────────────────────────────────────────────────
 
@@ -321,7 +307,6 @@ function AdminShellSidebar({
   onToggle,
   onLogout,
 }: AdminShellSidebarProps) {
-  const sectionMap = new Map(sections.map(s => [s.sectionId, s]))
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     content: true,
     media: true,
@@ -383,23 +368,21 @@ function AdminShellSidebar({
         />
 
         {/* Schema-driven section groups */}
-        {SIDEBAR_GROUPS.map(group => {
-          const groupSections = group.sectionIds
-            .map(id => sectionMap.get(id))
-            .filter((s): s is AdminSectionSchema => s !== undefined)
+        {ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => {
+          const groupSections = sections.filter(s => s.group === groupConfig.id)
 
           if (groupSections.length === 0) return null
 
-          const isExpanded = expandedGroups[group.id] ?? true
+          const isExpanded = expandedGroups[groupConfig.id] ?? true
           const hasActive = groupSections.some(s => s.sectionId === activeSectionId)
 
           return (
             <SidebarGroup
-              key={group.id}
-              label={group.label}
+              key={groupConfig.id}
+              label={groupConfig.label}
               isExpanded={isExpanded}
               hasActiveChild={hasActive}
-              onToggle={() => toggleGroup(group.id)}
+              onToggle={() => toggleGroup(groupConfig.id)}
             >
               {groupSections.map(section => (
                 <SidebarNavItem
@@ -424,8 +407,7 @@ function AdminShellSidebar({
 
         {/* Ungrouped sections (future-proof) */}
         {(() => {
-          const allGroupedIds = new Set(SIDEBAR_GROUPS.flatMap(g => g.sectionIds))
-          const ungrouped = sections.filter(s => !allGroupedIds.has(s.sectionId))
+          const ungrouped = sections.filter(s => !s.group)
           if (ungrouped.length === 0) return null
           return (
             <SidebarGroup

@@ -16,38 +16,8 @@ import { MagnifyingGlass, ArrowRight, CirclesFour, Columns } from '@phosphor-ico
 import '@/cms/section-schemas'
 import { getSections } from '@/lib/admin-schema-registry'
 import type { AdminSectionSchema } from '@/lib/admin-section-schema'
+import { ADMIN_SECTION_GROUP_CONFIG } from '@/lib/admin-section-schema'
 import { SchemaIcon } from './SchemaIcon'
-
-// ─── Section groups ───────────────────────────────────────────────────────────
-
-interface SectionGroup {
-  id: string
-  label: string
-  sectionIds: string[]
-}
-
-const SECTION_GROUPS: SectionGroup[] = [
-  {
-    id: 'content',
-    label: 'Content',
-    sectionIds: ['hero', 'bio', 'music', 'releases', 'gigs', 'social', 'contact'],
-  },
-  {
-    id: 'media',
-    label: 'Media',
-    sectionIds: ['gallery', 'media'],
-  },
-  {
-    id: 'configuration',
-    label: 'Configuration',
-    sectionIds: ['shell', 'partners', 'sponsoring', 'credit-highlights'],
-  },
-  {
-    id: 'legal',
-    label: 'Legal',
-    sectionIds: ['footer', 'impressum'],
-  },
-]
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -192,7 +162,6 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [query, setQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const sections = getSections()
-  const sectionMap = new Map(sections.map(s => [s.sectionId, s]))
 
   // Filter sections by search query (label or description)
   const normalizedQuery = query.trim().toLowerCase()
@@ -317,17 +286,15 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         </div>
       ) : (
         /* Grouped sections */
-        SECTION_GROUPS.map(group => {
-          const groupSections = group.sectionIds
-            .map(id => sectionMap.get(id))
-            .filter((s): s is AdminSectionSchema => s !== undefined)
+        ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => {
+          const groupSections = sections.filter(s => s.group === groupConfig.id)
 
           if (groupSections.length === 0) return null
 
           return (
-            <div key={group.id}>
+            <div key={groupConfig.id}>
               <h2 className="text-xs font-mono uppercase tracking-widest text-zinc-600 mb-3 pb-2 border-b border-zinc-800">
-                {group.label}
+                {groupConfig.label}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {groupSections.map(section => (
@@ -346,8 +313,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
       {/* Sections not in any group (future-proof) */}
       {filteredSections === null && (() => {
-        const allGroupedIds = new Set(SECTION_GROUPS.flatMap(g => g.sectionIds))
-        const ungrouped = sections.filter(s => !allGroupedIds.has(s.sectionId))
+        const ungrouped = sections.filter(s => !s.group)
         if (ungrouped.length === 0) return null
         return (
           <div>
