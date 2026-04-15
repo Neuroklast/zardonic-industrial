@@ -22,7 +22,7 @@
  *   Used by `CmsApp.tsx` as the top-level layout after authentication.
  */
 
-import { useState, useCallback, lazy, Suspense } from 'react'
+import { useState, useCallback, useMemo, lazy, Suspense } from 'react'
 import {
   List,
   X,
@@ -322,6 +322,16 @@ function AdminShellSidebar({
   const activeSectionId = getActiveSectionId(route)
   const isDashboard = route === 'admin' || route === 'admin/dashboard' || route === ''
 
+  // Pre-compute sections per group (sections array is static after registry init)
+  const groupedSections = useMemo(
+    () =>
+      ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => ({
+        ...groupConfig,
+        sections: sections.filter(s => s.group === groupConfig.id),
+      })),
+    [sections],
+  )
+
   return (
     <aside
       className={`
@@ -368,13 +378,11 @@ function AdminShellSidebar({
         />
 
         {/* Schema-driven section groups */}
-        {ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => {
-          const groupSections = sections.filter(s => s.group === groupConfig.id)
-
-          if (groupSections.length === 0) return null
+        {groupedSections.map(groupConfig => {
+          if (groupConfig.sections.length === 0) return null
 
           const isExpanded = expandedGroups[groupConfig.id] ?? true
-          const hasActive = groupSections.some(s => s.sectionId === activeSectionId)
+          const hasActive = groupConfig.sections.some(s => s.sectionId === activeSectionId)
 
           return (
             <SidebarGroup
@@ -384,7 +392,7 @@ function AdminShellSidebar({
               hasActiveChild={hasActive}
               onToggle={() => toggleGroup(groupConfig.id)}
             >
-              {groupSections.map(section => (
+              {groupConfig.sections.map(section => (
                 <SidebarNavItem
                   key={section.sectionId}
                   label={section.label}

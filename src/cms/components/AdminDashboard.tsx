@@ -10,7 +10,7 @@
  * any manual update to this file.
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { MagnifyingGlass, ArrowRight, CirclesFour, Columns } from '@phosphor-icons/react'
 // Side-effect import: registers all 15 section schemas with the global registry
 import '@/cms/section-schemas'
@@ -163,6 +163,16 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped')
   const sections = getSections()
 
+  // Pre-compute sections per group once (sections array is static after registry init)
+  const groupedSections = useMemo(
+    () =>
+      ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => ({
+        ...groupConfig,
+        sections: sections.filter(s => s.group === groupConfig.id),
+      })),
+    [sections],
+  )
+
   // Filter sections by search query (label or description)
   const normalizedQuery = query.trim().toLowerCase()
   const filteredSections = normalizedQuery
@@ -286,10 +296,8 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         </div>
       ) : (
         /* Grouped sections */
-        ADMIN_SECTION_GROUP_CONFIG.map(groupConfig => {
-          const groupSections = sections.filter(s => s.group === groupConfig.id)
-
-          if (groupSections.length === 0) return null
+        groupedSections.map(groupConfig => {
+          if (groupConfig.sections.length === 0) return null
 
           return (
             <div key={groupConfig.id}>
@@ -297,7 +305,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 {groupConfig.label}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {groupSections.map(section => (
+                {groupConfig.sections.map(section => (
                   <SectionCard
                     key={section.sectionId}
                     schema={section}

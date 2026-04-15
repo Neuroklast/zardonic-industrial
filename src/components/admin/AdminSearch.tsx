@@ -193,6 +193,10 @@ function buildSchemaItems(): SearchableItem[] {
 // Merge static items with schema-derived items (deduplicated by label+tab)
 const SCHEMA_ITEMS: SearchableItem[] = buildSchemaItems()
 
+// Module-level constants for section-derived items (SECTION_REGISTRY is static)
+const SECTION_VISIBILITY_ITEMS: SearchableItem[] = buildSectionVisibilityItems()
+const SECTION_CONFIG_ITEMS: SearchableItem[] = buildSectionConfigItems()
+
 interface AdminSearchProps {
   onNavigate: (tab: string) => void
 }
@@ -206,8 +210,8 @@ export function AdminSearch({ onNavigate }: AdminSearchProps) {
     const q = query.toLowerCase()
     const allItems = [
       ...STATIC_SEARCHABLE_ITEMS,
-      ...buildSectionVisibilityItems(),
-      ...buildSectionConfigItems(),
+      ...SECTION_VISIBILITY_ITEMS,
+      ...SECTION_CONFIG_ITEMS,
       ...SCHEMA_ITEMS,
     ]
     // Deduplicate by label+tab to avoid duplicates between static list and schema
