@@ -5,6 +5,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, X } from '@phosphor-icons/react'
 
+function sanitizeImageSrc(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+
+  // Allow common safe remote/local URL protocols.
+  if (/^(https?:\/\/|\/)/i.test(trimmed)) return trimmed
+
+  // Allow data URLs for common raster image types only.
+  if (/^data:image\/(?:png|jpeg|jpg|gif|webp);base64,[a-z0-9+/=]+$/i.test(trimmed)) return trimmed
+
+  return ''
+}
+
 interface BandInfoEditDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -23,6 +36,8 @@ export default function BandInfoEditDialog({ open, onOpenChange, name, genres, l
   const [bandLogoUrl, setBandLogoUrl] = useState(logoUrl || '')
   const [bandTitleImageUrl, setBandTitleImageUrl] = useState(titleImageUrl || '')
   const [newGenre, setNewGenre] = useState('')
+  const safeBandLogoUrl = sanitizeImageSrc(bandLogoUrl)
+  const safeBandTitleImageUrl = sanitizeImageSrc(bandTitleImageUrl)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -92,9 +107,9 @@ export default function BandInfoEditDialog({ open, onOpenChange, name, genres, l
               onChange={(e) => setBandLogoUrl(e.target.value)}
               placeholder="https://... or data:image/..."
             />
-            {bandLogoUrl && (
+            {safeBandLogoUrl && (
               <div className="mt-2 flex justify-center">
-                <img src={bandLogoUrl} alt="Logo Preview" className="max-w-[200px] max-h-[200px] object-contain border border-border rounded p-2" />
+                <img src={safeBandLogoUrl} alt="Logo Preview" className="max-w-[200px] max-h-[200px] object-contain border border-border rounded p-2" />
               </div>
             )}
             <p className="text-xs text-muted-foreground">Leave empty to use default logo</p>
@@ -108,9 +123,9 @@ export default function BandInfoEditDialog({ open, onOpenChange, name, genres, l
               onChange={(e) => setBandTitleImageUrl(e.target.value)}
               placeholder="https://... or data:image/..."
             />
-            {bandTitleImageUrl && (
+            {safeBandTitleImageUrl && (
               <div className="mt-2 flex justify-center">
-                <img src={bandTitleImageUrl} alt="Title Preview" className="max-w-full max-h-[100px] object-contain border border-border rounded p-2" />
+                <img src={safeBandTitleImageUrl} alt="Title Preview" className="max-w-full max-h-[100px] object-contain border border-border rounded p-2" />
               </div>
             )}
             <p className="text-xs text-muted-foreground">Leave empty to use default title image</p>
