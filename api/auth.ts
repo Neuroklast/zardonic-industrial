@@ -32,19 +32,13 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 /**
- * Verify a password against a stored hash.
- * Supports both scrypt (new) and legacy SHA-256 formats.
+ * Verify a password against a stored scrypt hash.
+ * Only `scrypt:<salt>:<derivedKey>` format is accepted.
+ * Non-scrypt hashes (e.g. old SHA-256) are rejected — admins must re-setup
+ * their password via the setup endpoint.
  */
 async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  if (!stored.startsWith('scrypt:')) {
-    // Legacy SHA-256 format (will be migrated automatically on next login)
-    const hash = createHash('sha256').update(password).digest('hex')
-    const a = Buffer.from(hash, 'utf8')
-    const b = Buffer.from(stored, 'utf8')
-    if (a.length !== b.length) return false
-    return cryptoTimingSafeEqual(a, b)
-  }
-
+  if (!stored.startsWith('scrypt:')) return false
   const [, salt, key] = stored.split(':')
   const derived = (await scryptAsync(password, salt, 64)) as Buffer
   const storedKey = Buffer.from(key, 'hex')
@@ -421,12 +415,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           if (!(await verifyTotpCodeOnce(totpSecret, loginData.totpCode))) {
             return res.status(403).json({ error: 'Invalid TOTP code', totpRequired: true })
           }
-        }
-
-        // Migration: rehash legacy SHA-256 to scrypt on successful login
-        if (!storedHash.startsWith('scrypt:')) {
-          const rehashed = await hashPassword(loginData.password)
-          await kv.set('admin-password-hash', rehashed)
         }
 
         await createSession(req, res)
