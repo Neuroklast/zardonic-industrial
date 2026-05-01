@@ -91,13 +91,31 @@ function getClientFingerprint(req: VercelRequest): string {
   return createHash('sha256').update(`${ua}|${ipPrefix}`).digest('hex')
 }
 
-/** Validate that the request has a valid session. Returns true/false. */
+/** Validate that the request has a valid session. Returns true/false.
+ *
+ * Accepts either:
+ *  1. An `nk-session` HttpOnly cookie (primary, issued by POST /api/auth).
+ *  2. An `x-session-token` request header (legacy fallback, issued by POST /api/session).
+ *
+ * Both session types are stored under the same `session:${token}` Redis key so
+ * both can be validated with a single lookup.
+ */
 export async function validateSession(req: VercelRequest): Promise<boolean> {
-  const token = getSessionFromCookie(req)
+  // Primary: cookie-based session (modern path)
+  const cookieToken = getSessionFromCookie(req)
+  // Fallback: header-based token (legacy path — api/session.ts login)
+  const headerToken = typeof req.headers['x-session-token'] === 'string'
+    ? req.headers['x-session-token']
+    : null
+
+  const token = cookieToken ?? headerToken
   if (!token) return false
+
   const sessionData = await kv.get<SessionData>(`session:${token}`)
   if (!sessionData) return false
-  // Validate client binding — reject if User-Agent or IP subnet changed
+  // Validate client binding — reject if User-Agent or IP subnet changed.
+  // Header-based sessions created by api/session.ts do not carry a fingerprint,
+  // so the fingerprint check is skipped when the field is absent.
   if (sessionData.fingerprint) {
     const currentFingerprint = getClientFingerprint(req)
     if (sessionData.fingerprint !== currentFingerprint) return false

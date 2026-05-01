@@ -5,8 +5,8 @@
  *  also stored client-side in localStorage as a fallback.
  */
 
-const STORAGE_KEY = 'nk-site-analytics'
-const SESSION_ID_KEY = 'nk-session-id'
+const STORAGE_KEY = 'zd-site-analytics'
+const SESSION_ID_KEY = 'zd-session-id'
 
 export interface AnalyticsEvent {
   type: 'page_view' | 'section_view' | 'interaction' | 'click'
