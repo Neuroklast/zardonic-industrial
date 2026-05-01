@@ -196,6 +196,12 @@ export default function SponsoringSection({
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             {logos.filter(logo => logo.src).map((logo, index) => (
               <div key={`sponsor-${index}`} className="relative group flex flex-col items-center gap-1">
+                {/*
+                 * Filter-Hinweis: FM verwaltet den `filter` inline (initial + whileInView + whileHover).
+                 * Das überschreibt den `filter` der CSS-Klasse `logo-white` absichtlich, damit
+                 * FM den Hover-Exit (chromatic → base) korrekt interpolieren kann.
+                 * logoBrightness-Änderungen werden reaktiv übernommen.
+                 */}
                 {logo.url ? (
                   <a
                     href={logo.url}
@@ -204,12 +210,6 @@ export default function SponsoringSection({
                     aria-label={logo.alt || logo.caption || 'Sponsor'}
                     className="block"
                   >
-                    {/*
-                     * Filter-Hinweis: FM verwaltet den `filter` inline (initial + whileInView + whileHover).
-                     * Das überschreibt den `filter` der CSS-Klasse `logo-white` absichtlich, damit
-                     * FM den Hover-Exit (chromatic → base) korrekt interpolieren kann.
-                     * logoBrightness-Änderungen werden reaktiv übernommen.
-                     */}
                     <motion.img
                       src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
                       alt={logo.alt}
@@ -230,32 +230,24 @@ export default function SponsoringSection({
                     />
                   </a>
                 ) : (
-                  <>
-                    {/*
-                     * Filter-Hinweis: FM verwaltet den `filter` inline (initial + whileInView + whileHover).
-                     * Das überschreibt den `filter` der CSS-Klasse `logo-white` absichtlich, damit
-                     * FM den Hover-Exit (chromatic → base) korrekt interpolieren kann.
-                     * logoBrightness-Änderungen werden reaktiv übernommen.
-                     */}
-                    <motion.img
-                      src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
-                      alt={logo.alt}
-                      className="logo-white h-10 md:h-14 w-auto object-contain"
-                      style={{ '--logo-brightness': logoBrightness } as React.CSSProperties}
-                      initial={{ opacity: 0, y: 10, filter: `brightness(0) invert(1) brightness(${logoBrightness})` }}
-                      whileInView={{ opacity: 1, y: 0, filter: `brightness(0) invert(1) brightness(${logoBrightness})` }}
-                      viewport={{ once: true }}
-                      transition={{
-                        duration: 0.5,
-                        delay: index * 0.1,
-                        filter: { duration: 0.18 },
-                      }}
-                      whileHover={{
-                        filter: 'brightness(0) invert(1) drop-shadow(-2px 0 1.5px var(--chromatic-color-left, rgba(255,50,50,0.85))) drop-shadow(2px 0 1.5px var(--chromatic-color-right, rgba(50,100,255,0.85)))',
-                      }}
-                      loading="lazy"
-                    />
-                  </>
+                  <motion.img
+                    src={toDirectImageUrl(logo.src, { w: 300 }) || logo.src}
+                    alt={logo.alt}
+                    className="logo-white h-10 md:h-14 w-auto object-contain"
+                    style={{ '--logo-brightness': logoBrightness } as React.CSSProperties}
+                    initial={{ opacity: 0, y: 10, filter: `brightness(0) invert(1) brightness(${logoBrightness})` }}
+                    whileInView={{ opacity: 1, y: 0, filter: `brightness(0) invert(1) brightness(${logoBrightness})` }}
+                    viewport={{ once: true }}
+                    transition={{
+                      duration: 0.5,
+                      delay: index * 0.1,
+                      filter: { duration: 0.18 },
+                    }}
+                    whileHover={{
+                      filter: 'brightness(0) invert(1) drop-shadow(-2px 0 1.5px var(--chromatic-color-left, rgba(255,50,50,0.85))) drop-shadow(2px 0 1.5px var(--chromatic-color-right, rgba(50,100,255,0.85)))',
+                    }}
+                    loading="lazy"
+                  />
                 )}
                 {logo.caption && (
                   <span className="font-mono text-[10px] text-muted-foreground/70 text-center leading-tight max-w-[120px]">
