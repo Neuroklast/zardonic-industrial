@@ -144,15 +144,15 @@ describe('SectionStyleOverride type — new fields', () => {
     expect(override.logoBrightness).toBe(1.2)
   })
 
-  it('accepts backgroundOpacity without TS errors', () => {
-    const override: SectionStyleOverride = { backgroundOpacity: 0.5 }
-    expect(override.backgroundOpacity).toBe(0.5)
-  })
-
-  it('both fields are optional — empty override is valid', () => {
+  it('logoBrightness is optional — empty override is valid', () => {
     const override: SectionStyleOverride = {}
     expect(override.logoBrightness).toBeUndefined()
-    expect(override.backgroundOpacity).toBeUndefined()
+  })
+
+  it('does not have backgroundColor or backgroundOpacity (section backgrounds removed)', () => {
+    const override: SectionStyleOverride = {}
+    expect(override).not.toHaveProperty('backgroundColor')
+    expect(override).not.toHaveProperty('backgroundOpacity')
   })
 })
 

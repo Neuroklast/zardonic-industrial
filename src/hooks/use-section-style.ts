@@ -15,10 +15,6 @@ export function useSectionStyle(
     const override = getSectionStyle(adminSettings, sectionId)
     const styles: React.CSSProperties = {}
 
-    if (override.backgroundColor) {
-      // Use type assertion since CSS custom properties are valid but not typed
-      ;(styles as Record<string, string>)['--section-bg'] = override.backgroundColor
-    }
     if (override.primaryColor) {
       ;(styles as Record<string, string>)['--section-primary'] = override.primaryColor
     }

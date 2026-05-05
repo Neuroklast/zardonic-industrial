@@ -362,9 +362,6 @@ export interface SectionStyleOverride {
   bodyLineHeight?: string
   textAlign?: 'left' | 'center' | 'right'
   primaryColor?: string
-  backgroundColor?: string
-  /** Opacity of the section background (0 = transparent, 1 = fully opaque). Default 0.5. */
-  backgroundOpacity?: number
   cardColor?: string
   borderColor?: string
   paddingY?: string
