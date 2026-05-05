@@ -162,7 +162,7 @@ function App() {
     <>
       {siteData && <StructuredData artistName={siteData.artistName} siteData={siteData} />}
       <PageLayout
-        contentClassName={`text-foreground${anim.backgroundImageUrl ? ' bg-transparent' : ' bg-background'}${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}
+        contentClassName={`text-foreground bg-transparent${anim.glitchEnabled === false ? ' no-glitch' : ''}${anim.chromaticEnabled === false ? ' no-chromatic' : ''}`}
         backgroundLayers={
           <BackgroundStack
             backgroundImageUrl={anim.backgroundImageUrl}
