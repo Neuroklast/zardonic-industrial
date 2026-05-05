@@ -176,19 +176,5 @@ These rules apply specifically to AI agent runs on this project:
 *   Do not refactor unrelated code in the same PR.
 *   Do not add new dependencies unless absolutely necessary — check `npm audit` for any new package.
 
-## 14. Legacy Code & Type Audit Notes
-
-The following decisions were made during a comprehensive legacy cleanup pass:
-
-### Removed
-*   **`SectionVisibility` type alias** (`src/lib/types.ts`) — Was a `@deprecated` alias for `Record<string, boolean>`. All consumer files (`AppNavBar.tsx`, `AppHeroSection.tsx`, `ThemeCustomizerDialog.tsx`) now use `Record<string, boolean>` inline.
-*   **`hashPassword()` in `src/lib/session.ts`** — Was a `@deprecated` client-side SHA-256 helper. No production code in `src/` called it; it existed only in its own test. Removed from `session.ts`; corresponding test describe block removed from `src/lib/session.test.ts`. The server-side `hashPassword` in `api/auth.ts` is unrelated and stays.
-
-### Kept (with rationale)
-*   **`textSize` fallback in `getBioBodyFontSize()`** — The CMS bio schema (`src/cms/section-schemas/bio-schema.ts`) still stores `textSize` as the field key; older KV data may have this field set. The canonical admin path is `bodyFontSize` (used by `SECTION_REGISTRY`). The fallback `bio?.bodyFontSize ?? bio?.textSize ?? 'text-lg'` must be preserved until a KV migration removes all `textSize` data.
-*   **`normalizeStoredRelease()` in `src/lib/release-adapters.ts`** — Legacy KV data may still have `streamingLinks` as a plain object instead of an array. The runtime guard `if (!links || Array.isArray(links)) return r` is a necessary safety net.
-*   **Analytics `AnalyticsData` mapping in `src/hooks/use-analytics.ts`** — `StatsDashboard` consumes `AnalyticsData` (legacy shape). The mapping from `SiteAnalytics` to `AnalyticsData` inside `getAnalyticsData()` is intentional architecture, not dead code.
-*   **`ThemeSettings` interface** — Used by the standalone `ThemeCustomizerDialog.tsx` component and its type-only test (`src/test/theme-overlay-effects.test.ts`). Distinct from `ThemeCustomization` (used in `AdminSettings.design.theme`): `ThemeSettings` carries `overlayEffects` and `activePreset` which `ThemeCustomization` does not.
-
 ### Admin Panel Config Paths (verified)
 All paths in `SECTION_REGISTRY` and `DESIGN_REGISTRY` (`src/lib/sections-registry.ts`) resolve to real keys in `AdminSettings` or `SiteData`. No orphaned paths were found.
