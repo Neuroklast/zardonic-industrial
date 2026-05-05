@@ -56,14 +56,14 @@ const ModelBackground = memo(function ModelBackground({
       modelUrl,
       (gltf) => {
         model = gltf.scene
-        // Centre & scale model to fit in view
+        // Center & scale model to fit in view
         const box = new THREE.Box3().setFromObject(model)
         const size = box.getSize(new THREE.Vector3())
-        const centre = box.getCenter(new THREE.Vector3())
+        const center = box.getCenter(new THREE.Vector3())
         const maxDim = Math.max(size.x, size.y, size.z)
         const scale = 3 / maxDim
         model.scale.setScalar(scale)
-        model.position.sub(centre.multiplyScalar(scale))
+        model.position.sub(center.multiplyScalar(scale))
         scene.add(model)
       },
       undefined,

@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  // Rate limit: shared global rate limiter (30 req / 60 s per IP)
+  // Shared per-IP rate limiter (configured globally as 30 req / 60 s in _ratelimit.ts)
   const allowed = await applyRateLimit(req, res)
   if (!allowed) return
 
