@@ -233,6 +233,49 @@ code, kbd, samp, pre {
   animation: none !important;
 }
 
+/* ── Unified Cyber Button System ──────────────────────────────────────────────
+ * All .cyber-btn variants share a consistent industrial/cyberpunk aesthetic:
+ * transparent base with a colored border, glow on hover, text NEVER turns dark.
+ * The --btn-glow custom property lets per-variant colours through cleanly.
+ */
+.cyber-btn {
+  position: relative;
+  letter-spacing: 0.08em;
+}
+
+.cyber-btn--primary {
+  --btn-glow: var(--primary);
+}
+.cyber-btn--destructive {
+  --btn-glow: var(--destructive);
+}
+.cyber-btn--outline {
+  --btn-glow: var(--primary);
+}
+.cyber-btn--secondary {
+  --btn-glow: var(--muted-foreground);
+}
+
+@media (hover: hover) {
+  .cyber-btn--primary:hover,
+  .cyber-btn--outline:hover,
+  .cyber-btn--secondary:hover {
+    border-color: var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 15%, transparent);
+    color: var(--primary);
+    box-shadow:
+      0 0 14px color-mix(in srgb, var(--primary) 35%, transparent),
+      inset 0 0 8px color-mix(in srgb, var(--primary) 8%, transparent);
+  }
+
+  .cyber-btn--destructive:hover {
+    border-color: var(--destructive);
+    background-color: color-mix(in srgb, var(--destructive) 15%, transparent);
+    color: var(--destructive);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--destructive) 35%, transparent);
+  }
+}
+
 * {
   scrollbar-width: thin;
   scrollbar-color: oklch(0.5 0 0) oklch(0.1 0 0);

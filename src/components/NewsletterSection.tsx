@@ -97,17 +97,15 @@ export default function NewsletterSection({
   if (!editMode && newsletterSettings?.enabled === false) return null
   if (!editMode && newsletterSettings?.showSection === false) return null
 
-  const bgOpacity = adminSettings?.sections?.styleOverrides?.newsletter?.backgroundOpacity ?? 0.5
-
   return (
     <section
       ref={sectionRef}
-      className="py-24 px-4 bg-gradient-to-b from-secondary/5 via-background to-background"
+      className="py-24 px-4"
       id="newsletter"
       style={{ order: sectionOrder }}
       data-theme-color="input border ring primary"
     >
-      <div className="max-w-6xl mx-auto" style={{ opacity: bgOpacity > 0 ? 1 : 0.3 }}>
+      <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           animate={isInView ? { opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' } : {}}

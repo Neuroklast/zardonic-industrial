@@ -39,10 +39,6 @@ export default function CreditHighlightsSection({
   // Style overrides
   const styleOverrides = adminSettings?.sections?.styleOverrides?.['creditHighlights']
   const logoBrightness = styleOverrides?.logoBrightness ?? 1
-  const backgroundOpacity = styleOverrides?.backgroundOpacity
-  const sectionStyle = backgroundOpacity !== undefined
-    ? { backgroundColor: `color-mix(in srgb, var(--card) ${Math.round(backgroundOpacity * 100)}%, transparent)` }
-    : undefined
 
   const startEditLabel = () => {
     setLabelDraft(sectionLabel || 'CREDIT.HIGHLIGHTS')
@@ -104,8 +100,7 @@ export default function CreditHighlightsSection({
     {visible && (
     <>
     <section
-      className={`py-16 px-4 noise-effect overflow-hidden${backgroundOpacity === undefined ? ' bg-card/50' : ''}`}
-      style={sectionStyle}
+      className="py-16 px-4 noise-effect overflow-hidden"
       data-theme-color="primary accent card border"
     >
       <div className="container mx-auto max-w-6xl">

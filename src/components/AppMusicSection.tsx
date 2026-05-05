@@ -63,7 +63,7 @@ function AppMusicSection({
   return (
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
-      <section id="music" className="py-24 px-4 bg-card/50 scanline-effect" data-theme-color="card">
+      <section id="music" className="py-24 px-4 scanline-effect" data-theme-color="card">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
