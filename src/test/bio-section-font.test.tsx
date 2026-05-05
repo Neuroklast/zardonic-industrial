@@ -193,14 +193,14 @@ describe('AppBioSection — font binding', () => {
     expect(bioText!.classList.contains('whitespace-pre-wrap')).toBe(true)
   })
 
-  it('bio section applies backgroundOpacity as inline style when set in styleOverrides', async () => {
+  it('bio section has no inline background style regardless of backgroundOpacity (section backgrounds removed)', async () => {
     const { container } = await renderBioSection({
       sections: { styleOverrides: { bio: { backgroundOpacity: 0.5 } } },
     })
     const section = container.querySelector('section#bio')
     expect(section).not.toBeNull()
-    expect(section!.getAttribute('style')).toContain('background-color')
-    expect(section!.getAttribute('style')).toContain('color-mix')
+    // Sections are now transparent — no inline background-color applied
+    expect(section!.getAttribute('style') ?? '').not.toContain('background-color')
   })
 
   it('bio section has no inline background style when backgroundOpacity is not set', async () => {

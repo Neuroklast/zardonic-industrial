@@ -28,6 +28,7 @@ export default function BackgroundTab({
 
   const { upload: uploadVideo, progress: videoUploadProgress, isUploading: isUploadingVideo } = useVideoUpload()
   const { upload: uploadVideoMobile, progress: videoMobileUploadProgress, isUploading: isUploadingVideoMobile } = useVideoUpload()
+  const { upload: uploadModel, progress: modelUploadProgress, isUploading: isUploadingModel } = useVideoUpload()
 
   const [videoCheckResult, setVideoCheckResult] = useState<VideoOptimizationResult | null>(null)
   const [isCheckingVideo, setIsCheckingVideo] = useState(false)
@@ -55,6 +56,14 @@ export default function BackgroundTab({
     if (result) updateAnim({ backgroundVideoMobileUrl: result.url })
     e.target.value = ''
   }, [uploadVideoMobile, updateAnim])
+
+  const handleModelUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const result = await uploadModel(file)
+    if (result) updateAnim({ backgroundModelUrl: result.url })
+    e.target.value = ''
+  }, [uploadModel, updateAnim])
 
   const handleCheckVideo = useCallback(async () => {
     const url = anim.backgroundVideoUrl
@@ -92,6 +101,7 @@ export default function BackgroundTab({
             { value: 'cloud-chamber', label: 'Cloud Chamber', desc: 'Radiation cloud chamber with noise, terminal glow & particles' },
             { value: 'glitch-grid', label: 'Glitch Grid', desc: 'Dark crosshatch grid with glitch artifacts & scan beam (DIGICIDE)' },
             { value: 'video', label: 'Video Loop', desc: 'Looping video file — falls back to a static image on low-end devices' },
+            { value: '3d-model', label: '3D Model', desc: 'Rotating 3D model (.glb/.gltf) rendered with Three.js' },
             { value: 'minimal', label: 'Minimal', desc: 'No decorative background' },
           ] as { value: BackgroundType; label: string; desc: string }[]).map(opt => (
             <button
@@ -511,6 +521,94 @@ export default function BackgroundTab({
                 </button>
               ))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* 3D Model background options */}
+      {currentBg === '3d-model' && (
+        <section className="space-y-3">
+          <h3 className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
+            3D Model Options
+          </h3>
+          <p className="font-mono text-xs text-muted-foreground">
+            Upload a .glb or .gltf 3D model that renders as a rotating page background via Three.js.
+          </p>
+
+          {/* Model URL / upload */}
+          <div className="space-y-2">
+            <Label className="font-mono text-xs text-muted-foreground">Model File</Label>
+            <div className="flex gap-2">
+              <Input
+                value={anim.backgroundModelUrl ?? ''}
+                onChange={e => updateAnim({ backgroundModelUrl: e.target.value || undefined })}
+                className="font-mono text-xs flex-1"
+                placeholder="https://... (.glb or .gltf)"
+              />
+              <label className="cursor-pointer">
+                <Button variant="outline" size="sm" asChild disabled={isUploadingModel}>
+                  <span className="font-mono text-xs">
+                    {isUploadingModel ? `${modelUploadProgress}%` : <Upload className="w-3 h-3" />}
+                  </span>
+                </Button>
+                <input
+                  type="file"
+                  accept=".glb,.gltf"
+                  className="hidden"
+                  onChange={handleModelUpload}
+                />
+              </label>
+            </div>
+            {modelUploadProgress > 0 && modelUploadProgress < 100 && (
+              <div className="w-full bg-border rounded-full h-1">
+                <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${modelUploadProgress}%` }} />
+              </div>
+            )}
+          </div>
+
+          {/* Auto-rotate */}
+          <div className="flex items-center justify-between">
+            <Label className="font-mono text-xs">Auto-Rotate</Label>
+            <Switch
+              checked={anim.backgroundModelAutoRotate !== false}
+              onCheckedChange={v => updateAnim({ backgroundModelAutoRotate: v })}
+            />
+          </div>
+
+          {/* Rotate speed */}
+          {anim.backgroundModelAutoRotate !== false && (
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Label className="font-mono text-xs">Rotation Speed</Label>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {(anim.backgroundModelRotateSpeed ?? 0.003).toFixed(3)}
+                </span>
+              </div>
+              <Slider
+                value={[Math.round((anim.backgroundModelRotateSpeed ?? 0.003) * 1000)]}
+                min={1}
+                max={20}
+                step={1}
+                onValueChange={([v]) => updateAnim({ backgroundModelRotateSpeed: v / 1000 })}
+              />
+            </div>
+          )}
+
+          {/* Opacity */}
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label className="font-mono text-xs">Opacity</Label>
+              <span className="font-mono text-xs text-muted-foreground">
+                {Math.round((anim.backgroundModelOpacity ?? 1) * 100)}%
+              </span>
+            </div>
+            <Slider
+              value={[(anim.backgroundModelOpacity ?? 1) * 100]}
+              min={10}
+              max={100}
+              step={5}
+              onValueChange={([v]) => updateAnim({ backgroundModelOpacity: v / 100 })}
+            />
           </div>
         </section>
       )}

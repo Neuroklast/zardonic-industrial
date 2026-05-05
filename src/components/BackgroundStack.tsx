@@ -13,6 +13,7 @@ const MatrixRain = React.lazy(() => import('@/components/MatrixRain'))
 const StarField = React.lazy(() => import('@/components/StarField'))
 const CloudChamberBackground = React.lazy(() => import('@/components/CloudChamberBackground'))
 const GlitchGridBackground = React.lazy(() => import('@/components/GlitchGridBackground'))
+const ModelBackground = React.lazy(() => import('@/components/ModelBackground'))
 
 /** Fixed (non-scrolling) background image. Depth layer --z-bg-image. */
 function FixedBackgroundImage({ url, fit, opacity }: {
@@ -98,7 +99,17 @@ function AnimatedBackgroundLayer({ type, hudTexts, transparent, animSettings }: 
   if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} starCount={animSettings?.starCount} starSpeed={animSettings?.starSpeed} /></Suspense>
   if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground glowColor={animSettings?.cloudGlowColor} /></Suspense>
   if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground transparent={transparent} gridSize={animSettings?.glitchGridSize} scanSpeed={animSettings?.glitchScanSpeed} glitchFrequency={animSettings?.glitchFrequency} /></Suspense>
-  // 'minimal' or 'video' handled at BackgroundStack level — no fallback here
+  if (bg === '3d-model' && animSettings?.backgroundModelUrl) return (
+    <Suspense fallback={null}>
+      <ModelBackground
+        modelUrl={animSettings.backgroundModelUrl}
+        autoRotate={animSettings.backgroundModelAutoRotate !== false}
+        rotateSpeed={animSettings.backgroundModelRotateSpeed}
+        opacity={animSettings.backgroundModelOpacity ?? 1}
+      />
+    </Suspense>
+  )
+  // 'minimal', 'video', '3d-model' (no URL) handled at BackgroundStack level — no fallback here
   return null
 }
 
@@ -137,10 +148,14 @@ export function BackgroundStack({
   hudTexts,
   animSettings,
 }: BackgroundStackProps) {
+  const isVideoActive = backgroundType === 'video' && Boolean(animSettings?.backgroundVideoUrl)
+
   return (
     <>
-      {/* Layer 0 (--z-bg-image): Static background image — always render when set */}
-      {backgroundImageUrl && (
+      {/* Layer 0 (--z-bg-image): Static background image.
+          Hidden when a video is active and playing — video acts as background instead.
+          Shown as fallback when video is disabled (e.g. low-end device). */}
+      {backgroundImageUrl && !isVideoActive && (
         <BackgroundImage
           url={backgroundImageUrl}
           fit={backgroundImageFit}
@@ -152,14 +167,14 @@ export function BackgroundStack({
       {/* Layer 1 (--z-bg-video): Video — shown whenever video background type is
           selected, regardless of the animatedBackgroundEnabled flag (which controls
           decorative overlay animations, not the primary background type). */}
-      {backgroundType === 'video' && animSettings?.backgroundVideoUrl && (
+      {isVideoActive && (
         <VideoBackground
-          videoUrl={animSettings.backgroundVideoUrl}
-          mobileVideoUrl={animSettings.backgroundVideoMobileUrl}
-          fallbackImageUrl={animSettings.backgroundImageUrl}
-          opacity={animSettings.backgroundVideoOpacity ?? 1}
-          scrollMode={animSettings.backgroundVideoMode === 'scroll'}
-          fit={animSettings.backgroundImageFit}
+          videoUrl={animSettings!.backgroundVideoUrl!}
+          mobileVideoUrl={animSettings?.backgroundVideoMobileUrl}
+          fallbackImageUrl={animSettings?.backgroundImageUrl}
+          opacity={animSettings?.backgroundVideoOpacity ?? 1}
+          scrollMode={animSettings?.backgroundVideoMode === 'scroll'}
+          fit={animSettings?.backgroundImageFit}
         />
       )}
 

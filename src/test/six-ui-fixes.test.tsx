@@ -61,32 +61,22 @@ describe('SECTION_REGISTRY — new fields', () => {
     expect(field?.defaultValue).toBe(1)
   })
 
-  it('bio has a backgroundOpacity slider field', () => {
+  it('bio does not have a backgroundOpacity slider field (section backgrounds removed)', () => {
     const entry = SECTION_REGISTRY.find(e => e.id === 'bio')
     const field = entry?.configFields.find(f => f.path === 'sections.styleOverrides.bio.backgroundOpacity')
-    expect(field).toBeDefined()
-    expect(field?.type).toBe('slider')
-    expect(field?.min).toBe(0)
-    expect(field?.max).toBe(1)
-    expect(field?.step).toBe(0.05)
+    expect(field).toBeUndefined()
   })
 
-  it('gigs has a backgroundOpacity slider field', () => {
+  it('gigs does not have a backgroundOpacity slider field (section backgrounds removed)', () => {
     const entry = SECTION_REGISTRY.find(e => e.id === 'gigs')
     const field = entry?.configFields.find(f => f.path === 'sections.styleOverrides.gigs.backgroundOpacity')
-    expect(field).toBeDefined()
-    expect(field?.type).toBe('slider')
-    expect(field?.min).toBe(0)
-    expect(field?.max).toBe(1)
+    expect(field).toBeUndefined()
   })
 
-  it('releases has a backgroundOpacity slider field', () => {
+  it('releases does not have a backgroundOpacity slider field (section backgrounds removed)', () => {
     const entry = SECTION_REGISTRY.find(e => e.id === 'releases')
     const field = entry?.configFields.find(f => f.path === 'sections.styleOverrides.releases.backgroundOpacity')
-    expect(field).toBeDefined()
-    expect(field?.type).toBe('slider')
-    expect(field?.min).toBe(0)
-    expect(field?.max).toBe(1)
+    expect(field).toBeUndefined()
   })
 })
 

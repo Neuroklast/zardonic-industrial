@@ -109,9 +109,9 @@ export function SystemMonitorHUD({ decorativeTexts, dataCounts }: SystemMonitorH
 
   return (
     <>
-      {/* Top Left Corner — positioned below navbar (~72px mobile / ~80px desktop) */}
+      {/* Top Left Corner — desktop only (hidden on mobile) */}
       <div
-        className="pointer-events-none fixed left-2 top-[76px] font-mono text-xs leading-tight tracking-wider text-primary/60 sm:left-4 md:top-[84px]"
+        className="hidden md:block pointer-events-none fixed left-4 top-[84px] font-mono text-xs leading-tight tracking-wider text-primary/60"
         style={{ zIndex: 'var(--z-hud)' } as React.CSSProperties}
         data-theme-color="primary"
       >
@@ -123,9 +123,9 @@ export function SystemMonitorHUD({ decorativeTexts, dataCounts }: SystemMonitorH
         </div>
       </div>
 
-      {/* Top Right Corner — positioned below navbar (~72px mobile / ~80px desktop) */}
+      {/* Top Right Corner — desktop only (hidden on mobile) */}
       <div
-        className="pointer-events-none fixed right-2 top-[76px] font-mono text-xs leading-tight tracking-wider text-primary/60 sm:right-4 md:top-[84px]"
+        className="hidden md:block pointer-events-none fixed right-4 top-[84px] font-mono text-xs leading-tight tracking-wider text-primary/60"
         style={{ zIndex: 'var(--z-hud)' } as React.CSSProperties}
         data-theme-color="primary"
       >
@@ -137,9 +137,9 @@ export function SystemMonitorHUD({ decorativeTexts, dataCounts }: SystemMonitorH
         </div>
       </div>
 
-      {/* Bottom Right Corner */}
+      {/* Bottom Right Corner — desktop only (hidden on mobile) */}
       <div
-        className="pointer-events-none fixed bottom-2 right-2 font-mono text-xs leading-tight tracking-wider text-primary/60 sm:bottom-4 sm:right-4 sm:text-xs"
+        className="hidden md:block pointer-events-none fixed bottom-4 right-4 font-mono text-xs leading-tight tracking-wider text-primary/60"
         style={{ zIndex: 'var(--z-hud)' } as React.CSSProperties}
         data-theme-color="primary"
       >

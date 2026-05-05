@@ -92,6 +92,7 @@ export default defineConfig(() => {
               id.includes('/node_modules/@tiptap/') ||
               id.includes('/node_modules/prosemirror')
             ) return 'vendor-tiptap'
+            if (id.includes('/node_modules/three')) return 'vendor-three'
             if (
               id.includes('/node_modules/@radix-ui/react-dialog') ||
               id.includes('/node_modules/@radix-ui/react-separator') ||
@@ -100,8 +101,9 @@ export default defineConfig(() => {
           },
         },
       },
-      // All gzipped chunks are under the 500 kB threshold required by AGENTS.md.
-      chunkSizeWarningLimit: 500,
+      // Gzipped chunks are under the 500 kB threshold required by AGENTS.md.
+      // The minified size limit is set higher to accommodate Three.js (595 kB minified / 153 kB gzip).
+      chunkSizeWarningLimit: 700,
       minify: 'esbuild',
     },
     optimizeDeps: {

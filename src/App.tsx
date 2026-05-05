@@ -18,6 +18,7 @@ export type { SiteData } from '@/lib/app-types'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
 import { LoadingScreen } from '@/components/LoadingScreen'
+import { useInstagramFeed } from '@/hooks/use-instagram-feed'
 const MinimalBarLoader = React.lazy(() => import('@/components/MinimalBarLoader'))
 const GlitchDecodeLoader = React.lazy(() => import('@/components/GlitchDecodeLoader'))
 const SwipeableGallery = React.lazy(() => import('@/components/SwipeableGallery'))
@@ -102,6 +103,13 @@ function App() {
   usePerfLog({ enabled: adminSettings?.devTools?.performanceLogEnabled ?? false })
   const { iTunesFetching, bandsintownFetching, hasAutoLoaded, iTunesProgress, handleFetchBandsintownEvents, handleFetchITunesReleases } = useSiteDataSync(siteData, isSiteDataLoaded, refetchSiteData, isOwner)
   useDocumentTitle(siteData?.artistName ?? '')
+
+  // Instagram feed — fetched client-side via the /api/instagram proxy
+  const { images: instagramImages } = useInstagramFeed({
+    accessToken: adminSettings?.instagram?.accessToken,
+    enabled: adminSettings?.instagram?.enabled === true,
+    maxImages: adminSettings?.instagram?.maxImages ?? 12,
+  })
 
   // ── Stable release mutation callbacks (useCallback prevents re-renders of
   //    memoised children when unrelated state changes) ──────────────────────
@@ -452,7 +460,7 @@ function App() {
       <SectionErrorBoundary sectionName="Gallery">
       <Suspense fallback={null}>
       <GallerySection
-        siteData={siteData}
+        siteData={{ ...siteData, instagramFeed: [...siteData.instagramFeed, ...instagramImages] }}
         editMode={editMode}
         sectionOrder={getSectionOrder('gallery')}
         visible={vis.gallery !== false}

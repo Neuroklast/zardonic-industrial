@@ -65,7 +65,7 @@ export interface ThemeCustomization {
   spotifyBrightness?: number
 }
 
-export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal' | 'cloud-chamber' | 'glitch-grid' | 'video'
+export type BackgroundType = 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'minimal' | 'cloud-chamber' | 'glitch-grid' | 'video' | '3d-model'
 
 export type LoadingScreenType = 'cyberpunk' | 'minimal-bar' | 'glitch-decode' | 'none'
 export type LoadingScreenMode = 'timed' | 'real'
@@ -123,6 +123,11 @@ export interface AnimationSettings {
    * 'none' or undefined = no overlay effect.
    */
   backgroundVideoOverlayEffect?: 'none' | 'circuit' | 'cyberpunk-hud' | 'matrix' | 'stars' | 'cloud-chamber' | 'glitch-grid'
+  // 3D model background options
+  backgroundModelUrl?: string
+  backgroundModelAutoRotate?: boolean
+  backgroundModelRotateSpeed?: number
+  backgroundModelOpacity?: number
 }
 
 export interface LoaderTexts {
@@ -482,6 +487,16 @@ export interface AdminSettings {
   devTools?: {
     /** When true, enables the performance logger (stored in sessionStorage). */
     performanceLogEnabled?: boolean
+  }
+
+  // Instagram feed integration
+  instagram?: {
+    /** Instagram Basic Display API access token. Never exposed client-side. */
+    accessToken?: string
+    /** Enable automatic Instagram feed in the gallery section. */
+    enabled?: boolean
+    /** Maximum number of Instagram images to show (default: 12). */
+    maxImages?: number
   }
 }
 
