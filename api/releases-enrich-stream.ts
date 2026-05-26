@@ -77,8 +77,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       res.write(`retry: ${SSE_RETRY_MS}\n`)
       res.write(`data: ${JSON.stringify(data)}\n\n`)
-      // @ts-expect-error - flush is available in Node.js http.ServerResponse
-      if (typeof res.flush === 'function') res.flush()
+      // flush() is available on Node.js http.ServerResponse (via compression middleware)
+      // but is not part of the VercelResponse type definition.
+      const flushable = res as unknown as { flush?: () => void }
+      if (typeof flushable.flush === 'function') flushable.flush()
       return true
     } catch {
       return false

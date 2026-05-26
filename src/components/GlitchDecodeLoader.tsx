@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState, useRef, memo } from 'react'
 import type React from 'react'
-import { cacheImage } from '@/lib/image-cache'
 import type { LoaderTexts, LoadingScreenMode } from '@/lib/types'
+import { useLoaderProgress } from '@/hooks/use-loader-progress'
 
 interface GlitchDecodeLoaderProps {
   onLoadComplete: () => void
@@ -36,17 +36,16 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
   mode = 'real',
   duration = 3,
 }: GlitchDecodeLoaderProps) {
-  const [progress, setProgress] = useState(0)
-  const [cachingDone, setCachingDone] = useState(precacheUrls.length === 0)
-  const [displayTitle, setDisplayTitle] = useState('')
   const titleRef = useRef(0)
 
   const targetTitle = loaderTexts?.titleLabel ?? 'SYSTEM BOOT'
+  const [displayTitle, setDisplayTitle] = useState(() => decodeString(targetTitle, 0))
+
+  const { progress } = useLoaderProgress({ precacheUrls, mode, duration, onLoadComplete, completeDelay: 800 })
 
   // Decode animation for title
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDisplayTitle(decodeString(targetTitle, 0))
+    titleRef.current = 0
     const id = setInterval(() => {
       titleRef.current = Math.min(titleRef.current + 1, targetTitle.length)
       setDisplayTitle(decodeString(targetTitle, titleRef.current))
@@ -54,45 +53,6 @@ const GlitchDecodeLoader = memo(function GlitchDecodeLoader({
     }, 80)
     return () => clearInterval(id)
   }, [targetTitle])
-
-  useEffect(() => {
-    if (mode === 'timed') {
-      const totalMs = (duration ?? 3) * 1000
-      const intervalMs = 50
-      const increment = 100 / (totalMs / intervalMs)
-      const id = setInterval(() => setProgress(p => Math.min(p + increment, 100)), intervalMs)
-      return () => clearInterval(id)
-    }
-    const id = setInterval(() => {
-      setProgress(p => {
-        if (p >= 95) return p
-        return Math.min(p + (p < 50 ? 3 : p < 80 ? 1.5 : 0.5), 95)
-      })
-    }, 100)
-    return () => clearInterval(id)
-  }, [mode, duration])
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (precacheUrls.length === 0) { setCachingDone(true); return }
-    setCachingDone(false)
-    let cancelled = false
-    Promise.allSettled(precacheUrls.map(url => cacheImage(url))).then(() => { if (!cancelled) setCachingDone(true) })
-    return () => { cancelled = true }
-  }, [precacheUrls])
-
-  useEffect(() => {
-    if (mode === 'timed') return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (cachingDone && progress >= 90) setProgress(100)
-  }, [cachingDone, progress, mode])
-
-  useEffect(() => {
-    if (progress >= 100 && (mode === 'timed' || cachingDone)) {
-      const t = setTimeout(() => onLoadComplete(), 800)
-      return () => clearTimeout(t)
-    }
-  }, [progress, cachingDone, mode, onLoadComplete])
 
   const pct = Math.floor(progress)
   const barCols = 40
