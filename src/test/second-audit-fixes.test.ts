@@ -88,7 +88,7 @@ describe('contact.ts — Brevo XSS fix', () => {
     } as any, res as any)
 
     const brevoCall = fetchSpy.mock.calls.find(
-      ([url]: [string]) => typeof url === 'string' && url.startsWith('https://api.brevo.com'),
+      ([url]: [string]) => typeof url === 'string' && /^https:\/\/api\.brevo\.com(?:\/|$)/.test(url),
     )
     expect(brevoCall, 'Brevo fetch must be called').toBeDefined()
     const body = JSON.parse(brevoCall![1]!.body as string) as { htmlContent: string }

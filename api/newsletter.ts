@@ -87,19 +87,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
         const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
         if (!dc) {
-          console.error('[newsletter] Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
-        } else {
-          const hash = createHash('md5').update(sanitizedEmail).digest('hex')
-          const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
-          await fetch(url, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
-            },
-            body: JSON.stringify({ status: 'unsubscribed' }),
-          })
+          throw new Error('Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
         }
+        const hash = createHash('md5').update(sanitizedEmail).digest('hex')
+        const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
+        await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
+          },
+          body: JSON.stringify({ status: 'unsubscribed' }),
+        })
       }
 
       // Brevo
