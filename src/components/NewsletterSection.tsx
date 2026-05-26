@@ -98,13 +98,14 @@ export default function NewsletterSection({
   if (!editMode && newsletterSettings?.showSection === false) return null
 
   return (
-    <section
-      ref={sectionRef}
-      className="py-24 px-4"
-      id="newsletter"
-      style={{ order: sectionOrder }}
-      data-theme-color="input border ring primary"
-    >
+    <div style={{ order: sectionOrder }}>
+      <Separator className="bg-border" />
+      <section
+        ref={sectionRef}
+        className="py-24 px-4 scanline-effect"
+        id="newsletter"
+        data-theme-color="input border ring primary"
+      >
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -283,5 +284,6 @@ export default function NewsletterSection({
         )}
       </div>
     </section>
+    </div>
   )
 }

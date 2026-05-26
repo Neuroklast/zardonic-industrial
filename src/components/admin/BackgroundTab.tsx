@@ -9,6 +9,7 @@ import { useState, useRef, useCallback } from 'react'
 
 import type { AdminSettings, AnimationSettings, BackgroundType, HudTexts, LoadingScreenType, LoadingScreenMode } from '@/lib/types'
 import { useVideoUpload } from '@/cms/hooks/useVideoUpload'
+import { useImageUpload } from '@/cms/hooks/useImageUpload'
 import { checkVideoScrollOptimization, type VideoOptimizationResult } from '@/lib/video-check'
 
 interface BackgroundTabProps {
@@ -29,6 +30,7 @@ export default function BackgroundTab({
   const { upload: uploadVideo, progress: videoUploadProgress, isUploading: isUploadingVideo } = useVideoUpload()
   const { upload: uploadVideoMobile, progress: videoMobileUploadProgress, isUploading: isUploadingVideoMobile } = useVideoUpload()
   const { upload: uploadModel, progress: modelUploadProgress, isUploading: isUploadingModel } = useVideoUpload()
+  const { upload: uploadImage, progress: imageUploadProgress, isUploading: isUploadingImage } = useImageUpload()
 
   const [videoCheckResult, setVideoCheckResult] = useState<VideoOptimizationResult | null>(null)
   const [isCheckingVideo, setIsCheckingVideo] = useState(false)
@@ -64,6 +66,14 @@ export default function BackgroundTab({
     if (result) updateAnim({ backgroundModelUrl: result.url })
     e.target.value = ''
   }, [uploadModel, updateAnim])
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const result = await uploadImage(file)
+    if (result) updateAnim({ backgroundImageUrl: result.url })
+    e.target.value = ''
+  }, [uploadImage, updateAnim])
 
   const handleCheckVideo = useCallback(async () => {
     const url = anim.backgroundVideoUrl
@@ -711,12 +721,32 @@ export default function BackgroundTab({
         </p>
         <div className="space-y-1">
           <Label className="font-mono text-xs text-muted-foreground">Image URL</Label>
-          <Input
-            value={anim.backgroundImageUrl ?? ''}
-            onChange={e => updateAnim({ backgroundImageUrl: e.target.value || undefined })}
-            className="font-mono text-xs"
-            placeholder="https://example.com/image.jpg"
-          />
+          <div className="flex gap-2">
+            <Input
+              value={anim.backgroundImageUrl ?? ''}
+              onChange={e => updateAnim({ backgroundImageUrl: e.target.value || undefined })}
+              className="font-mono text-xs flex-1"
+              placeholder="https://example.com/image.jpg"
+            />
+            <label className="cursor-pointer">
+              <Button variant="outline" size="sm" asChild disabled={isUploadingImage}>
+                <span className="font-mono text-xs">
+                  {isUploadingImage ? `${imageUploadProgress}%` : <Upload className="w-3 h-3" />}
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/avif"
+                className="hidden"
+                onChange={handleImageUpload}
+              />
+            </label>
+          </div>
+          {imageUploadProgress > 0 && imageUploadProgress < 100 && (
+            <div className="w-full bg-border rounded-full h-1">
+              <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${imageUploadProgress}%` }} />
+            </div>
+          )}
         </div>
         <div className="space-y-1">
           <Label className="font-mono text-xs text-muted-foreground">Object Fit</Label>

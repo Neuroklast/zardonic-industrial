@@ -6,6 +6,7 @@ import { Upload, Storefront, Plus, Trash, PencilSimple, Check, Images } from '@p
 import type { SiteData, HeroLink } from '@/lib/app-types'
 import type { AdminSettings } from '@/lib/types'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { useImageUpload } from '@/cms/hooks/useImageUpload'
 import { useState } from 'react'
 
 const DEFAULT_HERO_LINKS: HeroLink[] = [
@@ -70,29 +71,28 @@ export default function AppHeroSection({
   const heroMinHeight = adminSettings?.sections?.styleOverrides?.hero?.minHeight ?? 'min-h-screen'
   const heroPaddingTop = adminSettings?.sections?.styleOverrides?.hero?.paddingTop
 
-  const handlePrimaryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { upload: uploadHeroImage, isUploading: isUploadingPrimary } = useImageUpload()
+  const { upload: uploadExtraImage, isUploading: isUploadingExtra } = useImageUpload()
+
+  const handlePrimaryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      onUpdateSiteData?.((prev) => ({ ...prev, heroImage: reader.result as string }))
-    }
-    reader.readAsDataURL(file)
+    const result = await uploadHeroImage(file)
+    if (result) onUpdateSiteData?.((prev) => ({ ...prev, heroImage: result.url }))
     e.target.value = ''
   }
 
-  const handleExtraUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
+    const result = await uploadExtraImage(file)
+    if (result) {
       onUpdateSiteData?.((prev) => {
         const current = prev.heroImages ?? []
         if (current.length >= MAX_EXTRA_IMAGES) return prev
-        return { ...prev, heroImages: [...current, reader.result as string] }
+        return { ...prev, heroImages: [...current, result.url] }
       })
     }
-    reader.readAsDataURL(file)
     e.target.value = ''
   }
 
@@ -190,10 +190,10 @@ export default function AppHeroSection({
             {/* Primary hero image upload */}
             <div className="flex items-center justify-center gap-2 flex-wrap">
               <label className="cursor-pointer">
-                <Button variant="outline" size="sm" asChild>
+                <Button variant="outline" size="sm" asChild disabled={isUploadingPrimary}>
                   <span>
                     <Upload className="w-4 h-4 mr-2" />
-                    {primaryImage ? 'Change Hero Image' : 'Upload Hero Image'}
+                    {isUploadingPrimary ? 'Uploading…' : primaryImage ? 'Change Hero Image' : 'Upload Hero Image'}
                   </span>
                 </Button>
                 <input
@@ -239,7 +239,7 @@ export default function AppHeroSection({
                     </div>
                   ))}
                   {allImages.length < MAX_HERO_IMAGES && (
-                    <label className="cursor-pointer w-12 h-12 rounded border border-dashed border-primary/30 flex items-center justify-center hover:border-primary/60 transition-colors">
+                    <label className={`cursor-pointer w-12 h-12 rounded border border-dashed border-primary/30 flex items-center justify-center hover:border-primary/60 transition-colors${isUploadingExtra ? ' opacity-50 pointer-events-none' : ''}`}>
                       <Images className="w-4 h-4 text-primary/50" />
                       <input
                         ref={extraInputRef}
@@ -247,6 +247,7 @@ export default function AppHeroSection({
                         accept="image/*"
                         className="hidden"
                         onChange={handleExtraUpload}
+                        disabled={isUploadingExtra}
                       />
                     </label>
                   )}

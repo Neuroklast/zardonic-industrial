@@ -81,7 +81,7 @@ function AppBioSection({ bio, sectionOrder, visible, editMode, sectionLabel, hea
   return (
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
-      <section id="bio" className="py-24 px-4" data-theme-color="foreground muted-foreground card border">
+      <section id="bio" className="py-24 px-4 scanline-effect" data-theme-color="foreground muted-foreground card border">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
