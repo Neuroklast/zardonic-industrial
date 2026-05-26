@@ -163,6 +163,9 @@ These rules apply specifically to AI agent runs on this project:
 1.  **Update AGENTS.md**: If new conventions, patterns, or architectural decisions were introduced, add or update the relevant section in this file. AGENTS.md is the living specification of this project.
 2.  **Update documentation**: If new public APIs, components, or utilities were added, update the relevant docs in the `docs/` directory or inline JSDoc comments.
 3.  **Update `.ts-errors-remaining.txt`**: After fixing TypeScript errors, update or delete this file to reflect the current state. A clean typecheck means this file should either be empty or deleted. Current state: `npm run typecheck` passes with 0 errors — no `.ts-errors-remaining.txt` needed.
+4.  **Update `CHANGELOG.md`**: Every session that makes code changes MUST add an entry to `CHANGELOG.md` at the root, following the Keep-a-Changelog format. Group changes under `Added`, `Changed`, `Fixed`, `Security`.
+5.  **Update `docs/LESSONS_LEARNED.md`**: Any non-trivial lesson — bugs found, anti-patterns avoided, surprising behaviour discovered — MUST be added as a table row. See the template in that file.
+6.  **Update `README.md`**: If public-facing behaviour, API surface, or setup steps changed, update the README accordingly.
 
 ### Test-Driven Development
 
@@ -178,3 +181,31 @@ These rules apply specifically to AI agent runs on this project:
 
 ### Admin Panel Config Paths (verified)
 All paths in `SECTION_REGISTRY` and `DESIGN_REGISTRY` (`src/lib/sections-registry.ts`) resolve to real keys in `AdminSettings` or `SiteData`. No orphaned paths were found.
+
+## 14. Session-End Checklist
+
+Every agent session **MUST** complete the following before closing the PR or finalising the task. Treat this as a mandatory gate — failing to complete it is a process violation.
+
+```
+[ ] npm run lint        → 0 errors, 0 warnings
+[ ] npm run typecheck   → 0 errors
+[ ] npm run build       → 0 errors, 0 warnings
+[ ] npm run test        → all tests pass
+[ ] CHANGELOG.md        → new entry added under [Unreleased]
+[ ] docs/LESSONS_LEARNED.md → new row(s) added for non-trivial lessons
+[ ] AGENTS.md           → updated if new conventions were introduced
+[ ] README.md           → updated if public API or setup changed
+```
+
+### Known Stable Fixes (reference for future sessions)
+
+| Fix | File | Description |
+|-----|------|-------------|
+| Password setup guard | `api/session.ts` | `PUT /api/session` returns 409 if a hash already exists. Do NOT remove this guard. |
+| Redis short-circuit | `api/auth.ts:validateSession` | Returns `false` early if `!isRedisConfigured()` to prevent handler crashes. |
+| Model upload MIME types | `api/cms/video-upload-token.ts` | `model/gltf-binary` and `model/gltf+json` are in the allow-list alongside `video/*`. |
+| Rate limit on key validation | `api/validate-key.ts` | `applyRateLimit` must be called before any KV lookup. |
+| WebGL cleanup | `src/components/ModelBackground.tsx` | `scene.traverse` disposes geometry/material/texture before `renderer.dispose()`. |
+| Upload mount guard | `src/cms/hooks/useVideoUpload.ts`, `useMediaUpload.ts` | `isMountedRef` prevents setState after unmount. |
+| Enrichment status | `api/releases-enrichment-status.ts` | Reads live `releases-enrich-queue` key; `pendingCount` is never hardcoded to 0. |
+
