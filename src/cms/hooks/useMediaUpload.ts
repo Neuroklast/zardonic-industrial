@@ -32,10 +32,13 @@ export function useMediaUpload(): UseMediaUploadResult {
   const [progress, setProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const progressResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Track mount state so async completions don't call setState after unmount
+  const isMountedRef = useRef(true)
 
-  // Clear pending reset timer on unmount to prevent state update on unmounted component
   useEffect(() => {
+    isMountedRef.current = true
     return () => {
+      isMountedRef.current = false
       if (progressResetTimerRef.current !== null) {
         clearTimeout(progressResetTimerRef.current)
       }
@@ -49,13 +52,15 @@ export function useMediaUpload(): UseMediaUploadResult {
       progressResetTimerRef.current = null
     }
 
-    setIsUploading(true)
-    setProgress(0)
+    if (isMountedRef.current) {
+      setIsUploading(true)
+      setProgress(0)
+    }
 
     try {
-      setProgress(10)
+      if (isMountedRef.current) setProgress(10)
       const dataUrl = await fileToDataUrl(file)
-      setProgress(40)
+      if (isMountedRef.current) setProgress(40)
 
       const res = await fetch('/api/cms/media', {
         method: 'POST',
@@ -68,7 +73,7 @@ export function useMediaUpload(): UseMediaUploadResult {
         }),
       })
 
-      setProgress(90)
+      if (isMountedRef.current) setProgress(90)
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { error?: string }
@@ -76,7 +81,7 @@ export function useMediaUpload(): UseMediaUploadResult {
       }
 
       const result = await res.json() as MediaUploadResponse
-      setProgress(100)
+      if (isMountedRef.current) setProgress(100)
       toast.success(`"${file.name}" uploaded.`)
       return result
     } catch (err) {
@@ -84,12 +89,14 @@ export function useMediaUpload(): UseMediaUploadResult {
       toast.error(message)
       return null
     } finally {
-      setIsUploading(false)
-      // Reset progress after a short delay so the UI can show 100%
-      progressResetTimerRef.current = setTimeout(() => {
-        setProgress(0)
-        progressResetTimerRef.current = null
-      }, 800)
+      if (isMountedRef.current) {
+        setIsUploading(false)
+        // Reset progress after a short delay so the UI can show 100%
+        progressResetTimerRef.current = setTimeout(() => {
+          if (isMountedRef.current) setProgress(0)
+          progressResetTimerRef.current = null
+        }, 800)
+      }
     }
   }, [])
 

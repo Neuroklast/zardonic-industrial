@@ -19,10 +19,13 @@ export function useVideoUpload(): UseVideoUploadResult {
   const [progress, setProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const progressResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Track mount state so async completions don't call setState after unmount
+  const isMountedRef = useRef(true)
 
-  // Clear pending reset timer on unmount to prevent state update on unmounted component
   useEffect(() => {
+    isMountedRef.current = true
     return () => {
+      isMountedRef.current = false
       if (progressResetTimerRef.current !== null) {
         clearTimeout(progressResetTimerRef.current)
       }
@@ -36,8 +39,10 @@ export function useVideoUpload(): UseVideoUploadResult {
       progressResetTimerRef.current = null
     }
 
-    setIsUploading(true)
-    setProgress(0)
+    if (isMountedRef.current) {
+      setIsUploading(true)
+      setProgress(0)
+    }
 
     // Sanitise filename — keep only safe characters; include a timestamp to avoid collisions
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
@@ -48,11 +53,11 @@ export function useVideoUpload(): UseVideoUploadResult {
         access: 'public',
         handleUploadUrl: '/api/cms/video-upload-token',
         onUploadProgress: ({ percentage }) => {
-          setProgress(Math.round(percentage))
+          if (isMountedRef.current) setProgress(Math.round(percentage))
         },
       })
 
-      setProgress(100)
+      if (isMountedRef.current) setProgress(100)
       toast.success(`"${file.name}" uploaded.`)
       return {
         url: blob.url,
@@ -65,11 +70,13 @@ export function useVideoUpload(): UseVideoUploadResult {
       toast.error(message)
       return null
     } finally {
-      setIsUploading(false)
-      progressResetTimerRef.current = setTimeout(() => {
-        setProgress(0)
-        progressResetTimerRef.current = null
-      }, 800)
+      if (isMountedRef.current) {
+        setIsUploading(false)
+        progressResetTimerRef.current = setTimeout(() => {
+          if (isMountedRef.current) setProgress(0)
+          progressResetTimerRef.current = null
+        }, 800)
+      }
     }
   }, [])
 

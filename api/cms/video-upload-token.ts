@@ -4,7 +4,13 @@ import { applyRateLimit } from '../_ratelimit.js'
 import { validateSession } from '../auth.js'
 
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024 // 500 MB
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
+const ALLOWED_MEDIA_TYPES = [
+  'video/mp4',
+  'video/webm',
+  // 3D model formats for the ModelBackground component
+  'model/gltf-binary',   // .glb
+  'model/gltf+json',     // .gltf
+]
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const authenticated = await validateSession(req)
@@ -27,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: req.body as HandleUploadBody,
       onBeforeGenerateToken: async (_pathname: string) => {
         return {
-          allowedContentTypes: ALLOWED_VIDEO_TYPES,
+          allowedContentTypes: ALLOWED_MEDIA_TYPES,
           maximumSizeInBytes: MAX_VIDEO_SIZE,
         }
       },

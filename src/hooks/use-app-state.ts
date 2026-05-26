@@ -6,7 +6,7 @@
  * KV synchronisation, authentication wiring, and derived values.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useKV } from '@/hooks/use-kv'
 import { useAdminAuth } from '@/hooks/use-admin-auth'
 import { useAnalyticsConsent } from '@/lib/consent'
@@ -81,6 +81,9 @@ export function useAppState(): AppState {
   const [loading, setLoading] = useState(() => initialLoaderType !== 'none')
   const [contentLoaded, setContentLoaded] = useState(false)
   const [activeLoaderType] = useState(initialLoaderType)
+  // Ref to track the setTimeout used to set contentLoaded so it can be
+  // cleaned up if the component unmounts before the 100ms delay fires.
+  const contentLoadedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Admin authentication ───────────────────────────────────────────────────
   const {
@@ -181,7 +184,16 @@ export function useAppState(): AppState {
 
   useEffect(() => {
     if (!loading) {
-      setTimeout(() => setContentLoaded(true), 100)
+      contentLoadedTimerRef.current = setTimeout(() => {
+        setContentLoaded(true)
+        contentLoadedTimerRef.current = null
+      }, 100)
+      return () => {
+        if (contentLoadedTimerRef.current !== null) {
+          clearTimeout(contentLoadedTimerRef.current)
+          contentLoadedTimerRef.current = null
+        }
+      }
     }
   }, [loading])
 

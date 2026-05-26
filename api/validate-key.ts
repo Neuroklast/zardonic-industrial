@@ -4,6 +4,7 @@ const kv = new Proxy({} as ReturnType<typeof getRedis>, {
   get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
 })
 import { isPrimaryHost } from './_primary-check.js'
+import { applyRateLimit } from './_ratelimit.js'
 
 // Minimal inline types so we avoid the vulnerable @vercel/node package
 /**
@@ -26,6 +27,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'POST') return res.status(405).json({ valid: false, error: 'Method not allowed' })
+
+  // Rate limit — prevent brute-force key enumeration
+  const allowed = await applyRateLimit(req, res)
+  if (!allowed) return
 
   const { key } = req.body || {}
 

@@ -172,7 +172,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ success: true })
     }
 
-    // PUT: Setup initial password (scrypt)
+    // PUT: Setup initial password (scrypt) — only allowed when no password is configured yet.
+    // Prevents unauthenticated password resets on already-configured instances.
     if (req.method === 'PUT') {
       const body = req.body as Record<string, unknown>
       const password = typeof body?.password === 'string' ? body.password : undefined
@@ -183,6 +184,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       if (password.length < 8) {
         return res.status(400).json({ error: 'Password must be at least 8 characters' })
+      }
+
+      // Guard: refuse to overwrite an existing password via this unauthenticated endpoint.
+      // If a password is already set, the admin must use POST /api/auth with the current
+      // password (change-password flow) instead.
+      const existingHash = await kv.get('admin-password-hash')
+      if (existingHash) {
+        return res.status(409).json({ error: 'Password already configured' })
       }
 
       const hash = await hashPasswordScrypt(password)
