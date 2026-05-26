@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, isRedisConfigured } from './_redis.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { isHoneytoken, triggerHoneytokenAlarm, isMarkedAttacker, injectEntropyHeaders, getRandomTaunt, setDefenseHeaders } from './_honeytokens.js'
 import { kvGetQuerySchema, kvPostSchema, validate } from './_schemas.js'

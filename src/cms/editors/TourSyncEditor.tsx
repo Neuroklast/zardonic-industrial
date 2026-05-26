@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, RefreshCw, Calendar, Music2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface SyncStatus {
   ok: boolean
@@ -10,7 +11,7 @@ interface SyncStatus {
 }
 
 async function triggerGigsSync(): Promise<SyncStatus> {
-  const res = await fetch('/api/gigs-sync', {
+  const res = await fetch(API_ROUTES.GIGS_SYNC, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -21,7 +22,7 @@ async function triggerGigsSync(): Promise<SyncStatus> {
 }
 
 async function triggerSetlistSync(): Promise<SyncStatus> {
-  const res = await fetch('/api/setlistfm', {
+  const res = await fetch(API_ROUTES.SETLISTFM, {
     method: 'GET',
     credentials: 'include',
   })

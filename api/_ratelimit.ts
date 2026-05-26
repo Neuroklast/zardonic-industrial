@@ -1,7 +1,4 @@
-import { getRedis, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, isRedisConfigured } from './_redis.js'
 import { Ratelimit } from '@upstash/ratelimit'
 import { createHash, randomBytes } from 'node:crypto'
 

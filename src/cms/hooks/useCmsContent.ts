@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface ContentResponse<T> {
   value: T | null
@@ -26,7 +27,7 @@ async function fetchContent<T>(key: string): Promise<ContentResponse<T>> {
 }
 
 async function saveContent<T>(key: string, value: T, draft: boolean): Promise<void> {
-  const res = await fetch('/api/cms/content', {
+  const res = await fetch(API_ROUTES.CMS_CONTENT, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -39,7 +40,7 @@ async function saveContent<T>(key: string, value: T, draft: boolean): Promise<vo
 }
 
 async function publishContent(key: string, revert = false): Promise<void> {
-  const res = await fetch('/api/cms/publish', {
+  const res = await fetch(API_ROUTES.CMS_PUBLISH, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

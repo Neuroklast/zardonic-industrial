@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Envelope, EnvelopeOpen, Trash, CircleNotch } from '@phosphor-icons/react'
 import type { ContactMessage } from '@/lib/types'
 import { useLocale } from '@/contexts/LocaleContext'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface Props {
   open: boolean
@@ -24,7 +25,7 @@ export default function ContactInboxDialog({ open, onClose }: Props) {
   const fetchMessages = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/contact', { credentials: 'same-origin' })
+      const res = await fetch(API_ROUTES.CONTACT, { credentials: 'same-origin' })
       if (res.ok) {
         const { messages: data }: { messages: ContactMessage[] } = await res.json()
         setMessages((data ?? []).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()))
@@ -42,7 +43,7 @@ export default function ContactInboxDialog({ open, onClose }: Props) {
   }, [open, fetchMessages])
 
   const markAsRead = async (id: string) => {
-    await fetch('/api/contact', {
+    await fetch(API_ROUTES.CONTACT, {
       method: 'PATCH',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
@@ -62,7 +63,7 @@ export default function ContactInboxDialog({ open, onClose }: Props) {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    await fetch('/api/contact', {
+    await fetch(API_ROUTES.CONTACT, {
       method: 'DELETE',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },

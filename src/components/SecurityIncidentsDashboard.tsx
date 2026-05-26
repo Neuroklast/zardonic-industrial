@@ -3,6 +3,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useState, useEffect } from 'react'
 import { SecurityIncident, classifyIncident, classifyCountermeasure } from '@/lib/security-incidents'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface SecurityIncidentsDashboardProps {
   open: boolean
@@ -42,7 +43,7 @@ export default function SecurityIncidentsDashboard({ open, onClose, onViewProfil
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     setError(null)
-    fetch('/api/security-incidents', { credentials: 'same-origin' })
+    fetch(API_ROUTES.SECURITY_INCIDENTS, { credentials: 'same-origin' })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -70,7 +71,7 @@ export default function SecurityIncidentsDashboard({ open, onClose, onViewProfil
   const doClear = async () => {
     setConfirmClear(false)
     try {
-      const res = await fetch('/api/security-incidents', { method: 'DELETE', credentials: 'same-origin' })
+      const res = await fetch(API_ROUTES.SECURITY_INCIDENTS, { method: 'DELETE', credentials: 'same-origin' })
       if (res.ok) setIncidents([])
     } catch { /* ignore */ }
   }

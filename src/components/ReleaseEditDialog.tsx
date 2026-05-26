@@ -8,6 +8,7 @@ import { UploadSimple, Plus, X, ArrowsClockwise, ArrowCounterClockwise } from '@
 import type { Release } from '@/lib/types'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 interface ReleaseEditDialogProps {
   release: Release | null
   onSave: (release: Release) => void
@@ -105,7 +106,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
     if (!release?.id) return
     setIsSyncing(true)
     try {
-      const resp = await fetch('/api/releases-enrich-single', {
+      const resp = await fetch(API_ROUTES.RELEASES_ENRICH_SINGLE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -142,7 +143,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
     if (!release?.id) return
     setIsSyncingTracklist(true)
     try {
-      const resp = await fetch('/api/releases-enrich-single', {
+      const resp = await fetch(API_ROUTES.RELEASES_ENRICH_SINGLE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

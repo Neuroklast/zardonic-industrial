@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis, getRedisOrNull, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, getRedisOrNull, isRedisConfigured } from './_redis.js'
 import { randomUUID } from 'node:crypto'
 import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'

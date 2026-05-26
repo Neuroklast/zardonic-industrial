@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 /**
  * Custom KV hook backed by Vercel KV API routes, with localStorage fallback for local dev.
@@ -35,7 +36,7 @@ export function useKV<T>(key: string, defaultValue: T): [T, (updater: T | ((curr
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 3500)
 
-    fetch(`/api/kv?key=${encodeURIComponent(key)}`, { signal: controller.signal })
+    fetch(`${API_ROUTES.KV}?key=${encodeURIComponent(key)}`, { signal: controller.signal })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data && data.value !== null && data.value !== undefined) {
@@ -108,7 +109,7 @@ export function useKV<T>(key: string, defaultValue: T): [T, (updater: T | ((curr
         abortRef.current?.abort()
         abortRef.current = new AbortController()
 
-        fetch('/api/kv', {
+        fetch(API_ROUTES.KV, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
@@ -119,7 +120,7 @@ export function useKV<T>(key: string, defaultValue: T): [T, (updater: T | ((curr
             // Session may have expired — check auth status and reload if needed
             // so the next login starts with a clean state (no stale 503 errors)
             try {
-              const authRes = await fetch('/api/auth', { credentials: 'same-origin' })
+              const authRes = await fetch(API_ROUTES.AUTH, { credentials: 'same-origin' })
               if (authRes.ok) {
                 const authData = await authRes.json()
                 if (!authData.authenticated) {

@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Users, Trash, DownloadSimple, CircleNotch } from '@phosphor-icons/react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface Subscriber {
   email: string
@@ -26,7 +27,7 @@ export default function SubscriberListDialog({ open, onClose }: SubscriberListDi
   const fetchSubscribers = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/subscribers', { credentials: 'same-origin' })
+      const res = await fetch(API_ROUTES.SUBSCRIBERS, { credentials: 'same-origin' })
       if (res.ok) {
         const { subscribers: data }: { subscribers: Subscriber[] } = await res.json()
         setSubscribers(
@@ -43,7 +44,7 @@ export default function SubscriberListDialog({ open, onClose }: SubscriberListDi
   }, [open, fetchSubscribers])
 
   const handleDelete = async (email: string) => {
-    const res = await fetch('/api/subscribers', {
+    const res = await fetch(API_ROUTES.SUBSCRIBERS, {
       method: 'DELETE',
       credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },

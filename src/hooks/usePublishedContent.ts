@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface ContentResponse<T> {
   value: T | null
@@ -30,7 +31,7 @@ export function usePublishedContentFull<T>(key: string): {
     queryKey: ['cms-published', key],
     queryFn: async (): Promise<ContentResponse<T>> => {
       const params = new URLSearchParams({ key, draft: 'false' })
-      const res = await fetch(`/api/cms/content?${params.toString()}`, {
+      const res = await fetch(`${API_ROUTES.CMS_CONTENT}?${params.toString()}`, {
         credentials: 'include',
       })
       if (!res.ok) throw new Error(`Failed to load content: ${res.status}`)

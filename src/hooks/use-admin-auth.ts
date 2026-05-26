@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, startTransition } from 'react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 export interface AdminAuthState {
   isOwner: boolean
@@ -25,7 +26,7 @@ export function useAdminAuth() {
 
   // Check auth status on mount via cookie-based session
   useEffect(() => {
-    fetch('/api/auth', { credentials: 'same-origin' })
+    fetch(API_ROUTES.AUTH, { credentials: 'same-origin' })
       .then(res => res.ok ? res.json() : null)
       .then(data => {
         if (data) {
@@ -46,7 +47,7 @@ export function useAdminAuth() {
     const SESSION_CHECK_INTERVAL = 60_000
     const intervalId = setInterval(async () => {
       try {
-        const res = await fetch('/api/auth', { credentials: 'same-origin' })
+        const res = await fetch(API_ROUTES.AUTH, { credentials: 'same-origin' })
         if (!res.ok) return
         const data = await res.json()
         if (!data.authenticated) {
@@ -63,7 +64,7 @@ export function useAdminAuth() {
     try {
       const body: Record<string, string> = { password }
       if (totpCode) body.totpCode = totpCode
-      const res = await fetch('/api/auth', {
+      const res = await fetch(API_ROUTES.AUTH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -87,7 +88,7 @@ export function useAdminAuth() {
   const handleSetAdminPassword = useCallback(async (password: string, setupToken?: string): Promise<void> => {
     const body: Record<string, string> = { password, action: 'setup' }
     if (setupToken) body.setupToken = setupToken
-    const res = await fetch('/api/auth', {
+    const res = await fetch(API_ROUTES.AUTH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -106,7 +107,7 @@ export function useAdminAuth() {
   }, [handleSetAdminPassword])
 
   const handleChangeAdminPassword = useCallback(async (password: string): Promise<void> => {
-    const res = await fetch('/api/auth', {
+    const res = await fetch(API_ROUTES.AUTH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -120,7 +121,7 @@ export function useAdminAuth() {
 
   const handleAdminLogout = useCallback(async (): Promise<void> => {
     try {
-      await fetch('/api/auth', {
+      await fetch(API_ROUTES.AUTH, {
         method: 'DELETE',
         credentials: 'same-origin',
       })

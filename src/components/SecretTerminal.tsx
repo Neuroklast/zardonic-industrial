@@ -15,6 +15,7 @@ import {
 } from '@/lib/config'
 
 import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface SecretTerminalProps {
   isOpen: boolean
@@ -213,7 +214,7 @@ export default function SecretTerminal({ isOpen, onClose, customCommands = [], s
 
     // All other commands (including "help") go through the API
     try {
-      const res = await fetch('/api/terminal', {
+      const res = await fetch(API_ROUTES.TERMINAL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: trimmedCmd }),

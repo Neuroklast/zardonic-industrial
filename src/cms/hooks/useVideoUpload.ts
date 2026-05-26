@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { upload as blobUpload } from '@vercel/blob/client'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface VideoUploadResponse {
   url: string
@@ -51,7 +52,7 @@ export function useVideoUpload(): UseVideoUploadResult {
     try {
       const blob = await blobUpload(pathname, file, {
         access: 'public',
-        handleUploadUrl: '/api/cms/video-upload-token',
+        handleUploadUrl: API_ROUTES.CMS_VIDEO_UPLOAD_TOKEN,
         onUploadProgress: ({ percentage }) => {
           if (isMountedRef.current) setProgress(Math.round(percentage))
         },

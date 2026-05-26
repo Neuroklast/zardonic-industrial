@@ -3,6 +3,7 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui
 import { useState, useEffect, useMemo } from 'react'
 import { toast } from 'sonner'
 import { SecuritySettings, DEFAULT_SETTINGS } from '@/lib/security-defaults'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface SecuritySettingsDialogProps {
   open: boolean
@@ -122,7 +123,7 @@ export default function SecuritySettingsDialog({ open, onClose }: SecuritySettin
     if (!open) return
     setLoading(true)
     setError(null)
-    fetch('/api/security-settings', { credentials: 'same-origin' })
+    fetch(API_ROUTES.SECURITY_SETTINGS, { credentials: 'same-origin' })
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -135,7 +136,7 @@ export default function SecuritySettingsDialog({ open, onClose }: SecuritySettin
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/security-settings', {
+      const res = await fetch(API_ROUTES.SECURITY_SETTINGS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',

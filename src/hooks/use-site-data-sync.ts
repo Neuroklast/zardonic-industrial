@@ -3,6 +3,7 @@ import type { SiteData } from '@/lib/app-types'
 import { getSyncTimestamps, updateReleasesSync, updateGigsSync } from '@/lib/sync'
 import { parseGigDate } from '@/lib/utils'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
 
@@ -35,7 +36,7 @@ export function useSiteDataSync(
     setITunesProgress(null)
     try {
       // Phase 1: iTunes + MusicBrainz → immediate band-data write + queue
-      const response = await fetch('/api/releases-enrich', {
+      const response = await fetch(API_ROUTES.RELEASES_ENRICH, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +64,7 @@ export function useSiteDataSync(
       // release so the browser makes a single persistent connection instead of
       // calling /api/releases-enrich-worker every 200 ms.
       await new Promise<void>((resolve) => {
-        const stream = new EventSource('/api/releases-enrich-stream', { withCredentials: true })
+        const stream = new EventSource(API_ROUTES.RELEASES_ENRICH_STREAM, { withCredentials: true })
 
         stream.onmessage = (e: MessageEvent<string>) => {
           try {
@@ -122,7 +123,7 @@ export function useSiteDataSync(
   const handleFetchBandsintownEvents = useCallback(async (isAutoLoad = false) => {
     setBandsintownFetching(true)
     try {
-      const response = await fetch('/api/gigs-sync', {
+      const response = await fetch(API_ROUTES.GIGS_SYNC, {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },

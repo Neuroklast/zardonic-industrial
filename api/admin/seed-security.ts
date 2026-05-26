@@ -2,10 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { validateSession } from '../auth.js'
 import { applyRateLimit } from '../_ratelimit.js'
 import { seedHoneytokens, HONEYTOKEN_KEYS } from '../_honeytokens.js'
-import { getRedis } from '../_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv } from '../_redis.js'
 
 /**
  * Admin endpoint — seed security honeytokens into KV.

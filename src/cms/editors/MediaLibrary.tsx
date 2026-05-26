@@ -5,13 +5,14 @@ import { type MediaItem } from '../schemas'
 import { Loader2, Upload, Trash2, X, Image as ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface MediaResponse {
   items: MediaItem[]
 }
 
 async function fetchMedia(): Promise<MediaResponse> {
-  const res = await fetch('/api/cms/media', { credentials: 'include' })
+  const res = await fetch(API_ROUTES.CMS_MEDIA, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to fetch media: ${res.status}`)
   return res.json() as Promise<MediaResponse>
 }

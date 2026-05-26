@@ -4,6 +4,15 @@ import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
+
+const TTL_1_HOUR    = 3600
+const TTL_24_HOURS  = 86400
+const TTL_7_DAYS    = 604800
+const TTL_30_DAYS   = 2592000
+const TTL_1_YEAR    = 31536000
+
+const MS_PER_HOUR   = 3600000
 
 interface BlockedEntry {
   hashedIp: string
@@ -27,7 +36,7 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
   // Add form state
   const [newHashedIp, setNewHashedIp] = useState('')
   const [newReason, setNewReason] = useState('')
-  const [newTtl, setNewTtl] = useState<number>(604800) // 7 days default
+  const [newTtl, setNewTtl] = useState<number>(TTL_7_DAYS)
   const [adding, setAdding] = useState(false)
 
   useEffect(() => {
@@ -39,7 +48,7 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/blocklist', { credentials: 'same-origin' })
+      const res = await fetch(API_ROUTES.BLOCKLIST, { credentials: 'same-origin' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       setEntries(data.blocked || [])
@@ -59,7 +68,7 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
     setConfirmUnblockIp(null)
     if (!hashedIp) return
     try {
-      const res = await fetch('/api/blocklist', {
+      const res = await fetch(API_ROUTES.BLOCKLIST, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -83,7 +92,7 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
     }
     setAdding(true)
     try {
-      const res = await fetch('/api/blocklist', {
+      const res = await fetch(API_ROUTES.BLOCKLIST, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
@@ -100,7 +109,7 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
       toast.success('IP blocked')
       setNewHashedIp('')
       setNewReason('')
-      setNewTtl(604800)
+      setNewTtl(TTL_7_DAYS)
       setShowAddForm(false)
       loadBlocklist()
     } catch (err) {
@@ -121,14 +130,14 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
     }
   }
 
-  const getExpiryTime = (blockedAt: string, ttl: number = 604800) => {
+  const getExpiryTime = (blockedAt: string, ttl: number = TTL_7_DAYS) => {
     try {
       const blocked = new Date(blockedAt).getTime()
       const expiry = new Date(blocked + ttl * 1000)
       const now = Date.now()
       const remaining = expiry.getTime() - now
       if (remaining < 0) return 'Expired'
-      const hours = Math.floor(remaining / 3600000)
+      const hours = Math.floor(remaining / MS_PER_HOUR)
       const days = Math.floor(hours / 24)
       if (days > 0) return `${days}d ${hours % 24}h`
       return `${hours}h`
@@ -237,11 +246,11 @@ export default function BlocklistManagerDialog({ open, onClose }: BlocklistManag
                     onChange={(e) => setNewTtl(Number(e.target.value))}
                     className="w-full bg-black/50 border border-primary/20 px-3 py-2 font-mono text-[12px] text-foreground/80 focus:border-primary/50 focus:outline-none"
                   >
-                    <option value={3600}>1 hour</option>
-                    <option value={86400}>24 hours</option>
-                    <option value={604800}>7 days</option>
-                    <option value={2592000}>30 days</option>
-                    <option value={31536000}>1 year</option>
+                    <option value={TTL_1_HOUR}>1 hour</option>
+                    <option value={TTL_24_HOURS}>24 hours</option>
+                    <option value={TTL_7_DAYS}>7 days</option>
+                    <option value={TTL_30_DAYS}>30 days</option>
+                    <option value={TTL_1_YEAR}>1 year</option>
                   </select>
                 </div>
                 <button

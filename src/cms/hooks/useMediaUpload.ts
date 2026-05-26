@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface MediaUploadResponse {
   id: string
@@ -62,7 +63,7 @@ export function useMediaUpload(): UseMediaUploadResult {
       const dataUrl = await fileToDataUrl(file)
       if (isMountedRef.current) setProgress(40)
 
-      const res = await fetch('/api/cms/media', {
+      const res = await fetch(API_ROUTES.CMS_MEDIA, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

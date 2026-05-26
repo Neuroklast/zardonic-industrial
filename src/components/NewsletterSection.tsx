@@ -15,6 +15,7 @@ import {
   SECTION_GLITCH_INTERVAL_MS,
 } from '@/lib/config'
 import { trackNewsletterSignup } from '@/lib/analytics'
+import { API_ROUTES } from '@/lib/api-routes'
 
 export interface NewsletterSectionProps {
   onUpdate?: (settings: NewsletterSettings) => void
@@ -72,7 +73,7 @@ export default function NewsletterSection({
     setStatus('loading')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/newsletter', {
+      const res = await fetch(API_ROUTES.NEWSLETTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

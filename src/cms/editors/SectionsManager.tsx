@@ -3,19 +3,20 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { type SectionConfig } from '../schemas'
 import { Loader2, ChevronUp, ChevronDown, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface SectionsResponse {
   sections: SectionConfig[]
 }
 
 async function fetchSections(): Promise<SectionsResponse> {
-  const res = await fetch('/api/cms/sections', { credentials: 'include' })
+  const res = await fetch(API_ROUTES.CMS_SECTIONS, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to load sections: ${res.status}`)
   return res.json() as Promise<SectionsResponse>
 }
 
 async function saveSections(sections: SectionConfig[]): Promise<void> {
-  const res = await fetch('/api/cms/sections', {
+  const res = await fetch(API_ROUTES.CMS_SECTIONS, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

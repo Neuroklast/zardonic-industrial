@@ -16,6 +16,7 @@ import type { AdminSettings, SectionLabels, TerminalCommand } from '@/lib/types'
 import type { SiteData } from '@/lib/app-types'
 import { DEFAULT_SITE_DATA } from '@/lib/app-types'
 import { DEFAULT_SECTION_ORDER, type SectionKey } from '@/lib/config'
+import { API_ROUTES } from '@/lib/api-routes'
 
 // localStorage key used to persist the loader type for instant restoration
 const LOADER_TYPE_KEY = 'nk-loader-type'
@@ -258,7 +259,7 @@ export function useAppState(): AppState {
 
   // ── Release / gig reset ───────────────────────────────────────────────────
   const handleResetReleases = useCallback(async () => {
-    const resp = await fetch('/api/data-reset', {
+    const resp = await fetch(API_ROUTES.DATA_RESET, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -274,7 +275,7 @@ export function useAppState(): AppState {
   }, [handleUpdateSiteData, refetchSiteData])
 
   const handleResetGigs = useCallback(async () => {
-    const resp = await fetch('/api/data-reset', {
+    const resp = await fetch(API_ROUTES.DATA_RESET, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',

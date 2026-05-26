@@ -10,6 +10,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { XCircle, CheckCircle, Warning, ArrowsClockwise, Stop } from '@phosphor-icons/react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 const DELAY_BETWEEN_MS = 1_500   // 1.5 s between releases — respects MB + Odesli rate limits
 
@@ -57,7 +58,7 @@ export function ReleaseEnrichProgress({ releases, onClose, onComplete }: Props) 
       setCurrent(release.title)
 
       try {
-        const resp = await fetch('/api/releases-enrich-single', {
+        const resp = await fetch(API_ROUTES.RELEASES_ENRICH_SINGLE, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
