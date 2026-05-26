@@ -86,16 +86,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       // Mailchimp
       if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
         const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
-        const hash = createHash('md5').update(sanitizedEmail).digest('hex')
-        const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
-        await fetch(url, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
-          },
-          body: JSON.stringify({ status: 'unsubscribed' }),
-        })
+        if (!dc) {
+          console.error('[newsletter] Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
+        } else {
+          const hash = createHash('md5').update(sanitizedEmail).digest('hex')
+          const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
+          await fetch(url, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
+            },
+            body: JSON.stringify({ status: 'unsubscribed' }),
+          })
+        }
       }
 
       // Brevo
@@ -141,27 +145,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
     try {
       const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
-      const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members`
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
-        },
-        body: JSON.stringify({
-          email_address: sanitizedEmail,
-          status: 'pending',
-          tags: sanitizedSource ? [sanitizedSource] : [],
-        }),
-      })
-      const data = await response.json() as { title?: string; detail?: string }
-      if (!response.ok && data.title !== 'Member Exists') {
-        res.status(400).json({ error: data.detail || 'Subscription failed' })
+      if (!dc) {
+        console.error('[newsletter] Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
+      } else {
+        const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members`
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
+          },
+          body: JSON.stringify({
+            email_address: sanitizedEmail,
+            status: 'pending',
+            tags: sanitizedSource ? [sanitizedSource] : [],
+          }),
+        })
+        const data = await response.json() as { title?: string; detail?: string }
+        if (!response.ok && data.title !== 'Member Exists') {
+          res.status(400).json({ error: data.detail || 'Subscription failed' })
+          return
+        }
+        storeSubscriberLocally(sanitizedEmail, sanitizedSource)
+        res.status(200).json({ success: true })
         return
       }
-      storeSubscriberLocally(sanitizedEmail, sanitizedSource)
-      res.status(200).json({ success: true })
-      return
     } catch {
       res.status(500).json({ error: 'Newsletter service error' })
       return

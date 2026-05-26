@@ -128,7 +128,7 @@ async function sendEmailViaBrevo({ name, email, subject, message, toEmail }: { n
         to: [{ email: toEmail }],
         replyTo: { name, email },
         subject: `Contact Form: ${subject}`,
-        htmlContent: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><p><strong>Subject:</strong> ${subject}</p><p>${message.replace(/\n/g, '<br>')}</p>`,
+        htmlContent: `<p><strong>From:</strong> ${esc(name)} &lt;${esc(email)}&gt;</p><p><strong>Subject:</strong> ${esc(subject)}</p><p>${esc(message).replace(/\n/g, '<br>')}</p>`,
       }),
     })
     if (!response.ok) {

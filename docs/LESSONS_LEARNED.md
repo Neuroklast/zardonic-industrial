@@ -100,3 +100,25 @@ const headingClasses = [
 ```
 This ensures a robust default display that can still be elegantly replaced by global variable rules when configured.
 - Fixed Track Artist Extraction and Deduplication in ReleaseOverlayContent
+
+---
+
+## Second Audit Pass — 6 Fixes (2026-05-26)
+
+### XSS Parity Between Email Providers
+When escaping HTML in server-generated emails, escaping must be applied in every code path that produces HTML output. In `contact.ts`, the Resend path used the `esc()` helper but the Brevo fallback path — written later — did not. The `esc()` function was module-private and accessible; the fix was a one-line change. **Lesson:** when adding a second implementation of the same operation, always copy the security invariants from the first, not just the functional logic. Tests should cover both code paths, not just the primary one.
+
+### Error Messages Must Not Reach the Client
+Forwarding `error.message` to HTTP 500 responses (e.g., `message: error instanceof Error ? error.message : 'Unknown error'`) leaks internal implementation details: DB connection strings, key names, internal function names. The fix is always a static generic string on the public-facing response; log the full error internally. **Lesson:** treat the `message` field of a 5xx response as a public API surface — it must never contain exception text.
+
+### Dead Code Produces Real Overhead
+`session.ts` had a fallback `kv.get('zd-session:${token}')` in the GET handler, with a comment claiming it accepted tokens from `auth.ts`. However, `auth.ts` has always stored sessions under `session:${token}`. The fallback was never reachable, yet it fired on every failed session lookup — one extra Redis RTT per unauthenticated request. **Lesson:** verify the actual key prefix used by the writer before adding a "migration" reader. Add a test that asserts only the expected keys are accessed.
+
+### IntersectionObserver Cleanup: `disconnect()` not `unobserve()`
+`observer.unobserve(element)` removes the element from the observation list but the `IntersectionObserver` object itself remains alive and holds a reference to its callback closure. `observer.disconnect()` fully terminates the observer and releases all references. In cleanup functions, always call `disconnect()` unless you specifically need to keep the observer running and just remove one element. **Lesson:** prefer `disconnect()` over `unobserve()` in `useEffect` cleanup unless you have multiple observed elements and want to remove just one.
+
+### Image Preloader Hooks Need Unmount Guards
+Creating `new Image()` with an `onload` callback inside `useEffect` without a cleanup is a classic React setState-after-unmount pattern. The fix is a single boolean `mounted` flag: set to `false` in the return cleanup function, checked inside `onload` before calling `setState`. **Lesson:** any async side effect that calls `setState` — including image loads, fetch responses, and timers — must check whether the component is still mounted before updating state.
+
+### Array.pop() on Derived Strings Can Return Undefined
+TypeScript correctly types `string[].pop()` as `string | undefined`. When `process.env.MAILCHIMP_API_KEY.split('-').pop()` is used as a URL segment, a malformed key (empty suffix or trailing dash) produces `''` or potentially `undefined`, building an invalid URL that is silently requested. TypeScript's template literal interpolation accepts `undefined` without error. **Lesson:** always null-guard the result of `.pop()` (and other array tail accessors) before using in a URL or string construction; log a descriptive error and skip the call rather than sending a malformed request.

@@ -138,14 +138,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(401).json({ error: 'No session token provided' })
       }
 
-      // Check both legacy key and new zd-session key
+      // Validate session token against Redis
       const sessionData = await kv.get<SessionData>(`session:${token}`)
       if (!sessionData) {
-        // Also accept tokens created by the new auth.ts system
-        const zdSession = await kv.get(`zd-session:${token}`)
-        if (zdSession) {
-          return res.status(200).json({ valid: true })
-        }
         return res.status(401).json({ error: 'Invalid or expired session' })
       }
 
@@ -208,7 +203,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('[Session API] Error:', error)
     return res.status(500).json({
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error',
+      message: 'An unexpected error occurred',
     })
   }
 }

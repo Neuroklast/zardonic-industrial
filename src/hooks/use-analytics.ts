@@ -494,6 +494,6 @@ export function useAnalytics(sectionId: string): void {
     )
     const element = document.getElementById(sectionId)
     if (element) observer.observe(element)
-    return () => { if (element) observer.unobserve(element) }
+    return () => { observer.disconnect() }
   }, [sectionId])
 }
