@@ -38,6 +38,9 @@ if (!process.env.RATE_LIMIT_SALT && process.env.NODE_ENV === 'production') {
 // In non-production environments (local dev / CI) use a per-process random salt
 // so that rate-limit identifiers are still anonymised without requiring a config
 // change, and without embedding a guessable string in the source code.
+// Note: the salt is stable for the lifetime of the process (a warm serverless
+// container reuse window is typically a few minutes), which is acceptable for
+// development. Set RATE_LIMIT_SALT explicitly in staging/production.
 const SALT = process.env.RATE_LIMIT_SALT ?? randomBytes(32).toString('hex')
 
 // ─── Request / response types ─────────────────────────────────────────────────
