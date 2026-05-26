@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Mail, Trash2, MailOpen } from 'lucide-react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface ContactMessage {
   id: string
@@ -13,14 +14,14 @@ interface ContactMessage {
 }
 
 async function fetchMessages(): Promise<ContactMessage[]> {
-  const res = await fetch('/api/contact', { credentials: 'include' })
+  const res = await fetch(API_ROUTES.CONTACT, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to load messages: ${res.status}`)
   const data = await res.json()
   return data.messages ?? []
 }
 
 async function markRead(id: string): Promise<void> {
-  await fetch('/api/contact', {
+  await fetch(API_ROUTES.CONTACT, {
     method: 'PATCH',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
@@ -29,7 +30,7 @@ async function markRead(id: string): Promise<void> {
 }
 
 async function deleteMessage(id: string): Promise<void> {
-  await fetch('/api/contact', {
+  await fetch(API_ROUTES.CONTACT, {
     method: 'DELETE',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

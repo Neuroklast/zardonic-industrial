@@ -41,9 +41,11 @@ export function useLazyImage({ src, placeholder = '' }: UseLazyImageProps) {
   useEffect(() => {
     if (imageSrc === placeholder) return
 
+    let mounted = true
     const img = new Image()
     img.src = imageSrc
-    img.onload = () => setIsLoaded(true)
+    img.onload = () => { if (mounted) setIsLoaded(true) }
+    return () => { mounted = false }
   }, [imageSrc, placeholder])
 
   return { imgRef, imageSrc, isLoaded }

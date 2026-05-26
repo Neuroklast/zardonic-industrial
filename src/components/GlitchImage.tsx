@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { get } from '@/lib/config'
 
 interface GlitchImageProps {
@@ -15,14 +15,8 @@ interface GlitchImageProps {
  */
 export function GlitchImage({ src, alt, className = '', width, height }: GlitchImageProps) {
   const [isHovering, setIsHovering] = useState(false)
-  const [enabled, setEnabled] = useState(true)
+  const [enabled] = useState(() => Boolean(get('IMAGE_GLITCH_ON_HOVER_ENABLED')))
   const imageRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const isEnabled = get('IMAGE_GLITCH_ON_HOVER_ENABLED')
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEnabled(Boolean(isEnabled))
-  }, [])
 
   const handleMouseEnter = () => {
     if (enabled) {

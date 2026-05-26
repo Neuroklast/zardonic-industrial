@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface UseAutoSaveResult {
   lastSaved: Date | null
@@ -34,7 +35,7 @@ export function useAutoSave(
     if (!isDirtyRef.current) return
     setIsSaving(true)
     try {
-      const res = await fetch('/api/cms/autosave', {
+      const res = await fetch(API_ROUTES.CMS_AUTOSAVE, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

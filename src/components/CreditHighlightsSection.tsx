@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown } from '@phosphor-icons/react'
+import { Separator } from '@/components/ui/separator'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
@@ -99,9 +100,11 @@ export default function CreditHighlightsSection({
     <div style={{ order: sectionOrder }}>
     {visible && (
     <>
+    <Separator className="bg-border" />
     <section
-      className="py-16 px-4 noise-effect overflow-hidden"
+      className="py-24 px-4 scanline-effect overflow-hidden"
       data-theme-color="primary accent card border"
+      id="credit-highlights"
     >
       <div className="container mx-auto max-w-6xl">
         <motion.div

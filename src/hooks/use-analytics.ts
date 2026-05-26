@@ -5,6 +5,7 @@
  *  also stored client-side in localStorage as a fallback.
  */
 import { useEffect } from 'react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 const STORAGE_KEY = 'zd-site-analytics'
 const SESSION_ID_KEY = 'zd-session-id'
@@ -212,9 +213,9 @@ function sendToServer(payload: {
     const body = JSON.stringify(payload)
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
       const blob = new Blob([body], { type: 'application/json' })
-      navigator.sendBeacon('/api/analytics', blob)
+      navigator.sendBeacon(API_ROUTES.ANALYTICS, blob)
     } else {
-      fetch('/api/analytics', {
+      fetch(API_ROUTES.ANALYTICS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,
@@ -229,7 +230,7 @@ function sendToServer(payload: {
 /** Fetch the full analytics snapshot from the server (admin only) */
 export async function getAnalyticsData(): Promise<AnalyticsData> {
   try {
-    const res = await fetch('/api/analytics', { credentials: 'same-origin' })
+    const res = await fetch(API_ROUTES.ANALYTICS, { credentials: 'same-origin' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data: SiteAnalytics = await res.json()
     // Map new SiteAnalytics format to legacy AnalyticsData for StatsDashboard
@@ -273,7 +274,7 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 /** Fetch heatmap data from the server (admin only) */
 export async function getHeatmapData(): Promise<HeatmapPoint[]> {
   try {
-    const res = await fetch('/api/analytics?type=heatmap', { credentials: 'same-origin' })
+    const res = await fetch(`${API_ROUTES.ANALYTICS}?type=heatmap`, { credentials: 'same-origin' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = await res.json()
     return data.heatmap || []
@@ -285,7 +286,7 @@ export async function getHeatmapData(): Promise<HeatmapPoint[]> {
 /** Reset all analytics data on the server (admin only) */
 export async function resetAnalytics(): Promise<void> {
   try {
-    await fetch('/api/analytics', { method: 'DELETE', credentials: 'same-origin' })
+    await fetch(API_ROUTES.ANALYTICS, { method: 'DELETE', credentials: 'same-origin' })
   } catch { /* ignore */ }
   localStorage.removeItem(STORAGE_KEY)
 }
@@ -494,6 +495,6 @@ export function useAnalytics(sectionId: string): void {
     )
     const element = document.getElementById(sectionId)
     if (element) observer.observe(element)
-    return () => { if (element) observer.unobserve(element) }
+    return () => { observer.disconnect() }
   }, [sectionId])
 }

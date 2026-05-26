@@ -20,6 +20,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { toast } from 'sonner'
 import { useLocale } from '@/hooks/use-locale'
 import { t } from '@/lib/i18n-security'
+import { API_ROUTES } from '@/lib/api-routes'
 import {
   DEFAULT_SECURITY_SETTINGS,
   type SecuritySettings,
@@ -114,7 +115,7 @@ export function useSecuritySettings(open: boolean): UseSecuritySettingsReturn {
     setLoading(true)
     setError(null)
 
-    fetch('/api/security-settings', { credentials: 'same-origin' })
+    fetch(API_ROUTES.SECURITY_SETTINGS, { credentials: 'same-origin' })
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json() as Promise<{ settings: Partial<SecuritySettings> }>
@@ -153,7 +154,7 @@ export function useSecuritySettings(open: boolean): UseSecuritySettingsReturn {
   const handleSave = useCallback(async () => {
     setSaving(true)
     try {
-      const res = await fetch('/api/security-settings', {
+      const res = await fetch(API_ROUTES.SECURITY_SETTINGS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',

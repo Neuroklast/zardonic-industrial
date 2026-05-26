@@ -36,6 +36,11 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | Use `useState(() => expensiveInit())` lazy initializers instead of `useEffect` + `setState` for one-time config reads. The lazy form avoids an extra render cycle, removes the need for `eslint-disable react-hooks/set-state-in-effect`, and is the canonical React pattern. | Architecture | 🟡 Medium |
+| 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | `vi.mock` factory functions are hoisted to the top of the file before variable declarations. Referencing a `const` inside the factory throws "Cannot access before initialization". Use `vi.hoisted(() => ({ myMock: vi.fn() }))` to define mocks that are safe to reference inside `vi.mock` factories. | Testing | 🟠 High |
+| 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | `vi.advanceTimersByTime` with `async act` can fail to flush cascaded React state updates (effect A sets state → triggers effect B). Use sequential sync `act(() => { vi.advanceTimersByTime(n) })` calls — the pattern that already passes in the test suite — rather than a single `async act` with a large time step. | Testing | 🟡 Medium |
+| 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | Dev-mode security fallbacks must be unpredictable even if public. Replacing a hardcoded string constant with `randomBytes(32).toString('hex')` costs nothing but makes the dev secret ephemeral and unguessable, eliminating SSRF/rate-limit bypass risks during local development. | Security | 🟠 High |
+| 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | When two sibling components contain byte-for-byte identical effect logic, extract it into a shared hook. The configurable parameter (here: `completeDelay`) makes the hook reusable without losing per-component flexibility. | Architecture | 🟡 Medium |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | `App.tsx` has grown to 3 638 lines and is a God Object. Any future feature addition risks cascading side-effects. New state or UI must **never** be added directly to `App.tsx`. | Architecture | 🔴 Critical |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | `tsc -b --noCheck` in the build script silently ignores all TypeScript errors. This means broken types can reach production without any warning. Always check `package.json` build script when onboarding a new repo. | DevOps | 🟠 High |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | The entire `api/` directory is excluded from ESLint (`{ ignores: ['dist', 'node_modules', 'api'] }`). Serverless functions with auth/rate-limit logic receive zero static analysis. This is a blind spot — check `eslint.config.js` first when debugging API behaviour. | Security | 🟠 High |
@@ -51,6 +56,15 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | There are no E2E tests. Critical user flows (admin login, contact form, newsletter signup) could regress silently. When adding E2E tests, prioritise these three flows first. | Testing | 🟠 High |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | `CookieBanner.tsx` and `CookieConsent.tsx` both exist in the components folder and appear to duplicate cookie consent logic. Before modifying either, investigate which one is actually rendered in `App.tsx` and remove or merge the unused one. | Architecture | 🟡 Medium |
 | 2026-04-13 | jules | Jules | When optimizing images via `wsrv.nl` proxy, ensure that query parameters (such as `w`, `q`, `output`) are appended defensively, especially if the URL already has parameters (e.g. Google Drive URLs), so as not to break the `?url=` parameter structure. Also apply these defaults strictly inside `toDirectImageUrl`. | Performance | 🟡 Medium |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `PUT /api/session` had no guard against overwriting an existing password hash. The correct pattern for "initial setup" endpoints is to read the current value first and return 409 if it already exists — never blindly overwrite. | Security | 🔴 Critical |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `validateSession` in `api/auth.ts` called `kv.get()` (via Proxy) without first checking `isRedisConfigured()`. When Redis env vars are absent, the Proxy throws synchronously inside the handler, causing an unhandled 500. Always short-circuit to `return false` when the backing store is not configured. | Security | 🟠 High |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `api/validate-key.ts` was a public POST endpoint with open CORS (`*`) and **no rate limiting**. Any unauthenticated caller could enumerate activation keys. Every endpoint that performs a Redis membership check must call `applyRateLimit` first. | Security | 🟠 High |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `api/cms/video-upload-token.ts` only allowed `video/mp4` and `video/webm`, making 3D model uploads (`.glb` / `.gltf`) silently fail at the server. When an upload hook is reused for a new file type, always update the server-side allow-list in the token endpoint to match. | Architecture | 🟠 High |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `api/releases-enrichment-status.ts` hardcoded `pendingCount: 0` and `pending: []` — the response was a static placeholder. The queue state was available in the `releases-enrich-queue` Redis key. Always verify that status endpoints read live state rather than returning stubs. | Debugging | 🟡 Medium |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `ModelBackground.tsx` only called `renderer.dispose()` on cleanup, leaving Three.js `Mesh` geometries, materials, and textures allocated on the GPU. For every `renderer.dispose()` call, always precede it with a `scene.traverse()` that disposes each object's geometry and material (including any texture properties). | Performance | 🟠 High |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | Upload hooks (`useVideoUpload`, `useMediaUpload`) called `setState` after the async upload completed without checking whether the component was still mounted. The fix is a `isMountedRef = useRef(true)` set to `false` in the cleanup of a `useEffect` with empty deps. Guard every post-async `setState` with `if (isMountedRef.current)`. | Architecture | 🟡 Medium |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `usePublishedContent` returned `T` directly, swallowing fetch errors and making it impossible for callers to show error states. The correct pattern is to offer two export levels: a simple `T`-returning hook (backward-compatible) and a richer `{ data, isLoading, error }` variant via `usePublishedContentFull`. This avoids breaking existing callers while enabling better error handling for new ones. | Architecture | 🟡 Medium |
+| 2026-05-26 | copilot/stability-remediation | GitHub Copilot | A `setTimeout` inside a `useEffect` without a returned cleanup is a latent memory/state leak. The pattern `setTimeout(() => setState(x), delay)` inside `useEffect` must always be replaced with `const id = setTimeout(...); return () => clearTimeout(id)`. Use a `useRef` to expose the timer ID if the effect body is conditional. | Architecture | 🟡 Medium |
 
 ---
 
@@ -68,13 +82,14 @@ This document records lessons learned during development sessions. Every coding 
 
 | Category | Count |
 |----------|-------|
-| Architecture | 5 |
-| Security | 5 |
-| Performance | 3 |
+| Architecture | 10 |
+| Security | 9 |
+| Performance | 4 |
 | Dependencies | 1 |
 | Testing | 1 |
 | DevOps | 1 |
-| **Total** | **16** |
+| Debugging | 1 |
+| **Total** | **27** |
 
 ---
 
@@ -90,3 +105,25 @@ const headingClasses = [
 ```
 This ensures a robust default display that can still be elegantly replaced by global variable rules when configured.
 - Fixed Track Artist Extraction and Deduplication in ReleaseOverlayContent
+
+---
+
+## Second Audit Pass — 6 Fixes (2026-05-26)
+
+### XSS Parity Between Email Providers
+When escaping HTML in server-generated emails, escaping must be applied in every code path that produces HTML output. In `contact.ts`, the Resend path used the `esc()` helper but the Brevo fallback path — written later — did not. The `esc()` function was module-private and accessible; the fix was a one-line change. **Lesson:** when adding a second implementation of the same operation, always copy the security invariants from the first, not just the functional logic. Tests should cover both code paths, not just the primary one.
+
+### Error Messages Must Not Reach the Client
+Forwarding `error.message` to HTTP 500 responses (e.g., `message: error instanceof Error ? error.message : 'Unknown error'`) leaks internal implementation details: DB connection strings, key names, internal function names. The fix is always a static generic string on the public-facing response; log the full error internally. **Lesson:** treat the `message` field of a 5xx response as a public API surface — it must never contain exception text.
+
+### Dead Code Produces Real Overhead
+`session.ts` had a fallback `kv.get('zd-session:${token}')` in the GET handler, with a comment claiming it accepted tokens from `auth.ts`. However, `auth.ts` has always stored sessions under `session:${token}`. The fallback was never reachable, yet it fired on every failed session lookup — one extra Redis RTT per unauthenticated request. **Lesson:** verify the actual key prefix used by the writer before adding a "migration" reader. Add a test that asserts only the expected keys are accessed.
+
+### IntersectionObserver Cleanup: `disconnect()` not `unobserve()`
+`observer.unobserve(element)` removes the element from the observation list but the `IntersectionObserver` object itself remains alive and holds a reference to its callback closure. `observer.disconnect()` fully terminates the observer and releases all references. In cleanup functions, always call `disconnect()` unless you specifically need to keep the observer running and just remove one element. **Lesson:** prefer `disconnect()` over `unobserve()` in `useEffect` cleanup unless you have multiple observed elements and want to remove just one.
+
+### Image Preloader Hooks Need Unmount Guards
+Creating `new Image()` with an `onload` callback inside `useEffect` without a cleanup is a classic React setState-after-unmount pattern. The fix is a single boolean `mounted` flag: set to `false` in the return cleanup function, checked inside `onload` before calling `setState`. **Lesson:** any async side effect that calls `setState` — including image loads, fetch responses, and timers — must check whether the component is still mounted before updating state.
+
+### Array.pop() on Derived Strings Can Return Undefined
+TypeScript correctly types `string[].pop()` as `string | undefined`. When `process.env.MAILCHIMP_API_KEY.split('-').pop()` is used as a URL segment, a malformed key (empty suffix or trailing dash) produces `''` or potentially `undefined`, building an invalid URL that is silently requested. TypeScript's template literal interpolation accepts `undefined` without error. **Lesson:** always null-guard the result of `.pop()` (and other array tail accessors) before using in a URL or string construction; log a descriptive error and skip the call rather than sending a malformed request.

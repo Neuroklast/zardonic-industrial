@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Loader2, Mail, Trash2, Download } from 'lucide-react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface Subscriber {
   email: string
@@ -9,14 +10,14 @@ interface Subscriber {
 }
 
 async function fetchSubscribers(): Promise<Subscriber[]> {
-  const res = await fetch('/api/subscribers', { credentials: 'include' })
+  const res = await fetch(API_ROUTES.SUBSCRIBERS, { credentials: 'include' })
   if (!res.ok) throw new Error(`Failed to load subscribers: ${res.status}`)
   const data = await res.json()
   return data.subscribers ?? []
 }
 
 async function deleteSubscriber(email: string): Promise<void> {
-  await fetch('/api/subscribers', {
+  await fetch(API_ROUTES.SUBSCRIBERS, {
     method: 'DELETE',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },

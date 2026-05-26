@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, isRedisConfigured } from './_redis.js'
 import { scrypt, randomBytes, createHash, timingSafeEqual as cryptoTimingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import { applyRateLimit, getClientIp } from './_ratelimit.js'
@@ -95,6 +92,11 @@ function getClientFingerprint(req: VercelRequest): string {
  * both can be validated with a single lookup.
  */
 export async function validateSession(req: VercelRequest): Promise<boolean> {
+  // Short-circuit immediately if Redis is not configured — the kv Proxy would
+  // throw `getRedis()` which crashes the calling handler with a 500 instead of
+  // gracefully returning false (unauthenticated).
+  if (!isRedisConfigured()) return false
+
   // Primary: cookie-based session (modern path)
   const cookieToken = getSessionFromCookie(req)
   // Fallback: header-based token (legacy path — api/session.ts login)

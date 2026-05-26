@@ -1,7 +1,4 @@
-import { getRedis } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv } from './_redis.js'
 
 const KV_SETTINGS_KEY = 'nk-security-settings'
 const ALERT_DEDUP_PREFIX = 'nk-alert-dedup:'

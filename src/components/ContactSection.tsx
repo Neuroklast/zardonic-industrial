@@ -8,6 +8,7 @@ import EditableHeading from '@/components/EditableHeading'
 import { useState, useRef, useEffect } from 'react'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { ContactSettings, SectionLabels, AdminSettings } from '@/lib/types'
+import { API_ROUTES } from '@/lib/api-routes'
 import {
   SECTION_GLITCH_PROBABILITY,
   SECTION_GLITCH_DURATION_MS,
@@ -90,7 +91,7 @@ export default function ContactSection({
     setStatus('loading')
     setErrorMsg('')
     try {
-      const res = await fetch('/api/contact', {
+      const res = await fetch(API_ROUTES.CONTACT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, subject, message }),

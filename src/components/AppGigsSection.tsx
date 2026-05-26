@@ -72,11 +72,12 @@ function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, h
   return (
     <div style={{ order: sectionOrder }}>
       <Separator className="bg-border" />
-      <section id="gigs" className="py-24 px-4 noise-effect">
+      <section id="gigs" className="py-24 px-4 scanline-effect" data-theme-color="foreground card border primary">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
-            animate={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+            whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+            viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">

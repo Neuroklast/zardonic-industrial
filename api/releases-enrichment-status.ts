@@ -1,7 +1,14 @@
 /**
  * GET /api/releases-enrichment-status
  *
- * Returns the total count of releases stored in KV.
+ * Returns:
+ *   - `total`: total releases in band-data
+ *   - `pendingCount`: releases still waiting in the enrichment queue
+ *   - `pending`: summary of pending queue items (id + title)
+ *
+ * Reads the live `releases-enrich-queue` key so the admin dashboard shows
+ * real progress instead of the placeholder zeros that existed before.
+ *
  * Requires a valid admin session.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -9,6 +16,7 @@ import { getRedisOrNull, isRedisConfigured } from './_redis.js'
 import { validateSession } from './auth.js'
 
 const BAND_DATA_KEY = 'band-data'
+const QUEUE_KEY = 'releases-enrich-queue'
 
 interface Release {
   id: string
@@ -18,6 +26,12 @@ interface Release {
 
 interface SiteData {
   releases?: Release[]
+  [key: string]: unknown
+}
+
+interface EnrichQueue {
+  releases: Release[]
+  processedCount: number
   [key: string]: unknown
 }
 
@@ -33,12 +47,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   const redis = getRedisOrNull()!
-  const data = await redis.get<SiteData>(BAND_DATA_KEY)
-  const releases: Release[] = data?.releases ?? []
 
-  res.status(200).json({
-    total: releases.length,
-    pendingCount: 0,
-    pending: [],
-  })
+  const [siteData, queue] = await Promise.all([
+    redis.get<SiteData>(BAND_DATA_KEY),
+    redis.get<EnrichQueue>(QUEUE_KEY),
+  ])
+
+  const releases: Release[] = siteData?.releases ?? []
+  const total = releases.length
+
+  // Derive pending releases from the live queue (releases not yet processed)
+  let pendingCount = 0
+  let pending: Array<{ id: string; title: string }> = []
+  if (queue && Array.isArray(queue.releases)) {
+    const processed = typeof queue.processedCount === 'number' ? queue.processedCount : 0
+    const remaining = queue.releases.slice(processed)
+    pendingCount = remaining.length
+    pending = remaining.map(r => ({ id: r.id, title: r.title }))
+  }
+
+  res.status(200).json({ total, pendingCount, pending })
 }

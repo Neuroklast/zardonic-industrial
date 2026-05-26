@@ -3,20 +3,20 @@ import { upload as blobUpload } from '@vercel/blob/client'
 import { toast } from 'sonner'
 import { API_ROUTES } from '@/lib/api-routes'
 
-interface VideoUploadResponse {
+interface ImageUploadResponse {
   url: string
   fileName: string
   mimeType: string
   size: number
 }
 
-interface UseVideoUploadResult {
-  upload: (file: File) => Promise<VideoUploadResponse | null>
+interface UseImageUploadResult {
+  upload: (file: File) => Promise<ImageUploadResponse | null>
   progress: number
   isUploading: boolean
 }
 
-export function useVideoUpload(): UseVideoUploadResult {
+export function useImageUpload(): UseImageUploadResult {
   const [progress, setProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
   const progressResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -33,7 +33,7 @@ export function useVideoUpload(): UseVideoUploadResult {
     }
   }, [])
 
-  const upload = useCallback(async (file: File): Promise<VideoUploadResponse | null> => {
+  const upload = useCallback(async (file: File): Promise<ImageUploadResponse | null> => {
     // Cancel any pending progress reset before starting a new upload
     if (progressResetTimerRef.current !== null) {
       clearTimeout(progressResetTimerRef.current)
@@ -47,12 +47,12 @@ export function useVideoUpload(): UseVideoUploadResult {
 
     // Sanitise filename — keep only safe characters; include a timestamp to avoid collisions
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 255)
-    const pathname = `videos/${Date.now()}-${safeName}`
+    const pathname = `images/${Date.now()}-${safeName}`
 
     try {
       const blob = await blobUpload(pathname, file, {
         access: 'public',
-        handleUploadUrl: API_ROUTES.CMS_VIDEO_UPLOAD_TOKEN,
+        handleUploadUrl: API_ROUTES.CMS_IMAGE_UPLOAD_TOKEN,
         onUploadProgress: ({ percentage }) => {
           if (isMountedRef.current) setProgress(Math.round(percentage))
         },

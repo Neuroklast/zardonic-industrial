@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useCmsRoute } from '../hooks/useCmsRoute'
 import { fetchEnvStatus, REQUIRED_ENV_VARS } from '@/lib/env-check'
 import { Loader2, FileText, Users, Music, Newspaper, Share2, Anchor, Palette, Settings, Image, Layout, Eye, Inbox, Mail, Calendar, Shield, CheckCircle2, XCircle } from 'lucide-react'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface HealthResponse {
   status: string
@@ -10,7 +11,7 @@ interface HealthResponse {
 }
 
 async function fetchHealth(): Promise<HealthResponse> {
-  const res = await fetch('/api/health', { credentials: 'include' })
+  const res = await fetch(API_ROUTES.HEALTH, { credentials: 'include' })
   if (!res.ok) throw new Error(`Health check failed: ${res.status}`)
   return res.json() as Promise<HealthResponse>
 }

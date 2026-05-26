@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv } from './_redis.js'
 import { createHash } from 'node:crypto'
 import { applyRateLimit } from './_ratelimit.js'
 import { z } from 'zod'
@@ -86,6 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       // Mailchimp
       if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
         const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
+        if (!dc) {
+          throw new Error('Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
+        }
         const hash = createHash('md5').update(sanitizedEmail).digest('hex')
         const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
         await fetch(url, {
@@ -141,6 +141,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
     try {
       const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
+      if (!dc) {
+        throw new Error('Invalid Mailchimp API key: missing datacenter suffix (expected format: key-dc)')
+      }
       const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members`
       const response = await fetch(url, {
         method: 'POST',

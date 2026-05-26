@@ -3,13 +3,14 @@ import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { applyRateLimit } from '../_ratelimit.js'
 import { validateSession } from '../auth.js'
 
-const MAX_VIDEO_SIZE = 500 * 1024 * 1024 // 500 MB
-const ALLOWED_MEDIA_TYPES = [
-  'video/mp4',
-  'video/webm',
-  // 3D model formats for the ModelBackground component
-  'model/gltf-binary',   // .glb
-  'model/gltf+json',     // .gltf
+const MAX_IMAGE_SIZE = 20 * 1024 * 1024 // 20 MB
+const ALLOWED_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+  'image/avif',
 ]
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -33,17 +34,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       body: req.body as HandleUploadBody,
       onBeforeGenerateToken: async (_pathname: string) => {
         return {
-          allowedContentTypes: ALLOWED_MEDIA_TYPES,
-          maximumSizeInBytes: MAX_VIDEO_SIZE,
+          allowedContentTypes: ALLOWED_IMAGE_TYPES,
+          maximumSizeInBytes: MAX_IMAGE_SIZE,
         }
       },
       onUploadCompleted: async ({ blob }: { blob: { url: string } }) => {
-        console.log('[cms/video-upload-token] upload completed:', blob.url)
+        console.log('[cms/image-upload-token] upload completed:', blob.url)
       },
     })
     return res.json(jsonResponse)
   } catch (err) {
-    console.error('[cms/video-upload-token] error:', err)
+    console.error('[cms/image-upload-token] error:', err)
     return res.status(500).json({ error: 'Internal Server Error' })
   }
 }

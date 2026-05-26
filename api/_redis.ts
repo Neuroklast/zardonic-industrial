@@ -52,3 +52,20 @@ export function getRedisOrNull(): Redis | null {
   if (!isRedisConfigured()) return null
   return getRedis()
 }
+
+/**
+ * Shared lazy-proxy Redis accessor.
+ *
+ * Behaves exactly like calling `getRedis()` on every property access, but
+ * without requiring every consumer to declare the same four-line Proxy boilerplate.
+ * Import `kv` instead of repeating `new Proxy({}, { get(_, p) { return Reflect.get(getRedis(), p) } })`.
+ *
+ * Usage:
+ *   import { kv } from './_redis.js'
+ *   await kv.get('my-key')
+ */
+export const kv: Redis = new Proxy({} as Redis, {
+  get(_target, prop: string | symbol) {
+    return Reflect.get(getRedis(), prop)
+  },
+})

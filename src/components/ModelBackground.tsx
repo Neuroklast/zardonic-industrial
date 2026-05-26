@@ -99,6 +99,25 @@ const ModelBackground = memo(function ModelBackground({
     return () => {
       cancelAnimationFrame(animFrame)
       window.removeEventListener('resize', handleResize)
+      // Dispose all scene objects to free GPU memory (geometries, materials, textures)
+      scene.traverse((obj) => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry?.dispose()
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach((mat) => {
+              Object.values(mat).forEach((v) => {
+                if (v instanceof THREE.Texture) v.dispose()
+              })
+              mat.dispose()
+            })
+          } else if (obj.material) {
+            Object.values(obj.material).forEach((v) => {
+              if (v instanceof THREE.Texture) v.dispose()
+            })
+            obj.material.dispose()
+          }
+        }
+      })
       renderer.dispose()
     }
   }, [modelUrl, autoRotate, rotateSpeed])

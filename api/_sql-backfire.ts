@@ -1,7 +1,4 @@
-import { getRedis } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv } from './_redis.js'
 import { getClientIp, hashIp } from './_ratelimit.js'
 import { recordIncident } from './_attacker-profile.js'
 import { logSecurityEvent } from './_security-logger.js'

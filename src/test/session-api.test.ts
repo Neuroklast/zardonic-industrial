@@ -198,7 +198,8 @@ describe('Session API handler', () => {
       expect(res.json).toHaveBeenCalledWith({ error: 'Password must be at least 8 characters' })
     })
 
-    it('should setup password', async () => {
+    it('should setup password when none is configured', async () => {
+      mockKvGet.mockResolvedValue(null) // no existing hash
       const res = mockRes()
       await handler({
         method: 'PUT',
@@ -211,6 +212,21 @@ describe('Session API handler', () => {
         expect.any(String)
       )
       expect(res.status).toHaveBeenCalledWith(200)
+    })
+
+    it('should return 409 when password is already configured', async () => {
+      mockKvGet.mockResolvedValue('scrypt:abc:def') // existing hash present
+      const res = mockRes()
+      await handler({
+        method: 'PUT',
+        headers: {},
+        body: { password: 'newpassword123' },
+      } as any, res as any)
+
+      expect(res.status).toHaveBeenCalledWith(409)
+      expect(res.json).toHaveBeenCalledWith({ error: 'Password already configured' })
+      // Must NOT overwrite the existing hash
+      expect(mockKvSet).not.toHaveBeenCalledWith('admin-password-hash', expect.any(String))
     })
   })
 

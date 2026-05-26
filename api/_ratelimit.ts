@@ -1,9 +1,6 @@
-import { getRedis, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, isRedisConfigured } from './_redis.js'
 import { Ratelimit } from '@upstash/ratelimit'
-import { createHash } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
 
 /**
  * GDPR-compliant rate limiting utility for Vercel serverless functions.
@@ -15,16 +12,15 @@ import { createHash } from 'node:crypto'
  * - In production the RATE_LIMIT_SALT environment variable MUST be set to a
  *   unique random string. The module throws at startup if the variable is
  *   absent in a production environment (NODE_ENV=production).
- * - In development the known fallback string is used so local testing works
- *   without extra configuration.
+ * - In development/CI a per-process random salt is generated automatically so
+ *   local testing works without extra configuration; this random value is never
+ *   persisted and cannot be guessed from the source code.
  *
  * See also: middleware.js — the Edge middleware uses the same salt approach
  * with the Web Crypto API instead of Node's `crypto` module.
  */
 
 // ─── Salt ─────────────────────────────────────────────────────────────────────
-
-const SALT = process.env.RATE_LIMIT_SALT || 'nk-default-rate-limit-salt-change-me'
 
 // Refuse to start in production without a unique salt — a static fallback
 // would allow attackers to reverse IP hashes via rainbow tables because the
@@ -35,6 +31,14 @@ if (!process.env.RATE_LIMIT_SALT && process.env.NODE_ENV === 'production') {
     'A unique random salt is required in production to protect IP hashes.'
   )
 }
+
+// In non-production environments (local dev / CI) use a per-process random salt
+// so that rate-limit identifiers are still anonymised without requiring a config
+// change, and without embedding a guessable string in the source code.
+// Note: the salt is stable for the lifetime of the process (a warm serverless
+// container reuse window is typically a few minutes), which is acceptable for
+// development. Set RATE_LIMIT_SALT explicitly in staging/production.
+const SALT = process.env.RATE_LIMIT_SALT ?? randomBytes(32).toString('hex')
 
 // ─── Request / response types ─────────────────────────────────────────────────
 

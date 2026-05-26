@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
+import { API_ROUTES } from '@/lib/api-routes'
 
 interface AuthStatus {
   authenticated: boolean
@@ -22,7 +23,7 @@ export function useCmsAuth(): UseCmsAuthResult {
 
     async function checkSession() {
       try {
-        const res = await fetch('/api/auth', { credentials: 'include' })
+        const res = await fetch(API_ROUTES.AUTH, { credentials: 'include' })
         if (!res.ok) {
           if (!cancelled) setIsAuthenticated(false)
           return
@@ -42,7 +43,7 @@ export function useCmsAuth(): UseCmsAuthResult {
 
   const logout = useCallback(async () => {
     try {
-      await fetch('/api/auth', {
+      await fetch(API_ROUTES.AUTH, {
         method: 'DELETE',
         credentials: 'include',
       })

@@ -44,6 +44,7 @@ import DataTab from '@/components/admin/DataTab'
 import TranslationsTab from '@/components/admin/TranslationsTab'
 import { SECTION_REGISTRY } from '@/lib/sections-registry'
 import { getDisclosureLevel, getSectionOrder } from '@/lib/admin-settings'
+import { API_ROUTES } from '@/lib/api-routes'
 
 type AdminCategory = 'content' | 'design' | 'sections' | 'system'
 
@@ -257,7 +258,7 @@ export default function AdminPanel({
 
   const fetchApiHealth = useCallback(async () => {
     try {
-      const res = await fetch('/api/health')
+      const res = await fetch(API_ROUTES.HEALTH)
       if (res.ok) {
         const data = await res.json() as { status: string; services: Record<string, unknown> }
         setApiHealth(data)

@@ -1,8 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { getRedis, getRedisOrNull, isRedisConfigured } from './_redis.js'
-const kv = new Proxy({} as ReturnType<typeof getRedis>, {
-  get (_, prop: string | symbol) { return Reflect.get(getRedis(), prop) },
-})
+import { kv, getRedisOrNull, isRedisConfigured } from './_redis.js'
 import { randomUUID } from 'node:crypto'
 import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'
@@ -128,7 +125,7 @@ async function sendEmailViaBrevo({ name, email, subject, message, toEmail }: { n
         to: [{ email: toEmail }],
         replyTo: { name, email },
         subject: `Contact Form: ${subject}`,
-        htmlContent: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><p><strong>Subject:</strong> ${subject}</p><p>${message.replace(/\n/g, '<br>')}</p>`,
+        htmlContent: `<p><strong>From:</strong> ${esc(name)} &lt;${esc(email)}&gt;</p><p><strong>Subject:</strong> ${esc(subject)}</p><p>${esc(message).replace(/\n/g, '<br>')}</p>`,
       }),
     })
     if (!response.ok) {
