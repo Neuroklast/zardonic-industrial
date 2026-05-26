@@ -88,7 +88,7 @@ describe('contact.ts — Brevo XSS fix', () => {
     } as any, res as any)
 
     const brevoCall = fetchSpy.mock.calls.find(
-      ([url]: [string]) => typeof url === 'string' && url.includes('brevo.com'),
+      ([url]: [string]) => typeof url === 'string' && url.startsWith('https://api.brevo.com'),
     )
     expect(brevoCall, 'Brevo fetch must be called').toBeDefined()
     const body = JSON.parse(brevoCall![1]!.body as string) as { htmlContent: string }
@@ -276,13 +276,15 @@ describe('newsletter.ts — Mailchimp dc guard', () => {
     } as any, res as any)
 
     const mailchimpCalls = fetchSpy.mock.calls.filter(
-      ([url]: [string]) => typeof url === 'string' && url.includes('api.mailchimp.com'),
+      ([url]: [string]) => typeof url === 'string' && /\.api\.mailchimp\.com\//.test(url),
     )
     // With an empty dc, the URL is "https://.api.mailchimp.com" which is invalid
     // After the fix, the handler should skip the Mailchimp call entirely when dc is empty
     const badUrls = mailchimpCalls.filter(([url]: [string]) =>
-      typeof url === 'string' && url.includes('https://.api.mailchimp.com'),
+      typeof url === 'string' && /^https:\/\/\.api\.mailchimp\.com/.test(url),
     )
     expect(badUrls).toHaveLength(0)
+    // Handler must return 500 to signal misconfiguration, not silently succeed
+    expect(res.status.mock.calls[0]?.[0]).toBe(500)
   })
 })
