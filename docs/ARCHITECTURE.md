@@ -295,6 +295,8 @@ This avoids routing large files through the serverless function.
 - **Used in:**
   - `BackgroundTab.tsx` — background image field (upload button next to URL input)
   - `AppHeroSection.tsx` — primary hero image and extra slideshow images
+  - `CreditHighlightsSection.tsx` — credit logo fields
+  - `SponsoringSection.tsx` — sponsor/endorsement logo fields
 
 > **Note:** Previously `AppHeroSection` used `FileReader.readAsDataURL()` to encode images as base64 strings stored directly in Vercel KV. This was replaced with Vercel Blob uploads to avoid KV size limits (~64 KB per value) and improve performance.
 
