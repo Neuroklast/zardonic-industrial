@@ -75,9 +75,18 @@ function FileTypeIcon({ type }: { type?: string }) {
 // Overlay – shown when a file is clicked
 // ---------------------------------------------------------------------------
 
+function isYoutubeUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url)
+    return hostname === 'youtube.com' || hostname === 'www.youtube.com' || hostname === 'youtu.be'
+  } catch {
+    return false
+  }
+}
+
 function MediaOverlay({ file, onClose }: { file: MediaFile; onClose: () => void }) {
   const downloadHref = getDownloadHref(file.url)
-  const isYoutube = file.type === 'youtube' || file.url.includes('youtube.com') || file.url.includes('youtu.be')
+  const isYoutube = file.type === 'youtube' || isYoutubeUrl(file.url)
   const isAudio = file.type === 'audio' || file.url.match(/\.(mp3|ogg|wav|flac)(\?.*)?$/i)
 
   return (

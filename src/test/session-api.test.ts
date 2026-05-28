@@ -1,4 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { scrypt as scryptFn, randomBytes } from 'node:crypto'
+import { promisify } from 'node:util'
+
+const scryptAsync = promisify(scryptFn)
 
 // Mock @upstash/redis
 const mockKvGet = vi.fn()
@@ -33,6 +37,13 @@ function mockRes(): Res {
 }
 
 const { default: handler } = await import('../../api/session.ts')
+
+let scryptHashOfPassword: string
+beforeAll(async () => {
+  const salt = randomBytes(16).toString('hex')
+  const derived = await scryptAsync('password', salt, 64) as Buffer
+  scryptHashOfPassword = `scrypt:${salt}:${derived.toString('hex')}`
+})
 
 describe('Session API handler', () => {
   beforeEach(() => {
@@ -78,9 +89,7 @@ describe('Session API handler', () => {
     })
 
     it('should return session token for valid password', async () => {
-      // We need to hash 'testpassword' with SHA-256
-      // The session handler will hash the input and compare
-      mockKvGet.mockResolvedValue('5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8') // SHA-256 of 'password'
+      mockKvGet.mockResolvedValue(scryptHashOfPassword)
       
       const res = mockRes()
       await handler({
