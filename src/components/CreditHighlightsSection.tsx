@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown } from '@phosphor-icons/react'
+import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown, UploadSimple } from '@phosphor-icons/react'
 import { Separator } from '@/components/ui/separator'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
+import { useImageUpload } from '@/cms/hooks/useImageUpload'
 
 interface CreditHighlightsSectionProps {
   siteData: SiteData
@@ -33,6 +34,10 @@ export default function CreditHighlightsSection({
   const [labelDraft, setLabelDraft] = useState('')
   const [editingPrefix, setEditingPrefix] = useState(false)
   const [prefixDraft, setPrefixDraft] = useState('')
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null)
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const { upload: uploadLogo, isUploading: isUploadingLogo, progress: uploadProgress } = useImageUpload()
 
   const headingVisible = sectionLabels?.creditHighlightsHeadingVisible !== false
   const headingPrefix = sectionLabels?.creditHighlightsPrefix ?? '//'
@@ -94,6 +99,16 @@ export default function CreditHighlightsSection({
       ;[arr[idx], arr[target]] = [arr[target], arr[idx]]
       return { ...prev, creditHighlights: arr }
     })
+  }
+
+  const handleLogoUpload = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingSlot(idx)
+    const result = await uploadLogo(file)
+    if (result) updateLogo(idx, 'src', result.url)
+    setUploadingSlot(null)
+    e.target.value = ''
   }
 
   return (
@@ -259,6 +274,27 @@ export default function CreditHighlightsSection({
                     className="flex-1 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
                     aria-label={`Credit ${idx + 1} image URL`}
                   />
+                  <input
+                    ref={(el) => { fileInputRefs.current[idx] = el }}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    aria-label={`Upload image for credit ${idx + 1}`}
+                    onChange={(e) => void handleLogoUpload(idx, e)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRefs.current[idx]?.click()}
+                    disabled={isUploadingLogo}
+                    className="text-primary/50 hover:text-primary disabled:opacity-50 transition-colors shrink-0"
+                    aria-label={`Upload image for credit ${idx + 1}`}
+                  >
+                    {uploadingSlot === idx && isUploadingLogo ? (
+                      <span className="text-[9px] font-mono">{uploadProgress}%</span>
+                    ) : (
+                      <UploadSimple size={14} />
+                    )}
+                  </button>
                   <input
                     type="text"
                     value={logo.alt}
