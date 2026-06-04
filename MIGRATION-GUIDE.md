@@ -60,9 +60,8 @@ function MySection({ sectionOrder, visible, ...props }: Props) {
 ```
 
 **Notes:**
-- Remove the `Separator` import (SectionBase includes it).
-- Remove the `if (!visible) return null` guard (SectionBase handles it).
-- The `Separator` import was renamed to `_Separator` during the transition — remove it entirely.
+- Remove the `Separator` import — `SectionBase` handles it internally.
+- Remove the `if (!visible) return null` guard — `SectionBase` handles it.
 
 ---
 

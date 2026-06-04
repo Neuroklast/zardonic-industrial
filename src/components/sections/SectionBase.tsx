@@ -51,7 +51,7 @@ export function SectionBase({
       <Separator className="bg-border" />
       <section
         id={id}
-        className={cn('py-24 px-4 scanline-effect', className)}
+        className={cn('py-section px-card scanline-effect', className)}
         {...(themeColor ? { 'data-theme-color': themeColor } : {})}
       >
         {children}
