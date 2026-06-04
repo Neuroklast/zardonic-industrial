@@ -2,7 +2,7 @@ import React, { memo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
+import { Separator as _Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import ReleaseEditDialog from '@/components/ReleaseEditDialog'
 import { ReleaseCard } from '@/components/releases/ReleaseCard'
@@ -13,6 +13,7 @@ import type { AdminSettings, SectionLabels, Release as FullRelease } from '@/lib
 import type { ReleaseCardVariant, ReleaseHoverEffect } from '@/components/releases/ReleaseCard'
 import type { Release } from '@/lib/app-types'
 import { useLocale } from '@/contexts/LocaleContext'
+import { SectionBase } from '@/components/sections/SectionBase'
 
 interface AppReleasesSectionProps {
   releases: Release[]
@@ -117,11 +118,14 @@ function AppReleasesSection({ releases, sectionOrder, visible, editMode, section
   )
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="releases" className="py-24 px-4 scanline-effect">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
+    <>
+    <SectionBase
+      id="releases"
+      sectionOrder={sectionOrder}
+      visible={visible}
+    >
+      <div className="container mx-auto max-w-6xl">
+        <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
@@ -318,7 +322,7 @@ function AppReleasesSection({ releases, sectionOrder, visible, editMode, section
             )}
           </motion.div>
         </div>
-      </section>
+    </SectionBase>
 
       {editingRelease !== null && (
         <ReleaseEditDialog
@@ -327,7 +331,7 @@ function AppReleasesSection({ releases, sectionOrder, visible, editMode, section
           onClose={() => setEditingRelease(null)}
         />
       )}
-    </div>
+    </>
   )
 }
 export default memo(AppReleasesSection)
