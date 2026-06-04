@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Separator } from '@/components/ui/separator'
+import { SectionBase } from '@/components/sections/SectionBase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -33,11 +33,7 @@ export default function ShellSection({ setAdminSettings,
   }
 
   return (
-    <div style={{ order: sectionOrder }}>
-    {visible && (
-    <>
-    <Separator className="bg-border" />
-    <section id="shell" className="py-24 px-4 scanline-effect" data-theme-color="card border primary foreground">
+    <SectionBase id="shell" sectionOrder={sectionOrder} visible={visible} themeColor="card border primary foreground">
       <div className="container mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -200,9 +196,6 @@ export default function ShellSection({ setAdminSettings,
           </div>
         </motion.div>
       </div>
-    </section>
-    </>
-    )}
-    </div>
+    </SectionBase>
   )
 }

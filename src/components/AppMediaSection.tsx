@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Separator } from '@/components/ui/separator'
+import { SectionBase } from '@/components/sections/SectionBase'
 import { Folder } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
 import { MediaBrowser } from '@/components/MediaBrowser'
@@ -40,9 +40,8 @@ export default function AppMediaSection({
   if (!visible) return null
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="media" className="py-24 px-4 scanline-effect" data-theme-color="card border primary">
+    <>
+      <SectionBase id="media" sectionOrder={sectionOrder} visible={visible} themeColor="card border primary">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -110,7 +109,7 @@ export default function AppMediaSection({
             </motion.button>
           </motion.div>
         </div>
-      </section>
+      </SectionBase>
 
       <AnimatePresence>
         {browserOpen && (
@@ -123,6 +122,6 @@ export default function AppMediaSection({
           />
         )}
       </AnimatePresence>
-    </div>
+    </>
   )
 }

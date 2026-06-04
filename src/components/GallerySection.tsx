@@ -1,7 +1,7 @@
 import React, { memo } from 'react'
 import { motion } from 'framer-motion'
-import { Separator } from '@/components/ui/separator'
 import { Card } from '@/components/ui/card'
+import { SectionBase } from '@/components/sections/SectionBase'
 import { MagnifyingGlassPlus } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
 import { toDirectImageUrl } from '@/lib/image-cache'
@@ -36,11 +36,7 @@ function GallerySection({
   ]
 
   return (
-    <div style={{ order: sectionOrder }}>
-    {visible && (
-    <>
-    <Separator className="bg-border" />
-    <section id="gallery" className="py-24 px-4 scanline-effect" data-theme-color="card border primary">
+    <SectionBase id="gallery" sectionOrder={sectionOrder} visible={visible} themeColor="card border primary">
       <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -102,10 +98,7 @@ function GallerySection({
           )}
         </motion.div>
       </div>
-    </section>
-    </>
-    )}
-    </div>
+    </SectionBase>
   )
 }
 export default memo(GallerySection)
