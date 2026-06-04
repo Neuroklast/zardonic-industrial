@@ -180,12 +180,5 @@ No breaking changes. Migrate incrementally as you touch files.
 
 ## Components still using old patterns (prioritised list)
 
-These sections should be migrated in follow-up PRs, in order of frequency of edits:
-
-1. `AppMediaSection` — Separator + section boilerplate
-2. `GallerySection` — Separator + section boilerplate
-3. `CreditHighlightsSection` — Separator + section boilerplate
-4. `SponsoringSection` — Separator + section boilerplate
-5. `NewsletterSection` — Separator + section boilerplate
-6. `AppConnectSection` — Separator + section boilerplate
-7. `AppShellSection` — Separator + section boilerplate
+All page sections have been migrated to `SectionBase` as of this PR. No components
+with the old `div > Separator > section` boilerplate remain.

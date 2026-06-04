@@ -4,7 +4,7 @@
  * Enforces the required structure:
  *   <div style={{ order }}>
  *     <Separator />
- *     <section id className="py-24 px-4 scanline-effect" data-theme-color>
+ *     <section id className="py-section px-card scanline-effect" data-theme-color>
  *       {children}
  *     </section>
  *   </div>
