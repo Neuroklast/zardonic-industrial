@@ -2,12 +2,12 @@ import { memo, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import { CaretDown, CaretUp, FloppyDisk, PencilSimple, X } from '@phosphor-icons/react'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 import { getBioBodyFontSize } from '@/lib/admin-settings'
 import { toast } from 'sonner'
+import { SectionBase } from '@/components/sections/SectionBase'
 
 interface AppBioSectionProps {
   bio: string
@@ -79,11 +79,14 @@ function AppBioSection({ bio, sectionOrder, visible, editMode, sectionLabel, hea
   if (!visible) return null
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="bio" className="py-24 px-4 scanline-effect" data-theme-color="foreground muted-foreground card border">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
+    <SectionBase
+      id="bio"
+      sectionOrder={sectionOrder}
+      visible={visible}
+      themeColor="foreground muted-foreground card border"
+    >
+      <div className="container mx-auto max-w-6xl">
+        <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
@@ -190,8 +193,7 @@ function AppBioSection({ bio, sectionOrder, visible, editMode, sectionLabel, hea
             )}
           </motion.div>
         </div>
-      </section>
-    </div>
+    </SectionBase>
   )
 }
 export default memo(AppBioSection)

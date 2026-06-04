@@ -86,6 +86,13 @@ const defaultTheme = {
         overlay: "var(--color-bg-overlay)",
       },
       "focus-ring": "var(--color-focus-ring)",
+      // ── Semantic color aliases ──────────────────────────────────────────────
+      // Use these in new components instead of raw palette values.
+      // Values map to --color-brand-* / --color-surface-* in src/index.css.
+      "brand-primary": "var(--color-brand-primary)",
+      "brand-secondary": "var(--color-brand-secondary)",
+      "surface-base": "var(--color-surface-base)",
+      "surface-elevated": "var(--color-surface-elevated)",
     },
     borderRadius: {
       sm: "var(--radius-sm)",
@@ -94,6 +101,15 @@ const defaultTheme = {
       xl: "var(--radius-xl)",
       "2xl": "var(--radius-2xl)",
       full: "var(--radius-full)",
+    },
+    // ── Semantic typography scale ───────────────────────────────────────────
+    // Use text-hero / text-heading / text-body / text-body-sm in components.
+    // Values are fluid via clamp() — see src/index.css --font-size-* vars.
+    fontSize: {
+      hero: ["var(--font-size-hero)", { lineHeight: "1.1" }],
+      heading: ["var(--font-size-heading)", { lineHeight: "1.2" }],
+      body: ["var(--font-size-body)", { lineHeight: "1.6" }],
+      "body-sm": ["var(--font-size-small)", { lineHeight: "1.5" }],
     },
   },
   spacing: {
@@ -132,6 +148,12 @@ const defaultTheme = {
     72: "var(--size-72)",
     80: "var(--size-80)",
     96: "var(--size-96)",
+    // ── Semantic spacing scale ──────────────────────────────────────────────
+    // Use py-section, p-card, gap-inline in section components.
+    // Values are responsive — see src/index.css --spacing-* vars.
+    section: "var(--spacing-section)",
+    card: "var(--spacing-card)",
+    inline: "var(--spacing-inline)",
   },
   darkMode: ["selector", '[data-appearance="dark"]'],
 }

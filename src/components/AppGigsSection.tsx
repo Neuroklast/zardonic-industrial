@@ -2,13 +2,13 @@ import { memo, useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import { ArrowsClockwise, MapPin, CalendarBlank, CaretDown, CaretUp } from '@phosphor-icons/react'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 import type { Gig } from '@/lib/app-types'
 import { parseGigDate } from '@/lib/utils'
 import { useLocale } from '@/contexts/LocaleContext'
+import { SectionBase } from '@/components/sections/SectionBase'
 
 /** Format the event identifier as DDMMYYYY-LAT-LON when coordinates are available,
  * falling back to the raw gig id. */
@@ -70,11 +70,14 @@ function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, h
   const visibleGigs = showAll ? upcomingGigs : upcomingGigs.slice(0, INITIAL_VISIBLE)
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="gigs" className="py-24 px-4 scanline-effect" data-theme-color="foreground card border primary">
-        <div className="container mx-auto max-w-6xl">
-          <motion.div
+    <SectionBase
+      id="gigs"
+      sectionOrder={sectionOrder}
+      visible={visible}
+      themeColor="foreground card border primary"
+    >
+      <div className="container mx-auto max-w-6xl">
+        <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
             viewport={{ once: true }}
@@ -240,8 +243,7 @@ function AppGigsSection({ gigs, sectionOrder, visible, editMode, sectionLabel, h
             )}
           </motion.div>
         </div>
-      </section>
-    </div>
+    </SectionBase>
   )
 }
 export default memo(AppGigsSection)

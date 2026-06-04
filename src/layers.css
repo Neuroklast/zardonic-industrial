@@ -72,4 +72,27 @@
   /* Full-screen transition FX — glitch effects played on overlay open/close.
      Must be above everything, including system UI. pointer-events: none required. */
   --z-transition-fx: 70;
+
+  /* ── Local-stacking tokens ─────────────────────────────────────────────────
+   * ONLY valid inside elements that establish an isolated stacking context
+   * (i.e. `isolation: isolate` or `position` + a numeric `z-index`).
+   * These create a predictable local stacking order within a component
+   * boundary and never affect the global z-index space.
+   *
+   * Usage in CSS:   z-index: var(--z-local-above-1)
+   * Usage in TSX:   style={{ zIndex: 'var(--z-local-above-1)' } as React.CSSProperties}
+   */
+  --z-local-base:    0;   /* base layer — natural stacking order within isolation */
+  --z-local-above-1: 1;   /* one step above base (e.g. pseudo-overlay over bg) */
+  --z-local-above-2: 2;   /* two steps above base (e.g. noise texture over content) */
+  --z-local-top:    10;   /* topmost element within an isolated local context */
+
+  /* ── Pseudo-element negative stacking ──────────────────────────────────────
+   * For decorative ::before/::after pseudo-elements that must appear BEHIND
+   * their sibling text or other sibling content.
+   * REQUIRES `isolation: isolate` (or position + z-index) on the parent to
+   * prevent the negative value from escaping the local stacking context.
+   */
+  --z-pseudo-below:   -1; /* pseudo-element behind sibling content */
+  --z-pseudo-below-2: -2; /* second pseudo-element, further behind */
 }

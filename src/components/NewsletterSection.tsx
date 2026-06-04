@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import EditableHeading from '@/components/EditableHeading'
+import { SectionBase } from '@/components/sections/SectionBase'
 import { useState, useRef, useEffect } from 'react'
 import { useLocale } from '@/contexts/LocaleContext'
 import type { NewsletterSettings, SectionLabels, AdminSettings } from '@/lib/types'
@@ -99,15 +100,13 @@ export default function NewsletterSection({
   if (!editMode && newsletterSettings?.showSection === false) return null
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section
-        ref={sectionRef}
-        className="py-24 px-4 scanline-effect"
-        id="newsletter"
-        data-theme-color="input border ring primary"
-      >
-      <div className="max-w-6xl mx-auto">
+    <SectionBase
+      id="newsletter"
+      sectionOrder={sectionOrder ?? 0}
+      visible={true}
+      themeColor="input border ring primary"
+    >
+      <div ref={sectionRef} className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           animate={isInView ? { opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' } : {}}
@@ -284,7 +283,6 @@ export default function NewsletterSection({
           </motion.div>
         )}
       </div>
-    </section>
-    </div>
+    </SectionBase>
   )
 }

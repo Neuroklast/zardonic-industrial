@@ -57,6 +57,28 @@ export const LAYERS = {
   /** Full-screen glitch transition FX played when an overlay opens/closes.
    *  MUST be above SYSTEM. MUST be pointer-events: none. */
   TRANSITION_FX: 70,
+
+  // ── Local-stacking constants ───────────────────────────────────────────────
+  // These mirror the --z-local-* CSS custom properties in src/layers.css.
+  // ONLY use inside elements with `isolation: isolate` (or position + z-index).
+
+  /** Base layer within an isolated stacking context. */
+  LOCAL_BASE: 0,
+  /** One step above base within an isolated stacking context. */
+  LOCAL_ABOVE_1: 1,
+  /** Two steps above base within an isolated stacking context. */
+  LOCAL_ABOVE_2: 2,
+  /** Topmost element within an isolated stacking context. */
+  LOCAL_TOP: 10,
+
+  // ── Pseudo-element negative stacking ──────────────────────────────────────
+  // Mirrors --z-pseudo-below-* in src/layers.css.
+  // Requires `isolation: isolate` on the parent to prevent escape.
+
+  /** Decorative pseudo-element behind sibling content. */
+  PSEUDO_BELOW: -1,
+  /** Second decorative pseudo-element, further behind sibling content. */
+  PSEUDO_BELOW_2: -2,
 } as const
 
 export type LayerKey = keyof typeof LAYERS
