@@ -9,38 +9,38 @@
 }
 
 :root {
-  --background: oklch(0.015 0.005 240);
-  --foreground: oklch(0.82 0.03 210);
+  --background: #000000; --background: oklch(0.015 0.005 240);
+  --foreground: #afcacf; --foreground: oklch(0.82 0.03 210);
   
-  --card: oklch(0.045 0.008 230);
-  --card-foreground: oklch(0.82 0.03 210);
+  --card: #000001; --card: oklch(0.045 0.008 230);
+  --card-foreground: #afcacf; --card-foreground: oklch(0.82 0.03 210);
   
-  --popover: oklch(0.045 0.008 230);
-  --popover-foreground: oklch(0.82 0.03 210);
+  --popover: #000001; --popover: oklch(0.045 0.008 230);
+  --popover-foreground: #afcacf; --popover-foreground: oklch(0.82 0.03 210);
   
-  --primary: oklch(0.78 0.03 220);
-  --primary-foreground: oklch(0.82 0.03 210);
+  --primary: #a3bcc5; --primary: oklch(0.78 0.03 220);
+  --primary-foreground: #afcacf; --primary-foreground: oklch(0.82 0.03 210);
   
-  --secondary: oklch(0.07 0.01 230);
-  --secondary-foreground: oklch(0.82 0.03 210);
+  --secondary: #000102; --secondary: oklch(0.07 0.01 230);
+  --secondary-foreground: #afcacf; --secondary-foreground: oklch(0.82 0.03 210);
   
-  --muted: oklch(0.07 0.01 230);
-  --muted-foreground: oklch(0.40 0.02 220);
+  --muted: #000102; --muted: oklch(0.07 0.01 230);
+  --muted-foreground: #3c4a4f; --muted-foreground: oklch(0.40 0.02 220);
   
-  --accent: oklch(0.65 0.06 215);
-  --accent-foreground: oklch(0.82 0.03 210);
+  --accent: #6399a6; --accent: oklch(0.65 0.06 215);
+  --accent-foreground: #afcacf; --accent-foreground: oklch(0.82 0.03 210);
   
-  --destructive: oklch(0.45 0.18 20);
-  --destructive-foreground: oklch(0.82 0.03 210);
+  --destructive: #a10128; --destructive: oklch(0.45 0.18 20);
+  --destructive-foreground: #afcacf; --destructive-foreground: oklch(0.82 0.03 210);
   
-  --border: oklch(0.10 0.01 225);
-  --input: oklch(0.10 0.01 225);
-  --ring: oklch(0.78 0.03 220);
+  --border: #010405; --border: oklch(0.10 0.01 225);
+  --input: #010405; --input: oklch(0.10 0.01 225);
+  --ring: #a3bcc5; --ring: oklch(0.78 0.03 220);
   
   --radius: 0.125rem;
   
-  --border-color: oklch(0.10 0.01 225);
-  --hover-color: oklch(0.65 0.06 215);
+  --border-color: #010405; --border-color: oklch(0.10 0.01 225);
+  --hover-color: #6399a6; --hover-color: oklch(0.65 0.06 215);
   --scanline-color: rgba(255, 255, 255, 0.03);
   --crt-line-color: rgba(255, 255, 255, 0.05);
   --accent-l: 0.65;
@@ -138,7 +138,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeSpeed;
   /* FOUC prevention — background must match theme from the very first paint */
-  background-color: hsl(var(--background));
+  background-color: #000000;
+  background-color: var(--background);
 }
 
 /* Disable text selection outside of admin edit mode.
@@ -154,16 +155,6 @@ body.no-select [contenteditable],
 body.no-select a {
   user-select: text;
   -webkit-user-select: text;
-}
-
-/* Enable GPU acceleration for common transforms.
-   NOTE: will-change is intentionally omitted here — applying it to every
-   Framer Motion / Tailwind animate-* element blows Firefox's will-change
-   memory budget (document area × 3).  translateZ(0) already promotes the
-   element to its own compositor layer without the budget penalty. */
-[class*="motion-"], [class*="animate-"] {
-  transform: translateZ(0);
-  backface-visibility: hidden;
 }
 
 /* Optimize animations */
@@ -289,8 +280,12 @@ code, kbd, samp, pre {
   .cyber-btn--outline:hover,
   .cyber-btn--secondary:hover {
     border-color: var(--primary);
+    background-color: rgba(163, 188, 197, 0.15);
     background-color: color-mix(in srgb, var(--primary) 15%, transparent);
     color: var(--primary);
+    box-shadow:
+      0 0 14px rgba(163, 188, 197, 0.35),
+      inset 0 0 8px rgba(163, 188, 197, 0.08);
     box-shadow:
       0 0 14px color-mix(in srgb, var(--primary) 35%, transparent),
       inset 0 0 8px color-mix(in srgb, var(--primary) 8%, transparent);
@@ -298,14 +293,17 @@ code, kbd, samp, pre {
 
   .cyber-btn--destructive:hover {
     border-color: var(--destructive);
+    background-color: rgba(161, 1, 40, 0.15);
     background-color: color-mix(in srgb, var(--destructive) 15%, transparent);
     color: var(--destructive);
+    box-shadow: 0 0 14px rgba(161, 1, 40, 0.35);
     box-shadow: 0 0 14px color-mix(in srgb, var(--destructive) 35%, transparent);
   }
 }
 
 * {
   scrollbar-width: thin;
+  scrollbar-color: #636363 #030303;
   scrollbar-color: oklch(0.5 0 0) oklch(0.1 0 0);
 }
 
@@ -315,15 +313,18 @@ code, kbd, samp, pre {
 }
 
 *::-webkit-scrollbar-track {
+  background: #030303;
   background: oklch(0.1 0 0);
 }
 
 *::-webkit-scrollbar-thumb {
+  background: #636363;
   background: oklch(0.5 0 0);
   border-radius: 4px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
+  background: #9e9e9e;
   background: oklch(0.7 0 0);
 }
 
@@ -351,11 +352,7 @@ code, kbd, samp, pre {
   z-index: var(--z-section-fx);
   opacity: 0.8;
   animation: scanline-drift 8s linear infinite;
-  will-change: transform;
   transform: translateZ(0);
-}
-
-@keyframes scanline-drift {
   0% { transform: translateZ(0) translateY(0); }
   100% { transform: translateZ(0) translateY(4px); }
 }
@@ -410,7 +407,12 @@ code, kbd, samp, pre {
   text-shadow: 
     1px 0 0 rgba(255, 100, 100, 0.3),
     -1px 0 0 rgba(100, 255, 255, 0.3);
-  animation: chromatic-shift 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .chromatic-aberration {
+    animation: chromatic-shift 4s ease-in-out infinite;
+  }
 }
 
 .chromatic-aberration-text {
@@ -476,7 +478,6 @@ code, kbd, samp, pre {
   z-index: var(--z-section-fx);
   opacity: 0.6;
   animation: crt-scanline-move 8s linear infinite;
-  will-change: transform;
   transform: translateZ(0);
 }
 
@@ -510,7 +511,6 @@ code, kbd, samp, pre {
     );
   opacity: var(--crt-overlay-opacity, 0.6);
   animation: crt-flicker 4s ease-in-out infinite;
-  will-change: opacity;
   transform: translateZ(0);
   contain: strict;
 }
@@ -554,8 +554,7 @@ code, kbd, samp, pre {
     rgba(255, 255, 255, 0.04) 50%,
     transparent 100%
   );
-  animation: crt-scan-down 6s linear infinite;
-  will-change: transform;
+  animation: crt-scan-down 12s linear infinite;
   transform: translateZ(0);
 }
 
@@ -824,7 +823,11 @@ code, kbd, samp, pre {
 }
 
 :is(.cyber-border):hover {
+  border-color: rgba(99, 153, 166, 0.5);
   border-color: color-mix(in srgb, var(--hover-color, var(--accent)) 50%, transparent);
+  box-shadow: 
+    0 0 20px rgba(99, 153, 166, 0.2),
+    inset 0 0 20px rgba(99, 153, 166, 0.05);
   box-shadow: 
     0 0 20px color-mix(in srgb, var(--hover-color, var(--accent)) 20%, transparent),
     inset 0 0 20px color-mix(in srgb, var(--hover-color, var(--accent)) 5%, transparent);
@@ -839,6 +842,7 @@ code, kbd, samp, pre {
   position: absolute;
   width: 100%;
   height: 2px;
+  background: linear-gradient(to bottom, transparent, rgba(99, 153, 166, 0.5), transparent);
   background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--hover-color, var(--accent)) 50%, transparent), transparent);
   opacity: 0;
   pointer-events: none;
@@ -862,6 +866,7 @@ code, kbd, samp, pre {
 }
 .release-hover-zoom:hover {
   transform: scale(1.05);
+  box-shadow: 0 8px 32px rgba(99, 153, 166, 0.3);
   box-shadow: 0 8px 32px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
@@ -869,7 +874,9 @@ code, kbd, samp, pre {
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .release-hover-glow:hover {
+  box-shadow: 0 0 24px 4px rgba(163, 188, 197, 0.45);
   box-shadow: 0 0 24px 4px color-mix(in srgb, var(--primary) 45%, transparent);
+  border-color: rgba(163, 188, 197, 0.6) !important;
   border-color: color-mix(in srgb, var(--primary) 60%, transparent) !important;
 }
 
@@ -878,6 +885,7 @@ code, kbd, samp, pre {
 }
 .release-hover-lift:hover {
   transform: translateY(-6px);
+  box-shadow: 0 16px 40px rgba(163, 188, 197, 0.25);
   box-shadow: 0 16px 40px color-mix(in srgb, var(--primary) 25%, transparent);
 }
 
@@ -1585,7 +1593,11 @@ code, kbd, samp, pre {
 }
 
 :is(.cyber-card):hover {
+  border-color: rgba(99, 153, 166, 0.3);
   border-color: color-mix(in srgb, var(--hover-color, var(--accent)) 30%, transparent);
+  box-shadow: 
+    0 0 15px rgba(99, 153, 166, 0.1),
+    inset 0 0 15px rgba(99, 153, 166, 0.03);
   box-shadow: 
     0 0 15px color-mix(in srgb, var(--hover-color, var(--accent)) 10%, transparent),
     inset 0 0 15px color-mix(in srgb, var(--hover-color, var(--accent)) 3%, transparent);

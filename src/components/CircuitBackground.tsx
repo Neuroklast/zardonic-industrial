@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo, useState, useCallback, memo } from 'react'
+import { useEffect, useRef, useMemo, useCallback, memo } from 'react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 
 interface CircuitLine {
@@ -18,17 +18,6 @@ interface CircuitNode {
   depth: number
 }
 
-interface DataPulse {
-  key: number
-  lineId: number
-  x: string
-  y: string
-  width: string
-  height: string
-  horizontal: boolean
-  depth: number
-}
-
 export const CircuitBackground = memo(function CircuitBackground({
   speed = 1,
   glow = 0.8,
@@ -40,11 +29,12 @@ export const CircuitBackground = memo(function CircuitBackground({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll()
-  // Smooth out the raw scroll value so parallax layers ease to their target
-  // position rather than stopping abruptly when the user stops scrolling.
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20, restDelta: 0.001 })
-  const [pulses, setPulses] = useState<DataPulse[]>([])
   const pulseCounter = useRef(0)
+  // Pulse containers per depth layer — mutations go directly to DOM, no React re-renders
+  const pulseContainerDepth1 = useRef<HTMLDivElement>(null)
+  const pulseContainerDepth2 = useRef<HTMLDivElement>(null)
+  const pulseContainerDepth3 = useRef<HTMLDivElement>(null)
   
   // Optimize transforms with reduced motion sensitivity
   const layer1Y = useTransform(smoothProgress, [0, 1], ['0%', '10%'])
@@ -161,25 +151,27 @@ export const CircuitBackground = memo(function CircuitBackground({
   const depth1Lines = useMemo(() => lines.filter(l => l.depth === 1), [lines])
   const depth1Nodes = useMemo(() => nodes.filter(n => n.depth === 1), [nodes])
 
-  // Spawn random data pulses along circuit lines
+  // Spawn random data pulses — creates DOM elements directly to avoid React re-renders
   const spawnPulse = useCallback(() => {
     if (lines.length === 0) return
     const line = lines[Math.floor(Math.random() * lines.length)]
     const key = ++pulseCounter.current
-    setPulses(prev => [...prev, {
-      key,
-      lineId: line.id,
-      x: line.x,
-      y: line.y,
-      width: line.horizontal ? (line.width || '10%') : '2px',
-      height: line.horizontal ? '2px' : (line.height || '10%'),
-      horizontal: line.horizontal,
-      depth: line.depth,
-    }])
 
-    // Remove pulse after animation completes
+    const el = document.createElement('div')
+    el.className = `circuit-line-pulse ${line.horizontal ? 'horizontal' : 'vertical'}`
+    el.style.left = line.x
+    el.style.top = line.y
+    el.dataset.pulseKey = String(key)
+
+    const container =
+      line.depth === 1 ? pulseContainerDepth1.current :
+      line.depth === 2 ? pulseContainerDepth2.current :
+                         pulseContainerDepth3.current
+    container?.appendChild(el)
+
+    // Remove pulse element after animation completes
     setTimeout(() => {
-      setPulses(prev => prev.filter(p => p.key !== key))
+      if (el.parentNode) el.parentNode.removeChild(el)
     }, 1400)
   }, [lines])
 
@@ -238,16 +230,8 @@ export const CircuitBackground = memo(function CircuitBackground({
               }}
             />
           ))}
-          {pulses.filter(p => p.depth === 3).map((pulse) => (
-            <div
-              key={pulse.key}
-              className={`circuit-line-pulse ${pulse.horizontal ? 'horizontal' : 'vertical'}`}
-              style={{
-                left: pulse.x,
-                top: pulse.y,
-              }}
-            />
-          ))}
+          {/* Pulse container — elements injected directly via DOM to avoid re-renders */}
+          <div ref={pulseContainerDepth3} />
         </motion.div>
       </div>
 
@@ -281,16 +265,8 @@ export const CircuitBackground = memo(function CircuitBackground({
               }}
             />
           ))}
-          {pulses.filter(p => p.depth === 2).map((pulse) => (
-            <div
-              key={pulse.key}
-              className={`circuit-line-pulse ${pulse.horizontal ? 'horizontal' : 'vertical'}`}
-              style={{
-                left: pulse.x,
-                top: pulse.y,
-              }}
-            />
-          ))}
+          {/* Pulse container — elements injected directly via DOM to avoid re-renders */}
+          <div ref={pulseContainerDepth2} />
         </div>
       </motion.div>
 
@@ -324,16 +300,8 @@ export const CircuitBackground = memo(function CircuitBackground({
               }}
             />
           ))}
-          {pulses.filter(p => p.depth === 1).map((pulse) => (
-            <div
-              key={pulse.key}
-              className={`circuit-line-pulse ${pulse.horizontal ? 'horizontal' : 'vertical'}`}
-              style={{
-                left: pulse.x,
-                top: pulse.y,
-              }}
-            />
-          ))}
+          {/* Pulse container — elements injected directly via DOM to avoid re-renders */}
+          <div ref={pulseContainerDepth1} />
         </div>
       </motion.div>
     </>

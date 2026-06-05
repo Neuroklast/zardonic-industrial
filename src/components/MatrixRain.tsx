@@ -41,8 +41,15 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
     }
 
     resize()
-    const handleResize = () => resize()
-    window.addEventListener('resize', handleResize)
+
+    // Use ResizeObserver on the canvas itself (more precise than window resize)
+    // and debounce to avoid resetting the canvas on every pixel during drag.
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined
+    const resizeObserver = new ResizeObserver(() => {
+      clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(resize, 150)
+    })
+    resizeObserver.observe(canvas)
 
     // Resolve color once (outside the animation loop) and cache it.
     // Re-reading getComputedStyle on every rAF frame forces a synchronous
@@ -132,7 +139,8 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
     return () => {
       cancelAnimationFrame(animId)
       observer.disconnect()
-      window.removeEventListener('resize', handleResize)
+      resizeObserver.disconnect()
+      clearTimeout(debounceTimer)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [transparent, speed, density, color])
