@@ -353,6 +353,9 @@ code, kbd, samp, pre {
   opacity: 0.8;
   animation: scanline-drift 8s linear infinite;
   transform: translateZ(0);
+}
+
+@keyframes scanline-drift {
   0% { transform: translateZ(0) translateY(0); }
   100% { transform: translateZ(0) translateY(4px); }
 }

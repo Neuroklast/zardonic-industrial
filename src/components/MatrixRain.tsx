@@ -17,6 +17,7 @@ interface MatrixRainProps {
 
 const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 0.7, color }: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -44,10 +45,9 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
 
     // Use ResizeObserver on the canvas itself (more precise than window resize)
     // and debounce to avoid resetting the canvas on every pixel during drag.
-    let debounceTimer: ReturnType<typeof setTimeout> | undefined
     const resizeObserver = new ResizeObserver(() => {
-      clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(resize, 150)
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = setTimeout(resize, 150)
     })
     resizeObserver.observe(canvas)
 
@@ -140,7 +140,7 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
       cancelAnimationFrame(animId)
       observer.disconnect()
       resizeObserver.disconnect()
-      clearTimeout(debounceTimer)
+      clearTimeout(debounceTimerRef.current)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
   }, [transparent, speed, density, color])

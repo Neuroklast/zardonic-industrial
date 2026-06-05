@@ -162,6 +162,7 @@ export const CircuitBackground = memo(function CircuitBackground({
     el.style.left = line.x
     el.style.top = line.y
     el.dataset.pulseKey = String(key)
+    el.setAttribute('aria-hidden', 'true')
 
     const container =
       line.depth === 1 ? pulseContainerDepth1.current :
