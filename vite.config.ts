@@ -101,9 +101,11 @@ export default defineConfig(() => {
           },
         },
       },
-      // vendor-three (Three.js) is 595 kB minified / 153 kB gzip — well under 500 kB gzipped.
-      // ModelBackground is already lazy-loaded via React.lazy in BackgroundStack.tsx.
-      chunkSizeWarningLimit: 500,
+      // vendor-three (Three.js) is 595 kB minified / 153 kB gzip.
+      // chunkSizeWarningLimit compares against minified size, so set to 600 to accommodate Three.js
+      // while still catching unexpectedly large chunks. ModelBackground is lazy-loaded via
+      // React.lazy in BackgroundStack.tsx so Three.js is not in the critical path.
+      chunkSizeWarningLimit: 600,
       minify: 'esbuild',
     },
     optimizeDeps: {
