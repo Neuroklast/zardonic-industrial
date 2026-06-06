@@ -51,7 +51,7 @@ export default function AppMediaSection({
           >
             <div className="flex items-center justify-between mb-12 flex-wrap gap-4">
               <h2
-                className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build"
+                className="text-heading font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build"
                 data-text={`${prefix}${prefix ? ' ' : ''}${displayLabel}`}
               >
                 {prefix && <span className="text-primary/70 mr-2">{prefix}</span>}

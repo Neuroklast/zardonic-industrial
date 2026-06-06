@@ -151,7 +151,7 @@ export default function ProfileOverlay({ name, photoUrl, resolvePhoto, dataLines
                 {photoUrl && photoSrc ? (
                   <div className="w-full h-full overflow-hidden border border-primary/40 shadow-[0_0_20px_oklch(0.50_0.22_25/0.3),0_0_40px_oklch(0.50_0.22_25/0.15)] bg-black">
                     {!photoLoaded && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center z-[1] bg-black">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black" style={{ zIndex: 'var(--z-local-above-1)' } as React.CSSProperties}>
                         <div className="w-3/4 h-[2px] bg-primary/20 overflow-hidden mb-1">
                           <div className="h-full bg-primary animate-progress-bar" />
                         </div>

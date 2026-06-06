@@ -42,7 +42,7 @@ export const CyberpunkCursor = () => {
         position: 'fixed',
         top: 0,
         left: 0,
-        zIndex: 9999,
+        zIndex: 'var(--z-transition-fx)',
         pointerEvents: 'none',
         translateX: '-50%',
         translateY: '-50%',
