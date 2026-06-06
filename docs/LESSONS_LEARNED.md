@@ -1,7 +1,7 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-04-01  
-> **Agent ID:** copilot/deep-audit-dokumentation  
+> **Last Updated:** 2026-06-06  
+> **Agent ID:** copilot/architecture-refactor  
 
 ---
 
@@ -65,6 +65,7 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | Upload hooks (`useVideoUpload`, `useMediaUpload`) called `setState` after the async upload completed without checking whether the component was still mounted. The fix is a `isMountedRef = useRef(true)` set to `false` in the cleanup of a `useEffect` with empty deps. Guard every post-async `setState` with `if (isMountedRef.current)`. | Architecture | 🟡 Medium |
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `usePublishedContent` returned `T` directly, swallowing fetch errors and making it impossible for callers to show error states. The correct pattern is to offer two export levels: a simple `T`-returning hook (backward-compatible) and a richer `{ data, isLoading, error }` variant via `usePublishedContentFull`. This avoids breaking existing callers while enabling better error handling for new ones. | Architecture | 🟡 Medium |
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | A `setTimeout` inside a `useEffect` without a returned cleanup is a latent memory/state leak. The pattern `setTimeout(() => setState(x), delay)` inside `useEffect` must always be replaced with `const id = setTimeout(...); return () => clearTimeout(id)`. Use a `useRef` to expose the timer ID if the effect body is conditional. | Architecture | 🟡 Medium |
+| 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When a dialog owns shared state, undo history, DOM previews, or file inputs, keep that shell in the parent component and lazy-load only the tab panels. This preserves behavior while shrinking the eagerly loaded bundle and keeps each tab focused. | Architecture | 🟡 Medium |
 
 ---
 
@@ -82,14 +83,14 @@ This document records lessons learned during development sessions. Every coding 
 
 | Category | Count |
 |----------|-------|
-| Architecture | 10 |
+| Architecture | 11 |
 | Security | 9 |
 | Performance | 4 |
 | Dependencies | 1 |
 | Testing | 1 |
 | DevOps | 1 |
 | Debugging | 1 |
-| **Total** | **27** |
+| **Total** | **28** |
 
 ---
 

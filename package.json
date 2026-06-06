@@ -5,15 +5,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "NODE_OPTIONS='--disable-warning=DEP0169' vite",
+    "dev": "vite",
     "kill": "fuser -k 5000/tcp",
-    "build": "cross-env NODE_OPTIONS='--disable-warning=DEP0169' vite build",
+    "build": "vite build",
     "typecheck": "tsc -b --noEmit",
-    "test": "NODE_OPTIONS='--disable-warning=DEP0169' vitest run",
-    "test:watch": "NODE_OPTIONS='--disable-warning=DEP0169' vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint .",
-    "optimize": "NODE_OPTIONS='--disable-warning=DEP0169' vite optimize",
-    "preview": "NODE_OPTIONS='--disable-warning=DEP0169' vite preview"
+    "optimize": "vite optimize",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
