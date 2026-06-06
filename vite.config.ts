@@ -101,9 +101,9 @@ export default defineConfig(() => {
           },
         },
       },
-      // Gzipped chunks are under the 500 kB threshold required by AGENTS.md.
-      // The minified size limit is set higher to accommodate Three.js (595 kB minified / 153 kB gzip).
-      chunkSizeWarningLimit: 700,
+      // vendor-three (Three.js) is 595 kB minified / 153 kB gzip — well under 500 kB gzipped.
+      // ModelBackground is already lazy-loaded via React.lazy in BackgroundStack.tsx.
+      chunkSizeWarningLimit: 500,
       minify: 'esbuild',
     },
     optimizeDeps: {

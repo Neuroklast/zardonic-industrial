@@ -1,8 +1,8 @@
 import React, { memo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
+import { SectionBase } from '@/components/sections/SectionBase'
 import {
   InstagramLogo,
   FacebookLogo,
@@ -62,9 +62,7 @@ function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabe
   }
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="connect" className="py-24 px-4 scanline-effect" data-theme-color="primary accent">
+    <SectionBase id="connect" sectionOrder={sectionOrder} visible={visible} themeColor="primary accent">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -216,8 +214,7 @@ function AppSocialSection({ social, sectionOrder, visible, editMode, sectionLabe
             </motion.div>
           </motion.div>
         </div>
-      </section>
-    </div>
+    </SectionBase>
   )
 }
 export default memo(AppSocialSection)

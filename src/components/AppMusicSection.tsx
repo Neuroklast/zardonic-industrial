@@ -1,10 +1,10 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
+import { SectionBase } from '@/components/sections/SectionBase'
 
 /** Convert a Spotify profile URL to a `spotify:type:id` URI.
  *  e.g. "https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n" → "spotify:artist:7BqEidErPMNiUXCRE0dV2n"
@@ -52,8 +52,6 @@ function AppMusicSection({
   spotifyUrl,
 }: AppMusicSectionProps) {
 
-  if (!visible) return null
-
   const spotifyUri = (spotifyUrl ? spotifyUrlToUri(spotifyUrl) : null) ?? FALLBACK_SPOTIFY_URI
 
   const headingPrefix = sectionLabels?.headingPrefix
@@ -61,9 +59,7 @@ function AppMusicSection({
   const statusLabel = sectionLabels?.musicStatusLabel ?? '// STATUS: [STREAMING]'
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="music" className="py-24 px-4 scanline-effect" data-theme-color="card">
+    <SectionBase id="music" sectionOrder={sectionOrder} visible={visible} themeColor="card">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -121,8 +117,7 @@ function AppMusicSection({
             </Card>
           </motion.div>
         </div>
-      </section>
-    </div>
+    </SectionBase>
   )
 }
 export default memo(AppMusicSection)
