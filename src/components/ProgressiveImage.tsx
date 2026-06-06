@@ -41,7 +41,7 @@ export default function ProgressiveImage({ src, alt, className, style, draggable
   return (
     <div className="relative w-full h-full">
       {!loaded && (
-        <div className="absolute inset-0 flex items-center justify-center z-[1]">
+        <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 'var(--z-local-above-1)' } as React.CSSProperties}>
           <div className="w-3/4 max-w-[200px]">
             <div className="h-[2px] bg-primary/20 overflow-hidden">
               <div

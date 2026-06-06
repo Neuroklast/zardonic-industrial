@@ -1,7 +1,7 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-04-01  
-> **Agent ID:** copilot/deep-audit-dokumentation  
+> **Last Updated:** 2026-06-06  
+> **Agent ID:** copilot/architecture-refactor  
 
 ---
 
@@ -65,6 +65,8 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | Upload hooks (`useVideoUpload`, `useMediaUpload`) called `setState` after the async upload completed without checking whether the component was still mounted. The fix is a `isMountedRef = useRef(true)` set to `false` in the cleanup of a `useEffect` with empty deps. Guard every post-async `setState` with `if (isMountedRef.current)`. | Architecture | 🟡 Medium |
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | `usePublishedContent` returned `T` directly, swallowing fetch errors and making it impossible for callers to show error states. The correct pattern is to offer two export levels: a simple `T`-returning hook (backward-compatible) and a richer `{ data, isLoading, error }` variant via `usePublishedContentFull`. This avoids breaking existing callers while enabling better error handling for new ones. | Architecture | 🟡 Medium |
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | A `setTimeout` inside a `useEffect` without a returned cleanup is a latent memory/state leak. The pattern `setTimeout(() => setState(x), delay)` inside `useEffect` must always be replaced with `const id = setTimeout(...); return () => clearTimeout(id)`. Use a `useRef` to expose the timer ID if the effect body is conditional. | Architecture | 🟡 Medium |
+| 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When a dialog owns shared state, undo history, DOM previews, or file inputs, keep that shell in the parent component and lazy-load only the tab panels. This preserves behavior while shrinking the eagerly loaded bundle and keeps each tab focused. | Architecture | 🟡 Medium |
+| 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When splitting oversized UI files, move either stateful logic into a hook or self-contained view blocks into sibling components, but keep the owning dialog/browser shell in place so behavior, focus flow, and prop contracts stay unchanged. | Architecture | 🟡 Medium |
 
 ---
 
@@ -82,14 +84,14 @@ This document records lessons learned during development sessions. Every coding 
 
 | Category | Count |
 |----------|-------|
-| Architecture | 10 |
+| Architecture | 11 |
 | Security | 9 |
 | Performance | 4 |
 | Dependencies | 1 |
 | Testing | 1 |
 | DevOps | 1 |
 | Debugging | 1 |
-| **Total** | **27** |
+| **Total** | **28** |
 
 ---
 
@@ -127,3 +129,16 @@ Creating `new Image()` with an `onload` callback inside `useEffect` without a cl
 
 ### Array.pop() on Derived Strings Can Return Undefined
 TypeScript correctly types `string[].pop()` as `string | undefined`. When `process.env.MAILCHIMP_API_KEY.split('-').pop()` is used as a URL segment, a malformed key (empty suffix or trailing dash) produces `''` or potentially `undefined`, building an invalid URL that is silently requested. TypeScript's template literal interpolation accepts `undefined` without error. **Lesson:** always null-guard the result of `.pop()` (and other array tail accessors) before using in a URL or string construction; log a descriptive error and skip the call rather than sending a malformed request.
+
+---
+
+## Semantic Utilities Sweep & Z-Index Hygiene (2026-06-06)
+
+### Local Z-Index Tokens Must Replace All Raw Values Including Tailwind Bracket Classes
+Tailwind's arbitrary-value syntax `z-[60]` or `z-[1]` generates a raw integer `z-index`, which is as much a violation of the z-index contract as an inline `zIndex: 9999`. The design system's `--z-local-above-1`, `--z-local-top`, and `--z-transition-fx` tokens must be used via `style={{ zIndex: 'var(--z-...)' } as React.CSSProperties}` because Tailwind has no way to reference CSS custom properties in z-index utilities. **Lesson:** when auditing z-index violations, search for BOTH `zIndex:` inline styles AND `z-[...]` Tailwind classes — the latter is equally prohibited.
+
+### `--z-transition-fx` Is the Correct Layer for Fixed Pointer-Events-None Cursor Decorations
+A custom cursor reticle (`position: fixed, pointer-events: none`) must be above every other layer including modals and system UI, because it tracks the pointer at all times. `--z-transition-fx: 70` is designed for exactly this ("must be above everything, pointer-events: none required"). Using `zIndex: 9999` would work visually but breaks the shared contract, preventing future layers from reasoning about ordering. **Lesson:** for any always-on-top, pointer-events-none overlay, reach for `--z-transition-fx` first.
+
+### Semantic Typography Tokens Replace Breakpoint Pairs, Not Just Single Classes
+The pattern `text-4xl md:text-6xl` is two classes: a base size for mobile and an overriding size for desktop. The semantic token `text-heading` (with a fluid `clamp()` value) replaces *both* in one class, and does so with continuous scaling rather than a discrete jump at the breakpoint. **Lesson:** when migrating to semantic typography tokens, always remove the accompanying `md:text-*` override — the fluid value covers both ends of the spectrum.

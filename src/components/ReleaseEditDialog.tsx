@@ -4,11 +4,14 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { UploadSimple, Plus, X, ArrowsClockwise, ArrowCounterClockwise } from '@phosphor-icons/react'
+import { UploadSimple, Plus, X } from '@phosphor-icons/react'
 import type { Release } from '@/lib/types'
 import { fetchOdesliLinks } from '@/lib/odesli'
 import { toast } from 'sonner'
 import { API_ROUTES } from '@/lib/api-routes'
+import { StreamingLinksSection } from '@/components/releases/StreamingLinksSection'
+import { TracklistSection } from '@/components/releases/TracklistSection'
+
 interface ReleaseEditDialogProps {
   release: Release | null
   onSave: (release: Release) => void
@@ -29,7 +32,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
     bandcamp: '',
     youtube: '',
     appleMusic: '',
-    beatport: ''
+    beatport: '',
   })
   const [tracks, setTracks] = useState<Array<{ title: string; duration?: string; artist?: string }>>([])
   const [tracksHistory, setTracksHistory] = useState<Array<Array<{ title: string; duration?: string; artist?: string }>>>([])
@@ -57,24 +60,13 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         bandcamp: links.bandcamp || '',
         youtube: links.youtube || '',
         appleMusic: links.appleMusic || '',
-        beatport: links.beatport || ''
+        beatport: links.beatport || '',
       })
-      setTracks((release.tracks || []).map(t => ({ title: t.title, duration: t.duration, artist: t.artist })))
+      setTracks((release.tracks || []).map(track => ({ title: track.title, duration: track.duration, artist: track.artist })))
       setTracksHistory([])
       setCustomLinks(release.customLinks || [])
     }
   }, [release])
-
-  const addTrack = () => {
-    if (newTrack.title.trim()) {
-      setTracks([...tracks, { title: newTrack.title.trim(), duration: newTrack.duration || undefined, artist: newTrack.artist.trim() || undefined }])
-      setNewTrack({ title: '', duration: '', artist: '' })
-    }
-  }
-
-  const removeTrack = (index: number) => {
-    setTracks(tracks.filter((_, i) => i !== index))
-  }
 
   const addCustomLink = () => {
     if (newCustomLink.label.trim() && newCustomLink.url.trim()) {
@@ -117,11 +109,10 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         toast.error(err.error ?? 'Odesli sync failed')
         return
       }
-      
-      const { release: enrichedRelease } = await resp.json() as { release: { streamingLinks?: Array<{ platform: string; url: string }> } }
-      const getLink = (arr: Array<{ platform: string; url: string }> | undefined, plat: string) =>
-        arr?.find(l => l.platform === plat)?.url || ''
-      
+
+      const { release: enrichedRelease } = (await resp.json()) as { release: { streamingLinks?: Array<{ platform: string; url: string }> } }
+      const getLink = (arr: Array<{ platform: string; url: string }> | undefined, platform: string) => arr?.find(link => link.platform === platform)?.url || ''
+
       setFormData(prev => ({
         ...prev,
         spotify: getLink(enrichedRelease.streamingLinks, 'spotify') || prev.spotify,
@@ -155,15 +146,15 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         return
       }
       type EnrichmentResponse = { release: { tracks?: Array<{ title: string; duration?: string; artist?: string }> } }
-      const { release: enrichedRelease } = await resp.json() as EnrichmentResponse
-      const newTracks = enrichedRelease.tracks
-      if (!newTracks || newTracks.length === 0) {
+      const { release: enrichedRelease } = (await resp.json()) as EnrichmentResponse
+      const nextTracks = enrichedRelease.tracks
+      if (!nextTracks || nextTracks.length === 0) {
         toast.info('No tracklist found for this release')
         return
       }
       setTracksHistory(prev => [...prev.slice(-49), tracks])
-      setTracks(newTracks)
-      toast.success(`Tracklist synced — ${newTracks.length} tracks`)
+      setTracks(nextTracks)
+      toast.success(`Tracklist synced — ${nextTracks.length} tracks`)
     } catch {
       toast.error('Tracklist sync failed')
     } finally {
@@ -227,12 +218,9 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
         releaseDate: formData.releaseDate || undefined,
         description: formData.description || undefined,
         featured: formData.featured || undefined,
-        artists: formData.artists ? formData.artists.split(',').map(a => a.trim()).filter(Boolean) : undefined,
+        artists: formData.artists ? formData.artists.split(',').map(artist => artist.trim()).filter(Boolean) : undefined,
         streamingLinks: Object.keys(streamingLinks).length > 0 ? streamingLinks : undefined,
         tracks: tracks.length > 0 ? tracks : undefined,
-        // Always pass the current customLinks array (even when empty) so that
-        // mergeFullReleaseIntoStored can distinguish "user cleared all links"
-        // (empty array) from "links field not touched" (undefined).
         customLinks,
         manuallyEdited: true,
       })
@@ -253,7 +241,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={e => setFormData({ ...formData, title: e.target.value })}
               required
               className="bg-secondary border-input"
               placeholder="Track/Album Name"
@@ -265,7 +253,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             <Input
               id="artists"
               value={formData.artists}
-              onChange={(e) => setFormData({ ...formData, artists: e.target.value })}
+              onChange={e => setFormData({ ...formData, artists: e.target.value })}
               className="bg-secondary border-input"
               placeholder="e.g. Zardonic, Freqax"
             />
@@ -276,7 +264,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             <select
               id="type"
               value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation' })}
+              onChange={e => setFormData({ ...formData, type: e.target.value as '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation' })}
               className="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="">— None —</option>
@@ -294,7 +282,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
               id="releaseDate"
               type="date"
               value={formData.releaseDate}
-              onChange={(e) => setFormData({ ...formData, releaseDate: e.target.value })}
+              onChange={e => setFormData({ ...formData, releaseDate: e.target.value })}
               className="bg-secondary border-input"
             />
           </div>
@@ -304,7 +292,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={e => setFormData({ ...formData, description: e.target.value })}
               className="bg-secondary border-input"
               placeholder="Brief description of the release"
               rows={3}
@@ -316,7 +304,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
               id="featured"
               type="checkbox"
               checked={formData.featured}
-              onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
+              onChange={e => setFormData({ ...formData, featured: e.target.checked })}
               className="h-4 w-4 accent-primary"
             />
             <Label htmlFor="featured" className="cursor-pointer">Featured Release (shown prominently)</Label>
@@ -329,7 +317,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
                 id="artwork"
                 type="url"
                 value={formData.artwork.startsWith('data:') ? '' : formData.artwork}
-                onChange={(e) => setFormData({ ...formData, artwork: e.target.value })}
+                onChange={e => setFormData({ ...formData, artwork: e.target.value })}
                 className="bg-secondary border-input flex-1"
                 placeholder="https://..."
               />
@@ -338,7 +326,7 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => handleFileUpload(e, 'artwork')}
+                onChange={e => handleFileUpload(e, 'artwork')}
               />
               <Button
                 type="button"
@@ -358,191 +346,32 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
             )}
           </div>
 
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold">Streaming Links (optional)</h4>
-              {release?.id && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOdesliSync}
-                  disabled={isSyncing || isSaving}
-                  className="border-primary/30 hover:bg-primary/10 text-xs gap-1.5"
-                  title="Sync streaming links from Odesli"
-                >
-                  <ArrowsClockwise size={14} className={isSyncing ? 'animate-spin' : ''} />
-                  {isSyncing ? 'Syncing…' : 'Sync Odesli'}
-                </Button>
-              )}
-            </div>
-            
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="spotify">Spotify</Label>
-                <Input
-                  id="spotify"
-                  type="url"
-                  value={formData.spotify}
-                  onChange={(e) => setFormData({ ...formData, spotify: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://open.spotify.com/..."
-                />
-              </div>
+          <StreamingLinksSection
+            spotify={formData.spotify}
+            soundcloud={formData.soundcloud}
+            bandcamp={formData.bandcamp}
+            youtube={formData.youtube}
+            appleMusic={formData.appleMusic}
+            beatport={formData.beatport}
+            onChange={(field, value) => setFormData(prev => ({ ...prev, [field]: value }))}
+            releaseId={release?.id}
+            isSyncing={isSyncing}
+            onSync={handleOdesliSync}
+            isSaving={isSaving}
+          />
 
-              <div>
-                <Label htmlFor="soundcloud">SoundCloud</Label>
-                <Input
-                  id="soundcloud"
-                  type="url"
-                  value={formData.soundcloud}
-                  onChange={(e) => setFormData({ ...formData, soundcloud: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://soundcloud.com/..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="youtube">YouTube</Label>
-                <Input
-                  id="youtube"
-                  type="url"
-                  value={formData.youtube}
-                  onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://youtube.com/..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="bandcamp">Bandcamp</Label>
-                <Input
-                  id="bandcamp"
-                  type="url"
-                  value={formData.bandcamp}
-                  onChange={(e) => setFormData({ ...formData, bandcamp: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://bandcamp.com/..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="appleMusic">Apple Music</Label>
-                <Input
-                  id="appleMusic"
-                  type="url"
-                  value={formData.appleMusic}
-                  onChange={(e) => setFormData({ ...formData, appleMusic: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://music.apple.com/..."
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="beatport">Beatport</Label>
-                <Input
-                  id="beatport"
-                  type="url"
-                  value={formData.beatport}
-                  onChange={(e) => setFormData({ ...formData, beatport: e.target.value })}
-                  className="bg-secondary border-input"
-                  placeholder="https://beatport.com/..."
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between mb-3">
-              <h4 className="font-semibold">Track List (optional)</h4>
-              {release?.id && (
-                <div className="flex items-center gap-1.5">
-                  {tracksHistory.length > 0 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleUndoTracklist}
-                      disabled={isSyncingTracklist || isSaving}
-                      className="border-primary/30 hover:bg-primary/10 text-xs gap-1.5"
-                      title="Undo last tracklist sync"
-                      aria-label="Undo tracklist sync"
-                    >
-                      <ArrowCounterClockwise size={14} />
-                      Undo
-                    </Button>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleTracklistSync}
-                    disabled={isSyncingTracklist || isSaving}
-                    className="border-primary/30 hover:bg-primary/10 text-xs gap-1.5"
-                    title="Sync tracklist from MusicBrainz"
-                  >
-                    <ArrowsClockwise size={14} className={isSyncingTracklist ? 'animate-spin' : ''} />
-                    {isSyncingTracklist ? 'Syncing…' : 'Sync Tracklist'}
-                  </Button>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              {tracks.map((track, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <Input
-                    value={track.title}
-                    onChange={(e) => setTracks(tracks.map((t, i) => i === index ? { ...t, title: e.target.value } : t))}
-                    className="flex-1 bg-secondary border-input text-sm"
-                    placeholder="Track title"
-                  />
-                  <Input
-                    value={track.artist || ''}
-                    onChange={(e) => setTracks(tracks.map((t, i) => i === index ? { ...t, artist: e.target.value || undefined } : t))}
-                    className="w-28 bg-secondary border-input text-sm"
-                    placeholder="Artist"
-                    title="Artist name for this track (optional)"
-                  />
-                  <Input
-                    value={track.duration || ''}
-                    onChange={(e) => setTracks(tracks.map((t, i) => i === index ? { ...t, duration: e.target.value || undefined } : t))}
-                    className="w-20 bg-secondary border-input text-sm text-center"
-                    placeholder="4:23"
-                  />
-                  <Button type="button" variant="ghost" size="icon" onClick={() => removeTrack(index)}>
-                    <X size={16} />
-                  </Button>
-                </div>
-              ))}
-              <div className="flex gap-2">
-                <Input
-                  value={newTrack.title}
-                  onChange={(e) => setNewTrack({ ...newTrack, title: e.target.value })}
-                  placeholder="Track title"
-                  className="flex-1 bg-secondary border-input"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTrack() } }}
-                />
-                <Input
-                  value={newTrack.artist}
-                  onChange={(e) => setNewTrack({ ...newTrack, artist: e.target.value })}
-                  placeholder="Artist"
-                  className="w-28 bg-secondary border-input"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTrack() } }}
-                  title="Artist name for this track (optional)"
-                />
-                <Input
-                  value={newTrack.duration}
-                  onChange={(e) => setNewTrack({ ...newTrack, duration: e.target.value })}
-                  placeholder="4:23"
-                  className="w-20 bg-secondary border-input"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTrack() } }}
-                />
-                <Button type="button" onClick={addTrack} size="icon" className="flex-shrink-0">
-                  <Plus size={16} />
-                </Button>
-              </div>
-            </div>
-          </div>
+          <TracklistSection
+            tracks={tracks}
+            setTracks={setTracks}
+            tracksHistory={tracksHistory}
+            newTrack={newTrack}
+            setNewTrack={setNewTrack}
+            releaseId={release?.id}
+            isSyncingTracklist={isSyncingTracklist}
+            isSaving={isSaving}
+            onTracklistSync={handleTracklistSync}
+            onUndoTracklist={handleUndoTracklist}
+          />
 
           <div className="border-t border-border pt-4">
             <h4 className="font-semibold mb-3">Custom Links — CD / Vinyl / Merch (optional)</h4>
@@ -562,16 +391,21 @@ export default function ReleaseEditDialog({ release, onSave, onClose }: ReleaseE
               <div className="flex gap-2">
                 <Input
                   value={newCustomLink.label}
-                  onChange={(e) => setNewCustomLink({ ...newCustomLink, label: e.target.value })}
+                  onChange={e => setNewCustomLink({ ...newCustomLink, label: e.target.value })}
                   placeholder="CD / Vinyl / Merch..."
                   className="w-32 bg-secondary border-input"
                 />
                 <Input
                   value={newCustomLink.url}
-                  onChange={(e) => setNewCustomLink({ ...newCustomLink, url: e.target.value })}
+                  onChange={e => setNewCustomLink({ ...newCustomLink, url: e.target.value })}
                   placeholder="https://..."
                   className="flex-1 bg-secondary border-input"
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomLink() } }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addCustomLink()
+                    }
+                  }}
                 />
                 <Button type="button" onClick={addCustomLink} size="icon" className="flex-shrink-0">
                   <Plus size={16} />

@@ -115,7 +115,7 @@ export default function ContactSection({
   if (!editMode && contactSettings?.showSection === false) return null
 
   return (
-    <section ref={sectionRef} className="py-24 px-4" id="contact" data-theme-color="input border ring primary">
+    <section ref={sectionRef} className="py-section px-card" id="contact" data-theme-color="input border ring primary">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -124,7 +124,7 @@ export default function ContactSection({
         >
           <div className="flex items-center justify-between mb-12">
             <h2
-              className={`text-4xl md:text-6xl font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt${glitchActive ? ' glitch-text-effect' : ''}`}
+              className={`text-heading font-bold uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt${glitchActive ? ' glitch-text-effect' : ''}`}
               data-text={titleText}
             >
               <EditableHeading

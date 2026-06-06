@@ -1,10 +1,10 @@
 import { memo } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 import EditableHeading from '@/components/EditableHeading'
 import { SpotifyEmbed } from '@/components/SpotifyEmbed'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
+import { SectionBase } from '@/components/sections/SectionBase'
 
 /** Convert a Spotify profile URL to a `spotify:type:id` URI.
  *  e.g. "https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n" → "spotify:artist:7BqEidErPMNiUXCRE0dV2n"
@@ -52,8 +52,6 @@ function AppMusicSection({
   spotifyUrl,
 }: AppMusicSectionProps) {
 
-  if (!visible) return null
-
   const spotifyUri = (spotifyUrl ? spotifyUrlToUri(spotifyUrl) : null) ?? FALLBACK_SPOTIFY_URI
 
   const headingPrefix = sectionLabels?.headingPrefix
@@ -61,9 +59,7 @@ function AppMusicSection({
   const statusLabel = sectionLabels?.musicStatusLabel ?? '// STATUS: [STREAMING]'
 
   return (
-    <div style={{ order: sectionOrder }}>
-      <Separator className="bg-border" />
-      <section id="music" className="py-24 px-4 scanline-effect" data-theme-color="card">
+    <SectionBase id="music" sectionOrder={sectionOrder} visible={visible} themeColor="card">
         <div className="container mx-auto max-w-6xl">
           <motion.div
             initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
@@ -71,7 +67,7 @@ function AppMusicSection({
             viewport={{ once: true }}
             transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
           >
-            <h2 className="text-4xl md:text-6xl font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'MUSIC PLAYER'}`} data-theme-color="foreground primary">
+            <h2 className="text-heading font-bold mb-12 uppercase tracking-tighter text-foreground font-mono hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference" data-text={`${headingPrefix ? headingPrefix + ' ' : ''}${sectionLabel || 'MUSIC PLAYER'}`} data-theme-color="foreground primary">
               {headingPrefix && <span className="text-primary/70 mr-2">{headingPrefix}</span>}
               <EditableHeading onChange={() => {}}
                 text={sectionLabel}
@@ -121,8 +117,7 @@ function AppMusicSection({
             </Card>
           </motion.div>
         </div>
-      </section>
-    </div>
+    </SectionBase>
   )
 }
 export default memo(AppMusicSection)
