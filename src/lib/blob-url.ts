@@ -1,7 +1,7 @@
 export function isVercelBlobUrl(value: string): boolean {
   try {
     const url = new URL(value)
-    return url.hostname.includes('blob.vercel-storage.com')
+    return url.hostname === 'blob.vercel-storage.com' || url.hostname.endsWith('.blob.vercel-storage.com')
   } catch {
     return false
   }

@@ -91,7 +91,7 @@ export function ImageField({ fieldDef, value, onChange, error, disabled, classNa
           </button>
         </div>
         <p className="text-[10px] font-mono text-zinc-500">
-          Externe Bild-URLs werden beim Verlassen des Felds automatisch in Vercel Blob importiert.
+          External image URLs are automatically imported to Vercel Blob when the field loses focus.
         </p>
       </div>
       {value && (

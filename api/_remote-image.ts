@@ -63,16 +63,33 @@ async function hasBlockedResolvedIP(hostname: string): Promise<boolean> {
   }
 }
 
-function toDirectUrl(url: string): string {
-  const driveFile = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/)
-  if (driveFile) return `https://drive.google.com/uc?export=view&id=${driveFile[1]}`
-  const driveOpen = url.match(/drive\.google\.com\/open\?id=([^&#]+)/)
-  if (driveOpen) return `https://drive.google.com/uc?export=view&id=${driveOpen[1]}`
-  const driveUc = url.match(/drive\.google\.com\/uc\?[^#]*?id=([^&#]+)/)
-  if (driveUc) return `https://drive.google.com/uc?export=view&id=${driveUc[1]}`
-  const lh3Match = url.match(/lh3\.googleusercontent\.com\/d\/([^/?#]+)/)
-  if (lh3Match) return `https://drive.google.com/uc?export=view&id=${lh3Match[1]}`
-  return url
+function toDirectUrl(input: string): string {
+  let parsed: URL
+  try {
+    parsed = new URL(input)
+  } catch {
+    return input
+  }
+
+  if (parsed.hostname === 'drive.google.com') {
+    const pathParts = parsed.pathname.split('/').filter(Boolean)
+    if (pathParts[0] === 'file' && pathParts[1] === 'd' && pathParts[2]) {
+      return `https://drive.google.com/uc?export=view&id=${pathParts[2]}`
+    }
+
+    if ((parsed.pathname === '/open' || parsed.pathname === '/uc') && parsed.searchParams.get('id')) {
+      return `https://drive.google.com/uc?export=view&id=${parsed.searchParams.get('id')}`
+    }
+  }
+
+  if (parsed.hostname === 'lh3.googleusercontent.com') {
+    const pathParts = parsed.pathname.split('/').filter(Boolean)
+    if (pathParts[0] === 'd' && pathParts[1]) {
+      return `https://drive.google.com/uc?export=view&id=${pathParts[1]}`
+    }
+  }
+
+  return input
 }
 
 function assertAllowedRemoteUrl(input: string): URL {
@@ -115,6 +132,59 @@ export interface ImportedImageResult {
   size: number
 }
 
+async function readResponseBuffer(response: Response, maxBytes: number): Promise<Buffer> {
+  if (!response.body) {
+    const buffer = Buffer.from(await response.arrayBuffer())
+    if (buffer.byteLength > maxBytes) throw new Error('Image too large')
+    return buffer
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (!value) continue
+    total += value.byteLength
+    if (total > maxBytes) {
+      await reader.cancel()
+      throw new Error('Image too large')
+    }
+    chunks.push(value)
+  }
+
+  return Buffer.concat(chunks.map(chunk => Buffer.from(chunk)))
+}
+
+async function fetchValidatedImage(input: URL, redirectsRemaining = 5): Promise<Response> {
+  const response = await fetch(input.toString(), {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BlobImageImporter/1.0)' },
+    redirect: 'manual',
+  })
+
+  if ([301, 302, 303, 307, 308].includes(response.status)) {
+    if (redirectsRemaining === 0) {
+      throw new Error('Too many redirects')
+    }
+
+    const location = response.headers.get('location')
+    if (!location) {
+      throw new Error('Invalid redirect URL')
+    }
+
+    const nextUrl = assertAllowedRemoteUrl(new URL(location, input).toString())
+    if (await hasBlockedResolvedIP(nextUrl.hostname)) {
+      throw new Error('Blocked redirect target')
+    }
+
+    return fetchValidatedImage(nextUrl, redirectsRemaining - 1)
+  }
+
+  return response
+}
+
 export async function importRemoteImageToBlob(remoteUrl: string): Promise<ImportedImageResult> {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     throw new Error('BLOB_READ_WRITE_TOKEN environment variable is not set.')
@@ -126,10 +196,7 @@ export async function importRemoteImageToBlob(remoteUrl: string): Promise<Import
     throw new Error('Blocked host')
   }
 
-  const response = await fetch(parsedDirect.toString(), {
-    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BlobImageImporter/1.0)' },
-    redirect: 'follow',
-  })
+  const response = await fetchValidatedImage(parsedDirect)
 
   const finalUrl = assertAllowedRemoteUrl(response.url || parsedDirect.toString())
   if (await hasBlockedResolvedIP(finalUrl.hostname)) {
@@ -150,10 +217,7 @@ export async function importRemoteImageToBlob(remoteUrl: string): Promise<Import
     throw new Error('Image too large')
   }
 
-  const buffer = Buffer.from(await response.arrayBuffer())
-  if (buffer.byteLength > MAX_IMAGE_SIZE) {
-    throw new Error('Image too large')
-  }
+  const buffer = await readResponseBuffer(response, MAX_IMAGE_SIZE)
 
   const pathname = buildBlobPath(finalUrl, contentType)
   const blob = await put(pathname, buffer, {

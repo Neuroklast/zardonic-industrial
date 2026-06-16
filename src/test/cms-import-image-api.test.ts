@@ -46,6 +46,7 @@ function mockReq(overrides: Record<string, unknown> = {}) {
 describe('POST /api/cms/import-image', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
     process.env.BLOB_READ_WRITE_TOKEN = 'blob-token'
     mockValidateSession.mockResolvedValue(true)
     mockApplyRateLimit.mockResolvedValue(true)
