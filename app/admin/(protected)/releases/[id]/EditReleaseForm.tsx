@@ -3,6 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { updateRelease } from '@/app/admin/_actions/releases'
 import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
+import Image from 'next/image'
 import { useState } from 'react'
 
 interface Props {
@@ -11,7 +13,10 @@ interface Props {
 
 export default function EditReleaseForm({ release }: Props) {
   const router = useRouter()
-  const [coverPath, setCoverPath] = useState(release.cover_storage_path as string ?? '')
+  const [coverPath, setCoverPath] = useState((release.cover_storage_path as string) ?? '')
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    (release.cover_url as string | null) ?? null,
+  )
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -26,6 +31,10 @@ export default function EditReleaseForm({ release }: Props) {
       router.push('/admin/releases')
     }
   }
+
+  const streamingLinksJson = release.streaming_links
+    ? JSON.stringify(release.streaming_links)
+    : '[]'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -45,11 +54,11 @@ export default function EditReleaseForm({ release }: Props) {
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-1">Release Date</label>
-        <input name="release_date" type="date" defaultValue={release.release_date as string ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
+        <input name="release_date" type="date" defaultValue={(release.release_date as string) ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-1">Description</label>
-        <textarea name="description" rows={3} defaultValue={release.description as string ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none resize-none" />
+        <textarea name="description" rows={3} defaultValue={(release.description as string) ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none resize-none" />
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-1">Artists (comma separated)</label>
@@ -57,11 +66,30 @@ export default function EditReleaseForm({ release }: Props) {
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-2">Cover Art</label>
+        {coverPreview && (
+          <div className="mb-2">
+            <Image
+              src={coverPreview}
+              alt="Cover preview"
+              width={96}
+              height={96}
+              className="rounded border border-zinc-700 object-cover"
+            />
+          </div>
+        )}
         <ImageUploader
           label="Replace Cover"
-          onUpload={(path) => setCoverPath(path)}
+          currentUrl={coverPreview}
+          onUpload={(path) => {
+            setCoverPath(path)
+            setCoverPreview(null)
+          }}
           onError={(msg) => setError(msg)}
         />
+      </div>
+      <div>
+        <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>
+        <StreamingLinksEditor initialJson={streamingLinksJson} />
       </div>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">

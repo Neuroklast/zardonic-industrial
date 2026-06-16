@@ -1,5 +1,4 @@
 import { AdminNav } from '@/app/admin/_components/AdminNav'
-import { AdminHeader } from '@/app/admin/_components/AdminHeader'
 
 export default function ProtectedAdminLayout({
   children,
@@ -8,10 +7,10 @@ export default function ProtectedAdminLayout({
 }) {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      <AdminHeader />
       <div className="flex flex-1">
         <AdminNav />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        {/* pt-14 on mobile offsets the sticky top nav bar (~56px) */}
+        <main className="flex-1 p-4 pt-16 md:p-8 overflow-auto min-w-0">{children}</main>
       </div>
     </div>
   )

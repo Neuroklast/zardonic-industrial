@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import SiteConfigEditor from './SiteConfigEditor'
+import { BackgroundConfigEditor } from './BackgroundConfigEditor'
 
 const MANAGED_KEYS = [
   {
@@ -21,12 +22,6 @@ const MANAGED_KEYS = [
     example: '{"footerText":"Visit the official Zardonic Merchandise Store to get these and more!"}',
   },
   {
-    key: 'background',
-    label: 'Background Image',
-    description: 'R2 storage path or direct URL of the background image.',
-    example: '{"url":"https://example.com/bg.jpg"}',
-  },
-  {
     key: 'footer',
     label: 'Footer Links',
     description: 'Impressum and Privacy Policy page paths.',
@@ -45,11 +40,15 @@ export default async function SiteConfigPage() {
   }
 
   const rowMap = Object.fromEntries(rows.map((r) => [r.key, r.value]))
+  const bgValue = (rowMap['background'] ?? {}) as Record<string, unknown>
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-6">Site Configuration</h1>
       <div className="space-y-8">
+        {/* Background has a dedicated UI with upload support */}
+        <BackgroundConfigEditor currentValue={bgValue} />
+
         {MANAGED_KEYS.map((item) => (
           <SiteConfigEditor
             key={item.key}

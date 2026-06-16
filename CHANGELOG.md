@@ -9,6 +9,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **`supabase/schema.sql`** — single consolidated SQL script replacing the two migration files (`001_initial_schema.sql`, `002_extend_schema.sql`). Includes `itunes_id text unique` column on `releases` for deduplication.
+- **AdminNav rewrite** (`app/admin/_components/AdminNav.tsx`) — Phosphor icons, active-state highlighting via `usePathname()`, desktop sidebar + mobile slide-in drawer with backdrop. Fully mobile-compatible.
+- **iTunes sync** (`app/admin/_actions/itunesSync.ts`, `app/admin/(protected)/releases/sync/page.tsx`) — server action fetches iTunes Search API, downloads artwork to Cloudflare R2, upserts releases to Supabase with deduplication by `itunes_id`.
+- **Video background support** (`app/_components/public/SiteBackground.tsx`) — added `videoUrl` prop; renders looping muted `<video>` element with static image as poster/fallback when `videoUrl` is set. Fixed-position keeps background behind scrolling content.
+- **StreamingLinksEditor** (`app/admin/_components/StreamingLinksEditor.tsx`) — client component for editing platform/URL pairs with datalist suggestions; serialises to hidden input for form submission.
+- **BackgroundConfigEditor** (`app/admin/(protected)/site-config/BackgroundConfigEditor.tsx`) — dedicated admin UI for background image (R2 upload + URL input) and video URL.
+- **Gallery image thumbnails** (`app/admin/(protected)/gallery/page.tsx`) — gallery admin now renders actual Next.js Image previews via `resolveImageUrl`.
+- **`uploadBufferToR2()`** (`app/admin/_actions/r2Upload.ts`) — new server-side binary upload helper for Node.js Buffers (used for iTunes artwork download).
+- **Unit tests** — `src/test/site-background.test.tsx` (8 tests), `src/test/itunes-sync.test.ts` (5 tests), `src/test/streaming-links-editor.test.tsx` (7 tests).
+
+### Changed
+- **`app/page.tsx`** — reads `bgConfig.video_url` / `bgConfig.video_storage_path` and passes `backgroundVideoUrl` to `SiteBackground`.
+- **Release new/edit forms** — integrated StreamingLinksEditor and Image cover preview.
+- **`app/admin/(protected)/site-config/page.tsx`** — uses BackgroundConfigEditor for background key instead of raw JSON editor.
+- **`app/admin/(protected)/layout.tsx`** — simplified; removed AdminHeader dependency; mobile content padding adjusted for sticky nav bar.
+
+### Removed
+- **`supabase/migrations/001_initial_schema.sql`** and **`002_extend_schema.sql`** — replaced by single `supabase/schema.sql`.
+
+---
+
+### Added (prev)
 - **DB migration `002_extend_schema.sql`** — adds `music_highlights`, `merchandise`, `soundpacks`, and `newsletter_subscribers` tables with RLS policies; seeds default `site_config` rows for hero, newsletter, merchandise, footer, and background.
 - **`lib/r2.ts`** — `r2Url()` and `resolveImageUrl()` helpers that build public Cloudflare R2 URLs from object paths, with fallback to legacy `image_url` columns.
 - **Admin: Music Highlights** (`/admin/music-highlights`) — full CRUD for YouTube video/playlist highlights (title, URL, description, display order).

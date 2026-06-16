@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { createRelease } from '@/app/admin/_actions/releases'
 import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
 import { useState } from 'react'
 
 export default function NewReleasePage() {
@@ -60,6 +61,10 @@ export default function NewReleasePage() {
             onUpload={(path) => setCoverPath(path)}
             onError={(msg) => setError(msg)}
           />
+        </div>
+        <div>
+          <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>
+          <StreamingLinksEditor />
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <div className="flex gap-3">

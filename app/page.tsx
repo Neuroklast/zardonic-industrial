@@ -119,6 +119,10 @@ export default async function HomePage() {
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
   const bgFallback = typeof bgConfig.url === 'string' ? bgConfig.url : '/assets/bg-placeholder.jpg'
   const backgroundUrl = resolveImageUrl(bgStoragePath, bgFallback) ?? bgFallback
+  // Background video (optional): R2 path or direct URL
+  const bgVideoPath = typeof bgConfig.video_storage_path === 'string' ? bgConfig.video_storage_path : null
+  const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
+  const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => ({
@@ -169,7 +173,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen text-white">
       {/* Layered background (fixed, behind everything) */}
-      <SiteBackground imageUrl={backgroundUrl} alt="Background" />
+      <SiteBackground imageUrl={backgroundUrl} videoUrl={backgroundVideoUrl} alt="Background" />
 
       {/* Fixed navigation */}
       <SiteNav />
