@@ -31,10 +31,11 @@
 *   **Unit Testing**: Write unit tests for all new utilities, API routes, and complex hooks using Vitest.
 *   **Test Isolation**: Tests must not rely on external network requests. Mock all external APIs (iTunes, Bandsintown, Odesli).
 
-## 5. Build Configuration (Vite & Tailwind)
+## 5. Build Configuration (Next.js & Tailwind)
 
 *   **Valid CSS**: Ensure all custom CSS and Tailwind configurations use standard, valid syntax. Avoid experimental features that cause build warnings (e.g., incorrect `@media` query syntax).
-*   **Chunk Optimization**: Configure Rollup (via Vite) to split vendor chunks and application chunks effectively to prevent single files from exceeding 500kb (gzipped).
+*   **Chunk Optimization**: Configure Next.js bundles and lazy loading so large client-only features stay out of the critical path and no single application chunk grows unexpectedly.
+*   **Migration bridge rule**: During the App Router migration, root-level `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, `cms/`, and `styles/` are the canonical `@/*` import targets. Preserve `src/styles/`, `src/layers.css`, and `src/index.css` contents unchanged; only mirror them into the root-level Next.js structure.
 
 **Enforcement:** Before submitting any pull request or finalizing a task, you MUST run:
 1.  `npm run lint`

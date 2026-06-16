@@ -1,0 +1,65 @@
+{
+  "node": {
+    "403eeeb0ea6a94a599199b1f7ac5ae12edbb79ca21": {
+      "workers": {
+        "app/admin/(protected)/partners/page": {
+          "moduleId": 29990,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/admin/(protected)/partners/page.tsx"
+        }
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/admin/(protected)/partners/page.tsx"
+    },
+    "4083d10a57de8786f8833bb3402f9d40e0e5f82137": {
+      "workers": {
+        "app/admin/(protected)/partners/page": {
+          "moduleId": 29990,
+          "async": false,
+          "exportedName": "deletePartner",
+          "filename": "app/admin/_actions/partners.ts"
+        }
+      },
+      "exportedName": "deletePartner",
+      "filename": "app/admin/_actions/partners.ts"
+    },
+    "40f51f93fe02869b5bb199e66a905696f8651c8c68": {
+      "workers": {
+        "app/admin/(protected)/partners/page": {
+          "moduleId": 29990,
+          "async": false,
+          "exportedName": "createPartner",
+          "filename": "app/admin/_actions/partners.ts"
+        }
+      },
+      "exportedName": "createPartner",
+      "filename": "app/admin/_actions/partners.ts"
+    },
+    "600d0ac09b32e85c87fadc0d700f8cb30f611fc6d7": {
+      "workers": {
+        "app/admin/(protected)/partners/page": {
+          "moduleId": 29990,
+          "async": false,
+          "exportedName": "updatePartner",
+          "filename": "app/admin/_actions/partners.ts"
+        }
+      },
+      "exportedName": "updatePartner",
+      "filename": "app/admin/_actions/partners.ts"
+    },
+    "603b883d239a5d67c27fe5f1a42ac5d139122f941c": {
+      "workers": {
+        "app/admin/(protected)/partners/page": {
+          "moduleId": 29990,
+          "async": false,
+          "exportedName": "createSignedUploadUrl",
+          "filename": "app/admin/_actions/r2Upload.ts"
+        }
+      },
+      "exportedName": "createSignedUploadUrl",
+      "filename": "app/admin/_actions/r2Upload.ts"
+    }
+  },
+  "edge": {}
+}

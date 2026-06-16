@@ -1,0 +1,17 @@
+{
+  "node": {
+    "4006442b8cff25566e0d5aa06b6651826e637280ae": {
+      "workers": {
+        "app/admin/(protected)/bio/page": {
+          "moduleId": 38052,
+          "async": false,
+          "exportedName": "updateBio",
+          "filename": "app/admin/_actions/bio.ts"
+        }
+      },
+      "exportedName": "updateBio",
+      "filename": "app/admin/_actions/bio.ts"
+    }
+  },
+  "edge": {}
+}

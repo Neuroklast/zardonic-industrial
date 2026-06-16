@@ -1,0 +1,29 @@
+{
+  "node": {
+    "6045682de0db833bcc9ed2051518587c67e9f2bdfa": {
+      "workers": {
+        "app/admin/(protected)/releases/[id]/page": {
+          "moduleId": 14402,
+          "async": false,
+          "exportedName": "updateRelease",
+          "filename": "app/admin/_actions/releases.ts"
+        }
+      },
+      "exportedName": "updateRelease",
+      "filename": "app/admin/_actions/releases.ts"
+    },
+    "603b883d239a5d67c27fe5f1a42ac5d139122f941c": {
+      "workers": {
+        "app/admin/(protected)/releases/[id]/page": {
+          "moduleId": 14402,
+          "async": false,
+          "exportedName": "createSignedUploadUrl",
+          "filename": "app/admin/_actions/r2Upload.ts"
+        }
+      },
+      "exportedName": "createSignedUploadUrl",
+      "filename": "app/admin/_actions/r2Upload.ts"
+    }
+  },
+  "edge": {}
+}

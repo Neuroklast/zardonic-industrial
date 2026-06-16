@@ -1,0 +1,110 @@
+/**
+ * Z-INDEX LAYER CONTRACT
+ * ======================
+ * TypeScript mirror of the CSS custom properties defined in `src/layers.css`.
+ * Both files MUST be kept in sync. The CSS tokens are the source of truth for
+ * runtime styling; these constants allow compile-time invariant checking in tests.
+ *
+ * Layer architecture (lowest → highest):
+ *   BACKGROUND_IMAGE (0) → BG_VIDEO (1) → ANIMATED_BG (2) → BG_SCANLINE (3)
+ *   → CONTENT (10) → SECTION_FX (15) → HUD (20) → NAV (30)
+ *   → GLOBAL_FX (40) → OVERLAY (50) → SYSTEM (60)
+ *
+ * Rules:
+ * - Raw z-index numbers are FORBIDDEN. Use these constants in TS/TSX and
+ *   `var(--z-*)` custom properties in CSS.
+ * - Any element with section-local z-index effects MUST have
+ *   `isolation: isolate` on the container to prevent z-index leakage.
+ * - CRT/noise global FX use GLOBAL_FX (40) and MUST be `pointer-events: none`.
+ * - New backgrounds → BackgroundStack, new effects → GlobalEffects,
+ *   new modals → overlays slot of PageLayout.
+ */
+
+export const LAYERS = {
+  /** Fixed background image – deepest layer, always below everything. */
+  BACKGROUND_IMAGE: 0,
+  /** Video background layer – sits above the static background image.
+   *  Renders full-screen video with its own opacity and fallback image. */
+  BG_VIDEO: 1,
+  /** Animated overlay effects (MatrixRain, CircuitBackground, etc.).
+   *  MUST be above BG_VIDEO and BACKGROUND_IMAGE, MUST be below CONTENT.
+   *  MUST NOT paint an opaque background fill when in transparent/overlay mode. */
+  ANIMATED_BG: 2,
+  /** Background CRT scanline – sits above animated background, below content. */
+  BG_SCANLINE: 3,
+  /** All UI content: sections, footer.
+   *  MUST be strictly above ANIMATED_BG. */
+  CONTENT: 10,
+  /** Section-local effects — MUST use `isolation: isolate` on the container. */
+  SECTION_FX: 15,
+  /** SystemMonitorHUD floating readouts. */
+  HUD: 20,
+  /** AppNavBar – always accessible, above all content and HUD. */
+  NAV: 30,
+  /** Global post-processing FX (CRT overlay, vignette, noise).
+   *  MUST be pointer-events: none. All three share this layer since they are
+   *  decorative and DOM order determines their paint order. */
+  GLOBAL_FX: 40,
+  /** Modal backdrop — sits behind the overlay panel (OVERLAY) but above all
+   *  page content. Use this for semi-transparent darkening overlays behind
+   *  dialogs/admin panels so that Radix UI portal dropdowns (z-index 50) can
+   *  still appear above the panel through normal DOM ordering. */
+  MODAL_BACKDROP: 49,
+  /** Interactive overlays – modals, dialogs, galleries. */
+  OVERLAY: 50,
+  /** System-level UI – loading screen, cookie consent, toasts. */
+  SYSTEM: 60,
+  /** Full-screen glitch transition FX played when an overlay opens/closes.
+   *  MUST be above SYSTEM. MUST be pointer-events: none. */
+  TRANSITION_FX: 70,
+
+  // ── Local-stacking constants ───────────────────────────────────────────────
+  // These mirror the --z-local-* CSS custom properties in src/layers.css.
+  // ONLY use inside elements with `isolation: isolate` (or position + z-index).
+
+  /** Base layer within an isolated stacking context. */
+  LOCAL_BASE: 0,
+  /** One step above base within an isolated stacking context. */
+  LOCAL_ABOVE_1: 1,
+  /** Two steps above base within an isolated stacking context. */
+  LOCAL_ABOVE_2: 2,
+  /** Topmost element within an isolated stacking context. */
+  LOCAL_TOP: 10,
+
+  // ── Pseudo-element negative stacking ──────────────────────────────────────
+  // Mirrors --z-pseudo-below-* in src/layers.css.
+  // Requires `isolation: isolate` on the parent to prevent escape.
+
+  /** Decorative pseudo-element behind sibling content. */
+  PSEUDO_BELOW: -1,
+  /** Second decorative pseudo-element, further behind sibling content. */
+  PSEUDO_BELOW_2: -2,
+} as const
+
+export type LayerKey = keyof typeof LAYERS
+export type LayerValue = (typeof LAYERS)[LayerKey]
+
+/** Invariants the test suite enforces. Any violation breaks the build. */
+export const LAYER_INVARIANTS = {
+  /** Video layer must be above the static background image. */
+  BG_VIDEO_ABOVE_IMAGE: LAYERS.BG_VIDEO > LAYERS.BACKGROUND_IMAGE,
+  /** Animated background must always be above the video layer. */
+  ANIMATED_BG_ABOVE_VIDEO: LAYERS.ANIMATED_BG > LAYERS.BG_VIDEO,
+  /** Animated background must always be below content. */
+  ANIMATED_BG_BELOW_CONTENT: LAYERS.ANIMATED_BG < LAYERS.CONTENT,
+  /** Background image must always be the deepest layer. */
+  BG_IMAGE_DEEPEST: LAYERS.BACKGROUND_IMAGE < LAYERS.BG_VIDEO,
+  /** Global FX effects must always be above content. */
+  GLOBAL_FX_ABOVE_CONTENT: LAYERS.GLOBAL_FX > LAYERS.CONTENT,
+  /** Navigation must be above content and HUD. */
+  NAV_ABOVE_HUD: LAYERS.NAV > LAYERS.HUD,
+  /** Overlays must be above global FX. */
+  OVERLAY_ABOVE_GLOBAL_FX: LAYERS.OVERLAY > LAYERS.GLOBAL_FX,
+  /** Modal backdrop must be below its overlay panel. */
+  MODAL_BACKDROP_BELOW_OVERLAY: LAYERS.MODAL_BACKDROP < LAYERS.OVERLAY,
+  /** System is above interactive overlays. */
+  SYSTEM_TOPMOST: LAYERS.SYSTEM > LAYERS.OVERLAY,
+  /** Transition FX is above everything, including system UI, so the glitch
+   *  effect plays over loading screens. Must be pointer-events: none. */
+  TRANSITION_FX_ABOVE_SYSTEM: LAYERS.TRANSITION_FX > LAYERS.SYSTEM,
+} as const

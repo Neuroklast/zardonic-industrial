@@ -6,7 +6,7 @@ import type { FallbackProps } from "react-error-boundary";
 
 export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   // In development, rethrow so the React dev overlay shows the full stack trace.
-  if (import.meta.env.DEV) throw error;
+  if (process.env.NODE_ENV === 'development') throw error;
 
   // In production never expose internal error details — they may contain stack
   // traces, module paths, or other implementation details.

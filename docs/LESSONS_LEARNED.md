@@ -67,6 +67,7 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | A `setTimeout` inside a `useEffect` without a returned cleanup is a latent memory/state leak. The pattern `setTimeout(() => setState(x), delay)` inside `useEffect` must always be replaced with `const id = setTimeout(...); return () => clearTimeout(id)`. Use a `useRef` to expose the timer ID if the effect body is conditional. | Architecture | 🟡 Medium |
 | 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When a dialog owns shared state, undo history, DOM previews, or file inputs, keep that shell in the parent component and lazy-load only the tab panels. This preserves behavior while shrinking the eagerly loaded bundle and keeps each tab focused. | Architecture | 🟡 Medium |
 | 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When splitting oversized UI files, move either stateful logic into a hook or self-contained view blocks into sibling components, but keep the owning dialog/browser shell in place so behavior, focus flow, and prop contracts stay unchanged. | Architecture | 🟡 Medium |
+| 2026-06-16 | copilot/next-bootstrap | GitHub Copilot | During a Vite → Next App Router bridge migration, copy every alias-backed top-level folder used by `@/...` imports (including `cms/`, not only `components/`/`hooks/`/`lib/`). Leaving one alias root behind causes immediate module-resolution failures even when the visible page code looks unchanged. | DevOps | 🟠 High |
 
 ---
 

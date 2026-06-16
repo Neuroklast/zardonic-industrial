@@ -1,0 +1,53 @@
+{
+  "node": {
+    "4048a0e956a5f6e154be09eb1ae763367456f1f706": {
+      "workers": {
+        "app/admin/(protected)/releases/page": {
+          "moduleId": 87117,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/admin/(protected)/releases/page.tsx"
+        }
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/admin/(protected)/releases/page.tsx"
+    },
+    "403aa6c962bb9ec26ad6ecd76f4205041b0d21295d": {
+      "workers": {
+        "app/admin/(protected)/releases/page": {
+          "moduleId": 87117,
+          "async": false,
+          "exportedName": "deleteRelease",
+          "filename": "app/admin/_actions/releases.ts"
+        }
+      },
+      "exportedName": "deleteRelease",
+      "filename": "app/admin/_actions/releases.ts"
+    },
+    "407959512cf41d76fdf9220e8c7e13aa8e6696ff9b": {
+      "workers": {
+        "app/admin/(protected)/releases/page": {
+          "moduleId": 87117,
+          "async": false,
+          "exportedName": "createRelease",
+          "filename": "app/admin/_actions/releases.ts"
+        }
+      },
+      "exportedName": "createRelease",
+      "filename": "app/admin/_actions/releases.ts"
+    },
+    "6045682de0db833bcc9ed2051518587c67e9f2bdfa": {
+      "workers": {
+        "app/admin/(protected)/releases/page": {
+          "moduleId": 87117,
+          "async": false,
+          "exportedName": "updateRelease",
+          "filename": "app/admin/_actions/releases.ts"
+        }
+      },
+      "exportedName": "updateRelease",
+      "filename": "app/admin/_actions/releases.ts"
+    }
+  },
+  "edge": {}
+}

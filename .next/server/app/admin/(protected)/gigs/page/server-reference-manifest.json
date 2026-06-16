@@ -1,0 +1,53 @@
+{
+  "node": {
+    "40ba43d9015fbf5674ce4305e1a97388763c01a87a": {
+      "workers": {
+        "app/admin/(protected)/gigs/page": {
+          "moduleId": 8829,
+          "async": false,
+          "exportedName": "$$RSC_SERVER_ACTION_0",
+          "filename": "app/admin/(protected)/gigs/page.tsx"
+        }
+      },
+      "exportedName": "$$RSC_SERVER_ACTION_0",
+      "filename": "app/admin/(protected)/gigs/page.tsx"
+    },
+    "40254efb87f521f172421f8a7afa1f9e67a2f7d168": {
+      "workers": {
+        "app/admin/(protected)/gigs/page": {
+          "moduleId": 8829,
+          "async": false,
+          "exportedName": "deleteGig",
+          "filename": "app/admin/_actions/gigs.ts"
+        }
+      },
+      "exportedName": "deleteGig",
+      "filename": "app/admin/_actions/gigs.ts"
+    },
+    "40928872aefae26644ac90e924c3497fa2f0931cc1": {
+      "workers": {
+        "app/admin/(protected)/gigs/page": {
+          "moduleId": 8829,
+          "async": false,
+          "exportedName": "createGig",
+          "filename": "app/admin/_actions/gigs.ts"
+        }
+      },
+      "exportedName": "createGig",
+      "filename": "app/admin/_actions/gigs.ts"
+    },
+    "60a28e28df8e4e9c7fe3c0eadf09cba4ca1ad38335": {
+      "workers": {
+        "app/admin/(protected)/gigs/page": {
+          "moduleId": 8829,
+          "async": false,
+          "exportedName": "updateGig",
+          "filename": "app/admin/_actions/gigs.ts"
+        }
+      },
+      "exportedName": "updateGig",
+      "filename": "app/admin/_actions/gigs.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,19 @@
+{
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/admin/(protected)/bio/page": "app/admin/(protected)/bio/page.js",
+  "/admin/(protected)/gallery/new/page": "app/admin/(protected)/gallery/new/page.js",
+  "/admin/(protected)/gallery/page": "app/admin/(protected)/gallery/page.js",
+  "/admin/(protected)/gigs/[id]/page": "app/admin/(protected)/gigs/[id]/page.js",
+  "/admin/(protected)/gigs/new/page": "app/admin/(protected)/gigs/new/page.js",
+  "/admin/(protected)/gigs/page": "app/admin/(protected)/gigs/page.js",
+  "/admin/(protected)/page": "app/admin/(protected)/page.js",
+  "/admin/(protected)/partners/page": "app/admin/(protected)/partners/page.js",
+  "/admin/(protected)/releases/[id]/page": "app/admin/(protected)/releases/[id]/page.js",
+  "/admin/(protected)/releases/new/page": "app/admin/(protected)/releases/new/page.js",
+  "/admin/(protected)/releases/page": "app/admin/(protected)/releases/page.js",
+  "/admin/(protected)/social/page": "app/admin/(protected)/social/page.js",
+  "/admin/login/page": "app/admin/login/page.js",
+  "/admin/logout/route": "app/admin/logout/route.js",
+  "/page": "app/page.js"
+}

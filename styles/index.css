@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import './layers.css';
+@import './tokens.css';
+@import './base.css';
+@import './effects.css';
+@import './components.css';
+@import './layout.css';
+@import './loading.css';
+
+@layer base {
+  * {
+    @apply border-border
+  }
+}

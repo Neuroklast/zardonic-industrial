@@ -1,0 +1,17 @@
+{
+  "node": {
+    "60a28e28df8e4e9c7fe3c0eadf09cba4ca1ad38335": {
+      "workers": {
+        "app/admin/(protected)/gigs/[id]/page": {
+          "moduleId": 82981,
+          "async": false,
+          "exportedName": "updateGig",
+          "filename": "app/admin/_actions/gigs.ts"
+        }
+      },
+      "exportedName": "updateGig",
+      "filename": "app/admin/_actions/gigs.ts"
+    }
+  },
+  "edge": {}
+}

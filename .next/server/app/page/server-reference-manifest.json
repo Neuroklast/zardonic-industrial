@@ -1,0 +1,17 @@
+{
+  "node": {
+    "603b883d239a5d67c27fe5f1a42ac5d139122f941c": {
+      "workers": {
+        "app/page": {
+          "moduleId": 14030,
+          "async": false,
+          "exportedName": "createSignedUploadUrl",
+          "filename": "app/admin/_actions/r2Upload.ts"
+        }
+      },
+      "exportedName": "createSignedUploadUrl",
+      "filename": "app/admin/_actions/r2Upload.ts"
+    }
+  },
+  "edge": {}
+}

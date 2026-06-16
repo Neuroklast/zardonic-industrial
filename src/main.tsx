@@ -14,7 +14,7 @@ import "./main.css"
 
 // Suppress non-error console output in production to avoid leaking
 // internal structure, variable names, and API endpoint details.
-if (import.meta.env.PROD) {
+if (process.env.NODE_ENV === 'production') {
   const noop = () => {}
   console.log = noop
   console.warn = noop
