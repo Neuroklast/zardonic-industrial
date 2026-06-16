@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Remote image import for admin media fields** — added `/api/cms/import-image` plus shared Blob import logic so externally hosted images can be fetched server-side, validated against SSRF/private-network targets, and stored in Vercel Blob before being saved.
+
+### Changed
+- **Gallery image metadata** — `SiteData.gallery` now accepts structured image entries with optional `linkUrl` values while remaining backward-compatible with legacy string URLs; linked gallery tiles now open their configured external target instead of the lightbox.
+- **Admin image editing UX** — CMS image fields now include a direct upload control and automatically import pasted remote image URLs into Vercel Blob on blur. Credit Highlights and Sponsoring editor rows now do the same for manually entered logo URLs.
+
 ### Changed
 - **Tailwind semantic utilities sweep (section headings)** — replaced raw `text-4xl md:text-6xl` with the semantic `text-heading` token on all six section `<h2>` elements (`AppGigsSection`, `AppMusicSection`, `AppReleasesSection`, `AppSocialSection`, `AppMediaSection`, `ContactSection`). Section headings now use the fluid `clamp()`-based `--font-size-heading` variable defined in the design system instead of discrete breakpoint classes.
 - **Semantic spacing for ContactSection and AppFooter** — replaced `py-24 px-4` / `py-12 px-4` hard-coded spacing with `py-section px-card` tokens, making these elements consistent with the rest of the layout system.
