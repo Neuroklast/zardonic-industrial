@@ -2,12 +2,19 @@ import Link from 'next/link'
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Dashboard' },
-  { href: '/admin/releases', label: 'Releases' },
-  { href: '/admin/gigs', label: 'Gigs' },
+  // Site settings
+  { href: '/admin/site-config', label: 'Site Config' },
+  // Content
+  { href: '/admin/bio', label: 'Biography' },
+  { href: '/admin/releases', label: 'Discography' },
+  { href: '/admin/music-highlights', label: 'Music Highlights' },
+  { href: '/admin/merchandise', label: 'Merchandise' },
+  { href: '/admin/soundpacks', label: 'Soundpacks' },
+  { href: '/admin/gigs', label: 'Events' },
   { href: '/admin/gallery', label: 'Gallery' },
-  { href: '/admin/bio', label: 'Bio' },
+  // People & brands
+  { href: '/admin/partners', label: 'Credits & Partners' },
   { href: '/admin/social', label: 'Social Links' },
-  { href: '/admin/partners', label: 'Partners' },
 ]
 
 export function AdminNav() {

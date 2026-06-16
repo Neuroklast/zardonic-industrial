@@ -9,7 +9,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **Legacy packages restored as devDependencies** — re-added `@upstash/redis`, `@upstash/ratelimit`, `@vercel/blob`, and `otpauth` as `devDependencies` so Vitest can resolve legacy `api/` imports during the migration phase without reinstating them as production runtime dependencies.
+- **DB migration `002_extend_schema.sql`** — adds `music_highlights`, `merchandise`, `soundpacks`, and `newsletter_subscribers` tables with RLS policies; seeds default `site_config` rows for hero, newsletter, merchandise, footer, and background.
+- **`lib/r2.ts`** — `r2Url()` and `resolveImageUrl()` helpers that build public Cloudflare R2 URLs from object paths, with fallback to legacy `image_url` columns.
+- **Admin: Music Highlights** (`/admin/music-highlights`) — full CRUD for YouTube video/playlist highlights (title, URL, description, display order).
+- **Admin: Merchandise** (`/admin/merchandise`) — full CRUD with R2 image uploader and external link.
+- **Admin: Soundpacks** (`/admin/soundpacks`) — full CRUD with R2 image uploader and external link.
+- **Admin: Site Config** (`/admin/site-config`) — JSON editor for hero, newsletter, merchandise footer text, background image, and footer links; uses `updateSiteConfig` server action with `upsert`.
+- **Server actions** — `app/admin/_actions/musicHighlights.ts`, `merchandise.ts`, `soundpacks.ts`, `siteConfig.ts`; `app/_actions/newsletter.ts` (subscribe with GDPR consent gate), `app/_actions/contact.ts` (Resend email, HTML-escaped, server-only).
+- **New public homepage** (`app/page.tsx`) — replaced legacy `AppShell`/`useAppState`/KV system with a Next.js server component that fetches all data from Supabase; `revalidate = 60` for ISR.
+- **Public section components** under `app/_components/public/`: `SiteBackground`, `SiteNav`, `HeroSection`, `BioSection`, `CreditsSection`, `MusicHighlightsSection` (two-click YouTube consent per GDPR), `ReleasesSection`, `MerchandiseSection`, `SoundpacksSection`, `GigsSection` (upcoming + collapsible past), `NewsletterSection`, `ContactSection`, `SiteFooter` (social icons + legal links), `SectionWrapper`/`SectionDivider`.
+- **`app/layout.tsx`** — Space Mono font loaded via `<link>` at runtime (avoids build-time Google Fonts network requirement); OpenGraph metadata.
+- **`app/globals.css`** — Space Mono font stack, `.scanline-layer` CSS-only CRT scanline overlay, `.chromatic-hover` filter effect for logo grids.
+- **Admin nav** updated with all new sections: Site Config, Biography, Discography, Music Highlights, Merchandise, Soundpacks, Events, Gallery, Credits & Partners, Social Links.
+- **`.env.example`** — added `CONTACT_EMAIL` variable.
+- **`public/assets/bg-placeholder.jpg`** — minimal placeholder until real album cover is uploaded via Site Config.
+
+### Changed
+- **`app/page.tsx`** — migrated from legacy `'use client'` AppShell (KV/Redis) to a server-rendered page backed entirely by Supabase + R2.
+
+ — re-added `@upstash/redis`, `@upstash/ratelimit`, `@vercel/blob`, and `otpauth` as `devDependencies` so Vitest can resolve legacy `api/` imports during the migration phase without reinstating them as production runtime dependencies.
 
 ### Fixed
 - **`components/ui/chart.tsx` type errors** — narrowed `ChartPayloadItem.value` from `unknown` to `number | string` and added optional chain on `item.payload?.fill` to resolve two TypeScript build errors that blocked `npm run build`.
