@@ -162,3 +162,9 @@ An `// eslint-disable-next-line some/rule` comment where `some/rule` is not regi
 
 ### Server Actions in `app/_actions/` Need Their Directory Created First
 Next.js does not auto-create `app/_actions/` — attempting to create files there fails silently when the parent directory is missing. **Lesson:** always `mkdir -p` the target directory before creating files with automated tools.
+
+### Scroll-Default Video: Change `=== 'scroll'` Guard to `!== 'loop'`
+When making `scroll` the default video mode (previously `loop`), the `BackgroundStack.tsx` condition must be inverted from `backgroundVideoMode === 'scroll'` to `backgroundVideoMode !== 'loop'`. Using the positive check would leave existing settings (where the field is `undefined`) stuck in loop mode. **Lesson:** when changing a binary default, flip the condition rather than relying on the positive value check, so `undefined` inherits the new default correctly.
+
+### Upload-Only Admin UI: Show Stored Filename as Read-Only Confirmation
+Removing a URL text-input in favour of an upload-only button still needs to communicate the current stored URL to the admin. Extracting the filename with `url.split('/').pop()?.split('?')[0]` and rendering it as a small `<p>` element (truncated, with the full URL as `title`) gives confirmation without re-introducing an editable field.

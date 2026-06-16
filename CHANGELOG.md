@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Video background default mode** (`src/components/BackgroundStack.tsx`) — video mode now defaults to `scroll` (undefined → scroll-driven). Only an explicit `backgroundVideoMode: 'loop'` setting uses looping autoplay.
+- **Admin video UI** (`src/components/admin/BackgroundTab.tsx`) — removed URL text-input fields for desktop and mobile video; replaced with upload-only buttons. Videos are stored in the R2 bucket via signed upload URL. Uploaded filename is shown as read-only confirmation. Playback mode selector now lists "Scroll" first as the default option.
+- **Background type label** (`src/components/admin/BackgroundTab.tsx`) — selector entry renamed from "Video Loop" to "Video Scroll" to reflect the new scroll-first default.
+
 ### Added
 - **`supabase/schema.sql`** — single consolidated SQL script replacing the two migration files (`001_initial_schema.sql`, `002_extend_schema.sql`). Includes `itunes_id text unique` column on `releases` for deduplication.
 - **AdminNav rewrite** (`app/admin/_components/AdminNav.tsx`) — Phosphor icons, active-state highlighting via `usePathname()`, desktop sidebar + mobile slide-in drawer with backdrop. Fully mobile-compatible.
