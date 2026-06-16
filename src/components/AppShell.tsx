@@ -23,6 +23,7 @@ import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { useDocumentTitle } from '@/hooks/use-document-title'
 import { PageLayout } from '@/layouts/PageLayout'
 import { BackgroundStack } from '@/components/BackgroundStack'
+import { getGalleryImageSrc } from '@/lib/gallery-images'
 import { GlobalEffects } from '@/components/GlobalEffects'
 import { ActiveLoader } from '@/components/ActiveLoader'
 
@@ -203,7 +204,7 @@ export default function AppShell({
               {galleryIndex !== null && siteData && (
                 <Suspense fallback={null}>
                   <SwipeableGallery
-                    images={siteData.gallery}
+                    images={siteData.gallery.map(getGalleryImageSrc).filter(Boolean)}
                     initialIndex={galleryIndex}
                     onClose={() => setGalleryIndex(null)}
                   />

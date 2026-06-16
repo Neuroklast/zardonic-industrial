@@ -8,7 +8,10 @@ import { registerAdminSection } from '@/lib/admin-schema-registry'
 import type { AdminSectionSchema } from '@/lib/admin-section-schema'
 
 interface GallerySectionData {
-  images: string[]
+  images: Array<{
+    url: string
+    linkUrl?: string
+  }>
 }
 
 const gallerySectionSchema: AdminSectionSchema<GallerySectionData> = {
@@ -34,6 +37,13 @@ const gallerySectionSchema: AdminSectionSchema<GallerySectionData> = {
           placeholder: 'https://...',
           required: true,
           tooltip: 'Direct URL to the image. Use square or landscape images for best results.',
+        },
+        {
+          key: 'linkUrl',
+          type: 'url',
+          label: 'Link URL',
+          placeholder: 'https://...',
+          tooltip: 'Optional external link opened when this gallery image is clicked.',
         },
       ],
     },

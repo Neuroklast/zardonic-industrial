@@ -32,6 +32,7 @@ export const API_ROUTES = {
   CMS_AUTOSAVE:             '/api/cms/autosave',
   CMS_PUBLISH:              '/api/cms/publish',
   CMS_IMAGE_UPLOAD_TOKEN:   '/api/cms/image-upload-token',
+  CMS_IMAGE_IMPORT:         '/api/cms/import-image',
   CMS_VIDEO_UPLOAD_TOKEN:   '/api/cms/video-upload-token',
   SETLISTFM:                '/api/setlistfm',
 } as const

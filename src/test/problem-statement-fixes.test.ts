@@ -5,7 +5,7 @@
  *   3. description & featured round-trip through toFullRelease → save → merge
  *   4. Contact subjects – ContactSettings.contactSubjects type exists
  *   5. Hero images – SiteData.heroImages type exists
- *   6. Gallery – instagramFeed combined with gallery (type-level)
+ *   6. Gallery – structured gallery images with optional links are accepted
  */
 
 import { describe, it, expect } from 'vitest'
@@ -176,6 +176,18 @@ describe('SiteData type', () => {
   it('heroImages is optional', () => {
     const data: Partial<SiteData> = { heroImage: 'https://example.com/hero.jpg' }
     expect(data.heroImages).toBeUndefined()
+  })
+})
+
+describe('SiteData gallery', () => {
+  it('accepts structured gallery image entries with optional links', () => {
+    const data: Partial<SiteData> = {
+      gallery: [
+        { url: 'https://example.com/photo.jpg', linkUrl: 'https://example.com/store' },
+      ],
+    }
+    expect(Array.isArray(data.gallery)).toBe(true)
+    expect(typeof data.gallery?.[0]).toBe('object')
   })
 })
 

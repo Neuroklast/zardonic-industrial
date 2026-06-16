@@ -1,3 +1,5 @@
+import type { GalleryImageValue } from '@/lib/gallery-images'
+
 export interface Track {
   id: string
   title: string
@@ -89,7 +91,7 @@ export interface SiteData {
   tracks: Track[]
   gigs: Gig[]
   releases: Release[]
-  gallery: string[]
+  gallery: GalleryImageValue[]
   instagramFeed: string[]
   members: Member[]
   mediaFiles: MediaFile[]

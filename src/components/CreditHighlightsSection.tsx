@@ -6,6 +6,8 @@ import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 import { useImageUpload } from '@/cms/hooks/useImageUpload'
+import { useRemoteImageImport } from '@/cms/hooks/useRemoteImageImport'
+import { isHttpUrl, isVercelBlobUrl } from '@/lib/blob-url'
 
 interface CreditHighlightsSectionProps {
   siteData: SiteData
@@ -34,10 +36,11 @@ export default function CreditHighlightsSection({
   const [labelDraft, setLabelDraft] = useState('')
   const [editingPrefix, setEditingPrefix] = useState(false)
   const [prefixDraft, setPrefixDraft] = useState('')
-  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null)
+  const [busySlot, setBusySlot] = useState<number | null>(null)
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const { upload: uploadLogo, isUploading: isUploadingLogo, progress: uploadProgress } = useImageUpload()
+  const { importFromUrl, isImporting } = useRemoteImageImport()
 
   const headingVisible = sectionLabels?.creditHighlightsHeadingVisible !== false
   const headingPrefix = sectionLabels?.creditHighlightsPrefix ?? '//'
@@ -104,11 +107,20 @@ export default function CreditHighlightsSection({
   const handleLogoUpload = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    setUploadingSlot(idx)
+    setBusySlot(idx)
     const result = await uploadLogo(file)
     if (result) updateLogo(idx, 'src', result.url)
-    setUploadingSlot(null)
+    setBusySlot(null)
     e.target.value = ''
+  }
+
+  const handleSourceBlur = async (idx: number, value: string) => {
+    const trimmed = value.trim()
+    if (!trimmed || !isHttpUrl(trimmed) || isVercelBlobUrl(trimmed)) return
+    setBusySlot(idx)
+    const result = await importFromUrl(trimmed)
+    if (result) updateLogo(idx, 'src', result.url)
+    setBusySlot(null)
   }
 
   return (
@@ -268,6 +280,7 @@ export default function CreditHighlightsSection({
                     type="text"
                     value={logo.src}
                     onChange={(e) => updateLogo(idx, 'src', e.target.value)}
+                    onBlur={() => void handleSourceBlur(idx, logo.src)}
                     placeholder="Image URL"
                     className="flex-1 bg-transparent border border-primary/20 px-2 py-1 text-xs font-mono text-foreground placeholder:text-foreground/30 focus:outline-none focus:border-primary/50"
                     aria-label={`Credit ${idx + 1} image URL`}
@@ -283,12 +296,14 @@ export default function CreditHighlightsSection({
                   <button
                     type="button"
                     onClick={() => fileInputRefs.current[idx]?.click()}
-                    disabled={isUploadingLogo}
+                    disabled={isUploadingLogo || isImporting}
                     className="text-primary/50 hover:text-primary disabled:opacity-50 transition-colors shrink-0"
                     aria-label={`Upload image for credit ${idx + 1}`}
                   >
-                    {uploadingSlot === idx && isUploadingLogo ? (
+                    {busySlot === idx && isUploadingLogo ? (
                       <span className="text-[9px] font-mono">{uploadProgress}%</span>
+                    ) : busySlot === idx && isImporting ? (
+                      <span className="text-[9px] font-mono">SYNC</span>
                     ) : (
                       <UploadSimple size={14} />
                     )}

@@ -2,11 +2,12 @@ import React, { memo } from 'react'
 import { motion } from 'framer-motion'
 import { Card } from '@/components/ui/card'
 import { SectionBase } from '@/components/sections/SectionBase'
-import { MagnifyingGlassPlus } from '@phosphor-icons/react'
+import { ArrowSquareOut, MagnifyingGlassPlus } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import type { SiteData } from '@/App'
 import type { AdminSettings } from '@/lib/types'
+import { getGalleryImageLink, getGalleryImageSrc } from '@/lib/gallery-images'
 
 interface GallerySectionProps {
   siteData: SiteData
@@ -67,9 +68,14 @@ function GallerySection({
             </Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {allImages.map((image, index) => (
-                <motion.div
-                  key={index}
+              {allImages.map((image, index) => {
+                const imageSrc = getGalleryImageSrc(image)
+                const linkUrl = getGalleryImageLink(image)
+
+                return (
+                <motion.button
+                  key={`${imageSrc || 'gallery'}-${index}`}
+                  type="button"
                   initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
                   whileInView={{ opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
                   viewport={{ once: true }}
@@ -78,11 +84,18 @@ function GallerySection({
                     delay: index * 0.08,
                     ease: [0.25, 0.46, 0.45, 0.94]
                   }}
-                  className="aspect-square bg-muted overflow-hidden cursor-pointer relative group glitch-image"
-                  onClick={() => setGalleryIndex(index)}
+                  className="aspect-square bg-muted overflow-hidden cursor-pointer relative group glitch-image border-0 p-0 text-left"
+                  onClick={() => {
+                    if (linkUrl) {
+                      window.open(linkUrl, '_blank', 'noopener,noreferrer')
+                      return
+                    }
+                    setGalleryIndex(index)
+                  }}
+                  aria-label={linkUrl ? `Open external link for gallery image ${index + 1}` : `Open gallery image ${index + 1}`}
                 >
                   <img 
-                    src={toDirectImageUrl(image) || image} 
+                    src={toDirectImageUrl(imageSrc) || imageSrc} 
                     alt={`Gallery ${index + 1}`} 
                     className="w-full h-full object-cover hover-chromatic-image" 
                     crossOrigin="anonymous"
@@ -90,10 +103,14 @@ function GallerySection({
                     decoding="async"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <MagnifyingGlassPlus className="w-8 h-8 text-foreground" />
+                    {linkUrl ? (
+                      <ArrowSquareOut className="w-8 h-8 text-foreground" />
+                    ) : (
+                      <MagnifyingGlassPlus className="w-8 h-8 text-foreground" />
+                    )}
                   </div>
-                </motion.div>
-              ))}
+                </motion.button>
+              )})}
             </div>
           )}
         </motion.div>

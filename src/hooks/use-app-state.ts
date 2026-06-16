@@ -17,6 +17,7 @@ import type { SiteData } from '@/lib/app-types'
 import { DEFAULT_SITE_DATA } from '@/lib/app-types'
 import { DEFAULT_SECTION_ORDER, type SectionKey } from '@/lib/config'
 import { API_ROUTES } from '@/lib/api-routes'
+import { getGalleryImageSrc } from '@/lib/gallery-images'
 
 // localStorage key used to persist the loader type for instant restoration
 const LOADER_TYPE_KEY = 'nk-loader-type'
@@ -294,7 +295,10 @@ export function useAppState(): AppState {
   const precacheUrls = useMemo(() => {
     if (!siteData) return []
     const urls: string[] = []
-    siteData.gallery?.forEach(url => { if (url) urls.push(url) })
+    siteData.gallery?.forEach(image => {
+      const url = getGalleryImageSrc(image)
+      if (url) urls.push(url)
+    })
     siteData.releases?.forEach(r => { if (r.artwork) urls.push(r.artwork) })
     siteData.creditHighlights?.forEach(c => { if (c.src) urls.push(c.src) })
     return urls
