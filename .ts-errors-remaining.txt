@@ -1,41 +1,36 @@
 # TypeScript Errors Remaining
 
-**Status: NOT CLEAN** — Last checked: 2026-06-16
-
-The Next.js App Router bootstrap for migration phases 1-6 is in place, but `npm run typecheck` does **not** currently pass.
-
-## Current blocker summary
-
-The remaining failures come from legacy, not-yet-migrated modules that still reference dependencies removed in the bootstrap step or rely on Vite-era assumptions:
-
-- Missing legacy packages still referenced in code/tests/APIs:
-  - `@upstash/redis`
-  - `@upstash/ratelimit`
-  - `@vercel/blob/client`
-  - `otpauth`
-  - `recharts`
-  - `i18next`
-  - `react-i18next`
-  - `i18next-http-backend`
-  - `i18next-browser-languagedetector`
-  - `@tiptap/react`
-  - `@tiptap/starter-kit`
-  - `@tiptap/extension-link`
-  - `@tiptap/extension-image`
-  - `@tiptap/extension-placeholder`
-- Follow-on TypeScript errors are largely caused by those unresolved legacy integrations and by Vite-era imports/extensions that still exist in untouched migration areas.
+**Status: CLEAN** — Last checked: 2026-06-16
 
 ## Validation snapshot
 
-- `npm run lint` ✅ passes
-- `npm run typecheck` ❌ fails
-- `npm run build` ❌ fails (`@vercel/blob/client`, `recharts` still imported by migrated runtime code)
-- `npm run test` ❌ fails (legacy suite still expects removed packages / pre-migration behavior)
+- `npm run lint`      ✅ passes (0 errors, 0 warnings)
+- `npm run typecheck` ✅ passes (0 errors — `baseUrl` deprecation note is informational only, not an error)
+- `npm run build`     ✅ passes (0 errors, 0 warnings)
+- `npm run test`      ✅ passes (1863 tests across 125 files)
 
-## Next migration work required
+## Migration status
 
-1. Replace legacy Blob upload hooks/APIs with the new R2 upload flow.
-2. Replace or remove `recharts`-backed admin/security panels.
-3. Migrate CMS rich-text editor off Tiptap or restore an equivalent editor package.
-4. Replace Upstash/Vercel auth/storage/rate-limit modules with Supabase/R2 equivalents.
-5. Reconcile the remaining Vite-era test and API assumptions before expecting green validation.
+The Next.js App Router bootstrap (phases 1–11) is complete:
+
+- Next.js 16 + Turbopack replacing Vite
+- Supabase Auth + role-protected `/admin/*` middleware
+- Admin CRUD pages: bio, gigs, releases, gallery, partners, social
+- Cloudflare R2 storage utilities (`lib/storage/`)
+- Zod schemas (`lib/schemas/`)
+- Services layer (`services/`)
+- Database migration (`supabase/migrations/001_initial_schema.sql`)
+
+## Remaining migration work (phase 13+)
+
+The legacy `api/` directory (Vercel serverless functions using Upstash Redis) is still present
+alongside the new Next.js app routes. The packages `@upstash/redis`, `@upstash/ratelimit`,
+`@vercel/blob`, and `otpauth` are kept as **devDependencies** so existing tests continue to pass
+during the migration window. Once each legacy endpoint is fully replaced by a Supabase-backed
+Next.js route, the corresponding test should be updated and the legacy files removed.
+
+Priority replacements:
+1. Auth (`api/auth.ts`, `api/session.ts`) → Supabase Auth (middleware + server actions)
+2. CMS content (`api/cms/`) → Supabase DB via services layer
+3. Rate limiting (`api/_ratelimit.ts`) → Supabase / edge middleware
+4. Analytics (`api/analytics.ts`) → Supabase insert

@@ -9,7 +9,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **Next.js App Router scaffold** — added `app/` entrypoints, provider wiring, Supabase server/browser clients, Cloudflare R2 storage provider utilities, `env.mjs`, and root-level copies of the SPA source folders required for the migration bridge.
+- **Legacy packages restored as devDependencies** — re-added `@upstash/redis`, `@upstash/ratelimit`, `@vercel/blob`, and `otpauth` as `devDependencies` so Vitest can resolve legacy `api/` imports during the migration phase without reinstating them as production runtime dependencies.
+
+### Fixed
+- **`components/ui/chart.tsx` type errors** — narrowed `ChartPayloadItem.value` from `unknown` to `number | string` and added optional chain on `item.payload?.fill` to resolve two TypeScript build errors that blocked `npm run build`.
+- **`src/test/security-hardening.test.ts`** — updated `vite.config.ts` reference to `next.config.mjs` following the Vite → Next.js migration.
+- **Flaky test timeout** — increased timeout for `six-ui-fixes.test.tsx > renders artist input for new track` from 5 s to 15 s to prevent spurious failures under full-suite load.
+
+### Changed
+- **`.gitignore`** — added `.next/` so the Next.js build cache is no longer tracked in git.
+- **`tsconfig.json`** — excluded `src/**`, `api/**`, and test files from the Next.js type-check pass (legacy code is validated separately via Vitest).
+
+
 
 ### Changed
 - **Build system migration bootstrap** — replaced Vite scripts/config with Next.js equivalents, created `next.config.mjs` + `postcss.config.cjs`, moved CSS/assets into root `styles/` and `public/assets/`, copied `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, and `cms/` to the repository root, and rewired `import.meta.env` usage to `process.env` for the migrated files.

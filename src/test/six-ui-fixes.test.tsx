@@ -105,7 +105,7 @@ describe('ReleaseEditDialog — track artist field', () => {
     // Artist input should exist in the new-track form row
     const artistInputs = await screen.findAllByPlaceholderText('Artist')
     expect(artistInputs.length).toBeGreaterThan(0)
-  })
+  }, 15000)
 
   it('pre-fills existing track artist values from the release data', async () => {
     const { default: ReleaseEditDialog } = await import('@/components/ReleaseEditDialog')

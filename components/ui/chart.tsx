@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 interface ChartPayloadItem {
   name?: string
   dataKey?: string
-  value?: unknown
+  value?: number | string
   color?: string
   fill?: string
   payload?: Record<string, unknown>
@@ -190,7 +190,7 @@ function ChartTooltipContent({
         {payload.map((item: ChartPayloadItem, index: number) => {
           const key = `${nameKey || item.name || item.dataKey || "value"}`
           const itemConfig = getPayloadConfigFromPayload(config, item, key)
-          const indicatorColor = color || item.payload.fill || item.color
+          const indicatorColor = color || item.payload?.fill || item.color
 
           return (
             <div
