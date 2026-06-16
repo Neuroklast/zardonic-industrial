@@ -90,7 +90,7 @@ export function ImageField({ fieldDef, value, onChange, error, disabled, classNa
             {isUploading ? `${progress}%` : 'Upload'}
           </button>
         </div>
-        <p className="text-[10px] font-mono text-zinc-500">
+        <p className="text-xs font-mono text-zinc-500">
           External image URLs are automatically imported to Vercel Blob when the field loses focus.
         </p>
       </div>

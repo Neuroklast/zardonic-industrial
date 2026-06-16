@@ -2,6 +2,8 @@ import { resolve4, resolve6 } from 'node:dns/promises'
 import { put } from '@vercel/blob'
 
 const MAX_IMAGE_SIZE = 20 * 1024 * 1024 // 20 MB
+const MAX_FILENAME_LENGTH = 120
+const MAX_REDIRECTS = 5
 const BLOCKED_HOST_PATTERNS = [
   /^localhost$/i,
   /^127\./,
@@ -45,6 +47,7 @@ const CONTENT_TYPE_EXTENSIONS: Record<string, string> = {
 
 function isBlockedHost(hostname: string): boolean {
   if (BLOCKED_HOST_PATTERNS.some(pattern => pattern.test(hostname))) return true
+  // Blocks decimal integer hostnames such as 2130706433 (= 127.0.0.1).
   if (/^\d+$/.test(hostname)) return true
   if (!hostname.includes('.') && !hostname.startsWith('[')) return true
   return false
@@ -110,7 +113,7 @@ function assertAllowedRemoteUrl(input: string): URL {
 }
 
 function sanitizeFileName(baseName: string): string {
-  const safe = baseName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '').slice(0, 120)
+  const safe = baseName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^_+/, '').slice(0, MAX_FILENAME_LENGTH)
   return safe || 'image'
 }
 
@@ -158,7 +161,7 @@ async function readResponseBuffer(response: Response, maxBytes: number): Promise
   return Buffer.concat(chunks.map(chunk => Buffer.from(chunk)))
 }
 
-async function fetchValidatedImage(input: URL, redirectsRemaining = 5): Promise<Response> {
+async function fetchValidatedImage(input: URL, redirectsRemaining = MAX_REDIRECTS): Promise<Response> {
   const response = await fetch(input.toString(), {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BlobImageImporter/1.0)' },
     redirect: 'manual',

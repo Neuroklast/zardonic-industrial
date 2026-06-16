@@ -339,9 +339,9 @@ export default function SponsoringSection({
                       aria-label={`Upload image for sponsor ${idx + 1}`}
                     >
                       {busySlot === idx && isUploadingLogo ? (
-                        <span className="text-[9px] font-mono">{uploadProgress}%</span>
+                        <span className="text-[10px] font-mono">{uploadProgress}%</span>
                       ) : busySlot === idx && isImporting ? (
-                        <span className="text-[9px] font-mono">SYNC</span>
+                        <span className="text-[10px] font-mono">SYNC</span>
                       ) : (
                         <UploadSimple size={14} />
                       )}

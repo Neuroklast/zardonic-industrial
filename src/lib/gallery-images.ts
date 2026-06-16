@@ -1,5 +1,7 @@
 export interface GalleryImageObject {
+  /** Preferred source key for new data. */
   src?: string
+  /** Legacy/compatibility source key still accepted by older gallery payloads and CMS records. */
   url?: string
   linkUrl?: string
 }
