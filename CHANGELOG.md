@@ -9,9 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Public-site typography regression after Next.js migration** — `app/layout.tsx` now loads **Orbitron**, **Share Tech Mono**, and **Space Mono** in one Google Fonts request, restoring heading/body/mono font availability expected by CSS custom-property fallbacks.
+- **Theme token import regression** — `app/globals.css` now imports `styles/theme.css` before token/base/effect/component/layout styles, restoring Radix color variables, spacing scale (`--size-*`), radius tokens, and dependent Tailwind utilities.
 - **Legacy `@/App` type imports** — replaced all remaining `import type { SiteData } from '@/App'` usages across both `components/` and `src/components/` trees with `@/lib/app-types`, resolving Next.js/Vercel TypeScript module-resolution failures.
 
 ### Changed
+- **Global CSS font override cleanup** — removed the redundant `body { font-family: 'Space Mono', ... }` rule from `app/globals.css` so `styles/base.css` can apply `var(--font-body, 'Share Tech Mono', monospace)` as intended.
+- **Tailwind import deduplication** — removed Tailwind core/preflight/theme imports from `styles/theme.css` because `app/globals.css` already imports Tailwind once.
+- **Tailwind scan/config alignment** (`tailwind.config.js`) — updated token-reference comments from `src/index.css` to `styles/tokens.css` and expanded `content` globs to include `src/`, `cms/`, and `services/`.
+- **Root layout body class** — removed hardcoded `bg-black` in `app/layout.tsx` so background color is controlled by theme tokens (`--background`) instead of a fixed utility override.
 - **Video background default mode** (`src/components/BackgroundStack.tsx`) — video mode now defaults to `scroll` (undefined → scroll-driven). Only an explicit `backgroundVideoMode: 'loop'` setting uses looping autoplay.
 - **Admin video UI** (`src/components/admin/BackgroundTab.tsx`) — removed URL text-input fields for desktop and mobile video; replaced with upload-only buttons. Videos are stored in the R2 bucket via signed upload URL. Uploaded filename is shown as read-only confirmation. Playback mode selector now lists "Scroll" first as the default option.
 - **Background type label** (`src/components/admin/BackgroundTab.tsx`) — selector entry renamed from "Video Loop" to "Video Scroll" to reflect the new scroll-first default.

@@ -88,7 +88,7 @@ const defaultTheme = {
       "focus-ring": "var(--color-focus-ring)",
       // ── Semantic color aliases ──────────────────────────────────────────────
       // Use these in new components instead of raw palette values.
-      // Values map to --color-brand-* / --color-surface-* in src/index.css.
+      // Values map to --color-brand-* / --color-surface-* in styles/tokens.css.
       "brand-primary": "var(--color-brand-primary)",
       "brand-secondary": "var(--color-brand-secondary)",
       "surface-base": "var(--color-surface-base)",
@@ -104,7 +104,7 @@ const defaultTheme = {
     },
     // ── Semantic typography scale ───────────────────────────────────────────
     // Use text-hero / text-heading / text-body / text-body-sm in components.
-    // Values are fluid via clamp() — see src/index.css --font-size-* vars.
+    // Values are fluid via clamp() — see styles/tokens.css --font-size-* vars.
     fontSize: {
       hero: ["var(--font-size-hero)", { lineHeight: "1.1" }],
       heading: ["var(--font-size-heading)", { lineHeight: "1.2" }],
@@ -150,7 +150,7 @@ const defaultTheme = {
     96: "var(--size-96)",
     // ── Semantic spacing scale ──────────────────────────────────────────────
     // Use py-section, p-card, gap-inline in section components.
-    // Values are responsive — see src/index.css --spacing-* vars.
+    // Values are responsive — see styles/tokens.css --spacing-* vars.
     section: "var(--spacing-section)",
     card: "var(--spacing-card)",
     inline: "var(--spacing-inline)",
@@ -159,6 +159,16 @@ const defaultTheme = {
 }
 
 export default {
-  content: ["./app/**/*.{js,ts,jsx,tsx}", "./components/**/*.{js,ts,jsx,tsx}", "./hooks/**/*.{js,ts,jsx,tsx}", "./lib/**/*.{js,ts,jsx,tsx}", "./contexts/**/*.{js,ts,jsx,tsx}", "./layouts/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",
+    "./hooks/**/*.{js,ts,jsx,tsx}",
+    "./lib/**/*.{js,ts,jsx,tsx}",
+    "./contexts/**/*.{js,ts,jsx,tsx}",
+    "./layouts/**/*.{js,ts,jsx,tsx}",
+    "./cms/**/*.{js,ts,jsx,tsx}",
+    "./services/**/*.{js,ts,jsx,tsx}",
+  ],
   theme: { ...defaultTheme, ...theme },
 };
