@@ -30,7 +30,7 @@ import type {
   ProgressiveOverlayModes,
   DisclosureLevel,
 } from '@/lib/types'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 import { toast } from 'sonner'
 import AppearanceTab from '@/components/admin/AppearanceTab'
 import BackgroundTab from '@/components/admin/BackgroundTab'

@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **`components/AdminPanel.tsx`** — corrected broken `import type { SiteData }` from `'@/App'` to `'@/lib/app-types'`, resolving the Vercel build type-check failure.
+
 ### Changed
 - **Video background default mode** (`src/components/BackgroundStack.tsx`) — video mode now defaults to `scroll` (undefined → scroll-driven). Only an explicit `backgroundVideoMode: 'loop'` setting uses looping autoplay.
 - **Admin video UI** (`src/components/admin/BackgroundTab.tsx`) — removed URL text-input fields for desktop and mobile video; replaced with upload-only buttons. Videos are stored in the R2 bucket via signed upload URL. Uploaded filename is shown as read-only confirmation. Playback mode selector now lists "Scroll" first as the default option.
