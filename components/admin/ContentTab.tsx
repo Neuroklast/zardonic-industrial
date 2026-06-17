@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import type { AdminSettings, SectionLabels, ContactInfo, LoaderTexts, DecorativeTexts } from '@/lib/types'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 
 const SOCIAL_FIELDS: { key: keyof SiteData['social']; label: string; placeholder: string }[] = [
   { key: 'instagram', label: 'Instagram', placeholder: 'https://instagram.com/...' },

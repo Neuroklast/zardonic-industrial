@@ -1,7 +1,7 @@
 import { SECTION_REGISTRY } from '@/lib/sections-registry'
 import type { DisclosureLevel } from '@/lib/sections-registry'
 import type { AdminSettings } from '@/lib/types'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 import SectionFieldRenderer from '@/components/admin/SectionFieldRenderer'
 import { Separator } from '@/components/ui/separator'
 

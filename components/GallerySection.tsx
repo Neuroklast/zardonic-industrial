@@ -5,7 +5,7 @@ import { SectionBase } from '@/components/sections/SectionBase'
 import { MagnifyingGlassPlus } from '@phosphor-icons/react'
 import EditableHeading from '@/components/EditableHeading'
 import { toDirectImageUrl } from '@/lib/image-cache'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 import type { AdminSettings } from '@/lib/types'
 
 interface GallerySectionProps {

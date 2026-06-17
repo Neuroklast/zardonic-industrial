@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
-- **`components/AdminPanel.tsx`** — corrected broken `import type { SiteData }` from `'@/App'` to `'@/lib/app-types'`, resolving the Vercel build type-check failure.
+- **Legacy `@/App` type imports** — replaced all remaining `import type { SiteData } from '@/App'` usages across both `components/` and `src/components/` trees with `@/lib/app-types`, resolving Next.js/Vercel TypeScript module-resolution failures.
 
 ### Changed
 - **Video background default mode** (`src/components/BackgroundStack.tsx`) — video mode now defaults to `scroll` (undefined → scroll-driven). Only an explicit `backgroundVideoMode: 'loop'` setting uses looping autoplay.

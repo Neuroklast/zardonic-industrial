@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { PencilSimple, Check, Plus, Trash, Eye, EyeSlash, ArrowUp, ArrowDown, UploadSimple } from '@phosphor-icons/react'
 import { SectionBase } from '@/components/sections/SectionBase'
 import { toDirectImageUrl } from '@/lib/image-cache'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 import type { AdminSettings, SectionLabels } from '@/lib/types'
 import { useImageUpload } from '@/cms/hooks/useImageUpload'
 
