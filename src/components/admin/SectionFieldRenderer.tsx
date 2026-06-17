@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import type { AdminSettings } from '@/lib/types'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 import type { SectionConfigField, DisclosureLevel } from '@/lib/sections-registry'
 import { isFieldVisible, getAdminValue, setAdminValue } from '@/lib/admin-settings'
 

@@ -17,7 +17,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 
 interface OverviewTabProps {
   siteData: SiteData | undefined

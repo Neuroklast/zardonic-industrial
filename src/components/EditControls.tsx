@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import React, { useState, lazy, Suspense } from 'react'
 import AdminLoginDialog from '@/components/AdminLoginDialog'
 import type { AdminSettings } from '@/lib/types'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 
 const AdminPanel = lazy(() => import('@/components/AdminPanel'))
 

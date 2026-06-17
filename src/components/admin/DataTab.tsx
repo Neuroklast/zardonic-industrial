@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react'
 
 import { Export, ArrowSquareIn, ArrowsClockwise, MapPin, Trash } from '@phosphor-icons/react'
-import type { SiteData } from '@/App'
+import type { SiteData } from '@/lib/app-types'
 
 interface DataTabProps {
   siteData: SiteData | undefined
