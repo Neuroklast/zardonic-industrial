@@ -110,7 +110,7 @@ export default function BackgroundTab({
             { value: 'stars', label: 'Star Field', desc: 'Warp-speed star field' },
             { value: 'cloud-chamber', label: 'Cloud Chamber', desc: 'Radiation cloud chamber with noise, terminal glow & particles' },
             { value: 'glitch-grid', label: 'Glitch Grid', desc: 'Dark crosshatch grid with glitch artifacts & scan beam (DIGICIDE)' },
-            { value: 'video', label: 'Video Loop', desc: 'Looping video file — falls back to a static image on low-end devices' },
+            { value: 'video', label: 'Video Scroll', desc: 'Scroll-driven video file — falls back to a static image on low-end devices' },
             { value: '3d-model', label: '3D Model', desc: 'Rotating 3D model (.glb/.gltf) rendered with Three.js' },
             { value: 'minimal', label: 'Minimal', desc: 'No decorative background' },
           ] as { value: BackgroundType; label: string; desc: string }[]).map(opt => (
@@ -360,8 +360,9 @@ export default function BackgroundTab({
             Video Background Options
           </h3>
           <p className="font-mono text-xs text-muted-foreground">
-            Upload or link a video file (MP4 recommended). On low-end devices or
-            when the user prefers reduced motion, the fallback image is shown instead.
+            Upload a video file (MP4 recommended) — it is stored in the R2 bucket and played back
+            scroll-driven by default. On low-end devices or when the user prefers reduced motion,
+            the fallback image is shown instead.
           </p>
 
           {/* Playback Mode selector */}
@@ -369,14 +370,14 @@ export default function BackgroundTab({
             <Label className="font-mono text-xs text-muted-foreground">Playback Mode</Label>
             <div className="grid grid-cols-2 gap-1">
               {([
-                { value: 'loop', label: 'Loop', desc: 'Auto-playing looping video' },
                 { value: 'scroll', label: 'Scroll', desc: 'Video progress follows page scroll' },
+                { value: 'loop', label: 'Loop', desc: 'Auto-playing looping video' },
               ] as { value: 'loop' | 'scroll'; label: string; desc: string }[]).map(opt => (
                 <button
                   key={opt.value}
                   onClick={() => updateAnim({ backgroundVideoMode: opt.value })}
                   className={`text-left px-2 py-2 border rounded font-mono text-xs transition-colors ${
-                    (anim.backgroundVideoMode ?? 'loop') === opt.value
+                    (anim.backgroundVideoMode ?? 'scroll') === opt.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:border-primary/40'
                   }`}
@@ -388,39 +389,38 @@ export default function BackgroundTab({
             </div>
           </div>
 
-          {/* Video Source */}
+          {/* Video Upload */}
           <div className="space-y-2">
-            <Label className="font-mono text-xs text-muted-foreground">Video Source</Label>
-            <div className="flex gap-2">
-              <Input
-                value={anim.backgroundVideoUrl ?? ''}
-                onChange={e => updateAnim({ backgroundVideoUrl: e.target.value || undefined })}
-                className="font-mono text-xs flex-1"
-                placeholder="https://... (Vercel Blob URL)"
+            <Label className="font-mono text-xs text-muted-foreground">Video Upload (Desktop)</Label>
+            <label className="cursor-pointer w-full">
+              <Button variant="outline" size="sm" asChild disabled={isUploadingVideo} className="w-full">
+                <span className="font-mono text-xs">
+                  {isUploadingVideo
+                    ? `${videoUploadProgress}%`
+                    : <><Upload className="w-3 h-3 mr-1" />Video hochladen…</>}
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept="video/mp4,video/webm"
+                className="hidden"
+                onChange={handleVideoUpload}
               />
-              <label className="cursor-pointer">
-                <Button variant="outline" size="sm" asChild disabled={isUploadingVideo}>
-                  <span className="font-mono text-xs">
-                    {isUploadingVideo ? `${videoUploadProgress}%` : <Upload className="w-3 h-3" />}
-                  </span>
-                </Button>
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm"
-                  className="hidden"
-                  onChange={handleVideoUpload}
-                />
-              </label>
-            </div>
+            </label>
             {videoUploadProgress > 0 && videoUploadProgress < 100 && (
               <div className="w-full bg-border rounded-full h-1">
                 <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${videoUploadProgress}%` }} />
               </div>
             )}
+            {anim.backgroundVideoUrl && (
+              <p className="font-mono text-[10px] text-muted-foreground/60 truncate" title={anim.backgroundVideoUrl}>
+                ✓ {anim.backgroundVideoUrl.split('/').pop()?.split('?')[0] ?? 'video'}
+              </p>
+            )}
           </div>
 
           {/* Video optimization check (scroll mode only) */}
-          {(anim.backgroundVideoMode ?? 'loop') === 'scroll' && anim.backgroundVideoUrl && (
+          {(anim.backgroundVideoMode ?? 'scroll') !== 'loop' && anim.backgroundVideoUrl && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Button
@@ -470,34 +470,33 @@ export default function BackgroundTab({
             />
           </div>
 
-          {/* Mobile Video Source */}
+          {/* Mobile Video Upload */}
           <div className="space-y-2">
-            <Label className="font-mono text-xs text-muted-foreground">Mobile Video Source (optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                value={anim.backgroundVideoMobileUrl ?? ''}
-                onChange={e => updateAnim({ backgroundVideoMobileUrl: e.target.value || undefined })}
-                className="font-mono text-xs flex-1"
-                placeholder="https://... (Mobil-Video, optional)"
+            <Label className="font-mono text-xs text-muted-foreground">Mobile Video Upload (optional)</Label>
+            <label className="cursor-pointer w-full">
+              <Button variant="outline" size="sm" asChild disabled={isUploadingVideoMobile} className="w-full">
+                <span className="font-mono text-xs">
+                  {isUploadingVideoMobile
+                    ? `${videoMobileUploadProgress}%`
+                    : <><Upload className="w-3 h-3 mr-1" />Mobil-Video hochladen…</>}
+                </span>
+              </Button>
+              <input
+                type="file"
+                accept="video/mp4,video/webm"
+                className="hidden"
+                onChange={handleMobileVideoUpload}
               />
-              <label className="cursor-pointer">
-                <Button variant="outline" size="sm" asChild disabled={isUploadingVideoMobile}>
-                  <span className="font-mono text-xs">
-                    {isUploadingVideoMobile ? `${videoMobileUploadProgress}%` : <Upload className="w-3 h-3" />}
-                  </span>
-                </Button>
-                <input
-                  type="file"
-                  accept="video/mp4,video/webm"
-                  className="hidden"
-                  onChange={handleMobileVideoUpload}
-                />
-              </label>
-            </div>
+            </label>
             {videoMobileUploadProgress > 0 && videoMobileUploadProgress < 100 && (
               <div className="w-full bg-border rounded-full h-1">
                 <div className="bg-primary h-1 rounded-full transition-all" style={{ width: `${videoMobileUploadProgress}%` }} />
               </div>
+            )}
+            {anim.backgroundVideoMobileUrl && (
+              <p className="font-mono text-[10px] text-muted-foreground/60 truncate" title={anim.backgroundVideoMobileUrl}>
+                ✓ {anim.backgroundVideoMobileUrl.split('/').pop()?.split('?')[0] ?? 'video'}
+              </p>
             )}
             <p className="font-mono text-[10px] text-muted-foreground/60">
               Wird auf Geräten unter 768px Breite statt des Desktop-Videos verwendet.

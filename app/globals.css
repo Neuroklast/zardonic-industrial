@@ -1,0 +1,49 @@
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import '../styles/layers.css';
+@import '../styles/tokens.css';
+@import '../styles/base.css';
+@import '../styles/effects.css';
+@import '../styles/components.css';
+@import '../styles/layout.css';
+@import '../styles/loading.css';
+
+@layer base {
+  * {
+    @apply border-border
+  }
+
+  /* Apply Space Mono as the monospace font throughout the public site */
+  body {
+    font-family: 'Space Mono', 'IBM Plex Mono', 'Courier New', monospace;
+  }
+}
+
+/* ── CRT scanline overlay ───────────────────────────────────────────────────
+ * Applied to .scanline-layer which sits inside the fixed background stack,
+ * BELOW all foreground content. pointer-events:none ensures it never
+ * intercepts clicks. z-index: var(--z-bg-scanline) keeps it behind content.
+ */
+.scanline-layer {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ── Chromatic aberration on logo hover ─────────────────────────────────── */
+.chromatic-hover {
+  filter: none;
+  transition: filter 0.15s ease;
+}
+.chromatic-hover:hover {
+  filter:
+    drop-shadow(1px 0 0 rgba(255, 0, 60, 0.6))
+    drop-shadow(-1px 0 0 rgba(0, 220, 255, 0.6));
+}
+

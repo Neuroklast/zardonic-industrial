@@ -40,3 +40,6 @@ pids
 # Build/test artifacts
 test_output.txt
 deploy.txt
+
+# Next.js build output
+.next/

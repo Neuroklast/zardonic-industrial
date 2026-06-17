@@ -1,0 +1,451 @@
+/* ========================================
+   PROGRESSIVE OVERLAY CONTENT LOADING MODES
+   ======================================== */
+
+/* Mode 1: Progressive Content Reveal */
+.progressive-reveal {
+  position: relative;
+}
+
+.progressive-reveal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--primary) 50%, 
+    transparent 100%
+  );
+  animation: scanline-sweep 0.8s ease-out;
+  pointer-events: none;
+}
+
+@keyframes scanline-sweep {
+  0% {
+    top: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 100%;
+    opacity: 0;
+  }
+}
+
+/* Mode 2: Data Stream Loading - Binary Rain */
+.data-stream {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.data-stream::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(transparent 0%, transparent 70%, var(--primary) 100%);
+  animation: data-stream-flow 1.2s ease-out;
+  opacity: 0;
+  pointer-events: none;
+  z-index: var(--z-local-above-1);
+}
+
+.data-stream::after {
+  content: '01001000 01010101 01000100 00100000 01001100 01001111 01000001 01000100';
+  position: absolute;
+  inset: 0;
+  font-family: var(--font-share-tech);
+  font-size: 0.625rem;
+  color: var(--primary);
+  line-height: 1.2;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow: hidden;
+  opacity: 0.6;
+  animation: binary-rain 1.2s ease-out;
+  pointer-events: none;
+  z-index: var(--z-local-base);
+}
+
+@keyframes data-stream-flow {
+  0% {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes binary-rain {
+  0% {
+    opacity: 0.8;
+    filter: blur(2px);
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    filter: blur(0px);
+  }
+}
+
+/* Mode 3: Sector-by-Sector Assembly */
+.sector-assembly {
+  position: relative;
+}
+
+.sector-assembly::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: 
+    linear-gradient(to right, transparent 48%, var(--primary) 48%, var(--primary) 52%, transparent 52%),
+    linear-gradient(to bottom, transparent 48%, var(--primary) 48%, var(--primary) 52%, transparent 52%);
+  opacity: 0;
+  animation: sector-grid 1.5s ease-out;
+  pointer-events: none;
+}
+
+@keyframes sector-grid {
+  0% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* Sector loading indicators */
+.sector-indicator {
+  position: relative;
+  overflow: hidden;
+}
+
+.sector-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--primary) 50%,
+    transparent 100%
+  );
+  animation: sector-load 0.6s ease-out;
+}
+
+@keyframes sector-load {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Mode 4: Holographic Materialization */
+.holographic-materialize {
+  position: relative;
+  isolation: isolate;
+  animation: hologram-flicker 1.8s ease-out;
+}
+
+.holographic-materialize::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(var(--primary-rgb, 180 50 50) / 0.1) 2px,
+    rgba(var(--primary-rgb, 180 50 50) / 0.1) 4px
+  );
+  animation: hologram-scanlines 1.8s ease-out;
+  pointer-events: none;
+  z-index: var(--z-local-above-1);
+}
+
+.holographic-materialize::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary);
+  opacity: 0;
+  animation: hologram-flash 1.8s ease-out;
+  pointer-events: none;
+  z-index: var(--z-local-base);
+}
+
+@keyframes hologram-flicker {
+  0%, 10% {
+    opacity: 0.3;
+  }
+  15%, 25% {
+    opacity: 0.7;
+  }
+  30%, 40% {
+    opacity: 0.5;
+  }
+  45%, 55% {
+    opacity: 0.9;
+  }
+  60%, 100% {
+    opacity: 1;
+  }
+}
+
+@keyframes hologram-scanlines {
+  0% {
+    opacity: 0.8;
+    transform: translateY(-100%);
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes hologram-flash {
+  0% {
+    opacity: 0.3;
+  }
+  10% {
+    opacity: 0.1;
+  }
+  20% {
+    opacity: 0.2;
+  }
+  30% {
+    opacity: 0.05;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* RGB Split Effect for Hologram */
+.rgb-split {
+  position: relative;
+  animation: rgb-split-effect 1s ease-out;
+}
+
+@keyframes rgb-split-effect {
+  0% {
+    text-shadow: 
+      -3px 0 #ff0000,
+      3px 0 #00ffff,
+      0 -3px #00ff00;
+  }
+  50% {
+    text-shadow: 
+      -1.5px 0 #ff0000,
+      1.5px 0 #00ffff,
+      0 -1.5px #00ff00;
+  }
+  100% {
+    text-shadow: none;
+  }
+}
+
+/* Loading Progress Indicators */
+.progressive-loading-label {
+  font-family: var(--font-share-tech);
+  font-size: 0.75rem;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.6;
+    text-shadow: 0 0 4px var(--primary);
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 8px var(--primary);
+  }
+}
+
+/* ─── Cloud Chamber Background CSS Effects ─────────────────────────────────── */
+
+/* Radial vignette — darkens the chamber edges for depth */
+.cc-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+}
+
+/* Spotify embed CI theming
+ * Shifts Spotify's green accent (~hue 141°) to the site's primary accent hue
+ * via --spotify-hue-rotate (computed in use-app-theme.ts as primaryHue - 141).
+ * Falls back to -116deg which matches the default orange-red preset (hue 25°).
+ * Dark backgrounds and white text are achromatic and therefore unaffected.
+ * Applied only to the inner iframe so the pre-consent UI keeps its original styling.
+ */
+.spotify-ci-embed {
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.spotify-ci-embed iframe {
+  filter: hue-rotate(var(--spotify-hue-rotate, -116deg)) saturate(var(--spotify-saturate, 1.2)) brightness(var(--spotify-brightness, 1));
+  border-radius: 0 !important;
+  /* Scale up slightly so Spotify's internal border-radius is clipped by the
+     overflow:hidden container above, making corners visually square. */
+  transform: scale(1.02);
+  display: block;
+}
+
+/* ── Color Highlight System ─────────────────────────────────────────────────
+ * When the admin hovers a color picker in AppearanceTab, a data attribute
+ * `data-highlight-color="primary"` is set on <html>. Elements with a matching
+ * `data-theme-color="primary"` attribute receive a pulsing outline highlight
+ * so the user can see which parts of the site that color affects.
+ */
+@keyframes color-highlight-pulse {
+  0%, 100% { outline-color: oklch(0.7 0.25 140 / 0.6); }
+  50% { outline-color: oklch(0.9 0.25 140 / 1); }
+}
+
+/* ─── CMS admin UI ─────────────────────────────────────────────────────────── */
+
+/* Skeleton pulse for LoadingState — cyberpunk dark shimmer */
+/* ─── CMS Animation Tokens ─────────────────────────────────────────── */
+:root {
+  --cms-duration-fast: 150ms;
+  --cms-duration-normal: 200ms;
+  --cms-duration-slow: 300ms;
+}
+
+@keyframes skeleton-shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-pulse {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Smooth height transition for collapsible field groups */
+.cms-group-content {
+  overflow: hidden;
+  transition: grid-template-rows var(--cms-duration-normal) ease-out;
+  display: grid;
+}
+
+.cms-group-content[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.cms-group-content[data-open="false"] {
+  grid-template-rows: 0fr;
+}
+
+.cms-group-content > div {
+  overflow: hidden;
+}
+
+/* Validation error fade-in slide-down */
+@keyframes admin-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-error-in {
+  animation: admin-error-in var(--cms-duration-fast) ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-error-in {
+    animation: none;
+  }
+}
+
+/* Editor content fade transition when switching sections */
+@keyframes admin-content-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-content-fade {
+  animation: admin-content-fade var(--cms-duration-fast) ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-content-fade {
+    animation: none;
+  }
+}
+
+/* Global reduced-motion override for the entire CMS shell */
+@media (prefers-reduced-motion: reduce) {
+  [data-cms-shell] *,
+  [data-cms-shell] *::before,
+  [data-cms-shell] *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Match: html[data-highlight-color="X"] [data-theme-color~="X"] */
+html[data-highlight-color="primary"] [data-theme-color~="primary"],
+html[data-highlight-color="primary-foreground"] [data-theme-color~="primary-foreground"],
+html[data-highlight-color="accent"] [data-theme-color~="accent"],
+html[data-highlight-color="accent-foreground"] [data-theme-color~="accent-foreground"],
+html[data-highlight-color="background"] [data-theme-color~="background"],
+html[data-highlight-color="foreground"] [data-theme-color~="foreground"],
+html[data-highlight-color="card"] [data-theme-color~="card"],
+html[data-highlight-color="card-foreground"] [data-theme-color~="card-foreground"],
+html[data-highlight-color="border"] [data-theme-color~="border"],
+html[data-highlight-color="secondary"] [data-theme-color~="secondary"],
+html[data-highlight-color="secondary-foreground"] [data-theme-color~="secondary-foreground"],
+html[data-highlight-color="muted"] [data-theme-color~="muted"],
+html[data-highlight-color="muted-foreground"] [data-theme-color~="muted-foreground"],
+html[data-highlight-color="destructive"] [data-theme-color~="destructive"],
+html[data-highlight-color="destructive-foreground"] [data-theme-color~="destructive-foreground"],
+html[data-highlight-color="data-label"] [data-theme-color~="data-label"],
+html[data-highlight-color="modal-glow"] [data-theme-color~="modal-glow"],
+html[data-highlight-color="input"] [data-theme-color~="input"],
+html[data-highlight-color="ring"] [data-theme-color~="ring"],
+html[data-highlight-color="hover"] [data-theme-color~="hover"],
+html[data-highlight-color="popover"] [data-theme-color~="popover"],
+html[data-highlight-color="popover-foreground"] [data-theme-color~="popover-foreground"] {
+  outline: 2px dashed oklch(0.7 0.25 140 / 0.8);
+  outline-offset: 2px;
+  animation: color-highlight-pulse 1.2s ease-in-out infinite;
+}

@@ -43,7 +43,7 @@ export function RichTextEditor({ content, onChange, placeholder, onImageInsert }
       Placeholder.configure({ placeholder: placeholder ?? 'Write something…' }),
     ],
     content: (content as object) ?? {},
-    onUpdate: ({ editor }) => onChange(editor.getJSON()),
+    onUpdate: ({ editor }: { editor: any }) => onChange((editor as any).getJSON()),
   })
 
   const [linkInputOpen, setLinkInputOpen] = useState(false)

@@ -1,6 +1,6 @@
 # ZARDONIC — Industrial Cyberpunk Artist Website
 
-A fully customizable cyberpunk-themed artist website for **ZARDONIC**, built with React 19, TypeScript, Vite, and Framer Motion. Features a 3D loading screen, chromatic aberration glitch effects, and a full admin panel.
+A fully customizable cyberpunk-themed artist website for **ZARDONIC**, now being migrated to **Next.js App Router** while preserving the existing React visuals. The current bridge layer uses React 19, TypeScript, Next.js, and Framer Motion, and keeps the 3D loading screen, chromatic aberration glitch effects, and admin panel UI intact.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FNeuroklast%2Fzardonic-industrial&env=UPSTASH_REDIS_REST_URL,UPSTASH_REDIS_REST_TOKEN,RATE_LIMIT_SALT,BLOB_READ_WRITE_TOKEN,SITE_URL,SITE_NAME&envDescription=Required%20environment%20variables%20for%20Redis%2C%20security%2C%20and%20Vercel%20Blob&envLink=https%3A%2F%2Fgithub.com%2FNeuroklast%2Fzardonic-industrial%2Fblob%2Fmain%2F.env.example&project-name=zardonic-industrial&repository-name=zardonic-industrial)
 
@@ -75,7 +75,7 @@ Access via the lock icon in the footer, or navigate to `?admin-setup` for first-
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4 |
+| Frontend | React 19, TypeScript, Next.js App Router, Tailwind CSS 4 |
 | Animation | Framer Motion, Three.js |
 | Storage | Upstash Redis, Vercel Blob, IndexedDB, localStorage |
 | UI Primitives | Radix UI, Phosphor Icons, Sonner |
@@ -95,9 +95,11 @@ npm install
 # 2. Copy environment template and fill in values
 cp .env.example .env
 
-# 3. Start development server
+# 3. Start the Next.js development server
 npm run dev
 ```
+
+> **Migration note:** The App Router bootstrap now lives in `app/`, while the legacy `src/` tree remains in the repository as a reference during the phased migration. Root-level `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, `cms/`, and `styles/` mirror the current runtime imports used by Next.js.
 
 ---
 
@@ -155,12 +157,13 @@ See [`.env.example`](./.env.example) for the full list with descriptions.
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server (port 5173) |
-| `npm run build` | TypeScript check + Vite production build |
+| `npm run dev` | Start the Next.js development server |
+| `npm run build` | Run the Next.js production build |
+| `npm run start` | Start the built Next.js application |
 | `npm run test` | Run Vitest test suite |
 | `npm run lint` | Run ESLint |
-| `npm run preview` | Preview production build locally |
-| `npm run typecheck` | TypeScript type-check without build |
+| `npm run typecheck` | TypeScript type-check without emitting |
+| `npm run db:types` | Generate Supabase TypeScript types into `lib/database.types.ts` |
 
 ### Utility Scripts
 

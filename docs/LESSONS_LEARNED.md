@@ -67,6 +67,10 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-05-26 | copilot/stability-remediation | GitHub Copilot | A `setTimeout` inside a `useEffect` without a returned cleanup is a latent memory/state leak. The pattern `setTimeout(() => setState(x), delay)` inside `useEffect` must always be replaced with `const id = setTimeout(...); return () => clearTimeout(id)`. Use a `useRef` to expose the timer ID if the effect body is conditional. | Architecture | 🟡 Medium |
 | 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When a dialog owns shared state, undo history, DOM previews, or file inputs, keep that shell in the parent component and lazy-load only the tab panels. This preserves behavior while shrinking the eagerly loaded bundle and keeps each tab focused. | Architecture | 🟡 Medium |
 | 2026-06-06 | copilot/architecture-refactor | GitHub Copilot | When splitting oversized UI files, move either stateful logic into a hook or self-contained view blocks into sibling components, but keep the owning dialog/browser shell in place so behavior, focus flow, and prop contracts stay unchanged. | Architecture | 🟡 Medium |
+| 2026-06-16 | copilot/next-bootstrap | GitHub Copilot | During a Vite → Next App Router bridge migration, copy every alias-backed top-level folder used by `@/...` imports (including `cms/`, not only `components/`/`hooks/`/`lib/`). Leaving one alias root behind causes immediate module-resolution failures even when the visible page code looks unchanged. | DevOps | 🟠 High |
+| 2026-06-16 | copilot/features-overhaul | GitHub Copilot | `<input list="...">` has an implicit ARIA role of `"combobox"`, not `"textbox"`. `getAllByRole('textbox')` silently returns an empty array. Query these inputs by attribute selector (`querySelectorAll('input[aria-label^="..."]')`) or `getAllByRole('combobox')` instead. | Testing | 🟡 Medium |
+| 2026-06-16 | copilot/features-overhaul | GitHub Copilot | jsdom resolves relative URLs into absolute ones for DOM properties (e.g. `video.poster → 'http://localhost:3000/poster.jpg'`). When asserting values set as relative paths, use `getAttribute('poster')` instead of the reflected `.poster` property. | Testing | 🟡 Medium |
+| 2026-06-16 | copilot/features-overhaul | GitHub Copilot | Destructuring `const { container } = document` is always `undefined` — `document` has no `container` property. Always destructure `container` from the return value of `render()`. | Testing | 🟢 Low |
 
 ---
 
@@ -142,3 +146,25 @@ A custom cursor reticle (`position: fixed, pointer-events: none`) must be above 
 
 ### Semantic Typography Tokens Replace Breakpoint Pairs, Not Just Single Classes
 The pattern `text-4xl md:text-6xl` is two classes: a base size for mobile and an overriding size for desktop. The semantic token `text-heading` (with a fluid `clamp()` value) replaces *both* in one class, and does so with continuous scaling rather than a discrete jump at the breakpoint. **Lesson:** when migrating to semantic typography tokens, always remove the accompanying `md:text-*` override — the fluid value covers both ends of the spectrum.
+
+---
+
+## Supabase + R2 + Next.js Public Frontend Migration (2026-06-16)
+
+### next/font/google Requires Build-Time Network Access
+`next/font/google` fetches font CSS from Google's CDN at build time (not just at runtime). In sandboxed CI or restricted network environments this fails the build entirely. The workaround is to load the font via a `<link>` tag in `app/layout.tsx`'s `<head>` — this is browser-loaded and never blocks the build. **Lesson:** use `next/font/google` only when build-time network access to fonts.googleapis.com is guaranteed; otherwise use `<link rel="stylesheet">` in layout or a self-hosted font with `next/font/local`.
+
+### Partners Table with Category Field Avoids Table Proliferation
+Credits, endorsements, and partners all share the same shape (name, logo, URL, display_order). Rather than creating three separate tables, a single `partners` table with a `category` column (`'credit' | 'endorsement' | 'partner'`) handles all three. RLS applies uniformly and the admin page just filters by category. **Lesson:** before creating a new table, check if an existing table with a discriminator column covers the use case identically.
+
+### eslint-disable Comments Must Reference Existing Rules
+An `// eslint-disable-next-line some/rule` comment where `some/rule` is not registered in the project's ESLint config causes a lint error ("Definition for rule was not found"). Remove the comment rather than disabling a non-existent rule. **Lesson:** always verify that an ESLint rule exists in the active config before adding a disable comment; the safer approach is to fix the underlying issue instead.
+
+### Server Actions in `app/_actions/` Need Their Directory Created First
+Next.js does not auto-create `app/_actions/` — attempting to create files there fails silently when the parent directory is missing. **Lesson:** always `mkdir -p` the target directory before creating files with automated tools.
+
+### Scroll-Default Video: Change `=== 'scroll'` Guard to `!== 'loop'`
+When making `scroll` the default video mode (previously `loop`), the `BackgroundStack.tsx` condition must be inverted from `backgroundVideoMode === 'scroll'` to `backgroundVideoMode !== 'loop'`. Using the positive check would leave existing settings (where the field is `undefined`) stuck in loop mode. **Lesson:** when changing a binary default, flip the condition rather than relying on the positive value check, so `undefined` inherits the new default correctly.
+
+### Upload-Only Admin UI: Show Stored Filename as Read-Only Confirmation
+Removing a URL text-input in favour of an upload-only button still needs to communicate the current stored URL to the admin. Extracting the filename with `url.split('/').pop()?.split('?')[0]` and rendering it as a small `<p>` element (truncated, with the full URL as `title`) gives confirmation without re-introducing an editable field.
