@@ -1,7 +1,8 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
-@import '../styles/layers.css';
+@import '../styles/theme.css';
 @import '../styles/tokens.css';
+@import '../styles/layers.css';
 @import '../styles/base.css';
 @import '../styles/effects.css';
 @import '../styles/components.css';
@@ -11,11 +12,6 @@
 @layer base {
   * {
     @apply border-border
-  }
-
-  /* Apply Space Mono as the monospace font throughout the public site */
-  body {
-    font-family: 'Space Mono', 'IBM Plex Mono', 'Courier New', monospace;
   }
 }
 
@@ -46,4 +42,3 @@
     drop-shadow(1px 0 0 rgba(255, 0, 60, 0.6))
     drop-shadow(-1px 0 0 rgba(0, 220, 255, 0.6));
 }
-

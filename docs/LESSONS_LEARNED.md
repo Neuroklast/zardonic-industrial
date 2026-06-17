@@ -72,6 +72,7 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-06-16 | copilot/features-overhaul | GitHub Copilot | jsdom resolves relative URLs into absolute ones for DOM properties (e.g. `video.poster → 'http://localhost:3000/poster.jpg'`). When asserting values set as relative paths, use `getAttribute('poster')` instead of the reflected `.poster` property. | Testing | 🟡 Medium |
 | 2026-06-16 | copilot/features-overhaul | GitHub Copilot | Destructuring `const { container } = document` is always `undefined` — `document` has no `container` property. Always destructure `container` from the return value of `render()`. | Testing | 🟢 Low |
 | 2026-06-17 | copilot/fix-imports-from-app | GitHub Copilot | In the App Router migration, `@/*` resolves to root-level canonical folders. Any leftover `from '@/App'` type import breaks Next.js type checking because root `App.tsx` is no longer an alias target. Use `@/lib/app-types` for `SiteData` and related app-level types. | DevOps | 🟡 Medium |
+| 2026-06-17 | copilot/fix-font-loading-issues | GitHub Copilot | In Next.js App Router migrations, missing one foundational stylesheet import (`styles/theme.css`) can silently break all Tailwind token-backed spacing/colors because `--size-*` and Radix variables disappear. Keep Tailwind imported once in `app/globals.css`, then import token/theme layers in deterministic order. | DevOps | 🔴 Critical |
 
 ---
 

@@ -20,15 +20,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Space Mono loaded at runtime – avoids build-time network requirement */}
+        {/* Runtime-loaded webfonts for public site typography */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="bg-black">
+      <body>
         <Providers>
           {children}
         </Providers>
