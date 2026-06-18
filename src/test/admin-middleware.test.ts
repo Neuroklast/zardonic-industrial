@@ -1,6 +1,8 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import type { NextRequest } from 'next/server'
 
+type CookieToSet = { name: string; value: string; options?: Record<string, unknown> }
+
 const {
   mockGetUser,
   mockSingle,
@@ -8,11 +10,12 @@ const {
 } = vi.hoisted(() => ({
   mockGetUser: vi.fn(),
   mockSingle: vi.fn(),
-  mockCookiesToSet: [] as { name: string; value: string; options?: Record<string, unknown> }[],
+  mockCookiesToSet: [] as CookieToSet[],
 }))
 
 vi.mock('@supabase/ssr', () => ({
-  createServerClient: vi.fn((_url: string, _anonKey: string, options: { cookies: { setAll: (cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) => void } }) => ({
+  createServerClient: vi.fn(
+    (_url: string, _anonKey: string, options: { cookies: { setAll: (cookiesToSet: CookieToSet[]) => void } }) => ({
     auth: {
       getUser: async () => {
         if (mockCookiesToSet.length > 0) {
@@ -28,7 +31,8 @@ vi.mock('@supabase/ssr', () => ({
         }),
       }),
     }),
-  })),
+    }),
+  ),
 }))
 
 import { middleware } from '@/middleware'
