@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **`scripts/migrate-site-data.ts`** — TypeScript migration script that inserts all Zardonic band data (bio, gigs, releases, social links, partners, site_config) into Supabase using the service role key to bypass RLS. Run with `npm run migrate`.
+- **`scripts/MIGRATION.md`** — Documentation for running the migration script, including setup requirements and table overview.
+- **`tsconfig.scripts.json`** — Separate TypeScript configuration for scripts using `module: commonjs` / `moduleResolution: node`, compatible with `ts-node`.
+- **`migrate` npm script** — Added `"migrate": "npx ts-node --project tsconfig.scripts.json scripts/migrate-site-data.ts"` to `package.json`.
+- **`ts-node` and `dotenv` dev dependencies** — Required to run the migration script directly with `npm run migrate`.
+
 ### Fixed
 - **Visual design regression after Next.js migration** — restored the exact pre-migration look of the public site:
   - **HeroSection** now displays the Zardonic logo image with chromatic aberration glitch effects (`hero-logo-glitch`, `cyber2077-scan-build`) and framer-motion fade/slide animations instead of plain text.
