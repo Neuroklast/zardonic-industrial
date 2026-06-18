@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 
 const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
@@ -32,13 +32,8 @@ export function HeroSection({
   backgroundImageUrl,
   backgroundImageOpacity = 0.35,
 }: HeroSectionProps) {
-  const [contentLoaded, setContentLoaded] = useState(false)
+  const [contentLoaded] = useState(true)
   const prefersReducedMotion = useReducedMotion()
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setContentLoaded(true), 0)
-    return () => window.clearTimeout(timer)
-  }, [])
 
   return (
     <section

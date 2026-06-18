@@ -30,6 +30,7 @@ body {
   /* FOUC prevention — background must match theme from the very first paint */
   background-color: #000000;
   background-color: var(--background);
+  color: var(--foreground);
 }
 
 /* Disable text selection outside of admin edit mode.

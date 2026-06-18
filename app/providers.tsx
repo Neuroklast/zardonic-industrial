@@ -1,13 +1,11 @@
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { LazyMotion } from 'framer-motion'
+import { LazyMotion, domAnimation } from 'framer-motion'
 import { ErrorBoundary } from 'react-error-boundary'
 import type { FallbackProps } from 'react-error-boundary'
 import { LenisProvider } from '@/contexts/LenisContext'
 import { useState } from 'react'
-
-const loadMotionFeatures = () => import('@/lib/motion-features').then(m => m.default)
 
 function ErrorFallback({ error }: FallbackProps) {
   return (
@@ -29,7 +27,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <LazyMotion features={loadMotionFeatures} strict={false}>
+    <LazyMotion features={domAnimation} strict={false}>
       <LenisProvider>
         <QueryClientProvider client={queryClient}>
           <ErrorBoundary FallbackComponent={ErrorFallback}>
