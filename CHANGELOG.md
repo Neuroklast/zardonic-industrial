@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Mobile-first optimization — `xs: 480px` Tailwind breakpoint**: Added `extend.screens.xs = '480px'` to `tailwind.config.js`, enabling responsive classes like `xs:grid-cols-2` for small phones between 320–480px.
+- **AdminNav WCAG 2.1 AA touch targets**: Increased nav link padding from `py-2` to `py-3` (~44px hit area) and the hamburger/close buttons to `inline-flex p-2 min-h-[44px] min-w-[44px]` so all interactive elements meet the 44×44px minimum.
+- **Admin dashboard responsive grid**: Changed `grid-cols-2` to `grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4` for the count section and `grid-cols-1 xs:grid-cols-2 sm:grid-cols-3` for the link section, preventing overflow on iPhone SE (320px).
+- **Admin table horizontal scrolling**: Wrapped `<table>` in `<div className="overflow-x-auto">` in all seven admin list pages (releases, gigs, soundpacks, merchandise, music-highlights, partners, social) so wide tables scroll instead of breaking the layout on mobile.
+- **Login inputs iOS zoom prevention**: Changed email and password inputs in `app/admin/login/page.tsx` from `text-sm` to `text-base` (16px), preventing iOS Safari from auto-zooming on focus.
+- **Mobile optimization tests**: Added `src/test/admin-mobile.test.tsx` with 11 unit tests covering touch targets, responsive grid classes, table overflow wrappers, login input font sizes, and the xs breakpoint configuration.
+
 ### Removed
 - **Pseudo-security module removal**: Deleted the honeypot/countermeasure API helpers and public endpoints, removed the legacy security admin/CMS dashboards and dialogs, deleted security-only tests, and cleaned `vercel.json` rewrites plus CMS/admin navigation that pointed at those endpoints.
 

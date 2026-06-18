@@ -75,7 +75,7 @@ function LoginForm() {
               name="email"
               type="email"
               required
-              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
+              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
               autoComplete="email"
             />
           </div>
@@ -86,7 +86,7 @@ function LoginForm() {
               name="password"
               type="password"
               required
-              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
+              className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
               autoComplete="current-password"
             />
           </div>

@@ -26,6 +26,7 @@ export default async function SocialPage() {
       {links.length > 0 && (
         <div>
           <h2 className="text-sm font-medium text-zinc-400 mb-4">Existing Links</h2>
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-800 text-zinc-400">
@@ -48,6 +49,7 @@ export default async function SocialPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>

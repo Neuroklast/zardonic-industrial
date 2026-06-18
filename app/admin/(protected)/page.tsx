@@ -67,7 +67,7 @@ export default async function AdminDashboard() {
   return (
     <div>
       <h1 className="text-xl font-bold mb-6">Dashboard</h1>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
         {COUNT_SECTIONS.map((section) => (
           <Link
             key={section.href}
@@ -79,7 +79,7 @@ export default async function AdminDashboard() {
           </Link>
         ))}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
         {LINK_SECTIONS.map((item) => (
           <Link
             key={item.href}

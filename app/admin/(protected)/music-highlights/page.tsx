@@ -30,6 +30,7 @@ export default async function MusicHighlightsPage() {
       {items.length === 0 ? (
         <p className="text-zinc-400 text-sm">No music highlights yet.</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-zinc-400">
@@ -71,6 +72,7 @@ export default async function MusicHighlightsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )

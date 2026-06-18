@@ -67,7 +67,7 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
       href={item.href}
       onClick={onClick}
       className={[
-        'flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors',
+        'flex items-center gap-3 rounded px-3 py-3 text-sm font-medium transition-colors',
         active
           ? 'bg-red-900/30 text-red-400 border border-red-900/40'
           : 'text-zinc-400 hover:bg-zinc-800 hover:text-white border border-transparent',
@@ -105,7 +105,7 @@ export function AdminNav() {
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <Link
               href="/admin/logout"
-              className="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
+              className="flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
             >
               <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
               Sign Out
@@ -124,7 +124,7 @@ export function AdminNav() {
           aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={mobileOpen}
           onClick={() => setMobileOpen((v) => !v)}
-          className="text-zinc-400 hover:text-white p-1 rounded transition-colors"
+          className="inline-flex items-center justify-center text-zinc-400 hover:text-white p-2 min-h-[44px] min-w-[44px] rounded transition-colors"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <List className="h-5 w-5" />}
         </button>
@@ -154,7 +154,7 @@ export function AdminNav() {
             type="button"
             aria-label="Close menu"
             onClick={() => setMobileOpen(false)}
-            className="text-zinc-400 hover:text-white p-1 rounded transition-colors"
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white p-2 min-h-[44px] min-w-[44px] rounded transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -165,7 +165,7 @@ export function AdminNav() {
             <Link
               href="/admin/logout"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
+              className="flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
             >
               <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
               Sign Out
