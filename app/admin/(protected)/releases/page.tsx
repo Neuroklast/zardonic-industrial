@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
-import { deleteRelease } from '@/app/admin/_actions/releases'
+import { DeleteReleaseButton } from './DeleteReleaseButton'
 
 export default async function ReleasesPage() {
   let releases: Array<{ id: string; title: string; type: string; release_date: string | null }> = []
@@ -53,23 +53,7 @@ export default async function ReleasesPage() {
                   >
                     Edit
                   </Link>
-                  <form
-                    action={async () => {
-                      'use server'
-                      await deleteRelease(release.id)
-                    }}
-                    className="inline"
-                  >
-                    <button
-                      type="submit"
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                      onClick={(e) => {
-                        if (!confirm('Delete this release?')) e.preventDefault()
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </form>
+                  <DeleteReleaseButton releaseId={release.id} />
                 </td>
               </tr>
             ))}
