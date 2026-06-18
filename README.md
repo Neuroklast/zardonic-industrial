@@ -31,6 +31,7 @@ A fully customizable cyberpunk-themed artist website for **ZARDONIC**, now being
 - **Spotify Integration** — GDPR-compliant two-click embedded Spotify player with dynamic CI colour-theming (hue-rotate adapts to the active colour preset) and sharp industrial styling (no rounded corners)
 - **LLM Discoverability** — `public/llm.txt` served at `/llm.txt` with structured artist information, discography, genre context (drum & bass, metal DnB, mastering), and keywords so Gemini, Claude, Copilot, and ChatGPT surface ZARDONIC for relevant music industry queries
 - **iTunes & Bandsintown Sync** — Automatic release and tour date fetching with Odesli cross-platform links
+- **Release Detail Overlay** — Clicking a release card opens the existing cyberpunk animated detail overlay with cover art, links, and track metadata
 - **Responsive Gallery** — Swipeable image gallery with lightbox; Google Drive URL support via wsrv.nl proxy
 - **Social Connect** — Instagram, Facebook, Spotify, YouTube, SoundCloud, TikTok, and more
 - **News & Partners** — News section and partner/sponsors showcase
@@ -40,6 +41,7 @@ A fully customizable cyberpunk-themed artist website for **ZARDONIC**, now being
 
 ### Admin CMS
 Access the admin at `/admin/login` using Supabase Auth; protected admin routes require an authenticated `profiles.role = admin` session.
+Middleware now tolerates transient edge-side `profiles` lookup failures right after login to avoid false-positive redirect loops; non-admin roles are still blocked when a profile is definitively resolved.
 
 - **Section Visibility** — Show/hide any section (Bio, Music, Gigs, Releases, Gallery, Connect, Credits)
 - **Theme Customization** — All 20+ colors, heading/body/mono fonts, and favicon uploads stored in R2

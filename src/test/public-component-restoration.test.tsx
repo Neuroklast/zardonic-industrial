@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GigsSection } from '@/app/_components/public/GigsSection'
@@ -84,6 +84,23 @@ describe('restored public homepage components', () => {
     expect(container.querySelectorAll('.cyber-card')).toHaveLength(9)
     fireEvent.click(screen.getByRole('button', { name: /^ep$/i }))
     expect(screen.getAllByRole('link', { name: /on spotify/i })).toHaveLength(4)
+  })
+
+  it('calls release click handler when a release card is selected', () => {
+    const onReleaseClick = vi.fn()
+    const release = {
+      id: 'release-click',
+      title: 'Clickable Release',
+      type: 'single',
+      release_date: '2026-01-01',
+      coverUrl: null,
+      streamingLinks: [{ platform: 'spotify', url: 'https://example.com/click' }],
+    }
+
+    render(<ReleasesSection releases={[release]} onReleaseClick={onReleaseClick} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /open release details for clickable release/i }))
+    expect(onReleaseClick).toHaveBeenCalledWith(release)
   })
 
   it('restores gigs cards and credits logo grids', () => {

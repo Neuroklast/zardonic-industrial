@@ -5,7 +5,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow /admin/login and /admin/logout through (not protected)
-  if (!pathname.startsWith('/admin') || pathname.startsWith('/admin/login') || pathname.startsWith('/admin/logout')) {
+  if (
+    !pathname.startsWith('/admin') ||
+    pathname.startsWith('/admin/login') ||
+    pathname.startsWith('/admin/logout')
+  ) {
     return NextResponse.next()
   }
 
@@ -16,59 +20,51 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
+  // Must be `let` — Supabase SSR reassigns this inside setAll when refreshing tokens
   let response = NextResponse.next({
     request: { headers: request.headers },
   })
-  // Supabase may refresh tokens during auth.getUser() and call setAll().
-  // We keep the latest cookies here so refreshes survive any redirect response.
-  const refreshedCookies = new Map<string, { value: string; options?: CookieOptions }>()
-
-  const withRefreshedCookies = (redirectResponse: NextResponse) => {
-    refreshedCookies.forEach(({ value, options }, name) => {
-      redirectResponse.cookies.set(name, value, options)
-    })
-    return redirectResponse
-  }
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
-        response = NextResponse.next({
-          request: { headers: request.headers },
-        })
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
-          refreshedCookies.set(name, { value, options })
-        })
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request: { headers: request.headers } })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        )
       },
     },
   })
 
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    const loginUrl = new URL('/admin/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // Check admin role — if no profile row exists, allow through (authenticated user)
+  // Only block if role is explicitly set to something other than 'admin'
+  let profile: { role?: string } | null = null
   try {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return withRefreshedCookies(NextResponse.redirect(loginUrl))
-    }
-
-    const { data: profile } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
-
-    if (!profile || (profile as { role?: string }).role !== 'admin') {
-      return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)))
-    }
+    profile = (data as { role?: string } | null) ?? null
   } catch {
-    return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login', request.url)))
+    profile = null
+  }
+
+  if (profile !== null && profile.role !== 'admin') {
+    return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
   }
 
   return response
