@@ -20,9 +20,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  // We build ONE mutable response object. Supabase's setAll may be called
-  // during auth.getUser() to refresh tokens — all cookie writes go here.
-  const response = NextResponse.next({
+  // Must be `let` — Supabase SSR reassigns this inside setAll when refreshing tokens
+  let response = NextResponse.next({
     request: { headers: request.headers },
   })
 
@@ -30,58 +29,42 @@ export async function middleware(request: NextRequest) {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
-        // Write refreshed cookies into the request (for downstream reads)
-        // and into the response (so the browser receives them).
-        cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value)
-          response.cookies.set(name, value, options)
-        })
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request: { headers: request.headers } })
+        cookiesToSet.forEach(({ name, value, options }) =>
+          response.cookies.set(name, value, options),
+        )
       },
     },
   })
 
-  // Helper: copy any already-set cookies from `response` onto a redirect.
-  const withRefreshedCookies = (redirectResponse: NextResponse): NextResponse => {
-    response.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value)
-    })
-    return redirectResponse
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser()
+
+  if (authError || !user) {
+    const loginUrl = new URL('/admin/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
   }
 
+  // Check admin role — if no profile row exists, allow through (authenticated user)
+  // Only block if role is explicitly set to something other than 'admin'
+  let profile: { role?: string } | null = null
   try {
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser()
-
-    if (authError || !user) {
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return withRefreshedCookies(NextResponse.redirect(loginUrl))
-    }
-
-    // Check admin role in profiles table.
-    // If the row is missing (null), we allow through — the user is authenticated
-    // and may not have a profile row yet. Only block if role is explicitly NOT 'admin'.
-    let profile: { role?: string } | null = null
-    try {
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-      profile = (data as { role?: string } | null) ?? null
-    } catch {
-      profile = null
-    }
-
-    if (profile !== null && profile.role !== 'admin') {
-      return withRefreshedCookies(
-        NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)),
-      )
-    }
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    profile = (data as { role?: string } | null) ?? null
   } catch {
-    return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login', request.url)))
+    profile = null
+  }
+
+  if (profile !== null && profile.role !== 'admin') {
+    return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
   }
 
   return response
