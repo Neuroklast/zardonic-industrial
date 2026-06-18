@@ -1,20 +1,51 @@
 'use client'
 
-import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useState, type FormEvent } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabaseClient'
 
 function LoginForm() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
-  const redirectTo = searchParams.get('redirect') ?? '/admin'
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(
-    errorParam === 'invalid' ? 'Invalid email or password.' : null,
-  )
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit() {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setPending(true)
     setError(null)
+
+    const formData = new FormData(event.currentTarget)
+    const emailValue = formData.get('email')
+    const passwordValue = formData.get('password')
+
+    if (
+      typeof emailValue !== 'string' ||
+      emailValue.trim() === '' ||
+      typeof passwordValue !== 'string' ||
+      passwordValue === ''
+    ) {
+      setError('Email and password are required.')
+      setPending(false)
+      return
+    }
+
+    const email = emailValue.trim()
+    const password = passwordValue
+    const redirectTo = searchParams.get('redirect') ?? '/admin'
+    const supabase = createClient()
+
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (authError) {
+      setError(authError.message)
+      setPending(false)
+      return
+    }
+
+    router.push(redirectTo)
+    router.refresh()
   }
 
   return (
@@ -36,8 +67,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form method="POST" action="/admin/login/action" onSubmit={handleSubmit} className="space-y-4">
-          <input type="hidden" name="redirectTo" value={redirectTo} />
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>
             <input
