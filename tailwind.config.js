@@ -111,6 +111,9 @@ const defaultTheme = {
       body: ["var(--font-size-body)", { lineHeight: "1.6" }],
       "body-sm": ["var(--font-size-small)", { lineHeight: "1.5" }],
     },
+    screens: {
+      xs: "480px",
+    },
   },
   spacing: {
     px: "var(--size-px)",
