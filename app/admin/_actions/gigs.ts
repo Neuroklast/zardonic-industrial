@@ -69,3 +69,11 @@ export async function deleteGig(id: string) {
   revalidatePath('/admin/gigs')
   return { success: true }
 }
+
+export async function toggleGigVisibility(id: string, active: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('gigs').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/gigs')
+  return { success: true }
+}
