@@ -1,79 +1,75 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const {
-  mockPush,
-  mockRefresh,
-  mockSearchParams,
-  mockSignInWithPassword,
-  mockCreateClient,
-} = vi.hoisted(() => ({
-  mockPush: vi.fn(),
-  mockRefresh: vi.fn(),
+const { mockSearchParams } = vi.hoisted(() => ({
   mockSearchParams: vi.fn(),
-  mockSignInWithPassword: vi.fn(),
-  mockCreateClient: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: mockPush,
-    refresh: mockRefresh,
-  }),
   useSearchParams: () => mockSearchParams(),
 }))
 
-vi.mock('@/lib/supabaseClient', () => ({
-  createClient: mockCreateClient,
-}))
+import LoginForm from '@/app/admin/login/_components/LoginForm'
 
-import AdminLoginPage from '@/app/admin/login/page'
-
-describe('AdminLoginPage', () => {
+describe('LoginForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSearchParams.mockReturnValue(new URLSearchParams())
-    mockCreateClient.mockReturnValue({
-      auth: {
-        signInWithPassword: mockSignInWithPassword,
-      },
-    })
   })
 
-  it('signs in with the browser client and navigates to the redirect target', async () => {
+  it('renders email and password fields with a sign-in button', () => {
+    render(<LoginForm />)
+
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
+  })
+
+  it('posts natively to /admin/login/submit', () => {
+    render(<LoginForm />)
+    const form = screen.getByRole('button', { name: 'Sign In' }).closest('form')
+    expect(form).toHaveAttribute('method', 'POST')
+    expect(form).toHaveAttribute('action', '/admin/login/submit')
+  })
+
+  it('includes a hidden redirectTo field defaulting to /admin', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams())
+    render(<LoginForm />)
+    const hidden = document.querySelector<HTMLInputElement>('input[name="redirectTo"]')
+    expect(hidden).not.toBeNull()
+    expect(hidden?.value).toBe('/admin')
+  })
+
+  it('uses the redirect query param as the redirectTo value', () => {
     mockSearchParams.mockReturnValue(new URLSearchParams('redirect=%2Fadmin%2Freleases'))
-    mockSignInWithPassword.mockResolvedValue({ error: null })
-
-    render(<AdminLoginPage />)
-
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'admin@example.com' } })
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'super-secret' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
-
-    await waitFor(() => {
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: 'admin@example.com',
-        password: 'super-secret',
-      })
-    })
-    expect(mockPush).toHaveBeenCalledWith('/admin/releases')
-    expect(mockRefresh).toHaveBeenCalled()
+    render(<LoginForm />)
+    const hidden = document.querySelector<HTMLInputElement>('input[name="redirectTo"]')
+    expect(hidden?.value).toBe('/admin/releases')
   })
 
-  it('shows the Supabase error message and does not navigate on failed sign-in', async () => {
-    mockSignInWithPassword.mockResolvedValue({
-      error: { message: 'Invalid login credentials' },
-    })
+  it('shows the forbidden error message when error=forbidden is in the URL', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams('error=forbidden'))
+    render(<LoginForm />)
+    expect(screen.getByText(/access denied/i)).toBeInTheDocument()
+  })
 
-    render(<AdminLoginPage />)
+  it('shows the config error message when error=config is in the URL', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams('error=config'))
+    render(<LoginForm />)
+    expect(screen.getByText(/supabase is not configured/i)).toBeInTheDocument()
+  })
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'admin@example.com' } })
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrong-password' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+  it('shows the msg param as auth error text', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams('msg=Invalid+login+credentials'))
+    render(<LoginForm />)
+    expect(screen.getByText('Invalid login credentials')).toBeInTheDocument()
+  })
 
-    expect(await screen.findByText('Invalid login credentials')).toBeInTheDocument()
-    expect(mockPush).not.toHaveBeenCalled()
-    expect(mockRefresh).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: 'Sign In' })).toBeEnabled()
+  it('does not show msg when error=forbidden is set', () => {
+    mockSearchParams.mockReturnValue(new URLSearchParams('error=forbidden&msg=Invalid+login+credentials'))
+    render(<LoginForm />)
+    expect(screen.queryByText('Invalid login credentials')).not.toBeInTheDocument()
+    expect(screen.getByText(/access denied/i)).toBeInTheDocument()
   })
 })
+

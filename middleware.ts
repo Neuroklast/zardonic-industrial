@@ -77,7 +77,11 @@ export async function middleware(request: NextRequest) {
   }
 
   if (profile !== null && profile.role !== 'admin') {
-    return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
+    const forbiddenRedirect = NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
+    response.cookies.getAll().forEach((cookie) => {
+      forbiddenRedirect.cookies.set(cookie.name, cookie.value)
+    })
+    return forbiddenRedirect
   }
 
   return response
