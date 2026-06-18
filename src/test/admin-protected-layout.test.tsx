@@ -1,15 +1,15 @@
 import type { ReactElement } from 'react'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 
-const { mockCreateClient, mockRedirect } = vi.hoisted(() => ({
-  mockCreateClient: vi.fn(),
+const { mockCreateActionClient, mockRedirect } = vi.hoisted(() => ({
+  mockCreateActionClient: vi.fn(),
   mockRedirect: vi.fn((path: string) => {
     throw new Error(`NEXT_REDIRECT:${path}`)
   }),
 }))
 
 vi.mock('@/lib/supabaseServer', () => ({
-  createClient: mockCreateClient,
+  createActionClient: mockCreateActionClient,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -29,7 +29,7 @@ describe('ProtectedAdminLayout', () => {
 
   it('renders without redirect when middleware-authenticated user exists', async () => {
     const mockFrom = vi.fn()
-    mockCreateClient.mockResolvedValue({
+    mockCreateActionClient.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: { id: 'admin-user' } },
@@ -49,7 +49,7 @@ describe('ProtectedAdminLayout', () => {
   })
 
   it('redirects to login when fallback user lookup fails', async () => {
-    mockCreateClient.mockResolvedValue({
+    mockCreateActionClient.mockResolvedValue({
       auth: {
         getUser: vi.fn().mockResolvedValue({
           data: { user: null },
@@ -67,7 +67,7 @@ describe('ProtectedAdminLayout', () => {
   })
 
   it('redirects with config error when supabase client creation fails', async () => {
-    mockCreateClient.mockRejectedValue(new Error('missing env'))
+    mockCreateActionClient.mockRejectedValue(new Error('missing env'))
 
     await expect(
       ProtectedAdminLayout({
