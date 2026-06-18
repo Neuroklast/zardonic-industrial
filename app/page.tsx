@@ -16,6 +16,8 @@ import { NewsletterSection } from './_components/public/NewsletterSection'
 import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
+import { SocialSection } from './_components/public/SocialSection'
+import { SpotifySection } from './_components/public/SpotifySection'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -45,7 +47,7 @@ interface CommerceItemRow {
   image_storage_path: string | null; image_url: string | null; external_url: string | null
 }
 interface GalleryItemRow {
-  id: string; title: string
+  id: string; alt: string | null
   storage_path: string | null; image_url: string | null
 }
 interface SocialRow { id: string; platform: string; url: string; label: string | null }
@@ -76,7 +78,7 @@ async function fetchAll() {
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
-      supabase.from('gallery').select('id, title, storage_path, image_url').order('display_order', { ascending: true }),
+      supabase.from('gallery').select('id, alt, storage_path, image_url').order('display_order', { ascending: true }),
       supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
     ])
 
@@ -120,11 +122,13 @@ const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'gallery',          label: 'Gallery',            visible: true, order: 3  },
   { id: 'music-highlights', label: 'Music Highlights',   visible: true, order: 4  },
   { id: 'releases',         label: 'Discography',        visible: true, order: 5  },
-  { id: 'merchandise',      label: 'Merchandise',        visible: true, order: 6  },
-  { id: 'soundpacks',       label: 'Soundpacks',         visible: true, order: 7  },
-  { id: 'gigs',             label: 'Events',             visible: true, order: 8  },
-  { id: 'newsletter',       label: 'Newsletter',         visible: true, order: 9  },
-  { id: 'contact',          label: 'Contact',            visible: true, order: 10 },
+  { id: 'social',           label: 'Connect',            visible: true, order: 6  },
+  { id: 'spotify',          label: 'Music Stream',       visible: true, order: 7  },
+  { id: 'merchandise',      label: 'Merchandise',        visible: true, order: 8  },
+  { id: 'soundpacks',       label: 'Soundpacks',         visible: true, order: 9  },
+  { id: 'gigs',             label: 'Events',             visible: true, order: 10 },
+  { id: 'newsletter',       label: 'Newsletter',         visible: true, order: 11 },
+  { id: 'contact',          label: 'Contact',            visible: true, order: 12 },
 ]
 
 function parseSections(raw: unknown): SectionConfig[] {
@@ -180,6 +184,20 @@ export default async function HomePage() {
   const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
 
+  // Spotify: derive embed URI from social_links or site_config
+  const spotifyRow = social.find((s) => s.platform.toLowerCase() === 'spotify')
+  const spotifyUri = (() => {
+    const url = spotifyRow?.url ?? ''
+    if (!url) return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
+    try {
+      const { hostname, pathname } = new URL(url)
+      if (hostname !== 'open.spotify.com' && !hostname.endsWith('.spotify.com')) return url
+      const parts = pathname.replace(/^\//, '').split('/').filter((p) => !p.startsWith('intl-'))
+      if (parts.length >= 2 && parts[0] && parts[1]) return `spotify:${parts[0]}:${parts[1]}`
+    } catch { /* ignore */ }
+    return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
+  })()
+
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => ({
     id: r.id,
@@ -222,7 +240,7 @@ export default async function HomePage() {
   })
   const galleryItemMap = (row: GalleryItemRow) => ({
     id: row.id,
-    title: row.title,
+    alt: row.alt,
     imageUrl: resolveImageUrl(row.storage_path, row.image_url),
   })
 
@@ -303,6 +321,20 @@ export default async function HomePage() {
                 <div key="releases">
                   {divider}
                   <ReleasesSection releases={releaseItems} />
+                </div>
+              )
+            case 'social':
+              return social.length > 0 ? (
+                <div key="social">
+                  {divider}
+                  <SocialSection links={social} label={section.label} />
+                </div>
+              ) : null
+            case 'spotify':
+              return (
+                <div key="spotify">
+                  {divider}
+                  <SpotifySection uri={spotifyUri} label={section.label} />
                 </div>
               )
             case 'merchandise':

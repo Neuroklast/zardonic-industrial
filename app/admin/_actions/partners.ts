@@ -65,10 +65,10 @@ export async function deletePartner(id: string) {
   }, 'Unable to delete partner.')
 }
 
-export async function togglePartnerVisibility(id: string, visible: boolean) {
+export async function togglePartnerVisibility(id: string, active: boolean) {
   return runAdminAction(async () => {
     const supabase = createAdminClient()
-    const { error } = await supabase.from('partners').update({ visible }).eq('id', id)
+    const { error } = await supabase.from('partners').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')

@@ -5,7 +5,7 @@ import { MagnifyingGlassPlus } from '@phosphor-icons/react'
 
 interface GalleryItem {
   id: string
-  title: string
+  alt: string | null
   imageUrl: string | null
 }
 
@@ -53,7 +53,7 @@ export function GallerySection({ items }: GallerySectionProps) {
                 >
                   <img
                     src={item.imageUrl ?? ''}
-                    alt={item.title}
+                    alt={item.alt ?? ''}
                     className="hover-chromatic-image h-full w-full object-cover"
                     loading="lazy"
                     decoding="async"
