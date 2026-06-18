@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Admin login redirect loop — `@supabase/ssr` 0.12.x `setAll` headers**: `@supabase/ssr` ≥ 0.12 passes a second `headers` argument to the `setAll` cookie callback containing `Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0`, `Expires: 0`, and `Pragma: no-cache`. Without forwarding these headers, Vercel Edge and other CDNs can cache the 303 redirect response from the login Route Handler and serve it without `Set-Cookie` headers, so the browser never receives the session cookies and the middleware perpetually sees no session. Both `app/admin/login/submit/route.ts` and `middleware.ts` now accept and apply the `headers` second argument in their `setAll` callbacks. Removed the now-unused `type CookieOptions` import from both files. Updated tests in `admin-login-submit-route.test.ts` and `admin-middleware.test.ts` to pass headers through the mock and assert that the response carries the expected `Cache-Control` / `Expires` / `Pragma` headers.
 ### Added
 - **Mobile-first optimization — `xs: 480px` Tailwind breakpoint**: Added `extend.screens.xs = '480px'` to `tailwind.config.js`, enabling responsive classes like `xs:grid-cols-2` for small phones between 320–480px.
 - **AdminNav WCAG 2.1 AA touch targets**: Increased nav link padding from `py-2` to `py-3` (~44px hit area) and the hamburger/close buttons to `inline-flex p-2 min-h-[44px] min-w-[44px]` so all interactive elements meet the 44×44px minimum.

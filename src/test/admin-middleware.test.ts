@@ -2,15 +2,18 @@ import { describe, expect, it, beforeEach, vi } from 'vitest'
 import type { NextRequest } from 'next/server'
 
 type CookieToSet = { name: string; value: string; options?: Record<string, unknown> }
+type AuthHeaders = Record<string, string>
 
 const {
   mockGetUser,
   mockSingle,
   mockCookiesToSet,
+  mockAuthHeaders,
 } = vi.hoisted(() => ({
   mockGetUser: vi.fn(),
   mockSingle: vi.fn(),
   mockCookiesToSet: [] as CookieToSet[],
+  mockAuthHeaders: {} as AuthHeaders,
 }))
 
 vi.mock('@supabase/ssr', () => ({
@@ -18,12 +21,12 @@ vi.mock('@supabase/ssr', () => ({
     (
       _url: string,
       _anonKey: string,
-      options: { cookies: { setAll: (cookiesToSet: CookieToSet[]) => void } },
+      options: { cookies: { setAll: (cookiesToSet: CookieToSet[], headers: AuthHeaders) => void } },
     ) => ({
       auth: {
         getUser: async () => {
           if (mockCookiesToSet.length > 0) {
-            options.cookies.setAll(mockCookiesToSet)
+            options.cookies.setAll(mockCookiesToSet, mockAuthHeaders)
           }
           return mockGetUser()
         },
@@ -58,6 +61,9 @@ describe('middleware admin auth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCookiesToSet.length = 0
+    for (const key of Object.keys(mockAuthHeaders)) {
+      delete mockAuthHeaders[key]
+    }
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
   })
@@ -157,5 +163,30 @@ describe('middleware admin auth', () => {
     const response = await middleware(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBeNull()
+  })
+
+  it('applies cache-control headers from @supabase/ssr to the response', async () => {
+    mockCookiesToSet.push({
+      name: 'sb-access-token',
+      value: 'refreshed-token',
+      options: { path: '/', httpOnly: false },
+    })
+    mockAuthHeaders['Cache-Control'] = 'private, no-cache, no-store, must-revalidate, max-age=0'
+    mockAuthHeaders['Expires'] = '0'
+    mockAuthHeaders['Pragma'] = 'no-cache'
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'admin-user' } },
+      error: null,
+    })
+    mockSingle.mockResolvedValue({ data: { role: 'admin' } })
+
+    const response = await middleware(createRequest('/admin/releases'))
+
+    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('cache-control')).toBe(
+      'private, no-cache, no-store, must-revalidate, max-age=0',
+    )
+    expect(response.headers.get('expires')).toBe('0')
+    expect(response.headers.get('pragma')).toBe('no-cache')
   })
 })
