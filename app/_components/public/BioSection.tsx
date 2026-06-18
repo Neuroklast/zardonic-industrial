@@ -10,6 +10,8 @@ interface BioSectionProps {
 
 export function BioSection({ content }: BioSectionProps) {
   const [expanded, setExpanded] = useState(false)
+  const hasContent = content.trim().length > 0
+  const displayContent = hasContent ? content : 'Biography coming soon.'
 
   return (
     <section
@@ -49,35 +51,37 @@ export function BioSection({ content }: BioSectionProps) {
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              {content}
+              {displayContent}
             </m.div>
           </div>
 
-          <m.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="mt-6"
-          >
-            <button
-              type="button"
-              onClick={() => setExpanded((value) => !value)}
-              className="cyber-border hover-glitch inline-flex items-center gap-2 px-4 py-2 font-mono"
+          {hasContent ? (
+            <m.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="mt-6"
             >
-              {expanded ? (
-                <>
-                  <CaretUp className="h-4 w-4" />
-                  Show Less
-                </>
-              ) : (
-                <>
-                  <CaretDown className="h-4 w-4" />
-                  Read More
-                </>
-              )}
-            </button>
-          </m.div>
+              <button
+                type="button"
+                onClick={() => setExpanded((value) => !value)}
+                className="cyber-border hover-glitch inline-flex items-center gap-2 px-4 py-2 font-mono"
+              >
+                {expanded ? (
+                  <>
+                    <CaretUp className="h-4 w-4" />
+                    Show Less
+                  </>
+                ) : (
+                  <>
+                    <CaretDown className="h-4 w-4" />
+                    Read More
+                  </>
+                )}
+              </button>
+            </m.div>
+          ) : null}
         </m.div>
       </div>
     </section>

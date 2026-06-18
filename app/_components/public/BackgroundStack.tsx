@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useEffect, useRef } from 'react'
 
 interface BackgroundStackProps {
   imageUrl?: string
@@ -41,6 +42,45 @@ export function BackgroundStack({
   backgroundType = 'matrix',
   imageOpacity = 0.6,
 }: BackgroundStackProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    let frameId: number | null = null
+
+    const syncToScroll = () => {
+      frameId = null
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = scrollableHeight > 0
+        ? Math.min(Math.max(window.scrollY / scrollableHeight, 0), 1)
+        : 0
+      const duration = Number.isFinite(video.duration) ? video.duration : 0
+
+      if (duration > 0) {
+        video.currentTime = progress * duration
+      }
+    }
+
+    const scheduleSync = () => {
+      if (frameId !== null) return
+      frameId = window.requestAnimationFrame(syncToScroll)
+    }
+
+    scheduleSync()
+    window.addEventListener('scroll', scheduleSync, { passive: true })
+    video.addEventListener('loadedmetadata', scheduleSync)
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId)
+      }
+      window.removeEventListener('scroll', scheduleSync)
+      video.removeEventListener('loadedmetadata', scheduleSync)
+    }
+  }, [videoUrl])
+
   return (
     <>
       {imageUrl ? (
@@ -59,11 +99,11 @@ export function BackgroundStack({
       {videoUrl ? (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 'var(--z-bg-animated)' }}>
           <video
+            ref={videoRef}
             className="h-full w-full object-cover"
-            autoPlay
             muted
-            loop
             playsInline
+            preload="auto"
             poster={imageUrl}
             aria-hidden="true"
           >

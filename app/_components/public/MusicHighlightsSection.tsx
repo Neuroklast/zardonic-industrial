@@ -97,20 +97,25 @@ interface MusicHighlightsSectionProps {
 }
 
 export function MusicHighlightsSection({ highlights }: MusicHighlightsSectionProps) {
-  if (highlights.length === 0) return null
   return (
     <SectionWrapper id="music" heading="Music Highlights">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {highlights.map((h) => (
-          <div key={h.id} className="flex flex-col gap-3">
-            <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
-            <p className="font-mono text-sm text-zinc-200">{h.title}</p>
-            {h.description && (
-              <p className="font-mono text-xs text-zinc-500">{h.description}</p>
-            )}
-          </div>
-        ))}
-      </div>
+      {highlights.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {highlights.map((h) => (
+            <div key={h.id} className="flex flex-col gap-3">
+              <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
+              <p className="font-mono text-sm text-zinc-200">{h.title}</p>
+              {h.description && (
+                <p className="font-mono text-xs text-zinc-500">{h.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="border border-zinc-800 bg-zinc-950/50 p-12 text-center font-mono text-sm uppercase tracking-[0.3em] text-zinc-500">
+          Music highlights coming soon
+        </div>
+      )}
     </SectionWrapper>
   )
 }

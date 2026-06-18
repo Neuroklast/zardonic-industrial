@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`ts-node` and `dotenv` dev dependencies** — Required to run the migration script directly with `npm run migrate`.
 
 ### Fixed
+- **CSP / public homepage regressions** — aligned `vercel.json` CSP with Next.js hydration by allowing `'unsafe-inline'` in `script-src`, added `api/package.json` with `"type": "module"` so Vercel treats compiled `/api` functions as ESM, switched the App Router public background video to scroll-driven scrubbing instead of looping autoplay, kept the public bio/credits/gallery/music/releases/gigs sections visible with empty-state placeholders when Supabase returns no rows, and renamed `middleware.ts` to `proxy.ts` to remove the Next.js 16 build deprecation warning.
 - **Visual design regression after Next.js migration** — restored the exact pre-migration look of the public site:
   - **HeroSection** now displays the Zardonic logo image with chromatic aberration glitch effects (`hero-logo-glitch`, `cyber2077-scan-build`) and framer-motion fade/slide animations instead of plain text.
   - **SiteNav** now shows the Zardonic logo image with `logo-glitch` and `hover-chromatic-image` effects instead of a plain text link.
