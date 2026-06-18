@@ -12,12 +12,9 @@ function LoginForm() {
     errorParam === 'invalid' ? 'Invalid email or password.' : null,
   )
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit() {
     setPending(true)
     setError(null)
-    // Native submit — browser POSTs to the Route Handler which sets cookies then redirects
-    // Do NOT call e.preventDefault() so the full-page POST goes through
-    void e
   }
 
   return (
@@ -39,7 +36,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form method="POST" action="/admin/login" onSubmit={handleSubmit} className="space-y-4">
+        <form method="POST" action="/admin/login/action" onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div>
             <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>
