@@ -470,6 +470,27 @@ export default function BackgroundTab({
             />
           </div>
 
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Label className="font-mono text-xs">Brightness</Label>
+              <span className="font-mono text-xs text-muted-foreground">
+                {Math.round((anim.backgroundVideoBrightness ?? 1) * 100)}%
+              </span>
+            </div>
+            <Slider
+              value={[(anim.backgroundVideoBrightness ?? 1) * 100]}
+              min={0}
+              max={200}
+              step={5}
+              onValueChange={([v]) => updateAnim({ backgroundVideoBrightness: v / 100 })}
+            />
+            <div className="flex justify-between font-mono text-[9px] text-muted-foreground/70">
+              <span>0% (black)</span>
+              <span>100% (normal)</span>
+              <span>200% (bright)</span>
+            </div>
+          </div>
+
           {/* Mobile Video Upload */}
           <div className="space-y-2">
             <Label className="font-mono text-xs text-muted-foreground">Mobile Video Upload (optional)</Label>
