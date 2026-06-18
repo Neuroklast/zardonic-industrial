@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, lazy } from 'react'
+import dynamic from 'next/dynamic'
 
 interface BackgroundStackProps {
   imageUrl?: string
@@ -9,9 +9,10 @@ interface BackgroundStackProps {
   imageOpacity?: number
 }
 
-const MatrixRain = lazy(() => import('@/components/MatrixRain'))
-const CircuitBackground = lazy(() =>
-  import('@/components/CircuitBackground').then((module) => ({ default: module.CircuitBackground })),
+const MatrixRain = dynamic(() => import('@/components/MatrixRain'), { ssr: false })
+const CircuitBackground = dynamic(
+  () => import('@/components/CircuitBackground').then((module) => ({ default: module.CircuitBackground })),
+  { ssr: false },
 )
 
 function AnimatedLayer({
@@ -25,13 +26,11 @@ function AnimatedLayer({
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 'var(--z-bg-animated)' }}>
-      <Suspense fallback={null}>
-        {backgroundType === 'circuit' ? (
-          <CircuitBackground />
-        ) : (
-          <MatrixRain transparent={hasImage} />
-        )}
-      </Suspense>
+      {backgroundType === 'circuit' ? (
+        <CircuitBackground />
+      ) : (
+        <MatrixRain transparent={hasImage} />
+      )}
     </div>
   )
 }

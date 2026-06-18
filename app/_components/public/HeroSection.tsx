@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, type MouseEvent } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { m, useReducedMotion } from 'framer-motion'
 
 const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -47,7 +47,7 @@ export function HeroSection({
       data-theme-color="foreground primary"
     >
       {backgroundImageUrl && (
-        <motion.div
+        <m.div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
             backgroundImage: `url(${backgroundImageUrl})`,
@@ -61,14 +61,14 @@ export function HeroSection({
 
       <div className="absolute inset-0 noise-effect" aria-hidden="true" />
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
         className="relative px-4 text-center"
         style={{ zIndex: 'var(--z-content)' }}
       >
-        <motion.div
+        <m.div
           className="relative mb-6"
           initial={{ opacity: 1 }}
           animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
@@ -93,10 +93,10 @@ export function HeroSection({
               className="hero-logo-b absolute inset-0 h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
             />
           </div>
-        </motion.div>
+        </m.div>
 
         {tagline ? (
-          <motion.p
+          <m.p
             initial={{ opacity: 0, y: 16 }}
             animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
             transition={{
@@ -107,10 +107,10 @@ export function HeroSection({
             className="mx-auto max-w-2xl font-mono text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
           >
             {tagline}
-          </motion.p>
+          </m.p>
         ) : null}
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{
@@ -134,8 +134,8 @@ export function HeroSection({
           >
             <span className="hover-chromatic">TOUR DATES</span>
           </a>
-        </motion.div>
-      </motion.div>
+        </m.div>
+      </m.div>
     </section>
   )
 }
