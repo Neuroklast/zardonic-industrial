@@ -51,7 +51,10 @@ export async function requireAdmin(): Promise<void> {
   }
 }
 
-export function formatAdminActionError(error: unknown, fallback = 'The admin request could not be completed.'): string {
+export async function formatAdminActionError(
+  error: unknown,
+  fallback = 'The admin request could not be completed.',
+): Promise<string> {
   if (error instanceof Error) {
     return error.message || fallback
   }
@@ -71,6 +74,6 @@ export async function runAdminAction<T extends object>(
     await requireAdmin()
     return await action()
   } catch (error) {
-    return { error: formatAdminActionError(error, fallback) }
+    return { error: await formatAdminActionError(error, fallback) }
   }
 }
