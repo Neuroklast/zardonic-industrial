@@ -63,8 +63,8 @@ Access the admin at `/admin/login` using Supabase Auth; protected admin routes r
 - **Security Stack** — Honeytokens, attacker profiling, threat scoring, blocklist, rate limiting
 
 ### Data Persistence
-- **Upstash Redis** — Sessions, rate limiting, analytics, admin settings (24 h TTL)
-- **Vercel Blob** — Video and media file storage (client-side upload via `@vercel/blob/client`)
+- **Upstash Redis** — Rate limiting, analytics, and legacy data endpoints that remain outside the App Router
+- **Cloudflare R2** — Admin-uploaded media and favicon assets via signed uploads
 - **IndexedDB** — Image pre-caching during loading screen
 - **localStorage Fallback** — Graceful fallback when Redis is unavailable
 

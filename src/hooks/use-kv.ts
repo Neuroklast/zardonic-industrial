@@ -4,7 +4,7 @@ import { API_ROUTES } from '@/lib/api-routes'
 /**
  * Custom KV hook backed by Vercel KV API routes, with localStorage fallback for local dev.
  * Uses /api/kv (Vercel KV) for persistence, with localStorage fallback for local dev.
- * Auth is handled via HttpOnly session cookies (set by /api/auth).
+ * Auth is handled by the active admin session protecting write access on the server.
  *
  * Returns [value, updateValue, loaded, refetch] — `loaded` is true once the initial
  * KV/localStorage/default fetch has completed so consumers can avoid acting on
