@@ -9,6 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Visual design regression after Next.js migration** — restored the exact pre-migration look of the public site:
+  - **HeroSection** now displays the Zardonic logo image with chromatic aberration glitch effects (`hero-logo-glitch`, `cyber2077-scan-build`) and framer-motion fade/slide animations instead of plain text.
+  - **SiteNav** now shows the Zardonic logo image with `logo-glitch` and `hover-chromatic-image` effects instead of a plain text link.
+  - **SiteBackground** now renders the circuit board animated background (`CircuitBackground`) as a parallax overlay on top of the static background image, matching the default `circuit` animation type from the old app.
+
+### Added
+- **`app/_components/public/CircuitBackground.tsx`** — port of `src/components/CircuitBackground.tsx` adapted for Next.js App Router (client component, uses `m` from framer-motion within the existing `LazyMotion` context; three parallax depth layers with DOM-injected data-pulse animations).
+
+### Fixed
 - **Public-site typography regression after Next.js migration** — `app/layout.tsx` now loads **Orbitron**, **Share Tech Mono**, and **Space Mono** in one Google Fonts request, restoring heading/body/mono font availability expected by CSS custom-property fallbacks.
 - **Theme token import regression** — `app/globals.css` now imports `styles/theme.css` before token/base/effect/component/layout styles, restoring Radix color variables, spacing scale (`--size-*`), radius tokens, and dependent Tailwind utilities.
 - **Legacy `@/App` type imports** — replaced all remaining `import type { SiteData } from '@/App'` usages across both `components/` and `src/components/` trees with `@/lib/app-types`, resolving Next.js/Vercel TypeScript module-resolution failures.
