@@ -9,22 +9,36 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const response = NextResponse.next()
-
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !anonKey) {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
+    return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
+  }
+
+  let response = NextResponse.next({
+    request: { headers: request.headers },
+  })
+  const refreshedCookies = new Map<string, { value: string; options?: CookieOptions }>()
+
+  const withRefreshedCookies = (redirectResponse: NextResponse) => {
+    refreshedCookies.forEach(({ value, options }, name) => {
+      redirectResponse.cookies.set(name, value, options)
+    })
+    return redirectResponse
   }
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({
+          request: { headers: request.headers },
+        })
         cookiesToSet.forEach(({ name, value, options }) => {
-          request.cookies.set(name, value)
           response.cookies.set(name, value, options)
+          refreshedCookies.set(name, { value, options })
         })
       },
     },
@@ -39,7 +53,7 @@ export async function middleware(request: NextRequest) {
     if (authError || !user) {
       const loginUrl = new URL('/admin/login', request.url)
       loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
+      return withRefreshedCookies(NextResponse.redirect(loginUrl))
     }
 
     const { data: profile } = await supabase
@@ -49,10 +63,10 @@ export async function middleware(request: NextRequest) {
       .single()
 
     if (!profile || (profile as { role?: string }).role !== 'admin') {
-      return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
+      return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)))
     }
   } catch {
-    return NextResponse.redirect(new URL('/admin/login', request.url))
+    return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login', request.url)))
   }
 
   return response
