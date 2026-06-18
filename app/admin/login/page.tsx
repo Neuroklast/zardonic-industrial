@@ -17,8 +17,22 @@ function LoginForm() {
     setError(null)
 
     const formData = new FormData(event.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    const emailValue = formData.get('email')
+    const passwordValue = formData.get('password')
+
+    if (
+      typeof emailValue !== 'string' ||
+      emailValue.trim() === '' ||
+      typeof passwordValue !== 'string' ||
+      passwordValue === ''
+    ) {
+      setError('Email and password are required.')
+      setPending(false)
+      return
+    }
+
+    const email = emailValue.trim()
+    const password = passwordValue
     const redirectTo = searchParams.get('redirect') ?? '/admin'
     const supabase = createClient()
 
