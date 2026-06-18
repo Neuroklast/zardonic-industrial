@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Appearance favicon management**: `AppearanceEditor` now includes favicon uploads (`.ico`, `.png`, `.svg`) backed by the existing R2 upload flow, and `app/layout.tsx` now reads `site_config.appearance.faviconUrl` into App Router metadata so the configured icon is emitted site-wide.
 
 ### Fixed
-- **Admin middleware not running**: `proxy.ts` was never executed by Next.js because the file was not named `middleware.ts`. Created `middleware.ts` in the project root with the correct `export async function middleware(...)` default name and added `/admin/logout` to the pass-through list. `proxy.ts` is now a stub with an explanatory comment.
+- **Next.js 16 middleware/proxy conflict**: consolidated the full admin-auth guard directly in root `middleware.ts` and removed `proxy.ts` entirely, resolving the Next.js 16 build error that occurs when both files exist.
 - **Releases admin page crash (Digest 54827066)**: `app/admin/(protected)/releases/page.tsx` is a Server Component but had an `onClick` handler on the delete `<button>`, causing a React runtime error ("Event handlers cannot be passed to Client Component props"). Extracted `DeleteReleaseButton` into a dedicated `'use client'` component with `useTransition` for pending-state feedback.
 
 ### Added
