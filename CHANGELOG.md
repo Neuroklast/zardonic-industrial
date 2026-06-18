@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **`vercel.json` CSP blocks Next.js hydration**: Added `'unsafe-inline'` to `script-src` in the Content-Security-Policy header so Next.js inline scripts can execute and the page hydrates correctly.
+- **`vercel.json` `/admin` rewrite blocks admin panel**: Removed the `{ "source": "/admin/:p*", "destination": "/api/denied?_src=/admin/:p*" }` rewrite that was redirecting all admin traffic to `/api/denied`. The admin panel is protected by `middleware.ts` and does not need this rewrite.
+
 ### Added
 - **`scripts/migrate-site-data.ts`** — TypeScript migration script that inserts all Zardonic band data (bio, gigs, releases, social links, partners, site_config) into Supabase using the service role key to bypass RLS. Run with `npm run migrate`.
 - **`scripts/MIGRATION.md`** — Documentation for running the migration script, including setup requirements and table overview.
