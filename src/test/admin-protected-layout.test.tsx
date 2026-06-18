@@ -63,4 +63,15 @@ describe('ProtectedAdminLayout', () => {
     ).rejects.toThrow('NEXT_REDIRECT:/admin/login')
     expect(mockRedirect).toHaveBeenCalledWith('/admin/login')
   })
+
+  it('redirects with config error when supabase client creation fails', async () => {
+    mockCreateClient.mockRejectedValue(new Error('missing env'))
+
+    await expect(
+      ProtectedAdminLayout({
+        children: <div>secure content</div>,
+      }),
+    ).rejects.toThrow('NEXT_REDIRECT:/admin/login?error=config')
+    expect(mockRedirect).toHaveBeenCalledWith('/admin/login?error=config')
+  })
 })

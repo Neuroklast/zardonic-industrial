@@ -7,7 +7,13 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
+  let supabase: Awaited<ReturnType<typeof createClient>>
+  try {
+    supabase = await createClient()
+  } catch {
+    redirect('/admin/login?error=config')
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
