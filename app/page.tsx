@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
-import { SiteBackground } from './_components/public/SiteBackground'
+import { BackgroundStack } from './_components/public/BackgroundStack'
+import { GallerySection } from './_components/public/GallerySection'
+import { GlobalEffects } from './_components/public/GlobalEffects'
 import { SiteNav } from './_components/public/SiteNav'
 import { HeroSection } from './_components/public/HeroSection'
 import { BioSection } from './_components/public/BioSection'
@@ -38,9 +40,13 @@ interface PartnerRow {
 interface MusicHighlightRow {
   id: string; title: string; youtube_url: string; description: string | null
 }
-interface GalleryItemRow {
+interface CommerceItemRow {
   id: string; title: string
   image_storage_path: string | null; image_url: string | null; external_url: string | null
+}
+interface GalleryItemRow {
+  id: string; title: string
+  storage_path: string | null; image_url: string | null
 }
 interface SocialRow { id: string; platform: string; url: string; label: string | null }
 
@@ -58,6 +64,7 @@ async function fetchAll() {
       { data: musicRows },
       { data: merchRows },
       { data: soundpackRows },
+      { data: galleryRows },
       { data: socialRows },
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
@@ -68,6 +75,7 @@ async function fetchAll() {
       supabase.from('music_highlights').select('id, title, youtube_url, description').order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').order('display_order', { ascending: true }),
+      supabase.from('gallery').select('id, title, storage_path, image_url').order('display_order', { ascending: true }),
       supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
     ])
 
@@ -78,8 +86,9 @@ async function fetchAll() {
       releases: (releaseRows ?? []) as ReleaseRow[],
       partners: (partnerRows ?? []) as PartnerRow[],
       musicHighlights: (musicRows ?? []) as MusicHighlightRow[],
-      merch: (merchRows ?? []) as GalleryItemRow[],
-      soundpacks: (soundpackRows ?? []) as GalleryItemRow[],
+      merch: (merchRows ?? []) as CommerceItemRow[],
+      soundpacks: (soundpackRows ?? []) as CommerceItemRow[],
+      gallery: (galleryRows ?? []) as GalleryItemRow[],
       social: (socialRows ?? []) as SocialRow[],
     }
   } catch {
@@ -91,8 +100,9 @@ async function fetchAll() {
       releases: [] as ReleaseRow[],
       partners: [] as PartnerRow[],
       musicHighlights: [] as MusicHighlightRow[],
-      merch: [] as GalleryItemRow[],
-      soundpacks: [] as GalleryItemRow[],
+      merch: [] as CommerceItemRow[],
+      soundpacks: [] as CommerceItemRow[],
+      gallery: [] as GalleryItemRow[],
       social: [] as SocialRow[],
     }
   }
@@ -106,7 +116,7 @@ function getConfig(rows: SiteConfigRow[], key: string): Record<string, unknown> 
 export default async function HomePage() {
   const {
     configRows, bio, gigs, releases, partners,
-    musicHighlights, merch, soundpacks, social,
+    musicHighlights, merch, soundpacks, gallery, social,
   } = await fetchAll()
 
   const heroConfig = getConfig(configRows, 'hero')
@@ -123,6 +133,11 @@ export default async function HomePage() {
   const bgVideoPath = typeof bgConfig.video_storage_path === 'string' ? bgConfig.video_storage_path : null
   const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
   const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
+  const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
+  const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
+    ? rawBackgroundType
+    : 'matrix'
+  const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.6
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => ({
@@ -158,11 +173,16 @@ export default async function HomePage() {
       category: p.category,
     }))
 
-  const galleryItemMap = (row: GalleryItemRow) => ({
+  const commerceItemMap = (row: CommerceItemRow) => ({
     id: row.id,
     title: row.title,
     imageUrl: resolveImageUrl(row.image_storage_path, row.image_url),
     externalUrl: row.external_url,
+  })
+  const galleryItemMap = (row: GalleryItemRow) => ({
+    id: row.id,
+    title: row.title,
+    imageUrl: resolveImageUrl(row.storage_path, row.image_url),
   })
 
   // Gigs: split upcoming vs past
@@ -172,8 +192,13 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen text-white">
-      {/* Layered background (fixed, behind everything) */}
-      <SiteBackground imageUrl={backgroundUrl} videoUrl={backgroundVideoUrl} alt="Background" />
+      <GlobalEffects />
+      <BackgroundStack
+        imageUrl={backgroundUrl}
+        videoUrl={backgroundVideoUrl ?? undefined}
+        backgroundType={backgroundType}
+        imageOpacity={backgroundOpacity}
+      />
 
       {/* Fixed navigation */}
       <SiteNav />
@@ -184,8 +209,10 @@ export default async function HomePage() {
         <HeroSection
           headline={String(heroConfig.headline ?? 'ZARDONIC')}
           tagline={String(heroConfig.tagline ?? '')}
-          ctaLabel={String(heroConfig.ctaLabel ?? 'Listen Now')}
-          ctaUrl={String(heroConfig.ctaUrl ?? '#music')}
+          ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
+          ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
+          backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
+          backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
         />
 
         {bio && (
@@ -199,6 +226,13 @@ export default async function HomePage() {
           <>
             <SectionDivider />
             <CreditsSection credits={credits} endorsements={endorsements} />
+          </>
+        )}
+
+        {gallery.length > 0 && (
+          <>
+            <SectionDivider />
+            <GallerySection items={gallery.map(galleryItemMap)} />
           </>
         )}
 
@@ -220,7 +254,7 @@ export default async function HomePage() {
           <>
             <SectionDivider />
             <MerchandiseSection
-              items={merch.map(galleryItemMap)}
+              items={merch.map(commerceItemMap)}
               footerText={String(merchandiseConfig.footerText ?? '')}
             />
           </>
@@ -229,7 +263,7 @@ export default async function HomePage() {
         {soundpacks.length > 0 && (
           <>
             <SectionDivider />
-            <SoundpacksSection items={soundpacks.map(galleryItemMap)} />
+            <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
           </>
         )}
 
