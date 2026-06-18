@@ -17,6 +17,10 @@ vi.mock('@/lib/supabaseAdmin', () => ({
   }),
 }))
 
+vi.mock('@/app/admin/_actions/auth', () => ({
+  runAdminAction: async <T extends object>(action: () => Promise<T>) => action(),
+}))
+
 // ── Mock R2 upload ──────────────────────────────────────────────────────────
 vi.mock('@/app/admin/_actions/r2Upload', () => ({
   uploadBufferToR2: vi.fn().mockResolvedValue({
