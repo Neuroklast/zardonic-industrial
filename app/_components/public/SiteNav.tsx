@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+
+const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
 const NAV_LINKS = [
   { href: '#bio', label: 'Bio' },
@@ -17,15 +20,19 @@ export function SiteNav() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-[var(--z-nav)] border-b border-zinc-800/60 bg-black/60 backdrop-blur-sm"
+      className="fixed top-0 left-0 right-0 border-b border-zinc-800/60 bg-black/80 backdrop-blur-sm scanline-effect"
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-mono font-bold text-sm tracking-widest text-white hover:text-zinc-300 transition-colors"
-        >
-          ZARDONIC
+        <Link href="/" aria-label="Zardonic – Home" className="logo-glitch hover-chromatic-image">
+          <Image
+            src={LOGO_IMAGE}
+            alt="Zardonic"
+            width={120}
+            height={40}
+            className="h-9 w-auto object-contain brightness-110"
+            priority
+          />
         </Link>
 
         {/* Desktop nav */}
@@ -34,7 +41,7 @@ export function SiteNav() {
             <a
               key={l.href}
               href={l.href}
-              className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase"
+              className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase hover-chromatic"
             >
               {l.label}
             </a>
@@ -63,7 +70,7 @@ export function SiteNav() {
               key={l.href}
               href={l.href}
               onClick={() => setOpen(false)}
-              className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase"
+              className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase hover-chromatic"
             >
               {l.label}
             </a>
