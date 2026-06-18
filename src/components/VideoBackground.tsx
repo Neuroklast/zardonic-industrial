@@ -17,6 +17,8 @@ interface VideoBackgroundProps {
   fallbackImageUrl?: string
   /** Overall layer opacity applied to the video element only (0–1). Default: 1. */
   opacity?: number
+  /** CSS brightness filter applied to the video element (0–2). Default: 1 (unchanged). */
+  brightness?: number
   /** CSS object-fit for the video/image. Default: 'cover'. */
   fit?: 'cover' | 'contain' | 'fill' | 'none'
   /**
@@ -70,6 +72,7 @@ const VideoBackground = memo(function VideoBackground({
   mobileVideoUrl,
   fallbackImageUrl,
   opacity = 1,
+  brightness = 1,
   fit = 'cover',
   scrollMode = false,
 }: VideoBackgroundProps) {
@@ -191,6 +194,7 @@ const VideoBackground = memo(function VideoBackground({
             ...sharedMediaStyle,
             objectFit: fit,
             opacity,
+            filter: brightness !== 1 ? `brightness(${brightness})` : undefined,
             willChange: 'auto',
           }}
         />
@@ -213,6 +217,7 @@ const VideoBackground = memo(function VideoBackground({
           ...sharedMediaStyle,
           objectFit: fit,
           opacity,
+          filter: brightness !== 1 ? `brightness(${brightness})` : undefined,
           willChange: 'transform',
           transform: 'translateZ(0)',
         }}

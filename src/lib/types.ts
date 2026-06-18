@@ -116,6 +116,7 @@ export interface AnimationSettings {
   backgroundVideoUrl?: string
   backgroundVideoMobileUrl?: string
   backgroundVideoOpacity?: number
+  backgroundVideoBrightness?: number
   /** 'loop' = auto-playing looping video (default). 'scroll' = video playback driven by scroll position. */
   backgroundVideoMode?: 'loop' | 'scroll'
   /**
