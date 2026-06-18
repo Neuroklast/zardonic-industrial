@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Admin middleware not running**: `proxy.ts` was never executed by Next.js because the file was not named `middleware.ts`. Created `middleware.ts` in the project root with the correct `export async function middleware(...)` default name and added `/admin/logout` to the pass-through list. `proxy.ts` is now a stub with an explanatory comment.
+
 ### Added
 - **Gallery inline image management**: `GallerySection` now accepts `onUpdateGallery` prop; in editMode it shows an upload button (Vercel Blob via `useImageUpload`) and a URL-paste field to add images, plus per-image delete and reorder (up/down) controls overlaid on hover.
 - **Gallery style overrides now respected**: `GallerySection` reads `adminSettings.sections.styleOverrides.gallery.{columns, aspectRatio, gap, maxVisible, lightbox}` — previously these were registered in `sections-registry.ts` but ignored. Grid columns (2/3/4), aspect ratio (square/16:9/auto), gap, max-visible cap with "Show All" button, and lightbox toggle are all live.
