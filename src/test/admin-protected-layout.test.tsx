@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 
 const { mockCreateClient, mockRedirect } = vi.hoisted(() => ({
@@ -42,6 +43,7 @@ describe('ProtectedAdminLayout', () => {
     })
 
     expect(result).toBeTruthy()
+    expect((result as ReactElement).props.children).toBeTruthy()
     expect(mockRedirect).not.toHaveBeenCalled()
     expect(mockFrom).not.toHaveBeenCalled()
   })

@@ -15,22 +15,26 @@ const {
 
 vi.mock('@supabase/ssr', () => ({
   createServerClient: vi.fn(
-    (_url: string, _anonKey: string, options: { cookies: { setAll: (cookiesToSet: CookieToSet[]) => void } }) => ({
-    auth: {
-      getUser: async () => {
-        if (mockCookiesToSet.length > 0) {
-          options.cookies.setAll(mockCookiesToSet)
-        }
-        return mockGetUser()
+    (
+      _url: string,
+      _anonKey: string,
+      options: { cookies: { setAll: (cookiesToSet: CookieToSet[]) => void } },
+    ) => ({
+      auth: {
+        getUser: async () => {
+          if (mockCookiesToSet.length > 0) {
+            options.cookies.setAll(mockCookiesToSet)
+          }
+          return mockGetUser()
+        },
       },
-    },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          single: mockSingle,
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: mockSingle,
+          }),
         }),
       }),
-    }),
     }),
   ),
 }))

@@ -19,6 +19,8 @@ export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: { headers: request.headers },
   })
+  // Supabase may refresh tokens during auth.getUser() and call setAll().
+  // We keep the latest cookies here so refreshes survive any redirect response.
   const refreshedCookies = new Map<string, { value: string; options?: CookieOptions }>()
 
   const withRefreshedCookies = (redirectResponse: NextResponse) => {
