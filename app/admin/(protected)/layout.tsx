@@ -15,13 +15,6 @@ export default async function ProtectedAdminLayout({
     redirect('/admin/login')
   }
   */
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/admin/login')
-  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
