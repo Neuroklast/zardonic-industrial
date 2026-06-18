@@ -1,5 +1,6 @@
 'use server'
 
+import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -15,8 +16,8 @@ const gigInputSchema = z.object({
   description: z.string().optional().nullable(),
 })
 
-export async function createGig(formData: FormData) {
-  const raw = {
+function parseFormData(formData: FormData) {
+  return {
     title: formData.get('title'),
     venue: formData.get('venue') || null,
     city: formData.get('city') || null,
@@ -26,54 +27,59 @@ export async function createGig(formData: FormData) {
     festival_name: formData.get('festival_name') || null,
     description: formData.get('description') || null,
   }
+}
 
-  const parsed = gigInputSchema.safeParse(raw)
+export async function createGig(formData: FormData) {
+  const parsed = gigInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gigs').insert(parsed.data)
-  if (error) return { error: error.message }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gigs').insert(parsed.data)
+    if (error) return { error: error.message }
 
-  revalidatePath('/admin/gigs')
-  return { success: true }
+    revalidatePath('/admin/gigs')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to create gig.')
 }
 
 export async function updateGig(id: string, formData: FormData) {
-  const raw = {
-    title: formData.get('title'),
-    venue: formData.get('venue') || null,
-    city: formData.get('city') || null,
-    country: formData.get('country') || null,
-    event_date: formData.get('event_date'),
-    ticket_url: formData.get('ticket_url') || null,
-    festival_name: formData.get('festival_name') || null,
-    description: formData.get('description') || null,
-  }
-
-  const parsed = gigInputSchema.safeParse(raw)
+  const parsed = gigInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gigs').update(parsed.data).eq('id', id)
-  if (error) return { error: error.message }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gigs').update(parsed.data).eq('id', id)
+    if (error) return { error: error.message }
 
-  revalidatePath('/admin/gigs')
-  revalidatePath(`/admin/gigs/${id}`)
-  return { success: true }
+    revalidatePath('/admin/gigs')
+    revalidatePath(`/admin/gigs/${id}`)
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to update gig.')
 }
 
 export async function deleteGig(id: string) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gigs').delete().eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/gigs')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gigs').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/gigs')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to delete gig.')
 }
 
 export async function toggleGigVisibility(id: string, active: boolean) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gigs').update({ active }).eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/gigs')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gigs').update({ active }).eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/gigs')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to update gig visibility.')
 }

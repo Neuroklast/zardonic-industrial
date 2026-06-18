@@ -117,18 +117,6 @@ export function useKV<T>(key: string, defaultValue: T): [T, (updater: T | ((curr
           signal: abortRef.current.signal,
         }).then(async res => {
           if (res.status === 403) {
-            // Session may have expired — check auth status and reload if needed
-            // so the next login starts with a clean state (no stale 503 errors)
-            try {
-              const authRes = await fetch(API_ROUTES.AUTH, { credentials: 'same-origin' })
-              if (authRes.ok) {
-                const authData = await authRes.json()
-                if (!authData.authenticated) {
-                  window.location.reload()
-                  return
-                }
-              }
-            } catch { /* ignore — transient network error */ }
             return
           }
           if (!res.ok) {

@@ -1,15 +1,38 @@
 import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabaseServer'
 import { Providers } from './providers'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'Zardonic',
-  description: 'Official website of Zardonic – industrial metal / drum & bass',
-  openGraph: {
+const DEFAULT_ICON = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
+
+export async function generateMetadata(): Promise<Metadata> {
+  let faviconUrl: string | undefined
+
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'appearance')
+      .maybeSingle()
+
+    faviconUrl = (data?.value as { faviconUrl?: string } | null)?.faviconUrl
+  } catch {
+    faviconUrl = undefined
+  }
+
+  return {
     title: 'Zardonic',
     description: 'Official website of Zardonic – industrial metal / drum & bass',
-    type: 'website',
-  },
+    icons: {
+      icon: faviconUrl || DEFAULT_ICON,
+    },
+    openGraph: {
+      title: 'Zardonic',
+      description: 'Official website of Zardonic – industrial metal / drum & bass',
+      type: 'website',
+    },
+  }
 }
 
 export default function RootLayout({
@@ -20,7 +43,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Runtime-loaded webfonts for public site typography */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

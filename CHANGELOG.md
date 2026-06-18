@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Admin auth unified on Supabase**: protected admin routes now enforce the Supabase session server-side in `app/admin/(protected)/layout.tsx`, legacy `/api/auth` and `/api/session` endpoints now return 404 stubs, and admin server actions return clear auth/configuration errors instead of bubbling generic Server Action failures.
+- **Appearance favicon management**: `AppearanceEditor` now includes favicon uploads (`.ico`, `.png`, `.svg`) backed by the existing R2 upload flow, and `app/layout.tsx` now reads `site_config.appearance.faviconUrl` into App Router metadata so the configured icon is emitted site-wide.
+
+### Fixed
 - **Admin middleware not running**: `proxy.ts` was never executed by Next.js because the file was not named `middleware.ts`. Created `middleware.ts` in the project root with the correct `export async function middleware(...)` default name and added `/admin/logout` to the pass-through list. `proxy.ts` is now a stub with an explanatory comment.
 
 ### Added

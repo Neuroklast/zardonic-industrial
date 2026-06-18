@@ -1,5 +1,6 @@
 'use server'
 
+import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -16,8 +17,8 @@ const releaseInputSchema = z.object({
   display_order: z.coerce.number().optional().default(0),
 })
 
-export async function createRelease(formData: FormData) {
-  const raw = {
+function parseFormData(formData: FormData) {
+  return {
     title: formData.get('title'),
     type: formData.get('type'),
     release_date: formData.get('release_date') || null,
@@ -28,76 +29,80 @@ export async function createRelease(formData: FormData) {
     artists: formData.get('artists'),
     display_order: formData.get('display_order'),
   }
+}
 
-  const parsed = releaseInputSchema.safeParse(raw)
+function parseStreamingLinks(streamingLinks: string | undefined) {
+  return streamingLinks ? JSON.parse(streamingLinks) : []
+}
+
+function parseArtists(artists: string | undefined) {
+  return artists ? artists.split(',').map((artist: string) => artist.trim()).filter(Boolean) : []
+}
+
+export async function createRelease(formData: FormData) {
+  const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('releases').insert({
-    ...parsed.data,
-    streaming_links: parsed.data.streaming_links
-      ? JSON.parse(parsed.data.streaming_links)
-      : [],
-    artists: parsed.data.artists
-      ? parsed.data.artists.split(',').map((a: string) => a.trim()).filter(Boolean)
-      : [],
-  })
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('releases').insert({
+      ...parsed.data,
+      streaming_links: parseStreamingLinks(parsed.data.streaming_links),
+      artists: parseArtists(parsed.data.artists),
+    })
 
-  if (error) return { error: error.message }
+    if (error) return { error: error.message }
 
-  revalidatePath('/admin/releases')
-  return { success: true }
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to create release.')
 }
 
 export async function updateRelease(id: string, formData: FormData) {
-  const raw = {
-    title: formData.get('title'),
-    type: formData.get('type'),
-    release_date: formData.get('release_date') || null,
-    description: formData.get('description') || null,
-    cover_storage_path: formData.get('cover_storage_path') || null,
-    cover_url: formData.get('cover_url') || null,
-    streaming_links: formData.get('streaming_links'),
-    artists: formData.get('artists'),
-    display_order: formData.get('display_order'),
-  }
-
-  const parsed = releaseInputSchema.safeParse(raw)
+  const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
-  const supabase = createAdminClient()
-  const { error } = await supabase
-    .from('releases')
-    .update({
-      ...parsed.data,
-      streaming_links: parsed.data.streaming_links
-        ? JSON.parse(parsed.data.streaming_links)
-        : [],
-      artists: parsed.data.artists
-        ? parsed.data.artists.split(',').map((a: string) => a.trim()).filter(Boolean)
-        : [],
-    })
-    .eq('id', id)
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase
+      .from('releases')
+      .update({
+        ...parsed.data,
+        streaming_links: parseStreamingLinks(parsed.data.streaming_links),
+        artists: parseArtists(parsed.data.artists),
+      })
+      .eq('id', id)
 
-  if (error) return { error: error.message }
+    if (error) return { error: error.message }
 
-  revalidatePath('/admin/releases')
-  revalidatePath(`/admin/releases/${id}`)
-  return { success: true }
+    revalidatePath('/admin/releases')
+    revalidatePath(`/admin/releases/${id}`)
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to update release.')
 }
 
 export async function deleteRelease(id: string) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('releases').delete().eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/releases')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('releases').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to delete release.')
 }
 
 export async function toggleReleaseVisibility(id: string, active: boolean) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('releases').update({ active }).eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/releases')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('releases').update({ active }).eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to update release visibility.')
 }

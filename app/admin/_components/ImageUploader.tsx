@@ -5,7 +5,7 @@ import { useState, useRef } from 'react'
 interface ImageUploaderProps {
   label?: string
   currentUrl?: string | null
-  onUpload: (storagePath: string) => void
+  onUpload: (storagePath: string, publicUrl?: string) => void
   onError?: (error: string) => void
   accept?: string
 }
@@ -27,14 +27,12 @@ export function ImageUploader({
 
     setUploading(true)
     try {
-      // Get signed upload URL
       const { createSignedUploadUrl } = await import('@/app/admin/_actions/r2Upload')
       const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_MEDIA ?? 'zardonic-media'
       const ext = file.name.split('.').pop() ?? 'jpg'
       const path = `uploads/${Date.now()}.${ext}`
-      const { url, objectPath } = await createSignedUploadUrl(bucket, path)
+      const { url, objectPath, publicUrl } = await createSignedUploadUrl(bucket, path)
 
-      // Upload directly to R2
       const uploadRes = await fetch(url, {
         method: 'PUT',
         body: file,
@@ -46,12 +44,13 @@ export function ImageUploader({
       }
 
       setPreview(URL.createObjectURL(file))
-      onUpload(objectPath)
+      onUpload(objectPath, publicUrl)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Upload failed'
       onError?.(msg)
     } finally {
       setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
     }
   }
 
