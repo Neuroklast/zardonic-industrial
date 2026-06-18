@@ -16,9 +16,7 @@ interface Props {
 export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
   const router = useRouter()
   const [coverPath, setCoverPath] = useState((release.cover_storage_path as string) ?? '')
-  const [coverPreview, setCoverPreview] = useState<string | null>(
-    resolvedCoverUrl ?? (release.cover_url as string | null) ?? null,
-  )
+  const [coverPreview, setCoverPreview] = useState<string | null>(resolvedCoverUrl ?? null)
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
