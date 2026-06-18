@@ -19,6 +19,9 @@ import {
   SignOut,
   List,
   X,
+  Rows,
+  EnvelopeSimple,
+  Heartbeat,
 } from '@phosphor-icons/react'
 
 interface NavItem {
@@ -31,6 +34,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: '/admin',                  label: 'Dashboard',        icon: House,          exact: true },
   { href: '/admin/site-config',      label: 'Site Config',      icon: Gear },
+  { href: '/admin/sections',         label: 'Sections',         icon: Rows },
   { href: '/admin/bio',              label: 'Biography',        icon: TextAlignLeft },
   { href: '/admin/releases',         label: 'Discography',      icon: Disc },
   { href: '/admin/releases/sync',    label: 'iTunes Sync',      icon: ArrowsClockwise },
@@ -41,6 +45,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/gallery',          label: 'Gallery',          icon: Images },
   { href: '/admin/partners',         label: 'Credits & Partners', icon: Users },
   { href: '/admin/social',           label: 'Social Links',     icon: Share },
+  { href: '/admin/newsletter',       label: 'Newsletter',       icon: EnvelopeSimple },
+  { href: '/admin/health',           label: 'API Health',       icon: Heartbeat },
 ]
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {

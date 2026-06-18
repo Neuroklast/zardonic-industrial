@@ -49,6 +49,7 @@ interface GalleryItemRow {
   storage_path: string | null; image_url: string | null
 }
 interface SocialRow { id: string; platform: string; url: string; label: string | null }
+interface SectionConfig { id: string; label: string; visible: boolean; order: number }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 async function fetchAll() {
@@ -112,6 +113,34 @@ function getConfig(rows: SiteConfigRow[], key: string): Record<string, unknown> 
   return rows.find((r) => r.key === key)?.value ?? {}
 }
 
+const DEFAULT_SECTIONS: SectionConfig[] = [
+  { id: 'hero',             label: 'Hero',               visible: true, order: 0  },
+  { id: 'bio',              label: 'Biography',          visible: true, order: 1  },
+  { id: 'credits',          label: 'Credits & Partners', visible: true, order: 2  },
+  { id: 'gallery',          label: 'Gallery',            visible: true, order: 3  },
+  { id: 'music-highlights', label: 'Music Highlights',   visible: true, order: 4  },
+  { id: 'releases',         label: 'Discography',        visible: true, order: 5  },
+  { id: 'merchandise',      label: 'Merchandise',        visible: true, order: 6  },
+  { id: 'soundpacks',       label: 'Soundpacks',         visible: true, order: 7  },
+  { id: 'gigs',             label: 'Events',             visible: true, order: 8  },
+  { id: 'newsletter',       label: 'Newsletter',         visible: true, order: 9  },
+  { id: 'contact',          label: 'Contact',            visible: true, order: 10 },
+]
+
+function parseSections(raw: unknown): SectionConfig[] {
+  if (!Array.isArray(raw)) return DEFAULT_SECTIONS
+  const parsed = raw
+    .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+    .map((item) => ({
+      id: typeof item.id === 'string' ? item.id : '',
+      label: typeof item.label === 'string' ? item.label : '',
+      visible: typeof item.visible === 'boolean' ? item.visible : true,
+      order: typeof item.order === 'number' ? item.order : 0,
+    }))
+    .filter((s) => s.id !== '')
+  return parsed.length > 0 ? parsed : DEFAULT_SECTIONS
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   const {
@@ -124,6 +153,11 @@ export default async function HomePage() {
   const merchandiseConfig = getConfig(configRows, 'merchandise')
   const footerConfig = getConfig(configRows, 'footer')
   const bgConfig = getConfig(configRows, 'background')
+  const appearanceConfig = getConfig(configRows, 'appearance')
+  const sectionsRaw = configRows.find((r) => r.key === 'sections')?.value
+  const sections = parseSections(sectionsRaw)
+    .sort((a, b) => a.order - b.order)
+    .filter((s) => s.visible)
 
   // Background image: use R2 path or fallback to configured URL or placeholder
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
@@ -138,6 +172,13 @@ export default async function HomePage() {
     ? rawBackgroundType
     : 'matrix'
   const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.6
+
+  // Appearance config
+  const crtEnabled = typeof appearanceConfig.crtEnabled === 'boolean' ? appearanceConfig.crtEnabled : true
+  const scanlineEnabled = typeof appearanceConfig.scanlineEnabled === 'boolean' ? appearanceConfig.scanlineEnabled : true
+  const noiseEnabled = typeof appearanceConfig.noiseEnabled === 'boolean' ? appearanceConfig.noiseEnabled : true
+  const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
+  const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => ({
@@ -190,9 +231,17 @@ export default async function HomePage() {
   const upcoming = gigs.filter((g) => new Date(g.event_date) >= now)
   const past = gigs.filter((g) => new Date(g.event_date) < now).reverse()
 
+  // Helper: is a section visible?
+  function isSectionVisible(id: string) {
+    return sections.some((s) => s.id === id)
+  }
+
   return (
     <div className="min-h-screen text-white">
-      <GlobalEffects />
+      {/* Inject accent colors as CSS custom properties */}
+      <style>{`:root { --accent: ${accentColor}; --accent-secondary: ${accentColorSecondary}; }`}</style>
+
+      <GlobalEffects crtEnabled={crtEnabled} scanlineEnabled={scanlineEnabled} noiseEnabled={noiseEnabled} />
       <BackgroundStack
         imageUrl={backgroundUrl}
         videoUrl={backgroundVideoUrl ?? undefined}
@@ -203,61 +252,112 @@ export default async function HomePage() {
       {/* Fixed navigation */}
       <SiteNav />
 
-      {/* Main content – all sections stack above the background */}
+      {/* Main content – sections rendered in DB-controlled order */}
       <main>
-        {/* Hero */}
-        <HeroSection
-          headline={String(heroConfig.headline ?? 'ZARDONIC')}
-          tagline={String(heroConfig.tagline ?? '')}
-          ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
-          ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
-          backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
-          backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
-        />
+        {sections.map((section, idx) => {
+          const divider = idx > 0 ? <SectionDivider /> : null
+          switch (section.id) {
+            case 'hero':
+              return (
+                <div key="hero">
+                  <HeroSection
+                    headline={String(heroConfig.headline ?? 'ZARDONIC')}
+                    tagline={String(heroConfig.tagline ?? '')}
+                    ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
+                    ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
+                    backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
+                    backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
+                  />
+                </div>
+              )
+            case 'bio':
+              return (
+                <div key="bio">
+                  {divider}
+                  <BioSection content={bio} />
+                </div>
+              )
+            case 'credits':
+              return (
+                <div key="credits">
+                  {divider}
+                  <CreditsSection credits={credits} endorsements={endorsements} />
+                </div>
+              )
+            case 'gallery':
+              return (
+                <div key="gallery">
+                  {divider}
+                  <GallerySection items={gallery.map(galleryItemMap)} />
+                </div>
+              )
+            case 'music-highlights':
+              return (
+                <div key="music-highlights">
+                  {divider}
+                  <MusicHighlightsSection highlights={musicHighlights} />
+                </div>
+              )
+            case 'releases':
+              return (
+                <div key="releases">
+                  {divider}
+                  <ReleasesSection releases={releaseItems} />
+                </div>
+              )
+            case 'merchandise':
+              return merch.length > 0 ? (
+                <div key="merchandise">
+                  {divider}
+                  <MerchandiseSection
+                    items={merch.map(commerceItemMap)}
+                    footerText={String(merchandiseConfig.footerText ?? '')}
+                  />
+                </div>
+              ) : null
+            case 'soundpacks':
+              return soundpacks.length > 0 ? (
+                <div key="soundpacks">
+                  {divider}
+                  <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
+                </div>
+              ) : null
+            case 'gigs':
+              return (
+                <div key="gigs">
+                  {divider}
+                  <GigsSection upcoming={upcoming} past={past} />
+                </div>
+              )
+            case 'newsletter':
+              return (
+                <div key="newsletter">
+                  {divider}
+                  <NewsletterSection
+                    heading={String(newsletterConfig.heading ?? 'Mailing List')}
+                    body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
+                  />
+                </div>
+              )
+            case 'contact':
+              return (
+                <div key="contact">
+                  {divider}
+                  <ContactSection />
+                </div>
+              )
+            default:
+              return null
+          }
+        })}
 
-        <SectionDivider />
-        <BioSection content={bio} />
-
-        <SectionDivider />
-        <CreditsSection credits={credits} endorsements={endorsements} />
-
-        <SectionDivider />
-        <GallerySection items={gallery.map(galleryItemMap)} />
-
-        <SectionDivider />
-        <MusicHighlightsSection highlights={musicHighlights} />
-
-        <SectionDivider />
-        <ReleasesSection releases={releaseItems} />
-
-        {merch.length > 0 && (
+        {/* Fallback: if sections config is empty or contact not included */}
+        {!isSectionVisible('contact') && (
           <>
             <SectionDivider />
-            <MerchandiseSection
-              items={merch.map(commerceItemMap)}
-              footerText={String(merchandiseConfig.footerText ?? '')}
-            />
+            <ContactSection />
           </>
         )}
-
-        {soundpacks.length > 0 && (
-          <>
-            <SectionDivider />
-            <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
-          </>
-        )}
-
-        <SectionDivider />
-        <GigsSection upcoming={upcoming} past={past} />
-
-        <SectionDivider />
-        <NewsletterSection
-          heading={String(newsletterConfig.heading ?? 'Mailing List')}
-          body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
-        />
-
-        <SectionDivider />
-        <ContactSection />
       </main>
 
       <SiteFooter

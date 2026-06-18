@@ -220,3 +220,8 @@ insert into public.site_config (key, value) values
   ('footer',      '{"impressumUrl":"/impressum","privacyUrl":"/privacy"}'::jsonb),
   ('background',  '{}'::jsonb)
 on conflict (key) do nothing;
+
+insert into public.site_config (key, value) values
+  ('appearance', '{"crtEnabled":true,"scanlineEnabled":true,"noiseEnabled":true,"accentColor":"#dc2626","accentColorSecondary":"#7c3aed","vignetteOpacity":0.3,"chromaticStrength":0.5}'::jsonb),
+  ('sections', '[{"id":"hero","label":"Hero","visible":true,"order":0},{"id":"bio","label":"Biography","visible":true,"order":1},{"id":"credits","label":"Credits & Partners","visible":true,"order":2},{"id":"gallery","label":"Gallery","visible":true,"order":3},{"id":"music-highlights","label":"Music Highlights","visible":true,"order":4},{"id":"releases","label":"Discography","visible":true,"order":5},{"id":"merchandise","label":"Merchandise","visible":true,"order":6},{"id":"soundpacks","label":"Soundpacks","visible":true,"order":7},{"id":"gigs","label":"Events","visible":true,"order":8},{"id":"newsletter","label":"Newsletter","visible":true,"order":9},{"id":"contact","label":"Contact","visible":true,"order":10}]'::jsonb)
+on conflict (key) do nothing;
