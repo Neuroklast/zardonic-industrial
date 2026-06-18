@@ -5,7 +5,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Allow /admin/login and /admin/logout through (not protected)
-  if (!pathname.startsWith('/admin') || pathname.startsWith('/admin/login') || pathname.startsWith('/admin/logout')) {
+  if (
+    !pathname.startsWith('/admin') ||
+    pathname.startsWith('/admin/login') ||
+    pathname.startsWith('/admin/logout')
+  ) {
     return NextResponse.next()
   }
 
@@ -16,35 +20,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  let response = NextResponse.next({
+  // We build ONE mutable response object. Supabase's setAll may be called
+  // during auth.getUser() to refresh tokens — all cookie writes go here.
+  const response = NextResponse.next({
     request: { headers: request.headers },
   })
-  // Supabase may refresh tokens during auth.getUser() and call setAll().
-  // We keep the latest cookies here so refreshes survive any redirect response.
-  const refreshedCookies = new Map<string, { value: string; options?: CookieOptions }>()
-
-  const withRefreshedCookies = (redirectResponse: NextResponse) => {
-    refreshedCookies.forEach(({ value, options }, name) => {
-      redirectResponse.cookies.set(name, value, options)
-    })
-    return redirectResponse
-  }
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
-        response = NextResponse.next({
-          request: { headers: request.headers },
-        })
+        // Write refreshed cookies into the request (for downstream reads)
+        // and into the response (so the browser receives them).
         cookiesToSet.forEach(({ name, value, options }) => {
           request.cookies.set(name, value)
           response.cookies.set(name, value, options)
-          refreshedCookies.set(name, { value, options })
         })
       },
     },
   })
+
+  // Helper: copy any already-set cookies from `response` onto a redirect.
+  const withRefreshedCookies = (redirectResponse: NextResponse): NextResponse => {
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value)
+    })
+    return redirectResponse
+  }
 
   try {
     const {
@@ -58,6 +60,9 @@ export async function middleware(request: NextRequest) {
       return withRefreshedCookies(NextResponse.redirect(loginUrl))
     }
 
+    // Check admin role in profiles table.
+    // If the row is missing (null), we allow through — the user is authenticated
+    // and may not have a profile row yet. Only block if role is explicitly NOT 'admin'.
     let profile: { role?: string } | null = null
     try {
       const { data } = await supabase
@@ -70,8 +75,10 @@ export async function middleware(request: NextRequest) {
       profile = null
     }
 
-    if (profile && profile.role !== 'admin') {
-      return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)))
+    if (profile !== null && profile.role !== 'admin') {
+      return withRefreshedCookies(
+        NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)),
+      )
     }
   } catch {
     return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login', request.url)))
