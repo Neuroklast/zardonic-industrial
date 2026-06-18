@@ -17,6 +17,8 @@
 *   **Data Minimization**: Never log plaintext IP addresses. Always use the established `hashIp()` utility.
 *   **Environment Variables**: Ensure all required environment variables (e.g., `RATE_LIMIT_SALT`, `UPSTASH_REDIS_REST_URL`) are documented and checked at startup. Fail fast if security-critical variables are missing.
 *   **Dependencies**: Keep all `npm` packages updated. Run `npm audit` regularly and fix vulnerabilities immediately. Do not introduce packages with known high/critical CVEs.
+*   **Admin Login — canonical mechanism**: The **only** permitted admin sign-in path is a native HTML form `POST` to the server Route Handler at `app/admin/login/submit/route.ts`. That handler calls `supabase.auth.signInWithPassword()` via `createServerClient` and writes session cookies onto the **same 303 redirect response**, so the browser has valid cookies before the protected route is requested. Never use the browser Supabase client (`createBrowserClient` / `createClient()`) for the sign-in step; doing so reintroduces the cookie-propagation race that causes redirect loops.
+*   **Middleware cookie propagation**: Every `NextResponse.redirect()` returned from `middleware.ts` **must** copy the refreshed cookies from `response` onto the redirect response (`response.cookies.getAll().forEach(c => redirectResponse.cookies.set(...))`). Failing to do this on even one redirect branch silently burns tokens when Supabase rotates the access token during `getUser()`.
 
 ## 3. UI/UX & Accessibility (WCAG 2.1 AA)
 
@@ -202,7 +204,7 @@ Every agent session **MUST** complete the following before closing the PR or fin
 
 | Fix | File | Description |
 |-----|------|-------------|
-| Supabase admin auth | `app/admin/(protected)/layout.tsx`, `app/admin/_actions/auth.ts`, `proxy.ts` | Admin access is enforced with Supabase SSR session + `profiles.role = 'admin'`; do not reintroduce Redis/KV auth flows. |
+| Supabase admin auth | `app/admin/login/_components/LoginForm.tsx`, `app/admin/login/submit/route.ts`, `middleware.ts` | Admin sign-in uses a native form POST to the server Route Handler which sets cookies on the same 303 redirect response. Middleware copies refreshed cookies onto every redirect branch. Do not reintroduce browser-client `signInWithPassword` + `router.push` — this causes a cookie-propagation race and redirect loop. Do not reintroduce Redis/KV auth flows. |
 | Redis short-circuit | `api/auth.ts:validateSession` | Returns `false` early if `!isRedisConfigured()` to prevent handler crashes. |
 | Model upload MIME types | `api/cms/video-upload-token.ts` | `model/gltf-binary` and `model/gltf+json` are in the allow-list alongside `video/*`. |
 | Rate limit on key validation | `api/validate-key.ts` | `applyRateLimit` must be called before any KV lookup. |

@@ -127,6 +127,26 @@ describe('middleware admin auth', () => {
     expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
+  it('keeps refreshed cookies on forbidden redirect', async () => {
+    mockCookiesToSet.push({
+      name: 'sb-access-token',
+      value: 'rotated-token',
+      options: { path: '/', httpOnly: true },
+    })
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'regular-user' } },
+      error: null,
+    })
+    mockSingle.mockResolvedValue({
+      data: { role: 'user' },
+    })
+
+    const response = await middleware(createRequest('/admin/releases'))
+
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
+    expect(response.cookies.get('sb-access-token')?.value).toBe('rotated-token')
+  })
+
   it('allows request when profile lookup throws after valid auth', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'admin-user' } },

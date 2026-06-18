@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     const loginUrl = new URL('/admin/login', request.url)
-    loginUrl.searchParams.set('error', 'invalid')
+    loginUrl.searchParams.set('msg', error.message)
     loginUrl.searchParams.set('redirect', redirectTo)
     return NextResponse.redirect(loginUrl, { status: 303 })
   }
