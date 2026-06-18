@@ -2,8 +2,6 @@
  * /api/sitemap-gen.ts – Generates a real XML sitemap for search engines.
  *
  * Serves the sitemap at /sitemap.xml (routed via vercel.json rewrite).
- * The legacy /sitemap-extended.xml continues to point at /api/sitemap-trap
- * which acts as a honeypot for bot detection.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 

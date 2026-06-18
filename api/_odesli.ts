@@ -147,7 +147,7 @@ export async function fetchOdesliLinks(
   const cacheKey = odesliCacheKey(lookupUrl)
 
   try {
-    const cached = await redis.get<OdesliResponse>(cacheKey)
+    const cached = (await redis.get(cacheKey)) as OdesliResponse | null
     if (cached) {
       const { links, entityType } = extractStreamingLinksFromOdesli(cached)
       return { links, entityType, fromCache: true }

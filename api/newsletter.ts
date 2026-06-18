@@ -19,7 +19,7 @@ async function storeSubscriberLocally(email: string, source: string | undefined)
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       const key = 'newsletter-subscribers'
-      const subscribers: Subscriber[] = (await kv.get<Subscriber[]>(key)) || []
+      const subscribers: Subscriber[] = ((await kv.get(key)) as Subscriber[] | null) || []
       if (subscribers.some((s) => s.email === email)) return // already subscribed
       subscribers.push({ email, source: source || 'website', date: new Date().toISOString() })
       await kv.set(key, subscribers)
@@ -66,7 +66,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
         try {
           const key = 'newsletter-subscribers'
-          const subscribers: Subscriber[] = (await kv.get<Subscriber[]>(key)) || []
+          const subscribers: Subscriber[] = ((await kv.get(key)) as Subscriber[] | null) || []
           const filtered = subscribers.filter((s) => s.email !== sanitizedEmail)
           await kv.set(key, filtered)
           break

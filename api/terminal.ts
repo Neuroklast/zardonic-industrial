@@ -60,7 +60,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
 
   try {
-    const bandData = await kv.get<BandData>('band-data')
+    const bandData = (await kv.get('band-data')) as BandData | null
     const commands: TerminalCommand[] = (bandData && typeof bandData === 'object' && Array.isArray(bandData.terminalCommands))
       ? bandData.terminalCommands
       : []

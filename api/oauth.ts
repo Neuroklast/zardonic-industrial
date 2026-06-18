@@ -79,7 +79,7 @@ export function decryptToken(encrypted: string): TokenRecord {
 
 export async function appendOAuthLog(entry: OAuthLog): Promise<void> {
   try {
-    const logs = (await kv.get<OAuthLog[]>(OAUTH_LOGS_KEY)) || []
+    const logs = ((await kv.get(OAUTH_LOGS_KEY)) as OAuthLog[] | null) || []
     const trimmed = [...logs, entry].slice(-MAX_LOG_ENTRIES)
     await kv.set(OAUTH_LOGS_KEY, trimmed)
   } catch (err) {
@@ -186,7 +186,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       Promise.all(
         providerKeys.map(async (key) => {
           try {
-            const encrypted = await kv.get<string>(`oauth:token:${key}`)
+            const encrypted = (await kv.get(`oauth:token:${key}`)) as string | null
             if (encrypted) {
               const token = decryptToken(encrypted)
               return [
@@ -206,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
           }
         }),
       ),
-      kv.get<OAuthLog[]>(OAUTH_LOGS_KEY),
+      (await kv.get(OAUTH_LOGS_KEY)) as OAuthLog[] | null,
     ])
 
     const statuses = Object.fromEntries(statusEntries)
@@ -221,7 +221,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     if (!provider || !PROVIDERS[provider]) {
       return res.status(400).json({ error: 'Invalid provider' })
     }
-    const cfg = PROVIDERS[provider]
+    const cfg = PROVIDERS[provider]!
     if (!cfg.clientId()) {
       return res.status(503).json({
         error: `${cfg.name} OAuth is not configured. Set SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.`,
@@ -270,7 +270,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return res.status(400).send('<html><body><p>Invalid callback parameters.</p></body></html>')
     }
 
-    const storedState = await kv.get<{ provider: string; ip: string }>(`oauth:state:${state}`)
+    const storedState = (await kv.get(`oauth:state:${state}`)) as { provider: string; ip: string } | null
     if (!storedState || storedState.provider !== provider) {
       await appendOAuthLog({
         timestamp: new Date().toISOString(),
@@ -284,9 +284,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     await kv.del(`oauth:state:${state}`)
 
     try {
-      const redirectUri = getCallbackUrl(req, provider)
-      const tokenData = await exchangeCode(provider, code, redirectUri)
-      const profile = await fetchProfile(provider, tokenData.access_token as string)
+      const currentProvider = provider ?? storedState.provider
+      const redirectUri = getCallbackUrl(req, currentProvider)
+      const tokenData = await exchangeCode(currentProvider, code, redirectUri)
+      const profile = await fetchProfile(currentProvider, tokenData.access_token as string)
 
       const tokenRecord = {
         accessToken: tokenData.access_token as string,
@@ -295,25 +296,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         displayName: (profile?.['display_name'] as string | null) || (profile?.['name'] as string | null) || null,
         email: (profile?.['email'] as string | null) || null,
         connectedAt: new Date().toISOString(),
-        provider,
+        provider: currentProvider,
       }
 
       const encrypted = encryptToken(tokenRecord)
-      await kv.set(`oauth:token:${provider}`, encrypted)
+      await kv.set(`oauth:token:${currentProvider}`, encrypted)
 
       await appendOAuthLog({
         timestamp: new Date().toISOString(),
-        provider,
+        provider: currentProvider,
         action: 'connect',
         success: true,
         displayName: tokenRecord.displayName,
         email: tokenRecord.email,
       })
 
-      const cfg = PROVIDERS[provider]
+      const cfg = PROVIDERS[currentProvider]!
       const displayName = tokenRecord.displayName || tokenRecord.email || cfg.name
       return res.status(200).send(
-        `<html><body><script>window.opener?.postMessage({type:'oauth-callback',success:true,provider:${JSON.stringify(provider)},displayName:${JSON.stringify(displayName)}},${JSON.stringify(postMessageOrigin)});window.close()</script><p>Connected to ${cfg.name} as ${displayName}. You can close this window.</p></body></html>`,
+        `<html><body><script>window.opener?.postMessage({type:'oauth-callback',success:true,provider:${JSON.stringify(currentProvider)},displayName:${JSON.stringify(displayName)}},${JSON.stringify(postMessageOrigin)});window.close()</script><p>Connected to ${cfg.name} as ${displayName}. You can close this window.</p></body></html>`,
       )
     } catch (err) {
       console.error('OAuth callback error:', err)

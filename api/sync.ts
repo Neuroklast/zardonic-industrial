@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (req.method === 'GET') {
     try {
-      const data = await kv.get<{ lastReleasesSync?: number; lastGigsSync?: number }>(SYNC_KEY)
+      const data = (await kv.get(SYNC_KEY)) as { lastReleasesSync?: number; lastGigsSync?: number } | null
       return res.status(200).json({
         lastReleasesSync: data?.lastReleasesSync ?? 0,
         lastGigsSync: data?.lastGigsSync ?? 0,
@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const body = parsed.data
 
       // Merge with existing timestamps
-      const existing = await kv.get<{ lastReleasesSync?: number; lastGigsSync?: number }>(SYNC_KEY) ?? {}
+      const existing = ((await kv.get(SYNC_KEY)) as { lastReleasesSync?: number; lastGigsSync?: number } | null) ?? {}
       const updated = {
         lastReleasesSync: body.lastReleasesSync ?? existing.lastReleasesSync ?? 0,
         lastGigsSync: body.lastGigsSync ?? existing.lastGigsSync ?? 0,

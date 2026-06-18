@@ -2,9 +2,6 @@ import { z } from 'zod'
 
 // Re-export schemas that live in their own API files so tests can import
 // from a single location.
-export { blockSchema, unblockSchema } from './blocklist.js'
-export { getProfileSchema, deleteProfileSchema } from './attacker-profile.js'
-export { securitySettingsSchema } from './security-settings.js'
 
 /**
  * Zod schemas for strict input validation on all API endpoints.

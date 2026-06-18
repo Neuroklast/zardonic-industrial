@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   // Serve from Redis cache if available
   if (redis) {
     try {
-      const cached = await redis.get<unknown>(redisKey)
+      const cached = (await redis.get(redisKey)) as unknown | null
       if (cached !== null && cached !== undefined) {
         res.setHeader('Cache-Control', 'public, max-age=1800')
         res.setHeader('X-Cache', 'HIT')
@@ -52,7 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // Serve stale cache on 429
         if (redis) {
           try {
-            const stale = await redis.get<unknown>(redisKey)
+            const stale = (await redis.get(redisKey)) as unknown | null
             if (stale !== null && stale !== undefined) {
               res.setHeader('X-Cache', 'STALE')
               res.status(200).json(stale)
@@ -87,7 +87,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       res.setHeader('Retry-After', response.headers.get('Retry-After') ?? '60')
       if (redis) {
         try {
-          const stale = await redis.get<unknown>(redisKey)
+          const stale = (await redis.get(redisKey)) as unknown | null
           if (stale !== null && stale !== undefined) {
             res.setHeader('X-Cache', 'STALE')
             res.status(200).json(stale)

@@ -3,7 +3,6 @@ import { kv, isRedisConfigured } from './_redis.js'
 import { validateSession } from './auth.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { analyticsPostSchema, validate } from './_schemas.js'
-import { isHardBlocked } from './_blocklist.js'
 interface AnalyticsMeta {
   referrer?: string
   device?: string
@@ -282,13 +281,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  // Hard-block check — immediate rejection
-  const blocked = await isHardBlocked(req)
-  if (blocked) {
-    res.status(403).json({ error: 'FORBIDDEN' })
-    return
-  }
-
   // Rate limiting — only applied to non-POST methods (admin reads).
   // Analytics POSTs are public, fire-and-forget events; rate-limiting them
   // causes visible console errors (429) without meaningful security benefit
@@ -377,9 +369,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
       if (type === 'heatmap') {
         const raw = await kv.lrange(HEATMAP_KEY, 0, MAX_HEATMAP_POINTS - 1)
-        const points = (raw || []).map((entry) => {
-          try { return typeof entry === 'string' ? JSON.parse(entry) : entry } catch (e) { console.warn('Malformed heatmap entry:', e); return null }
-        }).filter(Boolean)
+        const points = (raw || []).map((entry: string | Record<string, unknown>) => {
+          try { return typeof entry === 'string' ? JSON.parse(entry) as Record<string, unknown> : entry } catch (e: unknown) { console.warn('Malformed heatmap entry:', e); return null }
+        }).filter((entry): entry is Record<string, unknown> => Boolean(entry))
         res.json({ heatmap: points })
         return
       }

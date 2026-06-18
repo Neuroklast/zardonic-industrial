@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCmsRoute } from '../hooks/useCmsRoute'
 import { fetchEnvStatus, REQUIRED_ENV_VARS } from '@/lib/env-check'
-import { Loader2, FileText, Users, Music, Newspaper, Share2, Anchor, Palette, Settings, Image, Layout, Eye, Inbox, Mail, Calendar, Shield, CheckCircle2, XCircle } from 'lucide-react'
+import { Loader2, FileText, Users, Music, Newspaper, Share2, Anchor, Palette, Settings, Image, Layout, Eye, Inbox, Mail, Calendar, CheckCircle2, XCircle } from 'lucide-react'
 import { API_ROUTES } from '@/lib/api-routes'
 
 interface HealthResponse {
@@ -39,7 +39,6 @@ const ACTIONS: QuickAction[] = [
   { label: 'Inbox', route: 'cms/api/inbox', icon: <Inbox size={20} />, description: 'Contact form inbox' },
   { label: 'Newsletter', route: 'cms/api/newsletter', icon: <Mail size={20} />, description: 'Manage subscribers' },
   { label: 'Tour Sync', route: 'cms/api/tour', icon: <Calendar size={20} />, description: 'Sync tour dates' },
-  { label: 'Security', route: 'cms/api/security', icon: <Shield size={20} />, description: 'Security settings' },
 ]
 
 export default function CmsDashboard() {

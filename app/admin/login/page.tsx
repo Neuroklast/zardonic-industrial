@@ -39,7 +39,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form method="POST" action="/admin/login" onSubmit={handleSubmit} className="space-y-4">
+        <form method="POST" action="/admin/login/submit" onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div>
             <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>

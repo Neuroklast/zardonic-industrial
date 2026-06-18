@@ -90,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const startTime = Date.now()
 
   try {
-    const queue = await redis.get<EnrichQueuePayload>(QUEUE_KEY)
+    const queue = (await redis.get(QUEUE_KEY)) as EnrichQueuePayload | null
 
     if (!queue || !queue.releases || queue.releases.length === 0) {
       sendEvent({ type: 'done', total: 0 })
@@ -138,7 +138,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
       // Persist enriched release to results key
       try {
-        const existing = await redis.get<Release[]>(RESULTS_KEY) ?? []
+        const existing = ((await redis.get(RESULTS_KEY)) as Release[] | null) ?? []
         existing.push(enrichedRelease)
         await redis.set(RESULTS_KEY, existing, { ex: QUEUE_TTL })
       } catch (redisErr) {
@@ -182,8 +182,8 @@ async function finalizeEnrichment(
   expectedTotal: number,
 ): Promise<void> {
   try {
-    const enrichedReleases = await redis.get<Release[]>(RESULTS_KEY) ?? []
-    const existing = await redis.get<SiteData>(BAND_DATA_KEY)
+    const enrichedReleases = ((await redis.get(RESULTS_KEY)) as Release[] | null) ?? []
+    const existing = (await redis.get(BAND_DATA_KEY)) as SiteData | null
     const existingReleases = existing?.releases ?? []
     const mergedReleases = mergeWithExistingReleases(enrichedReleases, existingReleases)
     const updatedSiteData: SiteData = { ...(existing ?? {}), releases: mergedReleases }

@@ -217,7 +217,6 @@ const translations: Record<string, Record<Locale, string>> = {
   'edit.config':               { en: 'CONFIG', de: 'KONFIG', ru: 'КОНФИГ', it: 'CONFIG', es: 'CONFIG', pt: 'CONFIG', ja: '設定', ko: '구성' },
   'edit.analytics':            { en: 'ANALYTICS', de: 'ANALYTIK', ru: 'АНАЛИТИКА', it: 'ANALISI', es: 'ANÁLISIS', pt: 'ANÁLISE', ja: 'アナリティクス', ko: '애널리틱스' },
   'edit.security':             { en: 'SECURITY', de: 'SICHERHEIT', ru: 'БЕЗОПАСНОСТЬ', it: 'SICUREZZA', es: 'SEGURIDAD', pt: 'SEGURANÇA', ja: 'セキュリティ', ko: '보안' },
-  'edit.blocklist':            { en: 'BLOCKLIST', de: 'SPERRLISTE', ru: 'БЛОК-ЛИСТ', it: 'LISTA NERA', es: 'LISTA DE BLOQUEO', pt: 'LISTA DE BLOQUEIO', ja: 'ブロックリスト', ko: '차단 목록' },
   'edit.theme':                { en: 'THEME', de: 'DESIGN', ru: 'ТЕМА', it: 'TEMA', es: 'TEMA', pt: 'TEMA', ja: 'テーマ', ko: '테마' },
   'edit.terminal':             { en: 'TERMINAL', de: 'TERMINAL', ru: 'ТЕРМИНАЛ', it: 'TERMINALE', es: 'TERMINAL', pt: 'TERMINAL', ja: 'ターミナル', ko: '터미널' },
   'edit.inbox':                { en: 'INBOX', de: 'POSTFACH', ru: 'ВХОДЯЩИЕ', it: 'POSTA IN ARRIVO', es: 'BANDEJA DE ENTRADA', pt: 'CAIXA DE ENTRADA', ja: '受信トレイ', ko: '받은 편지함' },

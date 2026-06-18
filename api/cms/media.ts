@@ -83,14 +83,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1)
       const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? '20'), 10) || 20))
 
-      const index = await kv.get<string[]>(MEDIA_INDEX_KEY) ?? []
+      const index = ((await kv.get(MEDIA_INDEX_KEY)) as string[] | null) ?? []
       const total = index.length
       const start = (page - 1) * limit
       const pageIds = index.slice(start, start + limit)
 
       const items: MediaItem[] = []
       for (const id of pageIds) {
-        const item = await kv.get<MediaItem>(`zd-cms:media:${id}`)
+        const item = (await kv.get(`zd-cms:media:${id}`)) as MediaItem | null
         if (item) items.push(item)
       }
 
@@ -150,7 +150,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await kv.set(`zd-cms:media:${id}`, mediaItem)
 
       // Prepend new id to the index list
-      const index = await kv.get<string[]>(MEDIA_INDEX_KEY) ?? []
+      const index = ((await kv.get(MEDIA_INDEX_KEY)) as string[] | null) ?? []
       await kv.set(MEDIA_INDEX_KEY, [id, ...index])
 
       return res.status(201).json({ item: mediaItem })
@@ -170,8 +170,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await kv.del(itemKey)
 
       // Remove from index
-      const index = await kv.get<string[]>(MEDIA_INDEX_KEY) ?? []
-      await kv.set(MEDIA_INDEX_KEY, index.filter(i => i !== idParam))
+      const index = ((await kv.get(MEDIA_INDEX_KEY)) as string[] | null) ?? []
+      await kv.set(MEDIA_INDEX_KEY, index.filter((i: string) => i !== idParam))
 
       return res.json({ success: true })
     }

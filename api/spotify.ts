@@ -13,7 +13,7 @@ async function getAccessToken(): Promise<string> {
   // Try cache first
   if (redis) {
     try {
-      const cached = await redis.get<string>(SPOTIFY_TOKEN_KEY)
+      const cached = (await redis.get(SPOTIFY_TOKEN_KEY)) as string | null
       if (cached) return cached
     } catch {
       // Cache miss or Redis error — continue to fetch a fresh token
@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const searchCacheKey = `spotify:search:${query.toLowerCase().replace(/\s+/g, '-')}:${searchType}`
         if (searchRedis) {
           try {
-            const cached = await searchRedis.get<unknown>(searchCacheKey)
+            const cached = (await searchRedis.get(searchCacheKey)) as unknown | null
             if (cached !== null && cached !== undefined) {
               res.setHeader('Cache-Control', 'public, max-age=300')
               res.setHeader('X-Cache', 'HIT')

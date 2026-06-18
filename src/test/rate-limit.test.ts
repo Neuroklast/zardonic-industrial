@@ -29,21 +29,6 @@ vi.mock('../../api/_ratelimit.js', () => ({
   getClientIp: vi.fn().mockReturnValue('1.2.3.4'),
 }))
 
-// Mock honeytokens — disable in rate-limit tests
-vi.mock('../../api/_honeytokens.js', () => ({
-  isHoneytoken: vi.fn().mockReturnValue(false),
-  triggerHoneytokenAlarm: vi.fn().mockResolvedValue(undefined),
-  isMarkedAttacker: vi.fn().mockResolvedValue(false),
-  injectEntropyHeaders: vi.fn(),
-  getRandomTaunt: vi.fn().mockReturnValue('test-taunt'),
-  setDefenseHeaders: vi.fn(),
-}))
-
-// Mock blocklist — disable hard-blocking in rate-limit tests
-vi.mock('../../api/_blocklist.js', () => ({
-  isHardBlocked: vi.fn().mockResolvedValue(false),
-}))
-
 function mockRes() {
   const res: any = {
     status: vi.fn(),

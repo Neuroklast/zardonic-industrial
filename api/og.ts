@@ -206,7 +206,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   let data: BandData | null = null
   try {
     if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-      data = await kv.get<BandData>('band-data')
+      data = (await kv.get('band-data')) as BandData | null
     }
   } catch {
     // KV unavailable — fall through to fallback
