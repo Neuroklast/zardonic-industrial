@@ -47,9 +47,11 @@ export async function middleware(request: NextRequest) {
           response.cookies.set(name, value, options),
         )
         // Apply cache-control headers so CDNs don't cache this response.
-        Object.entries(headers).forEach(([key, value]) =>
-          response.headers.set(key, value),
-        )
+        if (headers) {
+          Object.entries(headers).forEach(([key, value]) =>
+            response.headers.set(key, value),
+          )
+        }
       },
     },
   })
