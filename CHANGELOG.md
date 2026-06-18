@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Gallery inline image management**: `GallerySection` now accepts `onUpdateGallery` prop; in editMode it shows an upload button (Vercel Blob via `useImageUpload`) and a URL-paste field to add images, plus per-image delete and reorder (up/down) controls overlaid on hover.
+- **Gallery style overrides now respected**: `GallerySection` reads `adminSettings.sections.styleOverrides.gallery.{columns, aspectRatio, gap, maxVisible, lightbox}` — previously these were registered in `sections-registry.ts` but ignored. Grid columns (2/3/4), aspect ratio (square/16:9/auto), gap, max-visible cap with "Show All" button, and lightbox toggle are all live.
+- **ShellSection member overlay**: Clicking the featured-member photo card in `ShellSection` now opens the full `CyberpunkOverlay` (type `member`) with the shell member's data. A "View Profile" hover hint is shown; the card is keyboard-accessible (Enter/Space).
+- **Gallery glitch transition**: Opening the gallery now fires `useOverlayTransition()` (the same CRT-glitch flash used before releases/gigs overlays) for visual consistency.
+- **`handleUpdateGallery` in AppShell**: `AppShell` wires `onUpdateGallery` to `GallerySection` in editMode, persisting changes back to `siteData.gallery` via `handleUpdateSiteData`.
+
 ### Fixed
 - **CSP `connect-src` blocks Supabase**: Added `https://*.supabase.co` and `wss://*.supabase.co` to `connect-src` in `vercel.json` so Supabase auth, database, and Realtime connections are no longer blocked by the browser. Tightened `next.config.mjs` `connect-src` from `'self' https: wss:` to the same explicit allowlist for consistency. Updated `security-hardening.test.ts` allowlist and wildcard checks to include the new Supabase entries.
 - **`vercel.json` CSP blocks Next.js hydration**: Added `'unsafe-inline'` to `script-src` in the Content-Security-Policy header so Next.js inline scripts can execute and the page hydrates correctly.
