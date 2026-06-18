@@ -158,25 +158,38 @@ describe('vercel.json Content-Security-Policy', () => {
 
   it('does not allow connect-src to arbitrary external domains (only whitelisted APIs)', () => {
     // connect-src allows 'self' and specific whitelisted APIs.
-    // Wildcards are only permitted for Vercel Blob storage (required for client-side video uploads).
+    // Wildcards are only permitted for Vercel Blob storage and Supabase (required for client-side video uploads and auth/realtime).
     const connectSrc = cspHeader.value.match(/connect-src ([^;]+)/)
     expect(connectSrc).toBeTruthy()
     const connectSrcValue = connectSrc[1].trim()
     expect(connectSrcValue).toContain("'self'")
     // Verify only known trusted origins are present
-    const allowed = ["'self'", 'https://api.spotify.com', 'https://open.spotify.com',
+    const allowed = [
+      "'self'",
+      'https://api.spotify.com',
+      'https://open.spotify.com',
       'https://spclient.wg.spotify.com',
-      'https://api.song.link', 'https://rest.bandsintown.com', 'https://itunes.apple.com', 'https://wsrv.nl',
+      'https://api.song.link',
+      'https://rest.bandsintown.com',
+      'https://itunes.apple.com',
+      'https://wsrv.nl',
       'https://vercel.com',  // required for @vercel/blob/client SDK (client-side video upload token exchange)
-      'https://*.public.blob.vercel-storage.com']
+      'https://*.public.blob.vercel-storage.com',
+      'https://*.supabase.co',   // Supabase auth, database, storage
+      'wss://*.supabase.co',     // Supabase Realtime
+    ]
     const domains = connectSrcValue.split(/\s+/)
     for (const domain of domains) {
       expect(allowed).toContain(domain)
     }
-    // Wildcards must be limited to the known Vercel Blob storage pattern only
+    // Wildcards must be limited to known patterns only
     const wildcardDomains = domains.filter((d: string) => d.includes('*'))
     for (const wc of wildcardDomains) {
-      expect(['https://*.public.blob.vercel-storage.com']).toContain(wc)
+      expect([
+        'https://*.public.blob.vercel-storage.com',
+        'https://*.supabase.co',
+        'wss://*.supabase.co',
+      ]).toContain(wc)
     }
   })
 })

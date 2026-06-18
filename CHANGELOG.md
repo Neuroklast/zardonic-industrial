@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **CSP `connect-src` blocks Supabase**: Added `https://*.supabase.co` and `wss://*.supabase.co` to `connect-src` in `vercel.json` so Supabase auth, database, and Realtime connections are no longer blocked by the browser. Tightened `next.config.mjs` `connect-src` from `'self' https: wss:` to the same explicit allowlist for consistency. Updated `security-hardening.test.ts` allowlist and wildcard checks to include the new Supabase entries.
 - **`vercel.json` CSP blocks Next.js hydration**: Added `'unsafe-inline'` to `script-src` in the Content-Security-Policy header so Next.js inline scripts can execute and the page hydrates correctly.
 - **`vercel.json` `/admin` rewrite blocks admin panel**: Removed the `{ "source": "/admin/:p*", "destination": "/api/denied?_src=/admin/:p*" }` rewrite that was redirecting all admin traffic to `/api/denied`. The admin panel is protected by `middleware.ts` and does not need this rewrite.
 
