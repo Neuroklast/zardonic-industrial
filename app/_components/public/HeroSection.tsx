@@ -36,7 +36,8 @@ export function HeroSection({
   const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
-    setContentLoaded(true)
+    const timer = window.setTimeout(() => setContentLoaded(true), 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   return (

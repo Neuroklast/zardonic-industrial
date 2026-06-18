@@ -1,11 +1,37 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GigsSection } from '@/app/_components/public/GigsSection'
 import { GlobalEffects } from '@/app/_components/public/GlobalEffects'
 import { HeroSection } from '@/app/_components/public/HeroSection'
 import { ReleasesSection } from '@/app/_components/public/ReleasesSection'
+
+beforeAll(() => {
+  class MockIntersectionObserver implements IntersectionObserver {
+    readonly root = null
+    readonly rootMargin = '0px'
+    readonly thresholds = [0]
+
+    disconnect() {}
+    observe() {}
+    takeRecords() {
+      return []
+    }
+    unobserve() {}
+  }
+
+  Object.defineProperty(window, 'IntersectionObserver', {
+    writable: true,
+    configurable: true,
+    value: MockIntersectionObserver,
+  })
+  Object.defineProperty(globalThis, 'IntersectionObserver', {
+    writable: true,
+    configurable: true,
+    value: MockIntersectionObserver,
+  })
+})
 
 describe('restored public homepage components', () => {
   it('restores the hero glitch logo, overlays, and dual CTAs', () => {
