@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Black screen on initial load**: `app/providers.tsx` now uses synchronous `domAnimation` import instead of lazy-loading via `loadMotionFeatures`, eliminating the race condition where components rendered before motion features were available.
+- **Hero content invisible on load**: `HeroSection` `contentLoaded` state now initialises as `true`, removing the `setTimeout` that deferred content visibility and caused a blank hero on slow connections.
+- **Missing body text colour**: `styles/base.css` now sets `color: var(--foreground)` on `body`, ensuring text is visible from the first paint even before theme-specific CSS loads.
 - **Blank public page (CSP errors + LazyMotion conflict)**: All public components (`HeroSection`, `BioSection`, `GigsSection`, `ReleasesSection`, `CreditsSection`, `GallerySection`) now import `m` instead of `motion` from `framer-motion`, matching the `LazyMotion` context in `app/providers.tsx` and preventing components from rendering nothing while features load.
 - **CSP inline-script errors**: Added `headers()` configuration to `next.config.mjs` with `'unsafe-inline'` in `script-src` to allow Next.js hydration inline scripts and Framer Motion.
 - **BackgroundStack Vite-component crash**: Replaced `React.lazy` / `Suspense` with `next/dynamic` (`ssr: false`) for `MatrixRain` and `CircuitBackground` to prevent crashes from browser-only APIs during Next.js server-side rendering.
