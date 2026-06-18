@@ -46,10 +46,10 @@ export async function deleteGalleryImage(id: string) {
   }, 'Unable to delete gallery image.')
 }
 
-export async function toggleGalleryImageVisibility(id: string, visible: boolean) {
+export async function toggleGalleryImageVisibility(id: string, active: boolean) {
   return runAdminAction(async () => {
     const supabase = createAdminClient()
-    const { error } = await supabase.from('gallery').update({ visible }).eq('id', id)
+    const { error } = await supabase.from('gallery').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/gallery')

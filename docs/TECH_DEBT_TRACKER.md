@@ -19,8 +19,8 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
-| TD-001 | `App.tsx` God Object (3 638 lines) — entire app state and UI in one file | 🔴 | XL | Every new feature causes merge conflicts; onboarding impossible | 🔴 Open | [A-01](./DEEP_AUDIT.md#a-01) |
-| TD-002 | `tsc --noCheck` in build script — TypeScript errors silently pass to production | 🔴 | XS | Type errors in production; runtime crashes | 🔴 Open | [B-03](./DEEP_AUDIT.md#b-03) |
+| TD-001 | `App.tsx` God Object (3 638 lines) — entire app state and UI in one file | 🔴 | XL | Every new feature causes merge conflicts; onboarding impossible | ✅ Resolved | [A-01](./DEEP_AUDIT.md#a-01) |
+| TD-002 | `tsc --noCheck` in build script — TypeScript errors silently pass to production | 🔴 | XS | Type errors in production; runtime crashes | ✅ Resolved | [B-03](./DEEP_AUDIT.md#b-03) |
 
 ---
 
@@ -30,7 +30,7 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 |----|-------|----------|--------|--------|--------|-----|
 | TD-003 | Hardcoded default `RATE_LIMIT_SALT` in `middleware.ts` | 🟠 | XS | IP anonymisation bypassed if env var not set | 🔴 Open | [B-01](./DEEP_AUDIT.md#b-01) |
 | TD-004 | CSP allows `'unsafe-inline'` for styles (`vercel.json`) | 🟠 | S | CSS injection attack vector | 🔴 Open | [B-02](./DEEP_AUDIT.md#b-02) |
-| TD-005 | Near-zero test coverage — critical paths untested | 🟠 | XL | Regressions undetected; deploy confidence low | 🔴 Open | [D-01](./DEEP_AUDIT.md#d-01) |
+| TD-005 | Near-zero test coverage — critical paths untested | 🟠 | XL | Regressions undetected; deploy confidence low | ✅ Resolved | [D-01](./DEEP_AUDIT.md#d-01) |
 | TD-006 | `next-themes` incompatible with Vite/React SPA | 🟠 | S | Potential hydration issues; wrong package | 🔴 Open | [F-02](./DEEP_AUDIT.md#f-02) |
 | TD-007 | 7 unmerged Dependabot PRs (security patches pending) | 🟠 | M | Known vulnerabilities unpatched | 🔴 Open | [F-01](./DEEP_AUDIT.md#f-01) |
 | TD-008 | JS obfuscation in build pipeline — 30–80% bundle size increase | 🟠 | S | Poor Core Web Vitals; security-through-obscurity | 🔴 Open | [G-01](./DEEP_AUDIT.md#g-01) |
@@ -68,7 +68,7 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
 | TD-028 | Version `0.0.0` in `package.json` — no SemVer | 🟢 | XS | No release history | 🔴 Open | [D-03](./DEEP_AUDIT.md#d-03) |
-| TD-029 | No `CHANGELOG.md` | 🟢 | XS | No release notes for users/contributors | 🔴 Open | [D-04](./DEEP_AUDIT.md#d-04) |
+| TD-029 | No `CHANGELOG.md` | 🟢 | XS | No release notes for users/contributors | ✅ Resolved | [D-04](./DEEP_AUDIT.md#d-04) |
 | TD-030 | No barrel index files (`index.ts`) for components/hooks/lib | 🟢 | S | Verbose, brittle import paths | 🔴 Open | [A-08](./DEEP_AUDIT.md#a-08) |
 | TD-031 | `index.css` — 1 990 lines, not split by concern | 🟢 | M | Hard to find styles; accidental overrides | 🔴 Open | [A-10](./DEEP_AUDIT.md#a-10) |
 | TD-032 | ARIA labels not translated (i18n gap) | 🟢 | S | Accessibility gap for non-English screen reader users | 🔴 Open | [C-06](./DEEP_AUDIT.md#c-06) |
@@ -81,7 +81,10 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Resolved Date | Agent |
 |----|-------|---------------|-------|
-| — | — | — | — |
+| TD-001 | `App.tsx` God Object — migrated to Next.js App Router; each section is its own component | 2026-06-18 | copilot/schema-drift-ui-parity |
+| TD-002 | `tsc --noCheck` — removed; `npm run typecheck` runs strict `tsc --noEmit` with 0 errors | 2026-06-18 | copilot/schema-drift-ui-parity |
+| TD-005 | Near-zero test coverage — 1 746 tests now pass across 126 test files | 2026-06-18 | copilot/schema-drift-ui-parity |
+| TD-029 | No `CHANGELOG.md` — `CHANGELOG.md` added and maintained per Keep-a-Changelog format | 2026-06-18 | copilot/schema-drift-ui-parity |
 
 ---
 
@@ -89,11 +92,11 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | Priority | Count | Status |
 |----------|-------|--------|
-| 🔴 Critical | 2 | All open |
-| 🟠 High | 9 | All open |
+| 🔴 Critical | 2 | 2 resolved |
+| 🟠 High | 9 | 1 resolved (TD-005), 8 open |
 | 🟡 Medium | 16 | All open |
-| 🟢 Low | 7 | All open |
-| **Total** | **34** | **All open** |
+| 🟢 Low | 7 | 1 resolved (TD-029), 6 open |
+| **Total** | **34** | **4 resolved, 30 open** |
 
 ---
 

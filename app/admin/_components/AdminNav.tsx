@@ -22,6 +22,11 @@ import {
   Rows,
   EnvelopeSimple,
   Heartbeat,
+  ShieldWarning,
+  ChartBar,
+  Export,
+  Translate,
+  SpeakerHigh,
 } from '@phosphor-icons/react'
 
 interface NavItem {
@@ -47,6 +52,11 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/admin/social',           label: 'Social Links',     icon: Share },
   { href: '/admin/newsletter',       label: 'Newsletter',       icon: EnvelopeSimple },
   { href: '/admin/health',           label: 'API Health',       icon: Heartbeat },
+  { href: '/admin/security',         label: 'Security',         icon: ShieldWarning },
+  { href: '/admin/analytics',        label: 'Analytics',        icon: ChartBar },
+  { href: '/admin/data',             label: 'Data Export',      icon: Export },
+  { href: '/admin/translations',     label: 'Translations',     icon: Translate },
+  { href: '/admin/sound',            label: 'Sound',            icon: SpeakerHigh },
 ]
 
 function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
