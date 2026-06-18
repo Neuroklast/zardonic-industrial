@@ -55,3 +55,11 @@ export async function deleteMusicHighlight(id: string) {
   revalidatePath('/admin/music-highlights')
   return { success: true }
 }
+
+export async function toggleMusicHighlightVisibility(id: string, active: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('music_highlights').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/music-highlights')
+  return { success: true }
+}

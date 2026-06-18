@@ -13,16 +13,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - **HeroSection** now displays the Zardonic logo image with chromatic aberration glitch effects (`hero-logo-glitch`, `cyber2077-scan-build`) and framer-motion fade/slide animations instead of plain text.
   - **SiteNav** now shows the Zardonic logo image with `logo-glitch` and `hover-chromatic-image` effects instead of a plain text link.
   - **SiteBackground** now renders the circuit board animated background (`CircuitBackground`) as a parallax overlay on top of the static background image, matching the default `circuit` animation type from the old app.
-
-### Added
-- **`app/_components/public/CircuitBackground.tsx`** — port of `src/components/CircuitBackground.tsx` adapted for Next.js App Router (client component, uses `m` from framer-motion within the existing `LazyMotion` context; three parallax depth layers with DOM-injected data-pulse animations).
-
-### Fixed
+- **Blank public page (CSP errors + LazyMotion conflict)**: All public components (`HeroSection`, `BioSection`, `GigsSection`, `ReleasesSection`, `CreditsSection`, `GallerySection`) now import `m` instead of `motion` from `framer-motion`, matching the `LazyMotion` context in `app/providers.tsx` and preventing components from rendering nothing while features load.
+- **CSP inline-script errors**: Added `headers()` configuration to `next.config.mjs` with `'unsafe-inline'` in `script-src` to allow Next.js hydration inline scripts and Framer Motion.
+- **BackgroundStack Vite-component crash**: Replaced `React.lazy` / `Suspense` with `next/dynamic` (`ssr: false`) for `MatrixRain` and `CircuitBackground` to prevent crashes from browser-only APIs during Next.js server-side rendering.
 - **Public-site typography regression after Next.js migration** — `app/layout.tsx` now loads **Orbitron**, **Share Tech Mono**, and **Space Mono** in one Google Fonts request, restoring heading/body/mono font availability expected by CSS custom-property fallbacks.
 - **Theme token import regression** — `app/globals.css` now imports `styles/theme.css` before token/base/effect/component/layout styles, restoring Radix color variables, spacing scale (`--size-*`), radius tokens, and dependent Tailwind utilities.
 - **Legacy `@/App` type imports** — replaced all remaining `import type { SiteData } from '@/App'` usages across both `components/` and `src/components/` trees with `@/lib/app-types`, resolving Next.js/Vercel TypeScript module-resolution failures.
 
+### Added
+- **`app/_components/public/CircuitBackground.tsx`** — port of `src/components/CircuitBackground.tsx` adapted for Next.js App Router (client component, uses `m` from framer-motion within the existing `LazyMotion` context; three parallax depth layers with DOM-injected data-pulse animations).
+- **`app/_components/public/BackgroundStack.tsx`** — restored layered public background rendering with lazy-loaded Matrix Rain / Circuit backgrounds, optional video, and token-based stacking.
+- **`app/_components/public/GlobalEffects.tsx`** — restored CRT overlay, vignette, scanline background, and full-page noise for the public homepage.
+- **`app/_components/public/GallerySection.tsx`** — restored a motion-driven public gallery grid for Supabase gallery entries on the Next.js homepage.
+- **`lib/storage/r2-multipart.ts`** — low-level S3 multipart upload functions (`createMultipartUpload`, `signMultipartPart`, `completeMultipartUpload`, `abortMultipartUpload`) for large file uploads via Cloudflare R2.
+- **`app/admin/_actions/auth.ts`** — `requireAdmin()` server-side helper that verifies Supabase session and admin role; to be called at the top of every sensitive server action.
+- **`app/admin/_actions/r2Multipart.ts`** — server actions wrapping multipart R2 upload functions with `requireAdmin()` protection (`createMultipartUploadAction`, `signMultipartPartAction`, `completeMultipartUploadAction`, `abortMultipartUploadAction`).
+- **`hooks/useR2MultipartUpload.ts`** — client-side React hook for multipart uploads of large files (e.g. soundpacks), splitting the file into 5 MB parts and assembling them via signed URLs.
+- **`hooks/useImageUpload.ts`** — client-side React hook for simple image uploads (JPEG/PNG/WebP/GIF, max 10 MB) using `createSignedUploadUrl`.
+- **`toggleReleaseVisibility`** in `app/admin/_actions/releases.ts` — toggle `active` boolean on releases.
+- **`toggleGalleryImageVisibility`** in `app/admin/_actions/gallery.ts` — toggle `visible` boolean on gallery images.
+- **`toggleGigVisibility`** in `app/admin/_actions/gigs.ts` — toggle `active` boolean on gigs.
+- **`togglePartnerVisibility`** in `app/admin/_actions/partners.ts` — toggle `visible` boolean on partners.
+- **`toggleSoundpackVisibility`** in `app/admin/_actions/soundpacks.ts` — toggle `active` boolean on soundpacks.
+- **`toggleMerchandiseVisibility`** in `app/admin/_actions/merchandise.ts` — toggle `active` boolean on merchandise.
+- **`toggleMusicHighlightVisibility`** in `app/admin/_actions/musicHighlights.ts` — toggle `active` boolean on music highlights.
+- **`lib/schemas/soundpack.ts`** — Zod schema and `Soundpack` type.
+- **`lib/schemas/merchandise.ts`** — Zod schema and `Merchandise` type.
+- **`lib/schemas/musicHighlight.ts`** — Zod schema and `MusicHighlight` type.
+- **`services/soundpacksService.ts`** — `getAllSoundpacks()` with `isDev`/`hideDemoFallback`/`ServiceResult` pattern.
+- **`services/merchandiseService.ts`** — `getAllMerchandise()` with full service pattern.
+- **`services/musicHighlightsService.ts`** — `getAllMusicHighlights()` with full service pattern.
+- **`lib/mockData.ts`** — added `DEMO_SOUNDPACKS`, `DEMO_MERCHANDISE`, `DEMO_MUSIC_HIGHLIGHTS` demo data exports.
+- **`lib/constants.ts`** — `MEDIA_BUCKET`, `ADMIN_COOKIE_NAME`, `NAV_SECTIONS` constants.
+- **`supabase/migrations/20260101000000_initial_schema.sql`** — initial schema migration documenting all tables (`releases`, `gigs`, `gallery`, `bio`, `social_links`, `partners`, `soundpacks`, `merchandise`, `music_highlights`, `site_config`).
+
 ### Changed
+- **Public homepage restoration** (`app/page.tsx`) — replaced the simplified fixed background with `BackgroundStack`, added `GlobalEffects`, fetched `gallery` rows from Supabase, rendered the restored gallery section, and passed hero background data back into the public hero component.
+- **`app/_components/public/HeroSection.tsx`** — replaced the stripped-down text/button hero with the original glitch-logo composition, scanline/noise overlays, mount fade-in, and dual CTA buttons.
+- **`app/_components/public/BioSection.tsx`** — restored the animated clip-path heading reveal, blinking cursor, masked collapse/expand biography text, and motion-based text entrance.
+- **`app/_components/public/ReleasesSection.tsx`** — restored filter buttons, motion heading reveal, cyber-card release grid styling, platform link buttons, and show-all/show-less behaviour.
+- **`app/_components/public/GigsSection.tsx`** — restored staggered motion cards, event data labels, cyber-card hover effects, icon metadata rows, and upcoming/past segmentation.
+- **`app/_components/public/CreditsSection.tsx`** — restored motion logo grids with `chromatic-hover` treatment for credits and endorsements.
+- **Admin dashboard** (`app/admin/(protected)/page.tsx`) — expanded from 3 to 10 sections; shows live row counts for releases, gigs, gallery, soundpacks, merchandise, music highlights, and partners, plus quick links for bio, social, and site-config.
 - **Global CSS font override cleanup** — removed the redundant `body { font-family: 'Space Mono', ... }` rule from `app/globals.css` so `styles/base.css` can apply `var(--font-body, 'Share Tech Mono', monospace)` as intended.
 - **Tailwind import deduplication** — removed Tailwind core/preflight/theme imports from `styles/theme.css` because `app/globals.css` already imports Tailwind once.
 - **Tailwind scan/config alignment** (`tailwind.config.js`) — updated token-reference comments from `src/index.css` to `styles/tokens.css` and expanded `content` globs to include `src/`, `cms/`, and `services/`.

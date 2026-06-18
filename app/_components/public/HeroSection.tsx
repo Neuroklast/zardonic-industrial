@@ -1,81 +1,138 @@
 'use client'
 
+import { useEffect, useState, type MouseEvent } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 
-const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
+const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
 interface HeroSectionProps {
   headline: string
-  tagline: string
-  ctaLabel: string
-  ctaUrl: string
+  tagline?: string
+  ctaLabel?: string
+  ctaUrl?: string
+  backgroundImageUrl?: string
+  backgroundImageOpacity?: number
 }
 
-export function HeroSection({ headline: _headline, tagline, ctaLabel, ctaUrl }: HeroSectionProps) {
+function handleAnchorNavigation(event: MouseEvent<HTMLAnchorElement>, target: string) {
+  if (!target.startsWith('#')) return
+
+  const element = document.querySelector<HTMLElement>(target)
+  if (!element) return
+
+  event.preventDefault()
+  element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
+
+export function HeroSection({
+  headline,
+  tagline,
+  ctaLabel,
+  ctaUrl,
+  backgroundImageUrl,
+  backgroundImageOpacity = 0.35,
+}: HeroSectionProps) {
+  const [contentLoaded, setContentLoaded] = useState(false)
   const prefersReducedMotion = useReducedMotion()
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setContentLoaded(true), 0)
+    return () => window.clearTimeout(timer)
+  }, [])
 
   return (
     <section
-      className="relative min-h-screen flex items-center justify-center pt-20 overflow-hidden scanline-effect"
-      style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
+      className="relative flex min-h-screen items-center justify-center overflow-hidden pt-20 scanline-effect"
+      style={{ zIndex: 'var(--z-content)' }}
+      data-theme-color="foreground primary"
     >
+      {backgroundImageUrl && (
+        <m.div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${backgroundImageUrl})`,
+          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: backgroundImageOpacity }}
+          transition={{ duration: prefersReducedMotion ? 0 : 1.2, ease: 'easeInOut' }}
+          aria-hidden="true"
+        />
+      )}
+
+      <div className="absolute inset-0 noise-effect" aria-hidden="true" />
+
       <m.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.6 }}
-        className="relative text-center px-4"
+        animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
+        transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
+        className="relative px-4 text-center"
+        style={{ zIndex: 'var(--z-content)' }}
       >
-        {/* Logo with chromatic aberration glitch effect */}
         <m.div
-          className="mb-10 relative"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: prefersReducedMotion ? 0 : 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
+          className="relative mb-6"
+          initial={{ opacity: 1 }}
+          animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
         >
-          <div className="relative mx-auto w-fit hero-logo-glitch hover-glitch cyber2077-scan-build">
+          <div className="hero-logo-glitch hover-glitch cyber2077-scan-build relative mx-auto w-fit">
             <img
-              src={LOGO_IMAGE}
-              alt="Zardonic"
-              className="h-32 md:h-48 lg:h-64 w-auto object-contain brightness-110 hover-chromatic-image"
+              src={logoImage}
+              alt={headline}
+              className="hover-chromatic-image h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
               fetchPriority="high"
             />
             <img
-              src={LOGO_IMAGE}
+              src={logoImage}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 h-32 md:h-48 lg:h-64 w-auto object-contain brightness-110 hero-logo-r"
+              className="hero-logo-r absolute inset-0 h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
             />
             <img
-              src={LOGO_IMAGE}
+              src={logoImage}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 h-32 md:h-48 lg:h-64 w-auto object-contain brightness-110 hero-logo-b"
+              className="hero-logo-b absolute inset-0 h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
             />
           </div>
         </m.div>
 
-        {tagline && (
+        {tagline ? (
           <m.p
-            className="font-mono text-sm tracking-widest text-zinc-400 uppercase mb-10 max-w-md mx-auto"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: prefersReducedMotion ? 0 : 0.6, duration: prefersReducedMotion ? 0 : 0.6 }}
+            initial={{ opacity: 0, y: 16 }}
+            animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={{
+              delay: prefersReducedMotion ? 0 : 0.3,
+              duration: prefersReducedMotion ? 0 : 0.6,
+              ease: [0.25, 0.46, 0.45, 0.94],
+            }}
+            className="mx-auto max-w-2xl font-mono text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
           >
             {tagline}
           </m.p>
-        )}
+        ) : null}
 
         <m.div
-          className="flex gap-4 justify-center flex-wrap"
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: prefersReducedMotion ? 0 : 1.0, duration: prefersReducedMotion ? 0 : 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+          animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{
+            delay: prefersReducedMotion ? 0 : 0.6,
+            duration: prefersReducedMotion ? 0 : 0.8,
+            ease: [0.25, 0.46, 0.45, 0.94],
+          }}
+          className="mt-12 flex flex-wrap justify-center gap-4"
         >
           <a
-            href={ctaUrl}
-            className="font-mono text-xs tracking-widest uppercase border border-zinc-600 text-zinc-300 hover:border-white hover:text-white px-6 py-3 transition-colors hover-glitch cyber-border"
+            href={ctaUrl || '#releases'}
+            onClick={(event) => handleAnchorNavigation(event, ctaUrl || '#releases')}
+            className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
           >
-            <span className="hover-chromatic">{ctaLabel}</span>
+            <span className="hover-chromatic">{ctaLabel || 'LISTEN NOW'}</span>
+          </a>
+          <a
+            href="#gigs"
+            onClick={(event) => handleAnchorNavigation(event, '#gigs')}
+            className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
+          >
+            <span className="hover-chromatic">TOUR DATES</span>
           </a>
         </m.div>
       </m.div>

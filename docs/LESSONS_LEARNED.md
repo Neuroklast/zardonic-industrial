@@ -170,3 +170,6 @@ When making `scroll` the default video mode (previously `loop`), the `Background
 
 ### Upload-Only Admin UI: Show Stored Filename as Read-Only Confirmation
 Removing a URL text-input in favour of an upload-only button still needs to communicate the current stored URL to the admin. Extracting the filename with `url.split('/').pop()?.split('?')[0]` and rendering it as a small `<p>` element (truncated, with the full URL as `title`) gives confirmation without re-introducing an editable field.
+
+| 2026-06-18 | copilot/backend-parity | GitHub Copilot | When porting backend patterns across repos, always check whether helper functions like `requireAdmin()` exist before importing them in new server actions — create them first if missing, mirroring the middleware auth logic (Supabase session + profile role check) so server actions have defence-in-depth. | Architecture | 🟠 High |
+| 2026-06-18 | copilot/backend-parity | GitHub Copilot | Services for new entity types (soundpacks, merchandise, musicHighlights) must import schemas from `lib/schemas/` and demo data from `lib/mockData.ts` — not define them inline — to keep the single-source-of-truth principle intact and avoid drift between the service schema and the app-level Zod type. | Architecture | 🟡 Medium |
