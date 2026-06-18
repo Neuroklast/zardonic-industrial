@@ -48,7 +48,10 @@ export function BackgroundStack({
     const video = videoRef.current
     if (!video) return
 
+    let frameId: number | null = null
+
     const syncToScroll = () => {
+      frameId = null
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
       const progress = scrollableHeight > 0
         ? Math.min(Math.max(window.scrollY / scrollableHeight, 0), 1)
@@ -60,13 +63,21 @@ export function BackgroundStack({
       }
     }
 
-    syncToScroll()
-    window.addEventListener('scroll', syncToScroll, { passive: true })
-    video.addEventListener('loadedmetadata', syncToScroll)
+    const scheduleSync = () => {
+      if (frameId !== null) return
+      frameId = window.requestAnimationFrame(syncToScroll)
+    }
+
+    scheduleSync()
+    window.addEventListener('scroll', scheduleSync, { passive: true })
+    video.addEventListener('loadedmetadata', scheduleSync)
 
     return () => {
-      window.removeEventListener('scroll', syncToScroll)
-      video.removeEventListener('loadedmetadata', syncToScroll)
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId)
+      }
+      window.removeEventListener('scroll', scheduleSync)
+      video.removeEventListener('loadedmetadata', scheduleSync)
     }
   }, [videoUrl])
 

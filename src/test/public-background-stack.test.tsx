@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BackgroundStack } from '@/app/_components/public/BackgroundStack'
 
@@ -8,15 +8,23 @@ describe('public BackgroundStack', () => {
   const originalScrollHeight = document.documentElement.scrollHeight
 
   beforeEach(() => {
+    vi.useFakeTimers()
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1000 })
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
     Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 3000 })
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      return window.setTimeout(() => callback(0), 0)
+    })
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((handle: number) => {
+      window.clearTimeout(handle)
+    })
   })
 
   afterEach(() => {
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight })
     Object.defineProperty(window, 'scrollY', { configurable: true, value: originalScrollY })
     Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: originalScrollHeight })
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -51,6 +59,9 @@ describe('public BackgroundStack', () => {
 
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 500 })
     fireEvent.scroll(window)
+    act(() => {
+      vi.runAllTimers()
+    })
 
     expect(video.currentTime).toBe(30)
   })
