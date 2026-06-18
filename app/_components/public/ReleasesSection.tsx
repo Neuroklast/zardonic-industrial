@@ -25,6 +25,7 @@ interface Release {
 
 interface ReleasesSectionProps {
   releases: Release[]
+  onReleaseClick?: (release: Release) => void
 }
 
 type ReleaseFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
@@ -81,7 +82,7 @@ function getPlatformIcon(platform: string) {
   }
 }
 
-export function ReleasesSection({ releases }: ReleasesSectionProps) {
+export function ReleasesSection({ releases, onReleaseClick }: ReleasesSectionProps) {
   const [showAll, setShowAll] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
 
@@ -156,7 +157,24 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
                     whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className="cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic"
+                    className={`cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic ${
+                      onReleaseClick ? 'cursor-pointer' : ''
+                    }`}
+                    onClick={(event) => {
+                      if (!onReleaseClick) return
+                      const target = event.target
+                      if (target instanceof Element && target.closest('a')) return
+                      onReleaseClick(release)
+                    }}
+                    onKeyDown={(event) => {
+                      if (!onReleaseClick) return
+                      if (event.key !== 'Enter' && event.key !== ' ') return
+                      event.preventDefault()
+                      onReleaseClick(release)
+                    }}
+                    tabIndex={onReleaseClick ? 0 : undefined}
+                    role={onReleaseClick ? 'button' : undefined}
+                    aria-label={onReleaseClick ? `Open release details for ${release.title}` : undefined}
                   >
                     <div className="aspect-square bg-muted">
                       {release.coverUrl ? (

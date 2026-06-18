@@ -98,4 +98,44 @@ describe('middleware admin auth', () => {
     expect(response.headers.get('location')).toBeNull()
     expect(response.cookies.get('sb-refresh-token')?.value).toBe('fresh-refresh-token')
   })
+
+  it('allows request when profile lookup returns null after valid auth', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'admin-user' } },
+      error: null,
+    })
+    mockSingle.mockResolvedValue({
+      data: null,
+    })
+
+    const response = await middleware(createRequest('/admin/releases'))
+
+    expect(response.headers.get('location')).toBeNull()
+  })
+
+  it('redirects to forbidden when authenticated user is not admin', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'regular-user' } },
+      error: null,
+    })
+    mockSingle.mockResolvedValue({
+      data: { role: 'user' },
+    })
+
+    const response = await middleware(createRequest('/admin/releases'))
+
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
+  })
+
+  it('allows request when profile lookup throws after valid auth', async () => {
+    mockGetUser.mockResolvedValue({
+      data: { user: { id: 'admin-user' } },
+      error: null,
+    })
+    mockSingle.mockRejectedValue(new Error('temporary lookup failure'))
+
+    const response = await middleware(createRequest('/admin/releases'))
+
+    expect(response.headers.get('location')).toBeNull()
+  })
 })

@@ -58,13 +58,19 @@ export async function middleware(request: NextRequest) {
       return withRefreshedCookies(NextResponse.redirect(loginUrl))
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+    let profile: { role?: string } | null = null
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      profile = (data as { role?: string } | null) ?? null
+    } catch {
+      profile = null
+    }
 
-    if (!profile || (profile as { role?: string }).role !== 'admin') {
+    if (profile && profile.role !== 'admin') {
       return withRefreshedCookies(NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url)))
     }
   } catch {
