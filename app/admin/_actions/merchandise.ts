@@ -65,3 +65,11 @@ export async function deleteMerchandise(id: string) {
   revalidatePath('/admin/merchandise')
   return { success: true }
 }
+
+export async function toggleMerchandiseVisibility(id: string, active: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('merchandise').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/merchandise')
+  return { success: true }
+}

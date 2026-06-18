@@ -65,3 +65,11 @@ export async function deleteSoundpack(id: string) {
   revalidatePath('/admin/soundpacks')
   return { success: true }
 }
+
+export async function toggleSoundpackVisibility(id: string, active: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('soundpacks').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/soundpacks')
+  return { success: true }
+}

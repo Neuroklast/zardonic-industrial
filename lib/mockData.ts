@@ -4,6 +4,9 @@ import type { GalleryImage } from '@/lib/schemas/gallery'
 import type { Bio } from '@/lib/schemas/bio'
 import type { SocialLink } from '@/lib/schemas/social'
 import type { Partner } from '@/lib/schemas/partner'
+import type { Soundpack } from '@/lib/schemas/soundpack'
+import type { Merchandise } from '@/lib/schemas/merchandise'
+import type { MusicHighlight } from '@/lib/schemas/musicHighlight'
 
 export const DEMO_RELEASES: Release[] = [
   {
@@ -78,4 +81,19 @@ export const DEMO_SOCIAL_LINKS: SocialLink[] = [
 export const DEMO_PARTNERS: Partner[] = [
   { id: 'partner-1', name: 'Nuclear Blast', url: 'https://nuclearblast.com', logoUrl: null, logoStoragePath: null, category: 'label', displayOrder: 0 },
   { id: 'partner-2', name: 'Napalm Records', url: 'https://napalmrecords.com', logoUrl: null, logoStoragePath: null, category: 'label', displayOrder: 1 },
+]
+
+export const DEMO_SOUNDPACKS: Soundpack[] = [
+  { id: 'demo-sp-1', title: 'Industrial Drums Vol.1', imageUrl: null, imageStoragePath: null, externalUrl: 'https://zardonic.bandcamp.com', displayOrder: 0, active: true },
+  { id: 'demo-sp-2', title: 'Metal Guitars FX', imageUrl: null, imageStoragePath: null, externalUrl: null, displayOrder: 1, active: true },
+]
+
+export const DEMO_MERCHANDISE: Merchandise[] = [
+  { id: 'demo-merch-1', title: 'Zardonic T-Shirt', imageUrl: null, imageStoragePath: null, externalUrl: 'https://zardonic.bandcamp.com', displayOrder: 0, active: true },
+  { id: 'demo-merch-2', title: 'Industrial Poster', imageUrl: null, imageStoragePath: null, externalUrl: null, displayOrder: 1, active: true },
+]
+
+export const DEMO_MUSIC_HIGHLIGHTS: MusicHighlight[] = [
+  { id: 'demo-mh-1', title: 'Bleed For The Machine - Official Video', youtubeUrl: 'https://www.youtube.com/watch?v=example1', description: null, displayOrder: 0, active: true },
+  { id: 'demo-mh-2', title: 'Live at Wacken 2024', youtubeUrl: 'https://www.youtube.com/watch?v=example2', description: 'Full live set', displayOrder: 1, active: true },
 ]

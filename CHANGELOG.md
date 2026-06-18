@@ -8,7 +8,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **`lib/storage/r2-multipart.ts`** — low-level S3 multipart upload functions (`createMultipartUpload`, `signMultipartPart`, `completeMultipartUpload`, `abortMultipartUpload`) for large file uploads via Cloudflare R2.
+- **`app/admin/_actions/auth.ts`** — `requireAdmin()` server-side helper that verifies Supabase session and admin role; to be called at the top of every sensitive server action.
+- **`app/admin/_actions/r2Multipart.ts`** — server actions wrapping multipart R2 upload functions with `requireAdmin()` protection (`createMultipartUploadAction`, `signMultipartPartAction`, `completeMultipartUploadAction`, `abortMultipartUploadAction`).
+- **`hooks/useR2MultipartUpload.ts`** — client-side React hook for multipart uploads of large files (e.g. soundpacks), splitting the file into 5 MB parts and assembling them via signed URLs.
+- **`hooks/useImageUpload.ts`** — client-side React hook for simple image uploads (JPEG/PNG/WebP/GIF, max 10 MB) using `createSignedUploadUrl`.
+- **`toggleReleaseVisibility`** in `app/admin/_actions/releases.ts` — toggle `active` boolean on releases.
+- **`toggleGalleryImageVisibility`** in `app/admin/_actions/gallery.ts` — toggle `visible` boolean on gallery images.
+- **`toggleGigVisibility`** in `app/admin/_actions/gigs.ts` — toggle `active` boolean on gigs.
+- **`togglePartnerVisibility`** in `app/admin/_actions/partners.ts` — toggle `visible` boolean on partners.
+- **`toggleSoundpackVisibility`** in `app/admin/_actions/soundpacks.ts` — toggle `active` boolean on soundpacks.
+- **`toggleMerchandiseVisibility`** in `app/admin/_actions/merchandise.ts` — toggle `active` boolean on merchandise.
+- **`toggleMusicHighlightVisibility`** in `app/admin/_actions/musicHighlights.ts` — toggle `active` boolean on music highlights.
+- **`lib/schemas/soundpack.ts`** — Zod schema and `Soundpack` type.
+- **`lib/schemas/merchandise.ts`** — Zod schema and `Merchandise` type.
+- **`lib/schemas/musicHighlight.ts`** — Zod schema and `MusicHighlight` type.
+- **`services/soundpacksService.ts`** — `getAllSoundpacks()` with `isDev`/`hideDemoFallback`/`ServiceResult` pattern.
+- **`services/merchandiseService.ts`** — `getAllMerchandise()` with full service pattern.
+- **`services/musicHighlightsService.ts`** — `getAllMusicHighlights()` with full service pattern.
+- **`lib/mockData.ts`** — added `DEMO_SOUNDPACKS`, `DEMO_MERCHANDISE`, `DEMO_MUSIC_HIGHLIGHTS` demo data exports.
+- **`lib/constants.ts`** — `MEDIA_BUCKET`, `ADMIN_COOKIE_NAME`, `NAV_SECTIONS` constants.
+- **`supabase/migrations/20260101000000_initial_schema.sql`** — initial schema migration documenting all tables (`releases`, `gigs`, `gallery`, `bio`, `social_links`, `partners`, `soundpacks`, `merchandise`, `music_highlights`, `site_config`).
+
+### Changed
+- **Admin dashboard** (`app/admin/(protected)/page.tsx`) — expanded from 3 to 10 sections; shows live row counts for releases, gigs, gallery, soundpacks, merchandise, music highlights, and partners, plus quick links for bio, social, and site-config.
+
 ### Fixed
+
 - **Public-site typography regression after Next.js migration** — `app/layout.tsx` now loads **Orbitron**, **Share Tech Mono**, and **Space Mono** in one Google Fonts request, restoring heading/body/mono font availability expected by CSS custom-property fallbacks.
 - **Theme token import regression** — `app/globals.css` now imports `styles/theme.css` before token/base/effect/component/layout styles, restoring Radix color variables, spacing scale (`--size-*`), radius tokens, and dependent Tailwind utilities.
 - **Legacy `@/App` type imports** — replaced all remaining `import type { SiteData } from '@/App'` usages across both `components/` and `src/components/` trees with `@/lib/app-types`, resolving Next.js/Vercel TypeScript module-resolution failures.

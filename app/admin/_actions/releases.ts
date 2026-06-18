@@ -93,3 +93,11 @@ export async function deleteRelease(id: string) {
   revalidatePath('/admin/releases')
   return { success: true }
 }
+
+export async function toggleReleaseVisibility(id: string, active: boolean) {
+  const supabase = createAdminClient()
+  const { error } = await supabase.from('releases').update({ active }).eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/releases')
+  return { success: true }
+}
