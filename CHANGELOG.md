@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Admin login now sets HttpOnly cookies via Server Action**: replaced the client-side `signInWithPassword` flow (which only stored the session in `localStorage`) with a `'use server'` action in `app/admin/_actions/login.ts` that uses `createServerClient` from `@supabase/ssr`. Supabase now writes the session tokens as HttpOnly cookies, which the middleware can read, so users are no longer redirected back to `/admin/login` after every page visit. The `?redirect=` search-param is forwarded through the form via a hidden `redirectTo` input and respected in the server action.
 - **Admin auth unified on Supabase**: protected admin routes now enforce the Supabase session server-side in `app/admin/(protected)/layout.tsx`, legacy `/api/auth` and `/api/session` endpoints now return 404 stubs, and admin server actions return clear auth/configuration errors instead of bubbling generic Server Action failures.
 - **Appearance favicon management**: `AppearanceEditor` now includes favicon uploads (`.ico`, `.png`, `.svg`) backed by the existing R2 upload flow, and `app/layout.tsx` now reads `site_config.appearance.faviconUrl` into App Router metadata so the configured icon is emitted site-wide.
 
