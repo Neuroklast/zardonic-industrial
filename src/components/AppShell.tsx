@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { useInstagramFeed } from '@/hooks/use-instagram-feed'
 import AppNavBar from '@/components/AppNavBar'
 import AppHeroSection from '@/components/AppHeroSection'
+import { useOverlayTransition } from '@/components/OverlayTransition'
 import { StructuredData } from '@/components/StructuredData'
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { useDocumentTitle } from '@/hooks/use-document-title'
@@ -88,6 +89,7 @@ export default function AppShell({
   const [terminalOpen, setTerminalOpen] = useState(false)
   const [galleryIndex, setGalleryIndex] = useState<number | null>(null)
   const [cyberpunkOverlay, setCyberpunkOverlay] = useState<CyberpunkOverlayState | null>(null)
+  const { trigger: triggerGalleryTransition, element: galleryTransitionEl } = useOverlayTransition()
 
   useAppTheme(adminSettings)
   useSound(adminSettings?.sound)
@@ -123,6 +125,31 @@ export default function AppShell({
       releases: [...prev.releases, fullReleaseToStored(release)],
     }))
   }, [handleUpdateSiteData])
+
+  const handleOpenGallery = useCallback((index: number) => {
+    triggerGalleryTransition()
+    setGalleryIndex(index)
+  }, [triggerGalleryTransition])
+
+  const handleUpdateGallery = useCallback((gallery: string[]) => {
+    handleUpdateSiteData(prev => ({ ...prev, gallery }))
+  }, [handleUpdateSiteData])
+
+  const handleShellMemberClick = useCallback(() => {
+    const shell = adminSettings?.shell
+    if (!shell) return
+    setCyberpunkOverlay({
+      type: 'member',
+      data: {
+        id: 'shell',
+        name: shell.name ?? '',
+        role: shell.role ?? '',
+        bio: shell.bio ?? '',
+        image: shell.photo,
+        instagram: shell.social?.instagram,
+      },
+    })
+  }, [adminSettings?.shell])
 
   useEffect(() => {
     if (konamiActivated) {
@@ -199,6 +226,8 @@ export default function AppShell({
         }
         overlays={
           <>
+            {galleryTransitionEl}
+
             <AnimatePresence>
               {galleryIndex !== null && siteData && (
                 <Suspense fallback={null}>
@@ -332,6 +361,7 @@ export default function AppShell({
                   sectionOrder={getSectionOrder('shell')}
                   visible={vis.shell !== false}
                   sectionLabel={sectionLabels.shell || ''}
+                  onMemberClick={!editMode ? handleShellMemberClick : undefined}
                 />
               </Suspense>
             </SectionErrorBoundary>
@@ -419,8 +449,9 @@ export default function AppShell({
                   visible={vis.gallery !== false}
                   sectionLabel={sectionLabels.gallery || ''}
                   headingPrefix={sectionLabels.headingPrefix}
-                  setGalleryIndex={setGalleryIndex}
+                  setGalleryIndex={handleOpenGallery}
                   adminSettings={adminSettings}
+                  onUpdateGallery={editMode ? handleUpdateGallery : undefined}
                 />
               </Suspense>
             </SectionErrorBoundary>

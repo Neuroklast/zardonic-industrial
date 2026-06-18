@@ -16,6 +16,8 @@ interface ShellSectionProps {
   sectionOrder: number
   visible: boolean
   sectionLabel: string
+  /** Called when the member card is clicked in view mode — opens the overlay */
+  onMemberClick?: () => void
 }
 
 export default function ShellSection({ setAdminSettings,
@@ -24,6 +26,7 @@ export default function ShellSection({ setAdminSettings,
   sectionOrder,
   visible,
   sectionLabel,
+  onMemberClick,
 }: ShellSectionProps) {
   const member = adminSettings?.shell
 
@@ -58,11 +61,16 @@ export default function ShellSection({ setAdminSettings,
             {member && (
               <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
                 <motion.div
-                  className="relative aspect-square bg-muted border border-primary/30 overflow-hidden cyber-card"
+                  className={`relative aspect-square bg-muted border border-primary/30 overflow-hidden cyber-card${!editMode && onMemberClick ? ' cursor-pointer hover:border-primary/70 transition-colors' : ''}`}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.6, delay: 0.1 }}
+                  onClick={!editMode && onMemberClick ? onMemberClick : undefined}
+                  role={!editMode && onMemberClick ? 'button' : undefined}
+                  tabIndex={!editMode && onMemberClick ? 0 : undefined}
+                  onKeyDown={!editMode && onMemberClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onMemberClick() } : undefined}
+                  aria-label={!editMode && onMemberClick ? `View ${member?.name || 'member'} profile` : undefined}
                 >
                   {member?.photo ? (
                     <img
@@ -81,6 +89,11 @@ export default function ShellSection({ setAdminSettings,
                   <div className="absolute top-0 right-0 w-3 h-3 border-t border-r border-primary/60" />
                   <div className="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-primary/60" />
                   <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-primary/60" />
+                  {!editMode && onMemberClick && (
+                    <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="font-mono text-xs text-primary uppercase tracking-widest">View Profile</span>
+                    </div>
+                  )}
                 </motion.div>
 
                 <motion.div
