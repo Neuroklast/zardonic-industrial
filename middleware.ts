@@ -29,8 +29,17 @@ export async function middleware(request: NextRequest) {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
+        // Mutate the request cookie store so subsequent getAll() calls see the new values
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        response = NextResponse.next({ request: { headers: request.headers } })
+        // Rebuild the cookie header from the now-updated request.cookies so the
+        // downstream Server Component receives the refreshed tokens in its cookie store.
+        const requestHeaders = new Headers(request.headers)
+        requestHeaders.set(
+          'cookie',
+          request.cookies.getAll().map(({ name, value }) => `${name}=${value}`).join('; '),
+        )
+        response = NextResponse.next({ request: { headers: requestHeaders } })
+        // Also write the new cookies onto the response so the browser stores them.
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         )
