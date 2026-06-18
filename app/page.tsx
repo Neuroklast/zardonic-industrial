@@ -70,12 +70,12 @@ async function fetchAll() {
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
-      supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').order('event_date', { ascending: true }),
-      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links').order('display_order', { ascending: true }),
+      supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').eq('active', true).order('event_date', { ascending: true }),
+      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').order('display_order', { ascending: true }),
-      supabase.from('music_highlights').select('id, title, youtube_url, description').order('display_order', { ascending: true }),
-      supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').order('display_order', { ascending: true }),
-      supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').order('display_order', { ascending: true }),
+      supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('gallery').select('id, title, storage_path, image_url').order('display_order', { ascending: true }),
       supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
     ])

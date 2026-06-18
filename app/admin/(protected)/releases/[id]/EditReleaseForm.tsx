@@ -9,13 +9,15 @@ import { useState } from 'react'
 
 interface Props {
   release: Record<string, unknown>
+  /** Pre-resolved cover URL (R2 preferred over raw iTunes CDN). Computed server-side. */
+  resolvedCoverUrl?: string | null
 }
 
-export default function EditReleaseForm({ release }: Props) {
+export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
   const router = useRouter()
   const [coverPath, setCoverPath] = useState((release.cover_storage_path as string) ?? '')
   const [coverPreview, setCoverPreview] = useState<string | null>(
-    (release.cover_url as string | null) ?? null,
+    resolvedCoverUrl ?? (release.cover_url as string | null) ?? null,
   )
   const [error, setError] = useState<string | null>(null)
 

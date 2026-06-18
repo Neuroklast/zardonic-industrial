@@ -44,6 +44,12 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: '*.r2.cloudflarestorage.com' },
       { protocol: 'https', hostname: '*.r2.dev' },
+      // Apple Music / iTunes artwork CDN (used as fallback when R2 upload is skipped)
+      { protocol: 'https', hostname: '*.mzstatic.com' },
+      // YouTube video thumbnails
+      { protocol: 'https', hostname: 'img.youtube.com' },
+      // wsrv.nl image proxy (used for Google Drive and other external images)
+      { protocol: 'https', hostname: 'wsrv.nl' },
       ...(r2Hostname ? [{ protocol: /** @type {'https'} */ ('https'), hostname: r2Hostname }] : []),
     ],
   },
