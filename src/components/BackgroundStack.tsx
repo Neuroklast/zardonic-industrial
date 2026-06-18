@@ -173,6 +173,7 @@ export function BackgroundStack({
           mobileVideoUrl={animSettings?.backgroundVideoMobileUrl}
           fallbackImageUrl={animSettings?.backgroundImageUrl}
           opacity={animSettings?.backgroundVideoOpacity ?? 1}
+          brightness={animSettings?.backgroundVideoBrightness ?? 1}
           scrollMode={animSettings?.backgroundVideoMode !== 'loop'}
           fit={animSettings?.backgroundImageFit}
         />

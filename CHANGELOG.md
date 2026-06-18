@@ -9,6 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **`/admin/logout` 405 Method Not Allowed**: Next.js App Router RSC prefetch sends GET requests (with `?_rsc=…` query param) when the router navigates client-side. The logout route only had a `POST` handler, causing repeated 405 errors in the console. Added a shared `handleLogout` helper and exported both `GET` and `POST` handlers from `app/admin/logout/route.ts`.
+- **CSP `connect-src` blocks R2 CloudFlare uploads**: Image/video uploads via pre-signed PUT URLs to `*.r2.cloudflarestorage.com` and `*.r2.dev` were blocked by the Content Security Policy. Added both wildcards to the `connect-src` directive in `next.config.mjs`.
+
+### Added
+- **Background video brightness control**: Admins can now independently adjust the brightness of the background video (0–200 %) via a new slider in the Background tab. Added `backgroundVideoBrightness` to `AnimationSettings`, a `brightness` prop to `VideoBackground` (applies CSS `filter: brightness()`), wired it through `BackgroundStack`, and added the slider in `BackgroundTab`.
+
+### Fixed
 - **CSP `connect-src` blocks Supabase**: Added `https://*.supabase.co` and `wss://*.supabase.co` to `connect-src` in `vercel.json` so Supabase auth, database, and Realtime connections are no longer blocked by the browser. Tightened `next.config.mjs` `connect-src` from `'self' https: wss:` to the same explicit allowlist for consistency. Updated `security-hardening.test.ts` allowlist and wildcard checks to include the new Supabase entries.
 - **`vercel.json` CSP blocks Next.js hydration**: Added `'unsafe-inline'` to `script-src` in the Content-Security-Policy header so Next.js inline scripts can execute and the page hydrates correctly.
 - **`vercel.json` `/admin` rewrite blocks admin panel**: Removed the `{ "source": "/admin/:p*", "destination": "/api/denied?_src=/admin/:p*" }` rewrite that was redirecting all admin traffic to `/api/denied`. The admin panel is protected by `middleware.ts` and does not need this rewrite.
