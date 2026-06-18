@@ -8,7 +8,7 @@ import { HeroSection } from './_components/public/HeroSection'
 import { BioSection } from './_components/public/BioSection'
 import { CreditsSection } from './_components/public/CreditsSection'
 import { MusicHighlightsSection } from './_components/public/MusicHighlightsSection'
-import { ReleasesSection } from './_components/public/ReleasesSection'
+import { PublicPageClient } from './_components/public/PublicPageClient'
 import { MerchandiseSection } from './_components/public/MerchandiseSection'
 import { SoundpacksSection } from './_components/public/SoundpacksSection'
 import { GigsSection } from './_components/public/GigsSection'
@@ -16,6 +16,7 @@ import { NewsletterSection } from './_components/public/NewsletterSection'
 import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
+import type { Release as OverlayRelease } from '@/lib/app-types'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -141,6 +142,20 @@ function parseSections(raw: unknown): SectionConfig[] {
   return parsed.length > 0 ? parsed : DEFAULT_SECTIONS
 }
 
+function normalizeReleaseType(value: string): OverlayRelease['type'] {
+  const normalized = value.trim().toLowerCase()
+  if (
+    normalized === 'album' ||
+    normalized === 'ep' ||
+    normalized === 'single' ||
+    normalized === 'remix' ||
+    normalized === 'compilation'
+  ) {
+    return normalized
+  }
+  return ''
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   const {
@@ -181,18 +196,37 @@ export default async function HomePage() {
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
 
   // Releases: convert streaming_links to typed array
-  const releaseItems = releases.map((r) => ({
-    id: r.id,
-    title: r.title,
-    type: r.type,
-    release_date: r.release_date,
-    coverUrl: resolveImageUrl(r.cover_storage_path, r.cover_url),
-    streamingLinks: Array.isArray(r.streaming_links)
+  const releaseItems = releases.map((r) => {
+    const coverUrl = resolveImageUrl(r.cover_storage_path, r.cover_url)
+    const releaseDate = r.release_date ?? undefined
+    const releaseDateValue = releaseDate ? new Date(releaseDate) : null
+    const year = releaseDateValue && !Number.isNaN(releaseDateValue.getTime())
+      ? String(releaseDateValue.getFullYear())
+      : '----'
+    const streamingLinks = Array.isArray(r.streaming_links)
       ? (r.streaming_links as Array<{ platform: string; url: string }>).filter(
           (l) => typeof l.platform === 'string' && typeof l.url === 'string',
         )
-      : [],
-  }))
+      : []
+
+    return {
+      id: r.id,
+      title: r.title,
+      type: r.type,
+      release_date: r.release_date,
+      coverUrl,
+      streamingLinks,
+      overlayRelease: {
+        id: r.id,
+        title: r.title,
+        artwork: coverUrl ?? '',
+        year,
+        releaseDate,
+        streamingLinks,
+        type: normalizeReleaseType(r.type),
+      },
+    }
+  })
 
   // Partners split by category
   const credits = partners
@@ -302,7 +336,10 @@ export default async function HomePage() {
               return (
                 <div key="releases">
                   {divider}
-                  <ReleasesSection releases={releaseItems} />
+                  <PublicPageClient
+                    releases={releaseItems}
+                    artistName={String(heroConfig.headline ?? 'ZARDONIC')}
+                  />
                 </div>
               )
             case 'merchandise':
