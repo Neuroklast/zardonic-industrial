@@ -1,5 +1,6 @@
-import Image from 'next/image'
-import { SectionWrapper } from './SectionWrapper'
+'use client'
+
+import { motion } from 'framer-motion'
 
 interface PartnerItem {
   id: string
@@ -16,47 +17,69 @@ interface CreditsAndEndorsementsProps {
 
 function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string }) {
   if (items.length === 0) return null
+
   return (
-    <div className="mb-12">
-      <h3 className="font-mono text-xs tracking-widest text-zinc-600 uppercase mb-6">{heading}</h3>
-      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-6">
-        {items.map((item) => {
-          const inner = item.logoUrl ? (
-            <div className="relative w-full aspect-square">
-              <Image
-                src={item.logoUrl}
-                alt={item.name}
-                fill
-                className="object-contain opacity-70 hover:opacity-100 transition-opacity chromatic-hover"
-                sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
-              />
-            </div>
+    <div className="space-y-6">
+      <div className="data-label" data-theme-color="data-label">
+        // {heading}
+      </div>
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+        {items.map((item, index) => {
+          const content = item.logoUrl ? (
+            <motion.img
+              src={item.logoUrl}
+              alt={item.name}
+              className="chromatic-hover h-10 w-auto object-contain opacity-70 transition-opacity hover:opacity-100 md:h-14"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 0.7, y: 0 }}
+              whileHover={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
-            <span className="font-mono text-xs text-zinc-500 hover:text-zinc-300 transition-colors text-center">
+            <motion.span
+              className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
+            >
               {item.name}
-            </span>
+            </motion.span>
           )
 
+          const wrapperClassName = 'flex min-h-24 items-center justify-center p-2'
+
           return item.url ? (
-            <a
+            <motion.a
               key={item.id}
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center p-2 hover:scale-105 transition-transform"
               aria-label={item.name}
               title={item.name}
+              className={wrapperClassName}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              {inner}
-            </a>
+              {content}
+            </motion.a>
           ) : (
-            <div
+            <motion.div
               key={item.id}
-              className="flex items-center justify-center p-2"
+              className={wrapperClassName}
               title={item.name}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
-              {inner}
-            </div>
+              {content}
+            </motion.div>
           )
         })}
       </div>
@@ -66,12 +89,37 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
 
 export function CreditsSection({ credits, endorsements }: CreditsAndEndorsementsProps) {
   if (credits.length === 0 && endorsements.length === 0) return null
+
   return (
-    <SectionWrapper id="credits" heading="Credit Highlights">
-      <LogoGrid items={credits} heading="Notable credits" />
-      {endorsements.length > 0 && (
-        <LogoGrid items={endorsements} heading="Endorsements" />
-      )}
-    </SectionWrapper>
+    <section
+      id="credits"
+      className="scanline-effect py-section px-card"
+      style={{ zIndex: 'var(--z-content)' }}
+      data-theme-color="primary accent card border"
+    >
+      <div className="container mx-auto max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+            <h2
+              className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
+              data-text="CREDIT HIGHLIGHTS"
+            >
+              CREDIT HIGHLIGHTS
+              <span className="animate-pulse">_</span>
+            </h2>
+          </div>
+
+          <div className="space-y-12">
+            <LogoGrid items={credits} heading="CREDITS" />
+            <LogoGrid items={endorsements} heading="ENDORSEMENTS" />
+          </div>
+        </motion.div>
+      </div>
+    </section>
   )
 }

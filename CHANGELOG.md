@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **`app/_components/public/BackgroundStack.tsx`** — restored layered public background rendering with lazy-loaded Matrix Rain / Circuit backgrounds, optional video, and token-based stacking.
+- **`app/_components/public/GlobalEffects.tsx`** — restored CRT overlay, vignette, scanline background, and full-page noise for the public homepage.
+- **`app/_components/public/GallerySection.tsx`** — restored a motion-driven public gallery grid for Supabase gallery entries on the Next.js homepage.
 - **`lib/storage/r2-multipart.ts`** — low-level S3 multipart upload functions (`createMultipartUpload`, `signMultipartPart`, `completeMultipartUpload`, `abortMultipartUpload`) for large file uploads via Cloudflare R2.
 - **`app/admin/_actions/auth.ts`** — `requireAdmin()` server-side helper that verifies Supabase session and admin role; to be called at the top of every sensitive server action.
 - **`app/admin/_actions/r2Multipart.ts`** — server actions wrapping multipart R2 upload functions with `requireAdmin()` protection (`createMultipartUploadAction`, `signMultipartPartAction`, `completeMultipartUploadAction`, `abortMultipartUploadAction`).
@@ -32,6 +35,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **`supabase/migrations/20260101000000_initial_schema.sql`** — initial schema migration documenting all tables (`releases`, `gigs`, `gallery`, `bio`, `social_links`, `partners`, `soundpacks`, `merchandise`, `music_highlights`, `site_config`).
 
 ### Changed
+- **Public homepage restoration** (`app/page.tsx`) — replaced the simplified fixed background with `BackgroundStack`, added `GlobalEffects`, fetched `gallery` rows from Supabase, rendered the restored gallery section, and passed hero background data back into the public hero component.
+- **`app/_components/public/HeroSection.tsx`** — replaced the stripped-down text/button hero with the original glitch-logo composition, scanline/noise overlays, mount fade-in, and dual CTA buttons.
+- **`app/_components/public/BioSection.tsx`** — restored the animated clip-path heading reveal, blinking cursor, masked collapse/expand biography text, and motion-based text entrance.
+- **`app/_components/public/ReleasesSection.tsx`** — restored filter buttons, motion heading reveal, cyber-card release grid styling, platform link buttons, and show-all/show-less behaviour.
+- **`app/_components/public/GigsSection.tsx`** — restored staggered motion cards, event data labels, cyber-card hover effects, icon metadata rows, and upcoming/past segmentation.
+- **`app/_components/public/CreditsSection.tsx`** — restored motion logo grids with `chromatic-hover` treatment for credits and endorsements.
 - **Admin dashboard** (`app/admin/(protected)/page.tsx`) — expanded from 3 to 10 sections; shows live row counts for releases, gigs, gallery, soundpacks, merchandise, music highlights, and partners, plus quick links for bio, social, and site-config.
 
 ### Fixed
