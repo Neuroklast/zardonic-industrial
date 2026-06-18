@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabaseServer'
+import { createActionClient } from '@/lib/supabaseServer'
 import { AdminNav } from '@/app/admin/_components/AdminNav'
 
 export default async function ProtectedAdminLayout({
@@ -7,9 +7,9 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  let supabase: Awaited<ReturnType<typeof createClient>>
+  let supabase: Awaited<ReturnType<typeof createActionClient>>
   try {
-    supabase = await createClient()
+    supabase = await createActionClient()
   } catch {
     redirect('/admin/login?error=config')
   }

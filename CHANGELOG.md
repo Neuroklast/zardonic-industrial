@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Admin session persistence — middleware drops refreshed cookies on redirect**: `middleware.ts` now copies all cookies from the Supabase `response` onto the `NextResponse.redirect` response so that token refreshes performed during `getUser()` are not lost when auth fails and the user is redirected to login.
+- **Admin session persistence — `createClient()` silently swallows `setAll` errors in Layouts**: Added `createActionClient()` to `lib/supabaseServer.ts` — identical to `createClient()` but without the `try/catch` around `setAll`, so token refreshes are correctly persisted when called from Layouts and Server Actions. `app/admin/(protected)/layout.tsx` now uses `createActionClient()` instead of `createClient()`.
 - **Schema drift — `gallery` column renames**: `title` column renamed to `alt` and `visible` column renamed to `active` in the `gallery` table, aligning migrations with `schema.sql`. App Router queries in `app/page.tsx` and `GallerySection.tsx` updated accordingly.
 - **Schema drift — `partners` column rename**: `visible` column renamed to `active` in the `partners` table; `togglePartnerVisibility` server action updated.
 - **Schema drift — `site_config` restructure**: Bridging migration (`20260103000000_schema_sync.sql`) converts the `site_config` table from `(id uuid PK, key text, value text)` to `(key text PK, value jsonb)`, matching `schema.sql` and the App Router admin code.
