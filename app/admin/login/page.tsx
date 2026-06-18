@@ -1,15 +1,24 @@
 'use client'
 
-import { Suspense } from 'react'
-import { useActionState } from 'react'
+import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { signIn } from '@/app/admin/_actions/login'
 
 function LoginForm() {
-  const [state, formAction, pending] = useActionState(signIn, null)
   const searchParams = useSearchParams()
   const errorParam = searchParams.get('error')
   const redirectTo = searchParams.get('redirect') ?? '/admin'
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState<string | null>(
+    errorParam === 'invalid' ? 'Invalid email or password.' : null,
+  )
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setPending(true)
+    setError(null)
+    // Native submit — browser POSTs to the Route Handler which sets cookies then redirects
+    // Do NOT call e.preventDefault() so the full-page POST goes through
+    void e
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
@@ -30,7 +39,7 @@ function LoginForm() {
           </div>
         )}
 
-        <form action={formAction} className="space-y-4">
+        <form method="POST" action="/admin/login" onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <div>
             <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>
@@ -55,7 +64,7 @@ function LoginForm() {
             />
           </div>
 
-          {state?.error && <p className="text-red-400 text-sm">{state.error}</p>}
+          {error && <p className="text-red-400 text-sm">{error}</p>}
 
           <button
             type="submit"
