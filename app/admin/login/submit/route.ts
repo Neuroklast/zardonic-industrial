@@ -16,7 +16,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  // Build a mutable response so Supabase can write cookies onto it
+  // Build a mutable response so Supabase can write cookies onto it.
+  // Pass Supabase-provided options through unchanged so @supabase/ssr can emit
+  // multiple chunked Set-Cookie headers (sb-…-auth-token.0, .1, …) for large
+  // tokens. Overriding options here (e.g. hardcoding httpOnly/secure) bypasses
+  // chunking and produces a single oversized cookie that browsers silently drop.
   const response = NextResponse.redirect(new URL(redirectTo, request.url), { status: 303 })
 
   const supabase = createServerClient(url, anonKey, {
@@ -24,13 +28,7 @@ export async function POST(request: NextRequest) {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
-            path: '/',
-            ...options,
-          }),
+          response.cookies.set(name, value, options),
         )
       },
     },
@@ -40,7 +38,7 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     const loginUrl = new URL('/admin/login', request.url)
-    loginUrl.searchParams.set('error', 'invalid')
+    loginUrl.searchParams.set('msg', error.message)
     loginUrl.searchParams.set('redirect', redirectTo)
     return NextResponse.redirect(loginUrl, { status: 303 })
   }

@@ -17,7 +17,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Mobile optimization tests**: Added `src/test/admin-mobile.test.tsx` with 11 unit tests covering touch targets, responsive grid classes, table overflow wrappers, login input font sizes, and the xs breakpoint configuration.
 
 ### Removed
-- **Pseudo-security module removal**: Deleted the honeypot/countermeasure API helpers and public endpoints, removed the legacy security admin/CMS dashboards and dialogs, deleted security-only tests, and cleaned `vercel.json` rewrites plus CMS/admin navigation that pointed at those endpoints.
+- **Dead browser-client login path**: Removed the `handleSubmit` / `router.push` / `router.refresh` browser-client sign-in flow from `app/admin/login/page.tsx`; the canonical sign-in is now the server Route Handler at `app/admin/login/submit/route.ts`.
+- **Dead server action `app/admin/_actions/login.ts`**: Unused `signIn` server action removed; there is now exactly one login mechanism.
+- **Legacy root `cms/` directory**: The root-level `cms/` directory was a byte-for-byte duplicate of `src/cms/` and was never imported by the Next.js `app/` router. Removed to eliminate the DRY violation and the `CmsAuthGuard` / `useCmsAuth` → `/api/auth` → `window.location.hash = ''` redirect path that could bounce users out of the admin panel.
+- **Dead `src/cms/CmsApp.tsx` and `src/cms/hooks/useCmsAuth.ts`**: Not imported anywhere; removing them eliminates the last reference to the removed `/api/auth` legacy endpoint and the associated `window.location.hash` redirect.
+
+### Fixed
+- **Admin login cookie chunking — oversized cookie silently dropped by browser**: `app/admin/login/submit/route.ts` previously hardcoded `httpOnly: true, secure: true, sameSite: 'lax', path: '/'` before spreading Supabase-provided cookie options in its `setAll` handler. For large auth tokens the browser received a single cookie near or above the ~4 KB limit and silently rejected it (leaving a 34-byte empty stub). The `setAll` handler now passes Supabase-provided `options` through unchanged — matching the pattern in `middleware.ts` — so `@supabase/ssr` can emit chunked `Set-Cookie` headers (`sb-…-auth-token.0`, `.1`, …) each well under the browser limit. Added unit tests asserting that every chunk cookie is written with Supabase's exact options and that the error path still redirects correctly.
+- **Admin login redirect loop (primary fix)**: `app/admin/login/page.tsx` now renders a native HTML `<form method="POST" action="/admin/login/submit">` instead of calling the browser Supabase client + `router.push()`. The existing server Route Handler (`app/admin/login/submit/route.ts`) signs in via `createServerClient` and writes auth cookies onto the same 303 redirect response — so the browser has the cookies before it ever requests the protected route, eliminating the cookie-propagation race.
+- **Middleware drops refreshed cookies on `forbidden` redirect**: `middleware.ts` now copies all cookies from `response` onto the `forbidden` redirect response (mirrors the existing handling in the auth-failure branch). This prevents token burn when Supabase rotates tokens during `getUser()` and the user is subsequently redirected due to a non-admin role.
+- **Submit route error message**: `app/admin/login/submit/route.ts` now encodes the actual Supabase error message as a `?msg=` query parameter on the failure redirect (previously always redirected with the generic `?error=invalid`). `LoginForm` displays the `msg` param as the inline auth error.
+- **Schema trigger not idempotent**: `supabase/schema.sql` — `handle_new_user()` trigger now uses `ON CONFLICT (id) DO NOTHING` so re-running the migration or re-inserting an existing auth user never overwrites an admin's role.
+
+
 
 ### Fixed
 - **Vercel API TypeScript 5.9 compatibility**: Replaced generic `kv.get<T>()` / `redis.get<T>()` proxy calls across the serverless API handlers with cast-after-await patterns, added explicit callback parameter types, and fixed the remaining OAuth nullability issues so the API code no longer trips the stricter Vercel build checks.
