@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { MagnifyingGlassPlus } from '@phosphor-icons/react'
 
 interface GalleryItem {
@@ -25,7 +25,7 @@ export function GallerySection({ items }: GallerySectionProps) {
       data-theme-color="card border primary"
     >
       <div className="container mx-auto max-w-6xl">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
           viewport={{ once: true }}
@@ -43,7 +43,7 @@ export function GallerySection({ items }: GallerySectionProps) {
 
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
             {visibleItems.map((item, index) => (
-              <motion.div
+              <m.div
                 key={item.id}
                 initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
                 whileInView={{ opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
@@ -61,10 +61,10 @@ export function GallerySection({ items }: GallerySectionProps) {
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
                   <MagnifyingGlassPlus className="h-8 w-8 text-foreground" />
                 </div>
-              </motion.div>
+              </m.div>
             ))}
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )

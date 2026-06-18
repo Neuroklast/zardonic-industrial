@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { CalendarBlank, CaretDown, CaretUp, MapPin } from '@phosphor-icons/react'
 
 interface GigRow {
@@ -65,7 +65,7 @@ function GigList({
       {visibleGigs.map((gig, index) => {
         const location = [gig.city, gig.country].filter(Boolean).join(', ')
         return (
-          <motion.article
+          <m.article
             key={gig.id}
             initial={{ opacity: 0, x: -50, clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
             whileInView={{ opacity: 1, x: 0, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
@@ -116,12 +116,12 @@ function GigList({
                 ) : null}
               </div>
             </div>
-          </motion.article>
+          </m.article>
         )
       })}
 
       {gigs.length > INITIAL_VISIBLE ? (
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="flex justify-center pt-4">
+        <m.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="flex justify-center pt-4">
           <button
             type="button"
             onClick={() => setShowAll((value) => !value)}
@@ -139,7 +139,7 @@ function GigList({
               </>
             )}
           </button>
-        </motion.div>
+        </m.div>
       ) : null}
     </div>
   )
@@ -156,7 +156,7 @@ export function GigsSection({ upcoming, past }: GigsSectionProps) {
       data-theme-color="foreground card border primary"
     >
       <div className="container mx-auto max-w-6xl">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
           viewport={{ once: true }}
@@ -176,7 +176,7 @@ export function GigsSection({ upcoming, past }: GigsSectionProps) {
             <GigList gigs={upcoming} heading="UPCOMING" />
             <GigList gigs={past} heading="PAST" />
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )

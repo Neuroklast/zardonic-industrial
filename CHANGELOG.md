@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Blank public page (CSP errors + LazyMotion conflict)**: All public components (`HeroSection`, `BioSection`, `GigsSection`, `ReleasesSection`, `CreditsSection`, `GallerySection`) now import `m` instead of `motion` from `framer-motion`, matching the `LazyMotion` context in `app/providers.tsx` and preventing components from rendering nothing while features load.
+- **CSP inline-script errors**: Added `headers()` configuration to `next.config.mjs` with `'unsafe-inline'` in `script-src` to allow Next.js hydration inline scripts and Framer Motion.
+- **BackgroundStack Vite-component crash**: Replaced `React.lazy` / `Suspense` with `next/dynamic` (`ssr: false`) for `MatrixRain` and `CircuitBackground` to prevent crashes from browser-only APIs during Next.js server-side rendering.
+
 ### Added
 - **`app/_components/public/BackgroundStack.tsx`** — restored layered public background rendering with lazy-loaded Matrix Rain / Circuit backgrounds, optional video, and token-based stacking.
 - **`app/_components/public/GlobalEffects.tsx`** — restored CRT overlay, vignette, scanline background, and full-page noise for the public homepage.

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import {
   ApplePodcastsLogo,
   CaretDown,
@@ -108,7 +108,7 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
       data-theme-color="foreground card border primary"
     >
       <div className="container mx-auto max-w-6xl">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
           viewport={{ once: true }}
@@ -152,7 +152,7 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
             <>
               <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
                 {visibleReleases.map((release, index) => (
-                  <motion.article
+                  <m.article
                     key={release.id}
                     initial={{ opacity: 0, y: 24, clipPath: 'inset(0 0 100% 0)' }}
                     whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
@@ -213,12 +213,12 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
                         </div>
                       ) : null}
                     </div>
-                  </motion.article>
+                  </m.article>
                 ))}
               </div>
 
               {filteredReleases.length > 8 ? (
-                <motion.div
+                <m.div
                   className="mt-8 flex justify-center"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -241,11 +241,11 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
                       </>
                     )}
                   </button>
-                </motion.div>
+                </m.div>
               ) : null}
             </>
           )}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )

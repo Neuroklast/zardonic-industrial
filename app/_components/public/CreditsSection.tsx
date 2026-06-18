@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 interface PartnerItem {
   id: string
@@ -26,7 +26,7 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {items.map((item, index) => {
           const content = item.logoUrl ? (
-            <motion.img
+            <m.img
               src={item.logoUrl}
               alt={item.name}
               className="chromatic-hover h-10 w-auto object-contain opacity-70 transition-opacity hover:opacity-100 md:h-14"
@@ -39,7 +39,7 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
               decoding="async"
             />
           ) : (
-            <motion.span
+            <m.span
               className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground"
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -47,13 +47,13 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
               {item.name}
-            </motion.span>
+            </m.span>
           )
 
           const wrapperClassName = 'flex min-h-24 items-center justify-center p-2'
 
           return item.url ? (
-            <motion.a
+            <m.a
               key={item.id}
               href={item.url}
               target="_blank"
@@ -67,9 +67,9 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
               {content}
-            </motion.a>
+            </m.a>
           ) : (
-            <motion.div
+            <m.div
               key={item.id}
               className={wrapperClassName}
               title={item.name}
@@ -79,7 +79,7 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
               transition={{ duration: 0.5, delay: index * 0.08 }}
             >
               {content}
-            </motion.div>
+            </m.div>
           )
         })}
       </div>
@@ -98,7 +98,7 @@ export function CreditsSection({ credits, endorsements }: CreditsAndEndorsements
       data-theme-color="primary accent card border"
     >
       <div className="container mx-auto max-w-6xl">
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
           whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
           viewport={{ once: true }}
@@ -118,7 +118,7 @@ export function CreditsSection({ credits, endorsements }: CreditsAndEndorsements
             <LogoGrid items={credits} heading="CREDITS" />
             <LogoGrid items={endorsements} heading="ENDORSEMENTS" />
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </section>
   )
