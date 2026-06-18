@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Admin login redirect loop — `@supabase/ssr` 0.12.x `setAll` headers**: `@supabase/ssr` ≥ 0.12 passes a second `headers` argument to the `setAll` cookie callback containing `Cache-Control: private, no-cache, no-store, must-revalidate, max-age=0`, `Expires: 0`, and `Pragma: no-cache`. Without forwarding these headers, Vercel Edge and other CDNs can cache the 303 redirect response from the login Route Handler and serve it without `Set-Cookie` headers, so the browser never receives the session cookies and the middleware perpetually sees no session. Both `app/admin/login/submit/route.ts` and `middleware.ts` now accept and apply the `headers` second argument in their `setAll` callbacks. Removed the now-unused `type CookieOptions` import from both files. Updated tests in `admin-login-submit-route.test.ts` and `admin-middleware.test.ts` to pass headers through the mock and assert that the response carries the expected `Cache-Control` / `Expires` / `Pragma` headers.
+
 ### Removed
 - **Dead browser-client login path**: Removed the `handleSubmit` / `router.push` / `router.refresh` browser-client sign-in flow from `app/admin/login/page.tsx`; the canonical sign-in is now the server Route Handler at `app/admin/login/submit/route.ts`.
 - **Dead server action `app/admin/_actions/login.ts`**: Unused `signIn` server action removed; there is now exactly one login mechanism.

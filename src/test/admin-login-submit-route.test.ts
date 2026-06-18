@@ -3,13 +3,16 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 // ── Strictly-typed shared state ─────────────────────────────────────────────
 type CookieOptions = { path?: string; httpOnly?: boolean; secure?: boolean; sameSite?: string; maxAge?: number }
 type CookieToSet = { name: string; value: string; options?: CookieOptions }
+type AuthHeaders = Record<string, string>
 
 const {
   mockSignIn,
   mockCookiesToSet,
+  mockAuthHeaders,
 } = vi.hoisted(() => ({
   mockSignIn: vi.fn(),
   mockCookiesToSet: [] as CookieToSet[],
+  mockAuthHeaders: {} as AuthHeaders,
 }))
 
 // ── Mock @supabase/ssr ───────────────────────────────────────────────────────
@@ -18,13 +21,13 @@ vi.mock('@supabase/ssr', () => ({
     (
       _url: string,
       _anonKey: string,
-      options: { cookies: { setAll: (cookies: CookieToSet[]) => void } },
+      options: { cookies: { setAll: (cookies: CookieToSet[], headers: AuthHeaders) => void } },
     ) => ({
       auth: {
         signInWithPassword: async (_creds: { email: string; password: string }) => {
           // Emit the queued cookies before returning (simulates token write)
           if (mockCookiesToSet.length > 0) {
-            options.cookies.setAll(mockCookiesToSet)
+            options.cookies.setAll(mockCookiesToSet, mockAuthHeaders)
           }
           return mockSignIn()
         },
@@ -55,6 +58,10 @@ describe('POST /admin/login/submit', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockCookiesToSet.length = 0
+    // Reset auth headers to empty
+    for (const key of Object.keys(mockAuthHeaders)) {
+      delete mockAuthHeaders[key]
+    }
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
   })
@@ -162,5 +169,27 @@ describe('POST /admin/login/submit', () => {
     const chunk0Header = setCookieHeaders.find((h) => h.startsWith('sb-test-auth-token.0='))
     expect(chunk0Header).toBeDefined()
     expect(chunk0Header?.toLowerCase()).toContain('httponly')
+  })
+
+  // ── Success path: @supabase/ssr ≥ 0.12 cache-control headers applied ──────
+  it('applies cache-control headers from @supabase/ssr to the response', async () => {
+    mockCookiesToSet.push(
+      { name: 'sb-test-auth-token.0', value: 'value', options: { path: '/', httpOnly: false, secure: true, sameSite: 'lax' } },
+    )
+    // Simulate the headers that @supabase/ssr 0.12+ passes as the second arg
+    mockAuthHeaders['Cache-Control'] = 'private, no-cache, no-store, must-revalidate, max-age=0'
+    mockAuthHeaders['Expires'] = '0'
+    mockAuthHeaders['Pragma'] = 'no-cache'
+    mockSignIn.mockResolvedValue({ error: null })
+
+    const req = buildRequest({ email: 'admin@example.com', password: 'correct' })
+    const res = await POST(req as Parameters<typeof POST>[0])
+
+    expect(res.status).toBe(303)
+    expect(res.headers.get('cache-control')).toBe(
+      'private, no-cache, no-store, must-revalidate, max-age=0',
+    )
+    expect(res.headers.get('expires')).toBe('0')
+    expect(res.headers.get('pragma')).toBe('no-cache')
   })
 })

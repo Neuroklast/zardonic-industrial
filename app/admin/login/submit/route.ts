@@ -1,7 +1,7 @@
 'use server'
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
@@ -26,9 +26,14 @@ export async function POST(request: NextRequest) {
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
+      // @supabase/ssr ≥ 0.12 passes cache-control headers as the second arg so
+      // CDNs / Vercel Edge don't cache auth responses and strip Set-Cookie.
+      setAll: (cookiesToSet, headers) => {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
+        )
+        Object.entries(headers).forEach(([key, value]) =>
+          response.headers.set(key, value),
         )
       },
     },
