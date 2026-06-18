@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { useEffect, useRef } from 'react'
 
 interface BackgroundStackProps {
   imageUrl?: string
@@ -41,6 +42,34 @@ export function BackgroundStack({
   backgroundType = 'matrix',
   imageOpacity = 0.6,
 }: BackgroundStackProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    const syncToScroll = () => {
+      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
+      const progress = scrollableHeight > 0
+        ? Math.min(Math.max(window.scrollY / scrollableHeight, 0), 1)
+        : 0
+      const duration = Number.isFinite(video.duration) ? video.duration : 0
+
+      if (duration > 0) {
+        video.currentTime = progress * duration
+      }
+    }
+
+    syncToScroll()
+    window.addEventListener('scroll', syncToScroll, { passive: true })
+    video.addEventListener('loadedmetadata', syncToScroll)
+
+    return () => {
+      window.removeEventListener('scroll', syncToScroll)
+      video.removeEventListener('loadedmetadata', syncToScroll)
+    }
+  }, [videoUrl])
+
   return (
     <>
       {imageUrl ? (
@@ -59,11 +88,11 @@ export function BackgroundStack({
       {videoUrl ? (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 'var(--z-bg-animated)' }}>
           <video
+            ref={videoRef}
             className="h-full w-full object-cover"
-            autoPlay
             muted
-            loop
             playsInline
+            preload="auto"
             poster={imageUrl}
             aria-hidden="true"
           >

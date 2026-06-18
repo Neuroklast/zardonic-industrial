@@ -98,8 +98,6 @@ export function ReleasesSection({ releases }: ReleasesSectionProps) {
 
   const visibleReleases = showAll ? filteredReleases : filteredReleases.slice(0, 8)
 
-  if (releases.length === 0) return null
-
   return (
     <section
       id="releases"

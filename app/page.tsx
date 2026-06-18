@@ -215,40 +215,20 @@ export default async function HomePage() {
           backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
         />
 
-        {bio && (
-          <>
-            <SectionDivider />
-            <BioSection content={bio} />
-          </>
-        )}
+        <SectionDivider />
+        <BioSection content={bio} />
 
-        {(credits.length > 0 || endorsements.length > 0) && (
-          <>
-            <SectionDivider />
-            <CreditsSection credits={credits} endorsements={endorsements} />
-          </>
-        )}
+        <SectionDivider />
+        <CreditsSection credits={credits} endorsements={endorsements} />
 
-        {gallery.length > 0 && (
-          <>
-            <SectionDivider />
-            <GallerySection items={gallery.map(galleryItemMap)} />
-          </>
-        )}
+        <SectionDivider />
+        <GallerySection items={gallery.map(galleryItemMap)} />
 
-        {musicHighlights.length > 0 && (
-          <>
-            <SectionDivider />
-            <MusicHighlightsSection highlights={musicHighlights} />
-          </>
-        )}
+        <SectionDivider />
+        <MusicHighlightsSection highlights={musicHighlights} />
 
-        {releases.length > 0 && (
-          <>
-            <SectionDivider />
-            <ReleasesSection releases={releaseItems} />
-          </>
-        )}
+        <SectionDivider />
+        <ReleasesSection releases={releaseItems} />
 
         {merch.length > 0 && (
           <>
@@ -267,12 +247,8 @@ export default async function HomePage() {
           </>
         )}
 
-        {(upcoming.length > 0 || past.length > 0) && (
-          <>
-            <SectionDivider />
-            <GigsSection upcoming={upcoming} past={past} />
-          </>
-        )}
+        <SectionDivider />
+        <GigsSection upcoming={upcoming} past={past} />
 
         <SectionDivider />
         <NewsletterSection

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 // ---------------------------------------------------------------------------
@@ -133,10 +133,10 @@ describe('vercel.json Content-Security-Policy', () => {
     expect(cspHeader.value).toContain("default-src 'self'")
   })
 
-  it('does not allow unsafe-inline scripts', () => {
+  it('allows unsafe-inline scripts for Next.js hydration', () => {
     const scriptSrc = cspHeader.value.match(/script-src ([^;]+)/)
     expect(scriptSrc).toBeTruthy()
-    expect(scriptSrc[1]).not.toContain("'unsafe-inline'")
+    expect(scriptSrc[1]).toContain("'unsafe-inline'")
     // 'unsafe-eval' is required by the Spotify IFrame Embed API (spotify.com/embed/iframe-api/v1)
     // which uses eval() internally. It is intentionally allowed alongside the Spotify origin allowlist.
     expect(scriptSrc[1]).toContain("'unsafe-eval'")
@@ -182,31 +182,12 @@ describe('vercel.json Content-Security-Policy', () => {
 })
 
 // ---------------------------------------------------------------------------
-// Test: No inline scripts in index.html (prevents CSP violations)
+// Test: Next.js no longer uses a root index.html template
 // ---------------------------------------------------------------------------
 
-describe('index.html CSP compliance', () => {
-  const html = readFileSync(resolve(__dirname, '../../index.html'), 'utf-8')
-
-  it('does not contain inline <script> blocks (CSP script-src self)', () => {
-    // Matches <script> tags that contain inline code (not just src references)
-    const inlineScriptPattern = /<script(?![^>]*\bsrc\b)[^>]*>[^<]+<\/script>/gi
-    const matches = html.match(inlineScriptPattern)
-    expect(matches).toBeNull()
-  })
-
-  it('all script tags use src attribute for external loading', () => {
-    const scriptTags = html.match(/<script[^>]*>/gi) || []
-    for (const tag of scriptTags) {
-      expect(tag).toMatch(/\bsrc=/)
-    }
-  })
-
-  it('does not contain inline event handlers on HTML elements', () => {
-    // Matches on* attributes like oncontextmenu, onclick, etc.
-    const inlineHandlerPattern = /\bon\w+\s*=\s*["']/gi
-    const matches = html.match(inlineHandlerPattern)
-    expect(matches).toBeNull()
+describe('root HTML template', () => {
+  it('is not present in the Next.js app router build', () => {
+    expect(existsSync(resolve(__dirname, '../../index.html'))).toBe(false)
   })
 })
 

@@ -146,7 +146,7 @@ function GigList({
 }
 
 export function GigsSection({ upcoming, past }: GigsSectionProps) {
-  if (upcoming.length === 0 && past.length === 0) return null
+  const hasGigs = upcoming.length > 0 || past.length > 0
 
   return (
     <section
@@ -172,10 +172,16 @@ export function GigsSection({ upcoming, past }: GigsSectionProps) {
             </h2>
           </div>
 
-          <div className="space-y-10">
-            <GigList gigs={upcoming} heading="UPCOMING" />
-            <GigList gigs={past} heading="PAST" />
-          </div>
+          {hasGigs ? (
+            <div className="space-y-10">
+              <GigList gigs={upcoming} heading="UPCOMING" />
+              <GigList gigs={past} heading="PAST" />
+            </div>
+          ) : (
+            <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
+              Tour dates coming soon
+            </div>
+          )}
         </m.div>
       </div>
     </section>

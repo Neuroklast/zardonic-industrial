@@ -88,7 +88,7 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
 }
 
 export function CreditsSection({ credits, endorsements }: CreditsAndEndorsementsProps) {
-  if (credits.length === 0 && endorsements.length === 0) return null
+  const hasItems = credits.length > 0 || endorsements.length > 0
 
   return (
     <section
@@ -114,10 +114,16 @@ export function CreditsSection({ credits, endorsements }: CreditsAndEndorsements
             </h2>
           </div>
 
-          <div className="space-y-12">
-            <LogoGrid items={credits} heading="CREDITS" />
-            <LogoGrid items={endorsements} heading="ENDORSEMENTS" />
-          </div>
+          {hasItems ? (
+            <div className="space-y-12">
+              <LogoGrid items={credits} heading="CREDITS" />
+              <LogoGrid items={endorsements} heading="ENDORSEMENTS" />
+            </div>
+          ) : (
+            <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
+              Credits and endorsements coming soon
+            </div>
+          )}
         </m.div>
       </div>
     </section>
