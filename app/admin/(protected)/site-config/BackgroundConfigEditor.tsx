@@ -4,8 +4,12 @@ import { useState, useRef } from 'react'
 import Image from 'next/image'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { createSignedUploadUrl } from '@/app/admin/_actions/r2Upload'
+import * as SliderPrimitive from '@radix-ui/react-slider'
+import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
 
 const R2_BUCKET = process.env.NEXT_PUBLIC_R2_BUCKET_MEDIA ?? 'zardonic-media'
+
+type BackgroundType = 'matrix' | 'circuit' | 'minimal'
 
 interface BackgroundConfigEditorProps {
   currentValue: Record<string, unknown>
@@ -14,6 +18,15 @@ interface BackgroundConfigEditorProps {
 export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorProps) {
   const [imageUrl, setImageUrl] = useState((currentValue.url as string) ?? '')
   const [videoUrl, setVideoUrl] = useState((currentValue.video_url as string) ?? '')
+  const rawBgType = currentValue.backgroundType as string | undefined
+  const [backgroundType, setBackgroundType] = useState<BackgroundType>(
+    rawBgType === 'circuit' || rawBgType === 'minimal' || rawBgType === 'matrix'
+      ? rawBgType
+      : 'matrix',
+  )
+  const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
+    typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.6,
+  )
   const [uploadingImage, setUploadingImage] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -41,7 +54,12 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
   async function handleSave() {
     setStatus('saving')
     setErrorMsg(null)
-    const value = JSON.stringify({ url: imageUrl || undefined, video_url: videoUrl || undefined })
+    const value = JSON.stringify({
+      url: imageUrl || undefined,
+      video_url: videoUrl || undefined,
+      backgroundType,
+      backgroundImageOpacity,
+    })
     const fd = new FormData()
     fd.set('key', 'background')
     fd.set('value', value)
@@ -63,6 +81,53 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
           Upload or paste a URL for the background image. Optionally add a video URL for a
           looping video background (video takes precedence when set).
         </p>
+      </div>
+
+      {/* Background Type */}
+      <div className="space-y-2">
+        <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
+          Background Animation Type
+        </label>
+        <RadioGroupPrimitive.Root
+          value={backgroundType}
+          onValueChange={(v) => setBackgroundType(v as BackgroundType)}
+          className="flex gap-4"
+        >
+          {(['matrix', 'circuit', 'minimal'] as const).map((type) => (
+            <label key={type} className="flex items-center gap-1.5 cursor-pointer">
+              <RadioGroupPrimitive.Item
+                value={type}
+                className="size-4 rounded-full border border-zinc-600 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500/20 focus:outline-none"
+              >
+                <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+                  <span className="block size-2 rounded-full bg-red-500" />
+                </RadioGroupPrimitive.Indicator>
+              </RadioGroupPrimitive.Item>
+              <span className="text-xs text-zinc-300 capitalize">{type}</span>
+            </label>
+          ))}
+        </RadioGroupPrimitive.Root>
+      </div>
+
+      {/* Background Image Opacity */}
+      <div className="space-y-2">
+        <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
+          Background Image Opacity:{' '}
+          <span className="text-zinc-300 font-mono">{backgroundImageOpacity.toFixed(2)}</span>
+        </label>
+        <SliderPrimitive.Root
+          min={0}
+          max={1}
+          step={0.05}
+          value={[backgroundImageOpacity]}
+          onValueChange={([v]) => setBackgroundImageOpacity(v)}
+          className="relative flex items-center w-full touch-none select-none h-5"
+        >
+          <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
+            <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
+          </SliderPrimitive.Track>
+          <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
+        </SliderPrimitive.Root>
       </div>
 
       {/* Background image */}

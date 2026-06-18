@@ -1,14 +1,10 @@
 import { createClient } from '@/lib/supabaseServer'
 import SiteConfigEditor from './SiteConfigEditor'
 import { BackgroundConfigEditor } from './BackgroundConfigEditor'
+import { HeroConfigEditor } from './HeroConfigEditor'
+import { AppearanceEditor } from './AppearanceEditor'
 
 const MANAGED_KEYS = [
-  {
-    key: 'hero',
-    label: 'Hero Section',
-    description: 'Headline, tagline and call-to-action button shown above the fold.',
-    example: '{"headline":"ZARDONIC","tagline":"Industrial Metal / Drum & Bass","ctaLabel":"Listen Now","ctaUrl":"#music"}',
-  },
   {
     key: 'newsletter',
     label: 'Newsletter Section',
@@ -41,13 +37,21 @@ export default async function SiteConfigPage() {
 
   const rowMap = Object.fromEntries(rows.map((r) => [r.key, r.value]))
   const bgValue = (rowMap['background'] ?? {}) as Record<string, unknown>
+  const heroValue = (rowMap['hero'] ?? {}) as Record<string, unknown>
+  const appearanceValue = (rowMap['appearance'] ?? {}) as Record<string, unknown>
 
   return (
     <div>
       <h1 className="text-xl font-bold mb-6">Site Configuration</h1>
       <div className="space-y-8">
+        {/* Hero section – dedicated form editor */}
+        <HeroConfigEditor currentValue={heroValue} />
+
         {/* Background has a dedicated UI with upload support */}
         <BackgroundConfigEditor currentValue={bgValue} />
+
+        {/* Appearance / visual effects */}
+        <AppearanceEditor currentValue={appearanceValue} />
 
         {MANAGED_KEYS.map((item) => (
           <SiteConfigEditor
