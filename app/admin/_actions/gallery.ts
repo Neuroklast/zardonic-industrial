@@ -1,5 +1,6 @@
 'use server'
 
+import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
@@ -22,26 +23,37 @@ export async function saveGalleryImage(formData: FormData) {
   const parsed = galleryInputSchema.safeParse(raw)
   if (!parsed.success) return { error: parsed.error.message }
 
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gallery').insert(parsed.data)
-  if (error) return { error: error.message }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gallery').insert(parsed.data)
+    if (error) return { error: error.message }
 
-  revalidatePath('/admin/gallery')
-  return { success: true }
+    revalidatePath('/admin/gallery')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to save gallery image.')
 }
 
 export async function deleteGalleryImage(id: string) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gallery').delete().eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/gallery')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gallery').delete().eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/gallery')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to delete gallery image.')
 }
 
 export async function toggleGalleryImageVisibility(id: string, visible: boolean) {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('gallery').update({ visible }).eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/admin/gallery')
-  return { success: true }
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { error } = await supabase.from('gallery').update({ visible }).eq('id', id)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/gallery')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to update gallery visibility.')
 }

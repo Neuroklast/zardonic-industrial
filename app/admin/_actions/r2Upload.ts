@@ -2,6 +2,7 @@
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { requireAdmin } from '@/app/admin/_actions/auth'
 
 function buildR2Client(): S3Client {
   const accountId = process.env.R2_ACCOUNT_ID
@@ -24,11 +25,11 @@ function buildPublicUrl(objectPath: string): string {
   return `${host.replace(/\/$/, '')}/${objectPath}`
 }
 
-/** Generate a signed PUT URL for client-side direct upload to R2. */
 export async function createSignedUploadUrl(
   bucket: string,
   path: string,
 ): Promise<{ url: string; objectPath: string; publicUrl: string }> {
+  await requireAdmin()
   const client = buildR2Client()
   const objectPath = `${path}-${Date.now()}`
   const command = new PutObjectCommand({ Bucket: bucket, Key: objectPath })
@@ -36,16 +37,13 @@ export async function createSignedUploadUrl(
   return { url, objectPath, publicUrl: buildPublicUrl(objectPath) }
 }
 
-/**
- * Upload a buffer (e.g. downloaded artwork) directly to R2 from the server.
- * Returns the public URL and the R2 object path.
- */
 export async function uploadBufferToR2(
   bucket: string,
   objectPath: string,
   buffer: Buffer,
   contentType: string,
 ): Promise<{ publicUrl: string; objectPath: string }> {
+  await requireAdmin()
   const client = buildR2Client()
   await client.send(
     new PutObjectCommand({

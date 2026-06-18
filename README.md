@@ -39,21 +39,20 @@ A fully customizable cyberpunk-themed artist website for **ZARDONIC**, now being
 - **Secret Terminal** — Konami code–activated terminal interface
 
 ### Admin CMS
-Access via the lock icon in the footer, or navigate to `?admin-setup` for first-time setup.
+Access the admin at `/admin/login` using Supabase Auth; protected admin routes require an authenticated `profiles.role = admin` session.
 
 - **Section Visibility** — Show/hide any section (Bio, Music, Gigs, Releases, Gallery, Connect, Credits)
-- **Theme Customization** — All 20+ colors, heading/body/mono fonts, and favicon
+- **Theme Customization** — All 20+ colors, heading/body/mono fonts, and favicon uploads stored in R2
 - **Animation Controls** — Toggle glitch, scanline, chromatic, CRT, noise, and circuit effects
 - **Config Editor** — Fine-tune every animation parameter (durations, probabilities, intervals, offsets)
 - **Security Dashboard** — Incident log, attacker profiles, blocklist manager, threat scoring
 - **Contact Inbox & Subscribers** — View/manage contact submissions and newsletter subscribers
 - **Terminal Backend** — Execute admin commands via the built-in terminal
 - **Data Export/Import** — Export and restore all site data as JSON
-- **Password Protection** — scrypt-hashed admin password with TOTP (optional)
+- **Supabase Admin Auth** — App Router login backed by Supabase SSR sessions and admin-role checks
 
 ### Backend & API (50+ Vercel Serverless Functions)
-- **Auth** — scrypt + optional TOTP (`api/auth.ts`)
-- **Session** — HttpOnly cookies with scrypt password hashing (`api/auth.ts`)
+- **Admin Auth** — Supabase SSR session cookies with server-side role checks in `/admin`
 - **KV Proxy** — Upstash Redis read/write with public key allowlist (`api/kv.ts`)
 - **Analytics** — Visitor analytics with hashed IPs (`api/analytics.ts`)
 - **iTunes Sync** — Automatic release fetching (`api/itunes.ts`)
@@ -64,8 +63,8 @@ Access via the lock icon in the footer, or navigate to `?admin-setup` for first-
 - **Security Stack** — Honeytokens, attacker profiling, threat scoring, blocklist, rate limiting
 
 ### Data Persistence
-- **Upstash Redis** — Sessions, rate limiting, analytics, admin settings (24 h TTL)
-- **Vercel Blob** — Video and media file storage (client-side upload via `@vercel/blob/client`)
+- **Upstash Redis** — Rate limiting, analytics, and legacy data endpoints that remain outside the App Router
+- **Cloudflare R2** — Admin-uploaded media and favicon assets via signed uploads
 - **IndexedDB** — Image pre-caching during loading screen
 - **localStorage Fallback** — Graceful fallback when Redis is unavailable
 

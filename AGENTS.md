@@ -202,11 +202,10 @@ Every agent session **MUST** complete the following before closing the PR or fin
 
 | Fix | File | Description |
 |-----|------|-------------|
-| Password setup guard | `api/session.ts` | `PUT /api/session` returns 409 if a hash already exists. Do NOT remove this guard. |
+| Supabase admin auth | `app/admin/(protected)/layout.tsx`, `app/admin/_actions/auth.ts`, `proxy.ts` | Admin access is enforced with Supabase SSR session + `profiles.role = 'admin'`; do not reintroduce Redis/KV auth flows. |
 | Redis short-circuit | `api/auth.ts:validateSession` | Returns `false` early if `!isRedisConfigured()` to prevent handler crashes. |
 | Model upload MIME types | `api/cms/video-upload-token.ts` | `model/gltf-binary` and `model/gltf+json` are in the allow-list alongside `video/*`. |
 | Rate limit on key validation | `api/validate-key.ts` | `applyRateLimit` must be called before any KV lookup. |
 | WebGL cleanup | `src/components/ModelBackground.tsx` | `scene.traverse` disposes geometry/material/texture before `renderer.dispose()`. |
 | Upload mount guard | `src/cms/hooks/useVideoUpload.ts`, `useMediaUpload.ts` | `isMountedRef` prevents setState after unmount. |
 | Enrichment status | `api/releases-enrichment-status.ts` | Reads live `releases-enrich-queue` key; `pendingCount` is never hardcoded to 0. |
-

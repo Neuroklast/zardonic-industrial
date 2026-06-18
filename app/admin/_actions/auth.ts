@@ -15,7 +15,9 @@ export async function requireAdmin(): Promise<void> {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !anonKey) {
-    throw new Error('Supabase environment variables are not configured.')
+    throw new Error(
+      'Supabase auth is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.',
+    )
   }
 
   const supabase = createServerClient(url, anonKey, {
@@ -35,16 +37,43 @@ export async function requireAdmin(): Promise<void> {
   } = await supabase.auth.getUser()
 
   if (authError || !user) {
-    throw new Error('Unauthorized: not authenticated.')
+    throw new Error('Your admin session has expired. Please sign in again.')
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
 
-  if (!profile || (profile as { role?: string }).role !== 'admin') {
-    throw new Error('Forbidden: admin role required.')
+  if (profileError || !profile || (profile as { role?: string }).role !== 'admin') {
+    throw new Error('Your account does not have admin access.')
+  }
+}
+
+export async function formatAdminActionError(
+  error: unknown,
+  fallback = 'The admin request could not be completed.',
+): Promise<string> {
+  if (error instanceof Error) {
+    return error.message || fallback
+  }
+
+  if (typeof error === 'string' && error.trim()) {
+    return error
+  }
+
+  return fallback
+}
+
+export async function runAdminAction<T extends object>(
+  action: () => Promise<T>,
+  fallback?: string,
+): Promise<T | { error: string }> {
+  try {
+    await requireAdmin()
+    return await action()
+  } catch (error) {
+    return { error: await formatAdminActionError(error, fallback) }
   }
 }

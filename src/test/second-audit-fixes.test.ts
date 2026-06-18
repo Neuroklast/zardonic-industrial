@@ -27,12 +27,10 @@ vi.mock('../../api/_ratelimit.ts', () => ({
 vi.mock('../../api/auth.ts', () => ({
   validateSession: vi.fn().mockResolvedValue(false),
   isRedisConfigured: vi.fn().mockReturnValue(true),
-  hashPassword: vi.fn().mockResolvedValue('scrypt:fakesalt:fakekey'),
 }))
 
 // Top-level imports (module-level await is valid for ES modules / Vitest)
 const { default: contactHandler } = await import('../../api/contact.ts')
-const { default: sessionHandler } = await import('../../api/session.ts')
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -103,64 +101,7 @@ describe('contact.ts — Brevo XSS fix', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FIX 2 — session.ts: raw error.message leaked in 500 response
-// ─────────────────────────────────────────────────────────────────────────────
-describe('session.ts — no raw error.message in 500 response', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    process.env.UPSTASH_REDIS_REST_URL = 'https://fake.upstash.io'
-    process.env.UPSTASH_REDIS_REST_TOKEN = 'fake-token'
-  })
-
-  it('does not expose internal error details in 500 JSON body', async () => {
-    mockKvGet.mockRejectedValue(new Error('INTERNAL_SECRET_DB_CREDS'))
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    const res = mockRes()
-    await sessionHandler({
-      method: 'GET',
-      headers: { 'x-session-token': 'some-token' },
-      query: {},
-    } as any, res as any)
-
-    expect(res.status).toHaveBeenCalledWith(500)
-    const body = res.json.mock.calls[0]?.[0] as Record<string, unknown>
-    expect(JSON.stringify(body)).not.toContain('INTERNAL_SECRET_DB_CREDS')
-    consoleSpy.mockRestore()
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX 3 — session.ts: dead zd-session: fallback makes an extra KV call
-// ─────────────────────────────────────────────────────────────────────────────
-describe('session.ts — remove dead zd-session: fallback', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    process.env.UPSTASH_REDIS_REST_URL = 'https://fake.upstash.io'
-    process.env.UPSTASH_REDIS_REST_TOKEN = 'fake-token'
-  })
-
-  it('makes exactly one KV lookup for a missing token (no dead zd-session: check)', async () => {
-    // auth.ts stores session:${token}, never zd-session:${token}
-    // The zd-session: fallback is dead code and causes an extra KV round-trip
-    mockKvGet.mockResolvedValue(null)
-    const res = mockRes()
-    await sessionHandler({
-      method: 'GET',
-      headers: { 'x-session-token': 'missing-token' },
-      query: {},
-    } as any, res as any)
-
-    expect(res.status).toHaveBeenCalledWith(401)
-    // The dead zd-session: key must never be looked up
-    const allGetKeys = mockKvGet.mock.calls.map((c) => c[0] as string)
-    expect(allGetKeys.some((k) => k.startsWith('zd-session:'))).toBe(false)
-    // session:missing-token must be looked up
-    expect(allGetKeys).toContain('session:missing-token')
-  })
-})
-
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX 4 — use-analytics.ts: useAnalytics calls unobserve not disconnect
+// FIX 2 — use-analytics.ts: useAnalytics calls unobserve not disconnect
 // ─────────────────────────────────────────────────────────────────────────────
 describe('useAnalytics — cleanup calls disconnect not unobserve', () => {
   it('calls observer.disconnect() on unmount (not just unobserve)', async () => {
@@ -192,7 +133,7 @@ describe('useAnalytics — cleanup calls disconnect not unobserve', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FIX 5 — use-lazy-image.ts: Image onload setState after unmount
+// FIX 3 — use-lazy-image.ts: Image onload setState after unmount
 // ─────────────────────────────────────────────────────────────────────────────
 describe('useLazyImage — no setState after unmount', () => {
   it('ignores image onload callback fired after component unmount', async () => {
@@ -237,7 +178,7 @@ describe('useLazyImage — no setState after unmount', () => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FIX 6 — newsletter.ts: Mailchimp dc guard (empty-string dc → bad URL)
+// FIX 4 — newsletter.ts: Mailchimp dc guard (empty-string dc → bad URL)
 // ─────────────────────────────────────────────────────────────────────────────
 describe('newsletter.ts — Mailchimp dc guard', () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>

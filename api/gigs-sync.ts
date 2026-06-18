@@ -9,7 +9,7 @@
  * 5. Writes the result back to Redis band-data
  *
  * Cron calls must supply `Authorization: Bearer <CRON_SECRET>`.
- * Admin calls must supply a valid session (cookie or x-session-token header).
+ * Admin calls must be authenticated by the current server-side admin session.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getRedisOrNull, isRedisConfigured } from './_redis.js'

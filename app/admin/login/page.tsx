@@ -45,6 +45,11 @@ function LoginForm() {
             Access denied. Your account does not have admin privileges.
           </div>
         )}
+        {errorParam === 'config' && (
+          <div className="mb-4 p-3 rounded bg-red-950 border border-red-800 text-red-300 text-sm">
+            Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
