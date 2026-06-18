@@ -19,7 +19,6 @@ const InboxEditor = lazy(() => import('./editors/InboxEditor'))
 const NewsletterEditor = lazy(() => import('./editors/NewsletterEditor'))
 const TourSyncEditor = lazy(() => import('./editors/TourSyncEditor'))
 const StorageEditor = lazy(() => import('./editors/StorageEditor'))
-const SecurityDashboard = lazy(() => import('./editors/SecurityDashboard'))
 
 const EditorFallback = (
   <div className="flex items-center justify-center h-64">
@@ -50,7 +49,6 @@ function renderEditor(route: string) {
   if (route === 'cms/api/newsletter') return <NewsletterEditor />
   if (route === 'cms/api/tour') return <TourSyncEditor />
   if (route === 'cms/api/storage') return <StorageEditor />
-  if (route === 'cms/api/security') return <SecurityDashboard />
   if (route === 'cms/devtools/perf-log') return <PerfLogViewer />
 
   return (

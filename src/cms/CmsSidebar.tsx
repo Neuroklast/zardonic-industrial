@@ -24,7 +24,6 @@ import {
   Mail,
   Calendar,
   HardDrive,
-  Shield,
   Loader2,
   Check,
 } from 'lucide-react'
@@ -138,7 +137,6 @@ const navGroups: NavGroup[] = [
       { label: 'Newsletter', route: 'cms/api/newsletter', icon: <Mail size={16} /> },
       { label: 'Tour & Live', route: 'cms/api/tour', icon: <Calendar size={16} /> },
       { label: 'Cloud Storage', route: 'cms/api/storage', icon: <HardDrive size={16} /> },
-      { label: 'Security', route: 'cms/api/security', icon: <Shield size={16} /> },
     ],
   },
 ]

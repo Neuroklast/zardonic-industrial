@@ -233,7 +233,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       res.status(503).json({ error: 'Redis not configured' })
       return
     }
-    const existing = await redis.get<SiteData>(BAND_DATA_KEY)
+    const existing = (await redis.get(BAND_DATA_KEY)) as SiteData | null
     const existingGigs: Gig[] = existing?.gigs ?? []
     const existingById = new Map(existingGigs.map(g => [g.id, g]))
 

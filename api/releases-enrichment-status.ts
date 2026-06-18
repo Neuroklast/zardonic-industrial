@@ -49,8 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const redis = getRedisOrNull()!
 
   const [siteData, queue] = await Promise.all([
-    redis.get<SiteData>(BAND_DATA_KEY),
-    redis.get<EnrichQueue>(QUEUE_KEY),
+    (await redis.get(BAND_DATA_KEY)) as SiteData | null,
+    (await redis.get(QUEUE_KEY)) as EnrichQueue | null,
   ])
 
   const releases: Release[] = siteData?.releases ?? []
@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     const processed = typeof queue.processedCount === 'number' ? queue.processedCount : 0
     const remaining = queue.releases.slice(processed)
     pendingCount = remaining.length
-    pending = remaining.map(r => ({ id: r.id, title: r.title }))
+    pending = remaining.map((r: Release) => ({ id: r.id, title: r.title }))
   }
 
   res.status(200).json({ total, pendingCount, pending })

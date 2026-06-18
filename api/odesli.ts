@@ -27,7 +27,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   if (redis) {
     try {
-      const cached = await redis.get<unknown>(redisKey)
+      const cached = (await redis.get(redisKey)) as unknown | null
       if (cached !== null && cached !== undefined) {
         res.setHeader('Cache-Control', 'public, max-age=3600')
         res.setHeader('X-Cache', 'HIT')

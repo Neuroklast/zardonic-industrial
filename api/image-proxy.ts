@@ -2,9 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { kv } from './_redis.js'
 import { resolve4, resolve6 } from 'node:dns/promises'
 import { applyRateLimit } from './_ratelimit.js'
-import { isMarkedAttacker, serveFingerprintPixel } from './_honeytokens.js'
 import { imageProxyQuerySchema, validate } from './_schemas.js'
-import { isHardBlocked } from './_blocklist.js'
 /**
  * Server-side image proxy that fetches remote images, caches them in Vercel KV,
  * and returns the binary data. Handles Google Drive URLs and other CORS-restricted
@@ -87,19 +85,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const blocked = await isHardBlocked(req)
-  if (blocked) {
-    res.status(403).json({ error: 'FORBIDDEN' })
-    return
-  }
-
   const allowed = await applyRateLimit(req, res)
   if (!allowed) return
-
-  if (await isMarkedAttacker(req)) {
-    serveFingerprintPixel(res)
-    return
-  }
 
   const qParsed = validate(imageProxyQuerySchema, req.query)
   if (!qParsed.success) {
@@ -146,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const key = cacheKey(directUrl)
 
   try {
-    const cached = await kv.get<CachedImage>(key)
+    const cached = (await kv.get(key)) as CachedImage | null
     if (cached && cached.data && cached.contentType) {
       const buf = Buffer.from(cached.data, 'base64')
       res.setHeader('Content-Type', cached.contentType)
@@ -215,7 +202,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const base64 = Buffer.from(arrayBuf).toString('base64')
 
-    kv.set(key, { data: base64, contentType }, { ex: CACHE_TTL_SECONDS }).catch((e) => {
+    kv.set(key, { data: base64, contentType }, { ex: CACHE_TTL_SECONDS }).catch((e: unknown) => {
       console.warn('KV cache write failed:', e)
     })
 

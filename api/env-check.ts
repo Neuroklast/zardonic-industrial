@@ -32,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const redis = getRedisOrNull()
   if (redis) {
     try {
-      const passwordHash = await redis.get<string>('admin-password-hash')
+      const passwordHash = (await redis.get('admin-password-hash')) as string | null
       if (!passwordHash) {
         res.status(200).json({ vars: buildVars() })
         return

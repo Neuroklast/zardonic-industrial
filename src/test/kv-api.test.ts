@@ -32,21 +32,8 @@ vi.mock('../../api/_ratelimit.ts', () => ({
   hashIp: vi.fn().mockReturnValue('hashed-ip'),
 }))
 
-vi.mock('../../api/_honeytokens.ts', () => ({
-  isHoneytoken: vi.fn().mockReturnValue(false),
-  triggerHoneytokenAlarm: vi.fn().mockResolvedValue(undefined),
-  isMarkedAttacker: vi.fn().mockResolvedValue(false),
-  injectEntropyHeaders: vi.fn(),
-  getRandomTaunt: vi.fn().mockReturnValue('taunt'),
-  setDefenseHeaders: vi.fn(),
-}))
-
 vi.mock('../../api/auth.ts', () => ({
   validateSession: vi.fn().mockResolvedValue(true),
-}))
-
-vi.mock('../../api/_blocklist.ts', () => ({
-  isHardBlocked: vi.fn().mockResolvedValue(false),
 }))
 
 type Res = { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn>; setHeader: ReturnType<typeof vi.fn> }
@@ -68,9 +55,7 @@ function mockRes(): Res {
 // ---------------------------------------------------------------------------
 // Import mocked modules for resetting
 import * as ratelimitMod from '../../api/_ratelimit.ts'
-import * as blocklistMod from '../../api/_blocklist.ts'
 import * as authMod from '../../api/auth.ts'
-import * as honeytokensMod from '../../api/_honeytokens.ts'
 
 // We need a dynamic import so vi.mock is applied before the handler reads it
 const { default: handler, timingSafeEqual } = await import('../../api/kv.ts')
@@ -84,10 +69,7 @@ describe('KV API handler', () => {
 
     // Reset mocks to default safe values
     vi.mocked(ratelimitMod.applyRateLimit).mockResolvedValue(true)
-    vi.mocked(blocklistMod.isHardBlocked).mockResolvedValue(false)
     vi.mocked(authMod.validateSession).mockResolvedValue(true)
-    vi.mocked(honeytokensMod.isHoneytoken).mockReturnValue(false)
-    vi.mocked(honeytokensMod.isMarkedAttacker).mockResolvedValue(false)
     mockKvGet.mockResolvedValue(null)
     mockKvIncr.mockResolvedValue(1)
   })

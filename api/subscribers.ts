@@ -40,7 +40,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   try {
     if (req.method === 'GET') {
-      const subscribers = (await kv.get<Subscriber[]>(KV_KEY)) || []
+      const subscribers = ((await kv.get(KV_KEY)) as Subscriber[] | null) || []
       res.status(200).json({ subscribers })
       return
     }
@@ -54,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
       const sanitizedEmail = email.toLowerCase().trim().slice(0, 254)
 
-      const subscribers: Subscriber[] = (await kv.get<Subscriber[]>(KV_KEY)) || []
+      const subscribers: Subscriber[] = ((await kv.get(KV_KEY)) as Subscriber[] | null) || []
       const filtered = subscribers.filter((s) => s.email !== sanitizedEmail)
       await kv.set(KV_KEY, filtered)
 

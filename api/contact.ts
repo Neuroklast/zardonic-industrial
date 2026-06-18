@@ -69,7 +69,7 @@ async function resolveToEmail(): Promise<string | null> {
   try {
     const redis = getRedisOrNull()
     if (redis) {
-      const settings = await redis.get<{ contactSettings?: { emailForwardTo?: string } }>(ADMIN_SETTINGS_KEY)
+      const settings = (await redis.get(ADMIN_SETTINGS_KEY)) as { contactSettings?: { emailForwardTo?: string } } | null
       if (settings?.contactSettings?.emailForwardTo) {
         return settings.contactSettings.emailForwardTo
       }
@@ -241,7 +241,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse): Promise<void
   const MAX_RETRIES = 3
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const existing: ContactMessage[] = (await kv.get<ContactMessage[]>(KV_KEY)) || []
+      const existing: ContactMessage[] = ((await kv.get(KV_KEY)) as ContactMessage[] | null) || []
       existing.push(entry)
       const toStore = existing.length > MAX_CONTACT_MESSAGES ? existing.slice(-MAX_CONTACT_MESSAGES) : existing
       await kv.set(KV_KEY, toStore)
@@ -265,7 +265,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse): Promise<void>
     return
   }
 
-  const messages = (await kv.get<ContactMessage[]>(KV_KEY)) || []
+  const messages = ((await kv.get(KV_KEY)) as ContactMessage[] | null) || []
   res.status(200).json({ messages })
 }
 
@@ -287,7 +287,7 @@ async function handlePatch(req: VercelRequest, res: VercelResponse): Promise<voi
     return
   }
 
-  const messages: ContactMessage[] = (await kv.get<ContactMessage[]>(KV_KEY)) || []
+  const messages: ContactMessage[] = ((await kv.get(KV_KEY)) as ContactMessage[] | null) || []
   const idx = messages.findIndex((m) => m.id === id)
   if (idx === -1) {
     res.status(404).json({ error: 'Message not found.' })
@@ -314,7 +314,7 @@ async function handleDelete(req: VercelRequest, res: VercelResponse): Promise<vo
     return
   }
 
-  const messages: ContactMessage[] = (await kv.get<ContactMessage[]>(KV_KEY)) || []
+  const messages: ContactMessage[] = ((await kv.get(KV_KEY)) as ContactMessage[] | null) || []
   const filtered = messages.filter((m) => m.id !== id)
   if (filtered.length === messages.length) {
     res.status(404).json({ error: 'Message not found.' })

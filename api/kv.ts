@@ -1,10 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { kv, isRedisConfigured } from './_redis.js'
 import { applyRateLimit } from './_ratelimit.js'
-import { isHoneytoken, triggerHoneytokenAlarm, isMarkedAttacker, injectEntropyHeaders, getRandomTaunt, setDefenseHeaders } from './_honeytokens.js'
 import { kvGetQuerySchema, kvPostSchema, validate } from './_schemas.js'
 import { validateSession } from './auth.js'
-import { isHardBlocked } from './_blocklist.js'
 // Check if KV is properly configured
 
 /**
@@ -48,12 +46,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return res.status(200).end()
   }
 
-  // Hard-block check — immediate rejection
-  const blocked = await isHardBlocked(req)
-  if (blocked) {
-    return res.status(403).json({ error: 'FORBIDDEN' })
-  }
-
   // Wfuzz / hacking tool detection — immediate block (no tarpit to prevent FDoS)
   if (isSuspiciousUA(req)) {
     return res.status(403).json({
@@ -65,12 +57,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   // Rate limiting — blocks brute-force and DoS attacks (GDPR-compliant, IP is hashed)
   const allowed = await applyRateLimit(req, res)
   if (!allowed) return
-
-  // Entropy injection counter-measure: inject noise headers for flagged attacker IPs
-  if (await isMarkedAttacker(req)) {
-    injectEntropyHeaders(res)
-    setDefenseHeaders(res)
-  }
 
   // Check if KV is configured
   if (!isRedisConfigured()) {
@@ -87,18 +73,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       const parsed = validate(kvGetQuerySchema, req.query)
       if (!parsed.success) return res.status(400).json({ error: parsed.error })
       const { key } = parsed.data
-
-      // Honeytoken detection — taunting response on GET.
-      // Confrontational message lets the attacker know they've been caught.
-      if (isHoneytoken(key)) {
-        const responseSent = await triggerHoneytokenAlarm(req, key, res)
-        if (responseSent) return
-        setDefenseHeaders(res)
-        return res.status(403).json({
-          error: 'ACCESS_DENIED',
-          message: getRandomTaunt(),
-        })
-      }
 
       // Allow-list: only explicitly listed keys are publicly readable.
       // All other keys require a valid session to prevent leakage
@@ -170,17 +144,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       if (!parsed.success) return res.status(400).json({ error: parsed.error })
       const { key, value } = parsed.data
 
-      // Honeytoken detection — taunting response on POST.
-      if (isHoneytoken(key)) {
-        const responseSent = await triggerHoneytokenAlarm(req, key, res)
-        if (responseSent) return
-        setDefenseHeaders(res)
-        return res.status(403).json({
-          error: 'ACCESS_DENIED',
-          message: getRandomTaunt(),
-        })
-      }
-
       // Block writes to internal keys used by analytics or system functions
       const lowerKey = key.toLowerCase()
       if (lowerKey.startsWith('nk-analytics') || lowerKey.startsWith('nk-heatmap') || lowerKey.startsWith('img-cache:')) {
@@ -215,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         // deleted on the next unrelated save.
         if (!('terminalCommands' in sanitized)) {
           try {
-            const existing = await kv.get<Record<string, unknown>>(key)
+            const existing = (await kv.get(key)) as Record<string, unknown> | null
             if (existing && typeof existing === 'object' && Array.isArray((existing as Record<string, unknown>).terminalCommands)) {
               sanitized.terminalCommands = (existing as Record<string, unknown>).terminalCommands
             }
@@ -234,7 +197,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       if (key === 'admin:settings' && value && typeof value === 'object' && !Array.isArray(value)) {
         const incoming = value as Record<string, unknown>
         try {
-          const existing = await kv.get<Record<string, unknown>>(key)
+          const existing = (await kv.get(key)) as Record<string, unknown> | null
           if (existing && typeof existing === 'object') {
             for (const field of ['terminalCommands', 'configOverrides'] as const) {
               if (!(field in incoming) && field in existing) {

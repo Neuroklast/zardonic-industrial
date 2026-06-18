@@ -17,40 +17,50 @@
           "key": "Content-Security-Policy",
           "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://open.spotify.com https://embed-cdn.spotifycdn.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.spotify.com https://open.spotify.com https://spclient.wg.spotify.com https://api.song.link https://rest.bandsintown.com https://itunes.apple.com https://wsrv.nl https://vercel.com https://*.public.blob.vercel-storage.com https://*.supabase.co wss://*.supabase.co; frame-src https://www.youtube-nocookie.com https://open.spotify.com https://embed-cdn.spotifycdn.com; worker-src blob:; media-src 'self' data: https: blob:"
         },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
-        { "key": "Cross-Origin-Resource-Policy", "value": "same-origin" },
-        { "key": "X-DNS-Prefetch-Control", "value": "off" }
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "Cross-Origin-Resource-Policy",
+          "value": "same-origin"
+        },
+        {
+          "key": "X-DNS-Prefetch-Control",
+          "value": "off"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/dashboard/:p*", "destination": "/api/denied?_src=/dashboard/:p*" },
-    { "source": "/backup/:p*", "destination": "/api/denied?_src=/backup/:p*" },
-    { "source": "/config/:p*", "destination": "/api/denied?_src=/config/:p*" },
-    { "source": "/debug/:p*", "destination": "/api/denied?_src=/debug/:p*" },
-    { "source": "/staging/:p*", "destination": "/api/denied?_src=/staging/:p*" },
-    { "source": "/internal/:p*", "destination": "/api/denied?_src=/internal/:p*" },
-    { "source": "/private/:p*", "destination": "/api/denied?_src=/private/:p*" },
-    { "source": "/data/:p*", "destination": "/api/denied?_src=/data/:p*" },
-    { "source": "/logs/:p*", "destination": "/api/denied?_src=/logs/:p*" },
-    { "source": "/tmp/:p*", "destination": "/api/denied?_src=/tmp/:p*" },
-    { "source": "/wp-admin/:p*", "destination": "/api/denied?_src=/wp-admin/:p*" },
-    { "source": "/wp-login.php", "destination": "/api/denied?_src=/wp-login.php" },
-    { "source": "/phpmyadmin/:p*", "destination": "/api/denied?_src=/phpmyadmin/:p*" },
-    { "source": "/server-status", "destination": "/api/denied?_src=/server-status" },
-    { "source": "/server-info", "destination": "/api/denied?_src=/server-info" },
-    { "source": "/cgi-bin/:p*", "destination": "/api/denied?_src=/cgi-bin/:p*" },
-    { "source": "/xmlrpc.php", "destination": "/api/denied?_src=/xmlrpc.php" },
-    { "source": "/.env", "destination": "/api/denied?_src=/.env" },
-    { "source": "/.git/:p*", "destination": "/api/denied?_src=/.git/:p*" },
-    { "source": "/sitemap-extended.xml", "destination": "/api/sitemap-trap" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap-gen" },
-    { "source": "/share/:type/:id", "destination": "/api/og?type=:type&id=:id" }
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap-gen"
+    },
+    {
+      "source": "/share/:type/:id",
+      "destination": "/api/og?type=:type&id=:id"
+    }
   ],
   "crons": [
     {

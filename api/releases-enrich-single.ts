@@ -105,7 +105,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const redis = getRedisOrNull()!
 
   try {
-    const existing = await redis.get<SiteData>(BAND_DATA_KEY)
+    const existing = (await redis.get(BAND_DATA_KEY)) as SiteData | null
     const releases: Release[] = existing?.releases ?? []
     const release = releases.find(r => r.id === id)
     if (!release) { res.status(404).json({ error: 'Release not found' }); return }

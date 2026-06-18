@@ -2,9 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import sharp from 'sharp'
 import { resolve4, resolve6 } from 'node:dns/promises'
 import { applyRateLimit } from './_ratelimit.js'
-import { isMarkedAttacker } from './_honeytokens.js'
 import { imageProxyQuerySchema, validate } from './_schemas.js'
-import { isHardBlocked } from './_blocklist.js'
 /**
  * Server-side image proxy with adversarial noise injection.
  *
@@ -64,12 +62,6 @@ async function applyAdversarialNoise(imageBuffer: Buffer): Promise<Buffer> {
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
     res.status(405).json({ error: 'Method not allowed' })
-    return
-  }
-
-  const blocked = await isHardBlocked(req)
-  if (blocked) {
-    res.status(403).json({ error: 'FORBIDDEN' })
     return
   }
 
@@ -152,10 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const imageBuffer = Buffer.from(arrayBuf)
 
-    const isAttacker = await isMarkedAttacker(req)
-    const outputBuffer = isAttacker
-      ? imageBuffer
-      : await applyAdversarialNoise(imageBuffer)
+    const outputBuffer = await applyAdversarialNoise(imageBuffer)
 
     res.setHeader('X-Image-Camera', 'NIKON-Z6')
     res.setHeader('X-Image-GPS', '48.8566,2.3522')

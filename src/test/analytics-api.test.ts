@@ -50,10 +50,6 @@ vi.mock('../../api/_ratelimit.ts', () => ({
   hashIp: vi.fn().mockReturnValue('hashed-ip'),
 }))
 
-vi.mock('../../api/_blocklist.ts', () => ({
-  isHardBlocked: vi.fn().mockResolvedValue(false),
-}))
-
 vi.mock('../../api/auth.ts', () => ({
   validateSession: vi.fn().mockResolvedValue(true),
 }))

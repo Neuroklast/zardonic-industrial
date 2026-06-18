@@ -615,7 +615,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   try {
     // Read artistName from band-data (set by admin) — never hardcode it
-    const existingBandData = await redis.get<SiteData>(BAND_DATA_KEY)
+    const existingBandData = (await redis.get(BAND_DATA_KEY)) as SiteData | null
     const artistName = (existingBandData?.artistName as string | undefined)?.trim() || 'Zardonic'
 
     // 1. Fetch releases from iTunes AND Discogs in parallel (both primary sources)
