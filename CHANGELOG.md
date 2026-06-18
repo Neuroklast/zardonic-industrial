@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Admin login redirect loop after server-side auth redirect**: `app/admin/login/page.tsx` now signs in with the browser Supabase client and navigates with `router.push()`/`router.refresh()` only after the session cookies exist in the browser. The obsolete `/admin/login/action` route handler was removed so middleware reads the fresh session immediately instead of bouncing back to login.
 - **Admin session persistence — middleware drops refreshed cookies on redirect**: `middleware.ts` now copies all cookies from the Supabase `response` onto the `NextResponse.redirect` response so that token refreshes performed during `getUser()` are not lost when auth fails and the user is redirected to login.
 - **Admin session persistence — `createClient()` silently swallows `setAll` errors in Layouts**: Added `createActionClient()` to `lib/supabaseServer.ts` — identical to `createClient()` but without the `try/catch` around `setAll`, so token refreshes are correctly persisted when called from Layouts and Server Actions. `app/admin/(protected)/layout.tsx` now uses `createActionClient()` instead of `createClient()`.
 - **Schema drift — `gallery` column renames**: `title` column renamed to `alt` and `visible` column renamed to `active` in the `gallery` table, aligning migrations with `schema.sql`. App Router queries in `app/page.tsx` and `GallerySection.tsx` updated accordingly.
