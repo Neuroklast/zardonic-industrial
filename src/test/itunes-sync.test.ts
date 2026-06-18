@@ -78,7 +78,7 @@ describe('syncReleasesFromItunes', () => {
       not: vi.fn().mockResolvedValue({ data: [] }),
       order: vi.fn().mockReturnValue({
         limit: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null }),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null }),
         }),
       }),
     }))
@@ -106,7 +106,7 @@ describe('syncReleasesFromItunes', () => {
         not: vi.fn().mockResolvedValue({ data: [{ itunes_id: existingId }] }),
         order: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: { display_order: 0 } }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: { display_order: 0 } }),
           }),
         }),
       })),
@@ -144,7 +144,7 @@ describe('syncReleasesFromItunes', () => {
         not: vi.fn().mockResolvedValue({ data: [] }),
         order: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
           }),
         }),
       })),
@@ -178,7 +178,7 @@ describe('syncReleasesFromItunes', () => {
         not: vi.fn().mockResolvedValue({ data: [] }),
         order: vi.fn().mockReturnValue({
           limit: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null }),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null }),
           }),
         }),
       })),
