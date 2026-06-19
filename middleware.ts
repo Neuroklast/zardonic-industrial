@@ -35,11 +35,12 @@ export async function middleware(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         )
-        // Wichtige Cache-Control Header von Supabase übernehmen
-        // (verhindert, dass Vercel/CDN die Response mit fremden Tokens cached)
-        Object.entries(headers).forEach(([key, value]) =>
-          response.headers.set(key, value)
-        )
+        // Apply cache-control headers so CDNs don't cache this response.
+        if (headers) {
+          Object.entries(headers).forEach(([key, value]) =>
+            response.headers.set(key, value),
+          )
+        }
       },
     },
   })

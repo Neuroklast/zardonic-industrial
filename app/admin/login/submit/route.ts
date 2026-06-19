@@ -32,18 +32,27 @@ export async function POST(request: NextRequest) {
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options),
         )
-        Object.entries(headers).forEach(([key, value]) =>
-          response.headers.set(key, value),
-        )
+        if (headers) {
+          Object.entries(headers).forEach(([key, value]) =>
+            response.headers.set(key, value),
+          )
+        }
       },
     },
   })
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
+    if (error) {
+      const loginUrl = new URL('/admin/login', request.url)
+      loginUrl.searchParams.set('msg', error.message)
+      loginUrl.searchParams.set('redirect', redirectTo)
+      return NextResponse.redirect(loginUrl, { status: 303 })
+    }
+  } catch (error: any) {
     const loginUrl = new URL('/admin/login', request.url)
-    loginUrl.searchParams.set('msg', error.message)
+    loginUrl.searchParams.set('msg', error?.message || 'Login failed')
     loginUrl.searchParams.set('redirect', redirectTo)
     return NextResponse.redirect(loginUrl, { status: 303 })
   }

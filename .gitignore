@@ -43,3 +43,6 @@ deploy.txt
 
 # Next.js build output
 .next/
+playwright-report/
+test-results/
+e2e/screenshot.png
