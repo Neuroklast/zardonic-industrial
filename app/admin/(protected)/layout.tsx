@@ -7,20 +7,14 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  let supabase: Awaited<ReturnType<typeof createActionClient>>
-  try {
-    supabase = await createActionClient()
-  } catch {
-    redirect('/admin/login?error=config')
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+// Temporär auskommentiert zum Test
+  /*
+  let supabase = await createActionClient()
+  const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
     redirect('/admin/login')
   }
+  */
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
