@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
       loginUrl.searchParams.set('redirect', redirectTo)
       return NextResponse.redirect(loginUrl, { status: 303 })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     const loginUrl = new URL('/admin/login', request.url)
-    loginUrl.searchParams.set('msg', error?.message || 'Login failed')
+    loginUrl.searchParams.set('msg', error instanceof Error ? error.message : 'Login failed')
     loginUrl.searchParams.set('redirect', redirectTo)
     return NextResponse.redirect(loginUrl, { status: 303 })
   }

@@ -8,7 +8,7 @@ export default async function ProtectedAdminLayout({
   children: React.ReactNode
 }) {
   try {
-    let supabase = await createActionClient()
+    const supabase = await createActionClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       redirect('/admin/login')
