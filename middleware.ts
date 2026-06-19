@@ -24,18 +24,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  // Saubere Response (keine komplizierte Mutation mehr)
+  // Saubere Response
   let response = NextResponse.next({ request: { headers: request.headers } })
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (cookiesToSet, headers) => {
-        // Cookies auf die Response schreiben (für den Browser)
+        // Update request cookies so that Server Components/Actions in the same request
+        // see the freshly refreshed tokens.
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+
+        // Recreate the response to reflect the updated request headers downstream.
+        response = NextResponse.next({
+          request,
+        })
+
+        // Apply updated cookies and headers to the response so the browser receives them.
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
         )
-        // Apply cache-control headers so CDNs don't cache this response.
         if (headers) {
           Object.entries(headers).forEach(([key, value]) =>
             response.headers.set(key, value),
@@ -53,7 +61,12 @@ export async function middleware(request: NextRequest) {
   if (authError || !user) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    const redirectResponse = NextResponse.redirect(loginUrl)
+    // Persist refreshed cookies from `response` to `redirectResponse`
+    for (const cookie of response.cookies.getAll()) {
+      redirectResponse.cookies.set(cookie.name, cookie.value, { ...cookie })
+    }
+    return redirectResponse
   }
 
   // Admin-Role Check (tolerant bei fehlendem Profile-Row, wie bisher)
@@ -70,7 +83,13 @@ export async function middleware(request: NextRequest) {
   }
 
   if (profile !== null && profile.role !== 'admin') {
-    return NextResponse.redirect(new URL('/admin/login?error=forbidden', request.url))
+    const forbiddenUrl = new URL('/admin/login?error=forbidden', request.url)
+    const redirectResponse = NextResponse.redirect(forbiddenUrl)
+    // Persist refreshed cookies from `response` to `redirectResponse`
+    for (const cookie of response.cookies.getAll()) {
+      redirectResponse.cookies.set(cookie.name, cookie.value, { ...cookie })
+    }
+    return redirectResponse
   }
 
   return response
