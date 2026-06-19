@@ -42,7 +42,13 @@ export async function middleware(request: NextRequest) {
 
         // Apply updated cookies and headers to the response so the browser receives them.
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
+          response.cookies.set(name, value, {
+            ...options,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+          })
         )
         if (headers) {
           Object.entries(headers).forEach(([key, value]) =>

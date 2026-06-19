@@ -30,7 +30,13 @@ export async function POST(request: NextRequest) {
       // CDNs / Vercel Edge don't cache auth responses and strip Set-Cookie.
       setAll: (cookiesToSet, headers) => {
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
+          response.cookies.set(name, value, {
+            ...options,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+          }),
         )
         if (headers) {
           Object.entries(headers).forEach(([key, value]) =>

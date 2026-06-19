@@ -102,7 +102,7 @@ describe('POST /admin/login/submit', () => {
   })
 
   // ── Success path: chunked cookies written with Supabase-provided options ─
-  it('writes all chunked cookies with Supabase-provided options (not overridden)', async () => {
+  it('writes all chunked cookies with explicitly overridden options (httpOnly: true)', async () => {
     const chunk0Options: CookieOptions = { path: '/', httpOnly: false, secure: true, sameSite: 'lax', maxAge: 34560000 }
     const chunk1Options: CookieOptions = { path: '/', httpOnly: false, secure: true, sameSite: 'lax', maxAge: 34560000 }
 
@@ -133,14 +133,14 @@ describe('POST /admin/login/submit', () => {
     const chunk0Header = setCookieHeaders.find((h) => h.startsWith('sb-test-auth-token.0='))
     expect(chunk0Header).toBeDefined()
     expect(chunk0Header).toContain('chunk-value-0')
-    // httpOnly: false means the attribute should be absent
-    expect(chunk0Header?.toLowerCase()).not.toContain('httponly')
+    // Because of our hardcoded options, httpOnly is now explicitly true
+    expect(chunk0Header?.toLowerCase()).toContain('httponly')
 
     // Chunk 1: same assertions
     const chunk1Header = setCookieHeaders.find((h) => h.startsWith('sb-test-auth-token.1='))
     expect(chunk1Header).toBeDefined()
     expect(chunk1Header).toContain('chunk-value-1')
-    expect(chunk1Header?.toLowerCase()).not.toContain('httponly')
+    expect(chunk1Header?.toLowerCase()).toContain('httponly')
   })
 
   // ── Success path: default redirectTo is /admin ───────────────────────────
