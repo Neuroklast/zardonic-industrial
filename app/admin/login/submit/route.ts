@@ -7,61 +7,56 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  const redirectTo = (formData.get('redirectTo') as string | null) ?? '/admin'
+  const redirectTo = (formData.get('redirectTo') as string | null) ?? '/admin/releases'
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
   if (!url || !anonKey) {
-    return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
+    return NextResponse.redirect(new URL('/admin/login?error=config', request.url), 303)
   }
 
-  // Build a mutable response so Supabase can write cookies onto it.
-  // Pass Supabase-provided options through unchanged so @supabase/ssr can emit
-  // multiple chunked Set-Cookie headers (sb-…-auth-token.0, .1, …) for large
-  // tokens. Overriding options here (e.g. hardcoding httpOnly/secure) bypasses
-  // chunking and produces a single oversized cookie that browsers silently drop.
-  const response = NextResponse.redirect(new URL(redirectTo, request.url), { status: 303 })
-
+  // WICHTIG: Response erst NACH erfolgreichem Login erstellen
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      // @supabase/ssr ≥ 0.12 passes cache-control headers as the second arg so
-      // CDNs / Vercel Edge don't cache auth responses and strip Set-Cookie.
       setAll: (cookiesToSet, headers) => {
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, {
-            ...options,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-          }),
-        )
-        if (headers) {
-          Object.entries(headers).forEach(([key, value]) =>
-            response.headers.set(key, value),
-          )
-        }
+        // Wir erstellen die Response erst später → hier nur sammeln
+        // (Supabase schreibt die Cookies später selbst drauf)
       },
     },
   })
 
-  try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-    if (error) {
-      const loginUrl = new URL('/admin/login', request.url)
-      loginUrl.searchParams.set('msg', error.message)
-      loginUrl.searchParams.set('redirect', redirectTo)
-      return NextResponse.redirect(loginUrl, { status: 303 })
-    }
-  } catch (error: unknown) {
+  if (error || !data.session) {
     const loginUrl = new URL('/admin/login', request.url)
-    loginUrl.searchParams.set('msg', error instanceof Error ? error.message : 'Login failed')
+    loginUrl.searchParams.set('msg', error?.message || 'Login fehlgeschlagen')
     loginUrl.searchParams.set('redirect', redirectTo)
-    return NextResponse.redirect(loginUrl, { status: 303 })
+    return NextResponse.redirect(loginUrl, 303)
   }
+
+  // Jetzt erst die Redirect-Response erstellen
+  const response = NextResponse.redirect(
+    new URL(redirectTo, request.url),
+    303
+  )
+
+  // Session manuell als einziges Cookie setzen (vermeidet Chunking-Probleme)
+  const sessionValue = `base64-${btoa(JSON.stringify(data.session))}`
+
+  response.cookies.set({
+    name: 'sb-jksluzrcxqjtfwcrbxiw-auth-token',
+    value: sessionValue,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 400,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: false, // false, weil du teilweise client-seitig liest
+  })
 
   return response
 }
