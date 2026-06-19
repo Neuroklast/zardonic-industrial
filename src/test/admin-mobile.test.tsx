@@ -44,6 +44,14 @@ vi.mock('@/lib/supabaseServer', () => ({
   createClient: vi.fn(),
 }))
 
+vi.mock('@/lib/supabaseClient', () => ({
+  createClient: () => ({
+    auth: {
+      signInWithPassword: vi.fn(),
+    },
+  }),
+}))
+
 vi.mock('@/app/admin/_actions/gigs', () => ({ deleteGig: vi.fn() }))
 vi.mock('@/app/admin/_actions/soundpacks', () => ({ deleteSoundpack: vi.fn() }))
 vi.mock('@/app/admin/_actions/merchandise', () => ({ deleteMerchandise: vi.fn() }))
