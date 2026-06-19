@@ -7,14 +7,19 @@ export default async function ProtectedAdminLayout({
 }: {
   children: React.ReactNode
 }) {
-// Temporär auskommentiert zum Test
-  /*
-  let supabase = await createActionClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/admin/login')
+  try {
+    let supabase = await createActionClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      redirect('/admin/login')
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
+      throw error // rethrow Next.js redirect
+    }
+    // E.g. Missing required Supabase environment variables
+    redirect('/admin/login?error=config')
   }
-  */
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
