@@ -24,41 +24,43 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  // Saubere Response
-  let response = NextResponse.next({ request: { headers: request.headers } })
+  // === SAUBERES PATTERN (offiziell empfohlen) ===
+  let supabaseResponse = NextResponse.next({ request: { headers: request.headers } })
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (cookiesToSet, headers) => {
-        // Update request cookies so that Server Components/Actions in the same request
-        // see the freshly refreshed tokens.
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-
-        // Recreate the response to reflect the updated request headers downstream.
-        response = NextResponse.next({
-          request,
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value)
         })
 
-        // Apply updated cookies and headers to the response so the browser receives them.
-        cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, {
+        supabaseResponse = NextResponse.next({
+          request: { headers: request.headers },
+        })
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          supabaseResponse.cookies.set(name, value, {
             ...options,
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',
           })
-        )
+        })
+
         if (headers) {
           Object.entries(headers).forEach(([key, value]) =>
-            response.headers.set(key, value),
+            supabaseResponse.headers.set(key, value),
           )
         }
       },
     },
   })
 
+  // WICHTIG: getUser() direkt nach createServerClient aufrufen
   const {
     data: { user },
     error: authError,
@@ -67,12 +69,7 @@ export async function middleware(request: NextRequest) {
   if (authError || !user) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    const redirectResponse = NextResponse.redirect(loginUrl)
-    // Persist refreshed cookies from `response` to `redirectResponse`
-    for (const cookie of response.cookies.getAll()) {
-      redirectResponse.cookies.set(cookie.name, cookie.value, { ...cookie })
-    }
-    return redirectResponse
+    return NextResponse.redirect(loginUrl) // Supabase cookies werden automatisch mitgenommen
   }
 
   // Admin-Role Check (tolerant bei fehlendem Profile-Row, wie bisher)
@@ -90,15 +87,10 @@ export async function middleware(request: NextRequest) {
 
   if (profile !== null && profile.role !== 'admin') {
     const forbiddenUrl = new URL('/admin/login?error=forbidden', request.url)
-    const redirectResponse = NextResponse.redirect(forbiddenUrl)
-    // Persist refreshed cookies from `response` to `redirectResponse`
-    for (const cookie of response.cookies.getAll()) {
-      redirectResponse.cookies.set(cookie.name, cookie.value, { ...cookie })
-    }
-    return redirectResponse
+    return NextResponse.redirect(forbiddenUrl) // Supabase cookies werden automatisch mitgenommen
   }
 
-  return response
+  return supabaseResponse
 }
 
 export const config = {
