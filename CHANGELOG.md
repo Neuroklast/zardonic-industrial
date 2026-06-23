@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Admin site-config preview CSP**: Added `'self'` to `frame-src` and set `X-Frame-Options: SAMEORIGIN` so the split-view iframe can load `/?adminPreview=1`.
+
 ### Added
 - **Gallery visibility toggle**: Admin gallery list now shows Visible/Hidden per image (matches releases/partners pattern).
 - **AdminPageHeader rollout**: Consistent page headers on merchandise, soundpacks, gigs, music highlights, social, bio, site config, data, sections, health, analytics, sound, and newsletter admin pages.
