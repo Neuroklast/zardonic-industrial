@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Release modal tracklist**: Public release overlay now loads `tracks` + `artists` from Supabase and renders the pre-migration tracklist rules (site artist in bold, compound-artist dedup, feat. parsing).
 
 ### Fixed
+- **YouTube embed CSP**: Music Highlights now loads `youtube-nocookie.com` embeds (matches `YouTubeEmbed` and production `frame-src` in `vercel.json`).
+- **React hydration #418**: Public release and gig card dates use UTC-stable formatting (`format-release-date`, `format-display-date`) so SSR and client text nodes match across timezones.
+- **Spotify re-sync tracklists**: Bulk catalogue sync now updates existing releases that have a `spotify_id`/`discogs_id` but empty `tracks` (counts as “Tracklists updated” in admin UI).
+- **Favicon 404**: `/favicon.ico` rewrites to the default site icon in `vercel.json` and `next.config.mjs`.
 - **Bandsintown gigs sync**: Migrated tour sync to Supabase via `app/api/gigs-sync` and admin server action; legacy Redis `api/gigs-sync` route was not served by Next.js App Router. Adds `bandsintown_id` dedup column and admin **Sync from Bandsintown** button on `/admin/gigs`.
 - **Catalogue sync date errors**: Year-only and year-month release dates from Spotify/Discogs/iTunes are normalized to valid PostgreSQL `date` values (e.g. `2026` → `2026-01-01`) so bulk import no longer fails with `invalid input syntax for type date`.
 - **Spotify/Discogs tracklists on sync**: Per-release and bulk Spotify sync now persist album tracklists; Discogs releases import `tracklist` rows into `releases.tracks` jsonb.

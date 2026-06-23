@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { m } from 'framer-motion'
+import { formatIsoDateCompact, formatIsoDateLong } from '@/lib/format-display-date'
 import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 import { CalendarBlank, CaretDown, CaretUp, MapPin } from '@phosphor-icons/react'
 
@@ -24,25 +25,11 @@ interface GigsSectionProps {
 const INITIAL_VISIBLE = 3
 
 function formatEventLabel(eventDate: string) {
-  const date = new Date(eventDate)
-  if (Number.isNaN(date.getTime())) return eventDate.replaceAll('-', '')
-
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = String(date.getFullYear())
-  return `${day}${month}${year}`
+  return formatIsoDateCompact(eventDate)
 }
 
 function formatDisplayDate(eventDate: string) {
-  const date = new Date(eventDate)
-  if (Number.isNaN(date.getTime())) return eventDate
-
-  return date.toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatIsoDateLong(eventDate)
 }
 
 function GigList({

@@ -52,6 +52,7 @@ export interface ReleaseExternalSyncResult {
 
 export interface BulkExternalSyncResult {
   synced: number
+  updated: number
   skipped: number
   errors: string[]
 }
@@ -159,6 +160,39 @@ export async function syncReleaseFromExternalId(
   return actionResult
 }
 
+function releaseTracksAreEmpty(tracks: unknown): boolean {
+  return !Array.isArray(tracks) || tracks.length === 0
+}
+
+async function enrichMetadataForBulkImport(
+  source: ExternalReleaseSource,
+  externalId: string,
+  baseMetadata: ReleaseMetadata,
+): Promise<ReleaseMetadata> {
+  if (source === 'spotify') {
+    const enriched = await fetchReleaseMetadataFromSpotify(externalId)
+    if (enriched) {
+      return {
+        ...enriched,
+        streaming_links: mergeStreamingLinks(enriched.streaming_links, baseMetadata.streaming_links),
+      }
+    }
+    return baseMetadata
+  }
+
+  if (source === 'discogs' && baseMetadata.discogs_id) {
+    const enriched = await fetchReleaseMetadataFromDiscogs(baseMetadata.discogs_id)
+    if (enriched) {
+      return {
+        ...enriched,
+        streaming_links: mergeStreamingLinks(enriched.streaming_links, baseMetadata.streaming_links),
+      }
+    }
+  }
+
+  return baseMetadata
+}
+
 async function bulkImportMetadata(
   source: ExternalReleaseSource,
   idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
@@ -166,14 +200,14 @@ async function bulkImportMetadata(
   registryAction: 'itunes_sync' | 'spotify_sync' | 'discogs_sync',
   registryPayload: Record<string, unknown>,
 ): Promise<BulkExternalSyncResult> {
-  const result: BulkExternalSyncResult = { synced: 0, skipped: 0, errors: [] }
+  const result: BulkExternalSyncResult = { synced: 0, updated: 0, skipped: 0, errors: [] }
 
   const dispatchResult = dispatchAdminAction(
     registryAction,
     registryPayload,
     createSupabaseActionContext(createAdminClient()),
   )
-  if (!dispatchResult.ok) return { synced: 0, skipped: 0, errors: [dispatchResult.error] }
+  if (!dispatchResult.ok) return { synced: 0, updated: 0, skipped: 0, errors: [dispatchResult.error] }
 
   const actionResult = await runAdminAction(async () => {
     const supabase = createAdminClient()
@@ -200,28 +234,53 @@ async function bulkImportMetadata(
 
     for (const { externalId, metadata: baseMetadata } of items) {
       if (existingIds.has(externalId)) {
+        const { data: existingRow, error: existingError } = await supabase
+          .from('releases')
+          .select('id, tracks, streaming_links, manually_edited')
+          .eq(idField, externalId)
+          .maybeSingle()
+
+        if (existingError) {
+          result.errors.push(`Failed to load existing "${baseMetadata.title}": ${existingError.message}`)
+          result.skipped++
+          continue
+        }
+
+        const canUpdateTracks =
+          existingRow &&
+          !existingRow.manually_edited &&
+          releaseTracksAreEmpty(existingRow.tracks) &&
+          (source === 'spotify' || source === 'discogs')
+
+        if (canUpdateTracks) {
+          const metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
+          if (metadata.tracks && metadata.tracks.length > 0) {
+            const existingLinks = Array.isArray(existingRow.streaming_links)
+              ? (existingRow.streaming_links as StreamingLink[])
+              : []
+            const update = buildReleaseUpdateFromMetadata(metadata, existingLinks, source)
+            update.manually_edited = false
+
+            const { error: updateError } = await supabase
+              .from('releases')
+              .update(update)
+              .eq('id', existingRow.id)
+
+            if (updateError) {
+              result.errors.push(`Failed to update tracks for "${metadata.title}": ${updateError.message}`)
+              result.skipped++
+            } else {
+              result.updated++
+            }
+            continue
+          }
+        }
+
         result.skipped++
         continue
       }
 
-      let metadata = baseMetadata
-      if (source === 'spotify' && metadata.spotify_id) {
-        const enriched = await fetchReleaseMetadataFromSpotify(metadata.spotify_id)
-        if (enriched) {
-          metadata = {
-            ...enriched,
-            streaming_links: mergeStreamingLinks(enriched.streaming_links, metadata.streaming_links),
-          }
-        }
-      } else if (source === 'discogs' && metadata.discogs_id) {
-        const enriched = await fetchReleaseMetadataFromDiscogs(metadata.discogs_id)
-        if (enriched) {
-          metadata = {
-            ...enriched,
-            streaming_links: mergeStreamingLinks(enriched.streaming_links, metadata.streaming_links),
-          }
-        }
-      }
+      const metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
 
       const { count: titleCount } = await supabase
         .from('releases')
@@ -280,7 +339,9 @@ async function bulkImportMetadata(
     return result
   }, `Unable to sync releases from ${source}.`)
 
-  return 'error' in actionResult ? { synced: 0, skipped: 0, errors: [actionResult.error] } : actionResult
+  return 'error' in actionResult
+    ? { synced: 0, updated: 0, skipped: 0, errors: [actionResult.error] }
+    : actionResult
 }
 
 async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
@@ -298,6 +359,7 @@ export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExte
   if (!token) {
     return {
       synced: 0,
+      updated: 0,
       skipped: 0,
       errors: ['Spotify API credentials missing. Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET on the server.'],
     }
@@ -311,6 +373,7 @@ export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExte
   if (!artistId) {
     return {
       synced: 0,
+      updated: 0,
       skipped: 0,
       errors: [
         configuredId
@@ -344,6 +407,7 @@ export async function syncReleasesFromDiscogs(artist?: string): Promise<BulkExte
   if (!artistId) {
     return {
       synced: 0,
+      updated: 0,
       skipped: 0,
       errors: [
         configuredId

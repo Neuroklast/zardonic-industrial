@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { m } from 'framer-motion'
+import { formatReleaseDate } from '@/lib/format-release-date'
 import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 import {
   ApplePodcastsLogo,
@@ -57,15 +58,10 @@ function normalizeType(value: string | null | undefined): ReleaseFilter {
   return normalized === '' ? 'album' : ''
 }
 
-function formatReleaseDate(value: string | null) {
+function formatCardReleaseDate(value: string | null) {
   if (!value) return 'UNKNOWN'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  const formatted = formatReleaseDate(value, value.slice(0, 4))
+  return formatted || value
 }
 
 function getPlatformIcon(platform: string) {
@@ -203,7 +199,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                           {release.title}
                         </h3>
                         <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
-                          <span>{formatReleaseDate(release.release_date)}</span>
+                          <span>{formatCardReleaseDate(release.release_date)}</span>
                           <span className="border border-primary/30 px-2 py-0.5 text-primary">
                             {normalizeType(release.type) === 'album' ? 'Album' : normalizeType(release.type) || 'Release'}
                           </span>

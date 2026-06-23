@@ -12,7 +12,14 @@ function r2PublicHostname() {
 
 const r2Hostname = r2PublicHostname()
 
+const DEFAULT_FAVICON = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
+
 const nextConfig = {
+  async rewrites() {
+    return [
+      { source: '/favicon.ico', destination: DEFAULT_FAVICON },
+    ]
+  },
   async headers() {
     return [
       {

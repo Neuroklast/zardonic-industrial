@@ -115,11 +115,17 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
         <div className="rounded border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-zinc-200">Sync Result</h2>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid gap-3 ${'updated' in result ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
               <div className="text-2xl font-bold text-green-400">{result.synced}</div>
               <div className="text-xs text-zinc-500 mt-1">Imported</div>
             </div>
+            {'updated' in result ? (
+              <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
+                <div className="text-2xl font-bold text-cyan-400">{result.updated}</div>
+                <div className="text-xs text-zinc-500 mt-1">Tracklists updated</div>
+              </div>
+            ) : null}
             <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
               <div className="text-2xl font-bold text-zinc-400">{result.skipped}</div>
               <div className="text-xs text-zinc-500 mt-1">Already existed</div>
@@ -141,7 +147,7 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
             </div>
           )}
 
-          {result.synced > 0 && (
+          {(result.synced > 0 || ('updated' in result && result.updated > 0)) && (
             <Link
               href="/admin/releases"
               className="inline-block text-sm text-zinc-300 hover:text-white transition-colors underline underline-offset-2"

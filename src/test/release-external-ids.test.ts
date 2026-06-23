@@ -33,6 +33,9 @@ describe('release external id normalization', () => {
     expect(normalizeSpotifyArtistId('https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n')).toBe(
       '7BqEidErPMNiUXCRE0dV2n',
     )
+    expect(normalizeSpotifyArtistId('https://open.spotify.com/artist/1hCXQnXpV6ZvppsATivV27')).toBe(
+      '1hCXQnXpV6ZvppsATivV27',
+    )
     expect(normalizeDiscogsArtistId('https://www.discogs.com/artist/261118-Zardonic')).toBe('261118')
     expect(normalizeItunesArtistId('https://music.apple.com/us/artist/zardonic/261118434')).toBe('261118434')
   })

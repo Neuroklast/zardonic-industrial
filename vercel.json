@@ -54,6 +54,10 @@
   ],
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/sitemap-gen"
     },
