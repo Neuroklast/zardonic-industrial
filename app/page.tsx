@@ -184,24 +184,23 @@ export default async function HomePage() {
   // Per final spec: CONNECT should not be a full section — small logos live in footer only
   sections = sections.filter((s) => s.id !== 'social' && s.id !== 'connect' && s.id !== 'spotify')
 
-  // Extract releases style overrides (releaseLayout, columns, variants etc.) from site_config for public parity
+  // Extract section style overrides from site_config (centralized helper to avoid repetition)
+  // Note: sections config can be array of sections or object with styleOverrides
   const sectionsValue = sectionsRaw
-  const releaseOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.releases || {})
-    : {}
-  const fullReleaseOverrides = releaseOverrides // for variants etc.
-  const galleryOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.gallery || {})
-    : {}
-  const bioOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.bio || {})
-    : {}
-  const heroStyleOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.hero || {})
-    : {}
-  const creditOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.creditHighlights || {})
-    : {}
+  const overridesRoot =
+    sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue)
+      ? (sectionsValue as any).styleOverrides || sectionsValue
+      : {}
+
+  const getSectionOverrides = (key: string) =>
+    (overridesRoot && typeof overridesRoot === 'object') ? (overridesRoot[key] || {}) : {}
+
+  const releaseOverrides = getSectionOverrides('releases')
+  const fullReleaseOverrides = releaseOverrides
+  const galleryOverrides = getSectionOverrides('gallery')
+  const bioOverrides = getSectionOverrides('bio')
+  const heroStyleOverrides = getSectionOverrides('hero')
+  const creditOverrides = getSectionOverrides('creditHighlights')
 
   // Background: Digicide album cover as primary (per final spec) + keep rich scroll video + animated effects
   // We preserve the current "scroll video" + matrix/circuit animated layers the user likes,

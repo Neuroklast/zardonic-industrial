@@ -28,10 +28,11 @@ function AnimatedLayer({
   if (backgroundType === 'minimal') return null
 
   // High performance tuning while keeping the beloved current look
-  const matrixDensity = perfMode ? 0.45 : 0.7
-  const matrixSpeed = perfMode ? 0.7 : 1.0
-  const circuitSpeed = perfMode ? 0.6 : 1.0
-  const circuitGlow = perfMode ? 0.6 : 0.8
+  // We reduce only modestly so the rich effects (matrix rain, circuit) still feel like before
+  const matrixDensity = perfMode ? 0.55 : 0.7
+  const matrixSpeed = perfMode ? 0.85 : 1.0
+  const circuitSpeed = perfMode ? 0.8 : 1.0
+  const circuitGlow = perfMode ? 0.75 : 0.8
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 'var(--z-bg-animated)' }}>
@@ -58,12 +59,13 @@ export function BackgroundStack({
 
     let frameId: number | null = null
     let lastScrollY = 0
-    const THROTTLE_MS = 50 // high performance: throttle the expensive currentTime writes
+    let scrollTimeout: number | null = null
+    const THROTTLE_MS = 180 // high performance: strongly relaxed to minimize conflict with Lenis and main thread (cinematic scroll video is kept but deprioritized for smoothness)
 
     const syncToScroll = () => {
       frameId = null
       const scrollY = window.scrollY
-      if (Math.abs(scrollY - lastScrollY) < 4) return // micro-throttle
+      if (Math.abs(scrollY - lastScrollY) < 12) return
       lastScrollY = scrollY
 
       const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
@@ -73,7 +75,11 @@ export function BackgroundStack({
       const duration = Number.isFinite(video.duration) ? video.duration : 0
 
       if (duration > 0) {
-        video.currentTime = progress * duration
+        // Only set if significantly different to reduce paint cost
+        const targetTime = progress * duration
+        if (Math.abs(video.currentTime - targetTime) > 0.1) {
+          video.currentTime = targetTime
+        }
       }
     }
 
@@ -82,7 +88,7 @@ export function BackgroundStack({
       frameId = window.requestAnimationFrame(syncToScroll)
     }
 
-    // Initial + throttled listener for performance
+    // High perf: throttle + auto-pause sync when scrolling stops
     scheduleSync()
     let lastCall = 0
     const throttledScroll = () => {
@@ -91,17 +97,35 @@ export function BackgroundStack({
         lastCall = now
         scheduleSync()
       }
+
+      // Pause the expensive sync after user stops scrolling
+      if (scrollTimeout) clearTimeout(scrollTimeout)
+      scrollTimeout = window.setTimeout(() => {
+        if (frameId) {
+          cancelAnimationFrame(frameId)
+          frameId = null
+        }
+      }, 800)
     }
 
     window.addEventListener('scroll', throttledScroll, { passive: true })
     video.addEventListener('loadedmetadata', scheduleSync)
 
-    return () => {
-      if (frameId !== null) {
-        window.cancelAnimationFrame(frameId)
+    // Pause when tab hidden for perf
+    const onVisibility = () => {
+      if (document.hidden && frameId) {
+        cancelAnimationFrame(frameId)
+        frameId = null
       }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      if (frameId !== null) cancelAnimationFrame(frameId)
+      if (scrollTimeout) clearTimeout(scrollTimeout)
       window.removeEventListener('scroll', throttledScroll)
       video.removeEventListener('loadedmetadata', scheduleSync)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [videoUrl])
 

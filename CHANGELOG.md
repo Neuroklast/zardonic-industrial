@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added / Changed for Zardonic v234 Final Spec (while preserving current rich look)
+- Background now defaults to Digicide album cover as primary static layer, with all existing animated effects, scroll video behavior, matrix/circuit layers kept and running on top (high performance tuned).
+- High-performance improvements: throttled scroll-to-video sync, reduced density/speed for animated layers when strong image present, lite-mode friendly.
+- Releases: stronger protection in iTunes sync against overwriting user edits by title; enforced square gallery grid treatment.
+- Sections: Social/Connect reduced to small footer logos only (no full section). SpotifySection deprioritized in favor of YouTube-based Music Highlights.
+- Uniform clean sections enforced (no per-section backgrounds/overlays).
+- All changes verified via multiple static audit passes (greps for AGENTS violations, dynamic classes, effects presence, "NO" rules from tester spec).
+
+### Fixed
+- Potential performance regression in background scroll video + animated layers while keeping the beloved current aesthetic exactly as requested.
+
 ### Fixed
 - Full bug fix sweep from deep research: completed wiring of admin _actions (soundpacks, musicHighlights, gallery, bio, etc.) to ADMIN_ACTION_REGISTRY via dispatch + helper. Centralized ctx to reduce 'as any'.
 - Migration confirmation: verified PageLayout in public (no root min-h-screen), correct bridge imports, Lenis integration for smooth.
