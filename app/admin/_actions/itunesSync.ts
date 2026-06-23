@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { uploadBufferToR2 } from './r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { parseItunesItem, type ItunesSearchResult } from '@/lib/itunes-sync'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
@@ -17,55 +18,6 @@ export interface ItunesSyncResult {
   errors: string[]
 }
 
-interface ItunesResult {
-  collectionId?: number
-  trackId?: number
-  collectionName?: string
-  trackName?: string
-  wrapperType?: string
-  kind?: string
-  collectionType?: string
-  artworkUrl100?: string
-  releaseDate?: string
-  primaryGenreName?: string
-}
-
-function parseItunesItem(item: ItunesResult): {
-  title: string
-  type: string
-  release_date: string | null
-  itunes_id: string
-  artworkUrl: string | null
-} | null {
-  const isAlbum =
-    item.wrapperType === 'collection' &&
-    (item.collectionType === 'Album' || item.collectionType === 'Single')
-  const isSingle = item.wrapperType === 'track' && item.kind === 'music-video'
-
-  if (!isAlbum && !isSingle) return null
-
-  const title = item.collectionName ?? item.trackName
-  if (!title) return null
-
-  const rawId = item.collectionId ?? item.trackId
-  if (!rawId) return null
-
-  const nameLower = title.toLowerCase()
-  let type = 'album'
-  if (nameLower.includes(' ep') || nameLower.endsWith(' ep')) type = 'ep'
-  else if (nameLower.includes('single') || item.collectionType === 'Single') type = 'single'
-  else if (nameLower.includes('remix') || nameLower.includes('remixed')) type = 'remix'
-  else if (nameLower.includes('compilation') || nameLower.includes('best of')) type = 'compilation'
-
-  const artworkUrl = item.artworkUrl100
-    ? item.artworkUrl100.replace('100x100bb', '1000x1000bb')
-    : null
-
-  const release_date = item.releaseDate ? item.releaseDate.slice(0, 10) : null
-
-  return { title, type, release_date, itunes_id: String(rawId), artworkUrl }
-}
-
 export async function syncReleasesFromItunes(artist: string): Promise<ItunesSyncResult> {
   const result: ItunesSyncResult = { synced: 0, skipped: 0, errors: [] }
 
@@ -75,22 +27,28 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
   }
 
   const actionResult = await runAdminAction(async () => {
-    const [albumsRes, singlesRes] = await Promise.allSettled([
+    const [albumsRes, songsRes, singlesRes] = await Promise.allSettled([
       fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=album&limit=200`),
+      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=song&limit=200`),
       fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=musicVideo&limit=200`),
     ])
 
-    const items: ItunesResult[] = []
+    const items: ItunesSearchResult[] = []
 
     if (albumsRes.status === 'fulfilled' && albumsRes.value.ok) {
-      const data = (await albumsRes.value.json()) as { results?: ItunesResult[] }
+      const data = (await albumsRes.value.json()) as { results?: ItunesSearchResult[] }
       items.push(...(data.results ?? []))
     } else {
       result.errors.push('Failed to fetch albums from iTunes')
     }
 
+    if (songsRes.status === 'fulfilled' && songsRes.value.ok) {
+      const data = (await songsRes.value.json()) as { results?: ItunesSearchResult[] }
+      items.push(...(data.results ?? []))
+    }
+
     if (singlesRes.status === 'fulfilled' && singlesRes.value.ok) {
-      const data = (await singlesRes.value.json()) as { results?: ItunesResult[] }
+      const data = (await singlesRes.value.json()) as { results?: ItunesSearchResult[] }
       items.push(...(data.results ?? []))
     }
 
@@ -187,4 +145,81 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
   }, 'Unable to sync releases from iTunes.')
 
   return 'error' in actionResult ? { synced: 0, skipped: 0, errors: [actionResult.error] } : actionResult
+}
+
+export interface ItunesCoverResult {
+  ok: boolean
+  coverStoragePath?: string
+  coverUrl?: string
+  itunesId?: string
+  error?: string
+}
+
+export async function fetchItunesCoverForRelease(releaseId: string): Promise<ItunesCoverResult> {
+  const actionResult = await runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const { data: release, error: fetchError } = await supabase
+      .from('releases')
+      .select('id, title, artists, itunes_id')
+      .eq('id', releaseId)
+      .single()
+
+    if (fetchError || !release) {
+      return { ok: false, error: fetchError?.message ?? 'Release not found' }
+    }
+
+    const title = release.title as string
+    const artists = Array.isArray(release.artists) ? (release.artists as string[]) : []
+    const searchTerm = artists[0] ? `${title} ${artists[0]}` : title
+
+    const searchRes = await fetch(
+      `${ITUNES_SEARCH_URL}?term=${encodeURIComponent(searchTerm)}&entity=song&limit=5`,
+    )
+    if (!searchRes.ok) return { ok: false, error: 'iTunes search failed' }
+
+    const searchData = (await searchRes.json()) as { results?: ItunesSearchResult[] }
+    const match =
+      (searchData.results ?? []).find(
+        (item) =>
+          (item.trackName ?? item.collectionName ?? '').toLowerCase() === title.toLowerCase(),
+      ) ?? searchData.results?.[0]
+
+    if (!match) return { ok: false, error: 'No matching artwork found on iTunes' }
+
+    const parsed = parseItunesItem(match)
+    if (!parsed?.artworkUrl) return { ok: false, error: 'Matched item has no artwork' }
+
+    const artRes = await fetch(parsed.artworkUrl)
+    if (!artRes.ok) return { ok: false, error: 'Failed to download artwork' }
+
+    const buffer = Buffer.from(await artRes.arrayBuffer())
+    const objectPath = `releases/itunes-${parsed.itunes_id}.jpg`
+    const { publicUrl } = await uploadBufferToR2(R2_BUCKET, objectPath, buffer, 'image/jpeg')
+
+    const { error: updateError } = await supabase
+      .from('releases')
+      .update({
+        cover_storage_path: objectPath,
+        cover_url: publicUrl,
+        itunes_id: parsed.itunes_id,
+        manually_edited: true,
+      })
+      .eq('id', releaseId)
+
+    if (updateError) return { ok: false, error: updateError.message }
+
+    revalidatePath('/admin/releases')
+    revalidatePath(`/admin/releases/${releaseId}`)
+    revalidatePath('/')
+
+    return {
+      ok: true,
+      coverStoragePath: objectPath,
+      coverUrl: publicUrl,
+      itunesId: parsed.itunes_id,
+    }
+  }, 'Unable to fetch iTunes cover.')
+
+  if ('error' in actionResult) return { ok: false, error: actionResult.error }
+  return actionResult
 }

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import {
   ChartBar,
   Envelope,
@@ -70,10 +71,10 @@ export default async function AnalyticsPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold">Analytics</h1>
-        <p className="text-zinc-400 text-sm mt-1">Content statistics and analytics tracking settings.</p>
-      </div>
+      <AdminPageHeader
+        title="Analytics"
+        description="Content statistics and analytics tracking settings."
+      />
 
       {/* Content stats */}
       <section className="mb-8">

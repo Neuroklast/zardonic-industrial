@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { NewsletterClientPage } from './NewsletterClientPage'
 
 interface Subscriber {
@@ -33,10 +34,10 @@ export default async function NewsletterPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-2">Newsletter Subscribers</h1>
-      <p className="text-sm text-zinc-400 mb-6">
-        Manage your mailing list subscribers.
-      </p>
+      <AdminPageHeader
+        title="Newsletter Subscribers"
+        description="Manage your mailing list subscribers and export consent records."
+      />
 
       {error ? (
         <div className="border border-red-800 bg-red-900/20 rounded p-4 text-sm text-red-400">

@@ -1,10 +1,23 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { ADMIN_NAV_GROUPS } from '@/app/admin/_config/nav-groups'
 
-async function getCounts() {
+type CountKey =
+  | 'releases'
+  | 'gigs'
+  | 'gallery'
+  | 'bio'
+  | 'social'
+  | 'partners'
+  | 'soundpacks'
+  | 'merchandise'
+  | 'musicHighlights'
+
+async function getCounts(): Promise<Record<CountKey, number>> {
   try {
     const supabase = await createClient()
-    const [releases, gigs, gallery, bio, social, partners, soundpacks, merchandise, musicHighlights, siteConfig] =
+    const [releases, gigs, gallery, bio, social, partners, soundpacks, merchandise, musicHighlights] =
       await Promise.all([
         supabase.from('releases').select('id', { count: 'exact', head: true }),
         supabase.from('gigs').select('id', { count: 'exact', head: true }),
@@ -15,7 +28,6 @@ async function getCounts() {
         supabase.from('soundpacks').select('id', { count: 'exact', head: true }),
         supabase.from('merchandise').select('id', { count: 'exact', head: true }),
         supabase.from('music_highlights').select('id', { count: 'exact', head: true }),
-        supabase.from('site_config').select('id', { count: 'exact', head: true }),
       ])
     return {
       releases: releases.count ?? 0,
@@ -27,7 +39,6 @@ async function getCounts() {
       soundpacks: soundpacks.count ?? 0,
       merchandise: merchandise.count ?? 0,
       musicHighlights: musicHighlights.count ?? 0,
-      siteConfig: siteConfig.count ?? 0,
     }
   } catch {
     return {
@@ -40,54 +51,70 @@ async function getCounts() {
       soundpacks: 0,
       merchandise: 0,
       musicHighlights: 0,
-      siteConfig: 0,
     }
   }
 }
-
-const COUNT_SECTIONS = [
-  { href: '/admin/releases', label: 'Releases', key: 'releases' as const },
-  { href: '/admin/gigs', label: 'Gigs', key: 'gigs' as const },
-  { href: '/admin/gallery', label: 'Gallery', key: 'gallery' as const },
-  { href: '/admin/soundpacks', label: 'Sound Packs', key: 'soundpacks' as const },
-  { href: '/admin/merchandise', label: 'Merchandise', key: 'merchandise' as const },
-  { href: '/admin/music-highlights', label: 'Music Highlights', key: 'musicHighlights' as const },
-  { href: '/admin/partners', label: 'Partners', key: 'partners' as const },
-]
-
-const LINK_SECTIONS = [
-  { href: '/admin/bio', label: 'Bio' },
-  { href: '/admin/social', label: 'Social Links' },
-  { href: '/admin/site-config', label: 'Site Config' },
-]
 
 export default async function AdminDashboard() {
   const counts = await getCounts()
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6">Dashboard</h1>
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-        {COUNT_SECTIONS.map((section) => (
-          <Link
-            key={section.href}
-            href={section.href}
-            className="block p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors"
-          >
-            <div className="text-2xl font-bold text-white">{counts[section.key]}</div>
-            <div className="text-sm text-zinc-400 mt-1">{section.label}</div>
-          </Link>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4">
-        {LINK_SECTIONS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="block p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors text-sm text-zinc-300"
-          >
-            {item.label} →
-          </Link>
+      <AdminPageHeader
+        title="Dashboard"
+        description="Overview of site content and quick links to common admin tasks."
+        action={
+          <>
+            <Link
+              href="/admin/site-config"
+              className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-300 hover:text-white transition-colors"
+            >
+              Site Config
+            </Link>
+            <Link
+              href="/admin/data"
+              className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-300 hover:text-white transition-colors"
+            >
+              Import / Export
+            </Link>
+            <Link
+              href="/admin/releases/sync"
+              className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
+            >
+              iTunes Sync
+            </Link>
+          </>
+        }
+      />
+
+      <div className="space-y-8">
+        {ADMIN_NAV_GROUPS.filter((g) => g.id !== 'overview').map((group) => (
+          <section key={group.id}>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-3">{group.label}</h2>
+            <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {group.items.map((item) => {
+                const count =
+                  item.countKey && item.countKey in counts
+                    ? counts[item.countKey as CountKey]
+                    : null
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="block p-4 rounded-lg bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors"
+                  >
+                    {count !== null && (
+                      <div className="text-2xl font-bold text-white mb-1">{count}</div>
+                    )}
+                    <div className={`text-sm ${count !== null ? 'text-zinc-400' : 'text-zinc-200'}`}>
+                      {item.label}
+                    </div>
+                    {count === null && <div className="text-xs text-zinc-500 mt-1">Open →</div>}
+                  </Link>
+                )
+              })}
+            </div>
+          </section>
         ))}
       </div>
     </div>

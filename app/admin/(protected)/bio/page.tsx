@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabaseServer'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import BioForm from './BioForm'
 
 export default async function BioPage() {
@@ -13,7 +14,10 @@ export default async function BioPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl font-bold mb-6">Biography</h1>
+      <AdminPageHeader
+        title="Biography"
+        description="Edit the artist biography shown in the Bio section on the public site."
+      />
       <BioForm initialContent={content} />
     </div>
   )

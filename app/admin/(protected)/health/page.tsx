@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { RefreshButton } from './RefreshButton'
 
 interface CheckResult {
@@ -119,10 +120,11 @@ export default async function HealthPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">API Health</h1>
-        <RefreshButton />
-      </div>
+      <AdminPageHeader
+        title="API Health"
+        description="Connectivity checks for Supabase, R2, Resend, and iTunes. Verify environment variables are set."
+        action={<RefreshButton />}
+      />
 
       {/* Service checks */}
       <div className="space-y-3 mb-8">

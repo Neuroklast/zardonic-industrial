@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { createMerchandise } from '@/app/admin/_actions/merchandise'
 
 export default function NewMerchandisePage() {
@@ -16,7 +16,10 @@ export default function NewMerchandisePage() {
     setSaving(true)
     setError(null)
     const fd = new FormData(e.currentTarget)
-    if (storagePath) fd.set('image_storage_path', storagePath)
+    if (storagePath) {
+      fd.set('image_storage_path', storagePath)
+      fd.set('image_url', '')
+    }
     const result = await createMerchandise(fd)
     if (result.error) {
       setError(result.error)
@@ -38,21 +41,15 @@ export default function NewMerchandisePage() {
             className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
           />
         </div>
-        <div>
-          <label className="block text-sm text-zinc-300 mb-2">Cover Image</label>
-          <ImageUploader
-            label="Upload Image"
-            onUpload={setStoragePath}
-            onError={setError}
-          />
-          <p className="text-xs text-zinc-500 mt-1">Or paste a direct image URL below.</p>
-          <input
-            name="image_url"
-            type="url"
-            placeholder="https://…"
-            className="mt-1 w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
-          />
-        </div>
+        <MediaSourcePicker
+          label="Cover Image"
+          storagePrefix="merchandise"
+          onResolved={(path) => {
+            setStoragePath(path)
+            setError(null)
+          }}
+          onError={setError}
+        />
         <div>
           <label className="block text-sm text-zinc-300 mb-1">External Link URL</label>
           <input

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { saveGalleryImage } from '@/app/admin/_actions/gallery'
-import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { useState } from 'react'
 
 export default function NewGalleryImagePage() {
@@ -13,7 +13,7 @@ export default function NewGalleryImagePage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!storagePath) {
-      setError('Please upload an image first')
+      setError('Please add an image first')
       return
     }
     const formData = new FormData(e.currentTarget)
@@ -27,14 +27,15 @@ export default function NewGalleryImagePage() {
     <div className="max-w-lg">
       <h1 className="text-xl font-bold mb-6">Upload Gallery Image</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm text-zinc-300 mb-2">Image *</label>
-          <ImageUploader
-            label="Select Image"
-            onUpload={(path) => setStoragePath(path)}
-            onError={(msg) => setError(msg)}
-          />
-        </div>
+        <MediaSourcePicker
+          label="Image"
+          storagePrefix="gallery"
+          onResolved={(path) => {
+            setStoragePath(path)
+            setError(null)
+          }}
+          onError={(msg) => setError(msg)}
+        />
         <div>
           <label className="block text-sm text-zinc-300 mb-1">Alt Text</label>
           <input name="alt" className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />

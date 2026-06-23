@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { deleteGig } from '@/app/admin/_actions/gigs'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 
 export default async function GigsPage() {
   let gigs: Array<{ id: string; title: string; city: string | null; event_date: string }> = []
@@ -18,12 +19,15 @@ export default async function GigsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Gigs</h1>
-        <Link href="/admin/gigs/new" className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors">
-          + New Gig
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Gigs"
+        description="Manage upcoming and past events shown in the Events section."
+        action={
+          <Link href="/admin/gigs/new" className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors">
+            + New Gig
+          </Link>
+        }
+      />
       {gigs.length === 0 ? (
         <p className="text-zinc-400 text-sm">No gigs yet.</p>
       ) : (

@@ -365,6 +365,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  update_gallery_item: register({
+    id: 'update_gallery_item',
+    label: 'Update Gallery Item',
+    schema: z.object({ id: z.string().min(1), storage_path: z.string().optional() }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   delete_gallery_item: register({
     id: 'delete_gallery_item',
     label: 'Delete Gallery Item',

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import { deleteGalleryImage } from '@/app/admin/_actions/gallery'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { GalleryVisibilityToggle } from './GalleryVisibilityToggle'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -11,13 +13,14 @@ export default async function GalleryPage() {
     storage_path: string | null
     image_url: string | null
     display_order: number
+    active: boolean
   }> = []
 
   try {
     const supabase = await createClient()
     const { data } = await supabase
       .from('gallery')
-      .select('id, alt, storage_path, image_url, display_order')
+      .select('id, alt, storage_path, image_url, display_order, active')
       .order('display_order', { ascending: true })
     images = data ?? []
   } catch {
@@ -26,12 +29,15 @@ export default async function GalleryPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Gallery</h1>
-        <Link href="/admin/gallery/new" className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors">
-          + Upload Image
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Gallery"
+        description="Manage public gallery images. Upload, link, or import from Google Drive — all cached to R2."
+        action={
+          <Link href="/admin/gallery/new" className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors">
+            + Upload Image
+          </Link>
+        }
+      />
       {images.length === 0 ? (
         <p className="text-zinc-400 text-sm">No images yet.</p>
       ) : (
@@ -57,11 +63,17 @@ export default async function GalleryPage() {
                 </div>
                 <div className="p-2 flex items-center justify-between gap-2">
                   <span className="text-xs text-zinc-400 truncate">{img.alt ?? 'No alt'}</span>
-                  <form action={async () => { 'use server'; await deleteGalleryImage(img.id) }}>
-                    <button type="submit" className="text-xs text-red-400 hover:text-red-300 transition-colors shrink-0">
-                      Delete
-                    </button>
-                  </form>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <GalleryVisibilityToggle imageId={img.id} active={img.active ?? true} />
+                    <Link href={`/admin/gallery/${img.id}`} className="text-xs text-zinc-400 hover:text-white transition-colors">
+                      Edit
+                    </Link>
+                    <form action={async () => { 'use server'; await deleteGalleryImage(img.id) }}>
+                      <button type="submit" className="text-xs text-red-400 hover:text-red-300 transition-colors">
+                        Delete
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             )

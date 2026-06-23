@@ -55,6 +55,7 @@ export function HeroSection({
       {backgroundImageUrl && (
         <m.div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          data-draft-target="hero-bg-image"
           style={{
             ...bgStyle,
             opacity: backgroundImageOpacity,
@@ -112,6 +113,7 @@ export function HeroSection({
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
             className="mx-auto max-w-2xl font-mono text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
+            data-draft-target="hero-tagline"
           >
             {tagline}
           </m.p>
@@ -129,6 +131,7 @@ export function HeroSection({
         >
           <a
             href={ctaUrl || '#releases'}
+            data-draft-target="hero-cta-link"
             onClick={(event) => {
               event.preventDefault()
               const id = (ctaUrl || '#releases').replace('#', '')
@@ -136,7 +139,7 @@ export function HeroSection({
             }}
             className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
           >
-            <span className="hover-chromatic">{ctaLabel || 'LISTEN NOW'}</span>
+            <span className="hover-chromatic" data-draft-target="hero-cta">{ctaLabel || 'LISTEN NOW'}</span>
           </a>
           <a
             href="#gigs"

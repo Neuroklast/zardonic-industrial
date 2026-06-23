@@ -38,11 +38,12 @@ npx ts-node scripts/migrate-site-data.ts
 
 The script uses `upsert` with `ON CONFLICT` handling, so it is safe to run multiple times. Existing rows will be updated, no duplicates will be created.
 
-## Schema
+## Schema (required first step)
 
-Ensure the database schema has been applied before running the migration:
+Apply the **single canonical schema** in the Supabase SQL Editor before seeding data:
 
-```bash
-# In Supabase SQL Editor, run:
-supabase/schema.sql
-```
+1. Open **Supabase → SQL Editor**
+2. Paste the full contents of [`supabase/schema.sql`](../supabase/schema.sql)
+3. Run it once (safe to re-run — fully idempotent)
+
+There are no separate migration files. `supabase/schema.sql` is the only source of truth.

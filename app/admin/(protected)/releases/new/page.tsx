@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { createRelease } from '@/app/admin/_actions/releases'
-import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
 import { useState } from 'react'
 
@@ -14,7 +14,10 @@ export default function NewReleasePage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    if (coverPath) formData.set('cover_storage_path', coverPath)
+    if (coverPath) {
+      formData.set('cover_storage_path', coverPath)
+      formData.set('cover_url', '')
+    }
 
     const result = await createRelease(formData)
     if (result?.error) {
@@ -54,14 +57,15 @@ export default function NewReleasePage() {
           <label className="block text-sm text-zinc-300 mb-1">Artists (comma separated)</label>
           <input name="artists" className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" placeholder="Zardonic, Guest Artist" />
         </div>
-        <div>
-          <label className="block text-sm text-zinc-300 mb-2">Cover Art</label>
-          <ImageUploader
-            label="Upload Cover"
-            onUpload={(path) => setCoverPath(path)}
-            onError={(msg) => setError(msg)}
-          />
-        </div>
+        <MediaSourcePicker
+          label="Cover Art"
+          storagePrefix="releases/covers"
+          onResolved={(path) => {
+            setCoverPath(path)
+            setError(null)
+          }}
+          onError={(msg) => setError(msg)}
+        />
         <div>
           <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>
           <StreamingLinksEditor />

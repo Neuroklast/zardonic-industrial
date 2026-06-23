@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { deleteMusicHighlight } from '@/app/admin/_actions/musicHighlights'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 
 export default async function MusicHighlightsPage() {
   let items: Array<{ id: string; title: string; youtube_url: string; display_order: number }> = []
@@ -18,15 +19,18 @@ export default async function MusicHighlightsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Music Highlights</h1>
-        <Link
-          href="/admin/music-highlights/new"
-          className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
-        >
-          + New Highlight
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Music Highlights"
+        description="Curate featured YouTube videos for the Music Highlights section."
+        action={
+          <Link
+            href="/admin/music-highlights/new"
+            className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
+          >
+            + New Highlight
+          </Link>
+        }
+      />
       {items.length === 0 ? (
         <p className="text-zinc-400 text-sm">No music highlights yet.</p>
       ) : (

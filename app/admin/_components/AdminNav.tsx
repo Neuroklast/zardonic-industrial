@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { SignOut, List, X } from '@phosphor-icons/react'
 import {
   House,
   Gear,
   TextAlignLeft,
   Disc,
-  ArrowsClockwise,
   Waveform,
   TShirt,
   Package,
@@ -16,10 +16,6 @@ import {
   Images,
   Users,
   Share,
-  SignOut,
-  List,
-  X,
-  Rows,
   EnvelopeSimple,
   Heartbeat,
   ChartBar,
@@ -27,40 +23,37 @@ import {
   Translate,
   SpeakerHigh,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
+import {
+  ADMIN_NAV_GROUPS,
+  isNavItemActive,
+  type AdminNavItemData,
+} from '@/app/admin/_config/nav-groups'
 
-interface NavItem {
-  href: string
-  label: string
-  icon: React.ElementType
-  exact?: boolean
+const NAV_ICONS: Record<string, Icon> = {
+  '/admin': House,
+  '/admin/site-config': Gear,
+  '/admin/translations': Translate,
+  '/admin/bio': TextAlignLeft,
+  '/admin/gallery': Images,
+  '/admin/partners': Users,
+  '/admin/music-highlights': Waveform,
+  '/admin/releases': Disc,
+  '/admin/gigs': Calendar,
+  '/admin/merchandise': TShirt,
+  '/admin/soundpacks': Package,
+  '/admin/social': Share,
+  '/admin/newsletter': EnvelopeSimple,
+  '/admin/sound': SpeakerHigh,
+  '/admin/analytics': ChartBar,
+  '/admin/health': Heartbeat,
+  '/admin/data': Export,
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { href: '/admin',                  label: 'Dashboard',        icon: House,          exact: true },
-  { href: '/admin/site-config',      label: 'Site Config',      icon: Gear },
-  { href: '/admin/sections',         label: 'Sections',         icon: Rows },
-  { href: '/admin/bio',              label: 'Biography',        icon: TextAlignLeft },
-  { href: '/admin/releases',         label: 'Discography',      icon: Disc },
-  { href: '/admin/releases/sync',    label: 'iTunes Sync',      icon: ArrowsClockwise },
-  { href: '/admin/music-highlights', label: 'Music Highlights', icon: Waveform },
-  { href: '/admin/merchandise',      label: 'Merchandise',      icon: TShirt },
-  { href: '/admin/soundpacks',       label: 'Soundpacks',       icon: Package },
-  { href: '/admin/gigs',             label: 'Events',           icon: Calendar },
-  { href: '/admin/gallery',          label: 'Gallery',          icon: Images },
-  { href: '/admin/partners',         label: 'Credits & Partners', icon: Users },
-  { href: '/admin/social',           label: 'Social Links',     icon: Share },
-  { href: '/admin/newsletter',       label: 'Newsletter',       icon: EnvelopeSimple },
-  { href: '/admin/health',           label: 'API Health',       icon: Heartbeat },
-  { href: '/admin/analytics',        label: 'Analytics',        icon: ChartBar },
-  { href: '/admin/data',             label: 'Data Export',      icon: Export },
-  { href: '/admin/translations',     label: 'Translations',     icon: Translate },
-  { href: '/admin/sound',            label: 'Sound',            icon: SpeakerHigh },
-]
-
-function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
+function NavLink({ item, onClick }: { item: AdminNavItemData; onClick?: () => void }) {
   const pathname = usePathname()
-  const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
-  const Icon = item.icon
+  const active = isNavItemActive(pathname, item)
+  const Icon = NAV_ICONS[item.href] ?? House
 
   return (
     <Link
@@ -80,11 +73,25 @@ function NavLink({ item, onClick }: { item: NavItem; onClick?: () => void }) {
 }
 
 function NavLinks({ onNavClick }: { onNavClick?: () => void }) {
+  const pathname = usePathname()
+
   return (
-    <nav className="flex flex-col gap-1 flex-1" aria-label="Admin navigation">
-      {NAV_ITEMS.map((item) => (
-        <NavLink key={item.href} item={item} onClick={onNavClick} />
+    <nav className="flex flex-col gap-4 flex-1" aria-label="Admin navigation">
+      {ADMIN_NAV_GROUPS.map((group) => (
+        <div key={group.id}>
+          <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
+            {group.label}
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {group.items.map((item) => (
+              <NavLink key={item.href} item={item} onClick={onNavClick} />
+            ))}
+          </div>
+        </div>
       ))}
+      {pathname.startsWith('/admin/releases/sync') && (
+        <p className="px-3 text-xs text-zinc-500">iTunes Sync — use Discography page or Dashboard quick link.</p>
+      )}
     </nav>
   )
 }
@@ -94,8 +101,7 @@ export function AdminNav() {
 
   return (
     <>
-      {/* ── Desktop sidebar ─────────────────────────────────────── */}
-      <aside className="hidden md:flex flex-col w-56 shrink-0 bg-zinc-950 border-r border-zinc-800 min-h-screen sticky top-0 h-screen">
+      <aside className="hidden md:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800 min-h-screen sticky top-0 h-screen">
         <div className="p-4 border-b border-zinc-800">
           <span className="font-mono font-bold tracking-[0.2em] text-sm text-white uppercase">Zardonic</span>
           <span className="ml-2 text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Admin</span>
@@ -116,7 +122,6 @@ export function AdminNav() {
         </div>
       </aside>
 
-      {/* ── Mobile top bar ───────────────────────────────────────── */}
       <div className="md:hidden flex items-center justify-between px-4 py-3 bg-zinc-950 border-b border-zinc-800 sticky top-0 z-50">
         <span className="font-mono font-bold tracking-[0.2em] text-sm text-white uppercase">
           Zardonic <span className="text-zinc-500 text-[10px] font-mono">Admin</span>
@@ -132,7 +137,6 @@ export function AdminNav() {
         </button>
       </div>
 
-      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
           className="md:hidden fixed inset-0 z-40 bg-black/80"
@@ -141,7 +145,6 @@ export function AdminNav() {
         />
       )}
 
-      {/* Mobile drawer */}
       <aside
         className={[
           'md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-zinc-950 border-r border-zinc-800',

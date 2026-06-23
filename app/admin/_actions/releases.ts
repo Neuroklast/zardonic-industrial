@@ -5,6 +5,7 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
+import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { z } from 'zod'
 
 const releaseInputSchema = z.object({
@@ -52,8 +53,9 @@ export async function createRelease(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
+    const row = preferR2StoragePath(parsed.data, 'cover_storage_path', 'cover_url')
     const { error } = await supabaseAdmin.from('releases').insert({
-      ...parsed.data,
+      ...row,
       streaming_links: parseStreamingLinks(parsed.data.streaming_links),
       artists: parseArtists(parsed.data.artists),
       manually_edited: true, // protect user edits from future enrichment/sync
@@ -77,10 +79,11 @@ export async function updateRelease(id: string, formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
+    const row = preferR2StoragePath(parsed.data, 'cover_storage_path', 'cover_url')
     const { error } = await supabaseAdmin
       .from('releases')
       .update({
-        ...parsed.data,
+        ...row,
         streaming_links: parseStreamingLinks(parsed.data.streaming_links),
         artists: parseArtists(parsed.data.artists),
         manually_edited: true, // protect user edits from future enrichment/sync
