@@ -3,42 +3,74 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { syncReleasesFromItunes, type ItunesSyncResult } from '@/app/admin/_actions/itunesSync'
+import {
+  syncReleasesFromDiscogs,
+  syncReleasesFromSpotify,
+  type BulkExternalSyncResult,
+} from '@/app/admin/_actions/releaseExternalSync'
 
-export default function ItunesSyncPage() {
+type SyncSource = 'itunes' | 'spotify' | 'discogs'
+
+export default function ExternalSyncPage() {
+  const [source, setSource] = useState<SyncSource>('itunes')
   const [artist, setArtist] = useState('Zardonic')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<ItunesSyncResult | null>(null)
+  const [result, setResult] = useState<ItunesSyncResult | BulkExternalSyncResult | null>(null)
 
   async function handleSync(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setResult(null)
     try {
-      const res = await syncReleasesFromItunes(artist)
-      setResult(res)
+      if (source === 'itunes') {
+        setResult(await syncReleasesFromItunes(artist))
+      } else if (source === 'spotify') {
+        setResult(await syncReleasesFromSpotify(artist))
+      } else {
+        setResult(await syncReleasesFromDiscogs(artist))
+      }
     } finally {
       setLoading(false)
     }
   }
 
+  const descriptions: Record<SyncSource, string> = {
+    itunes:
+      'Search the iTunes catalogue for an artist and import new releases. Artwork is cached to R2 automatically.',
+    spotify:
+      'Resolve the artist on Spotify and import albums/singles/compilations. Requires SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET.',
+    discogs:
+      'Resolve the artist on Discogs and import their release list. Requires DISCOGS_TOKEN.',
+  }
+
   return (
     <div className="max-w-xl">
       <div className="flex items-center gap-4 mb-6">
-        <Link
-          href="/admin/releases"
-          className="text-zinc-500 hover:text-white text-sm transition-colors"
-        >
+        <Link href="/admin/releases" className="text-zinc-500 hover:text-white text-sm transition-colors">
           ← Discography
         </Link>
-        <h1 className="text-xl font-bold">iTunes Sync</h1>
+        <h1 className="text-xl font-bold">Catalogue Sync</h1>
       </div>
 
-      <div className="rounded border border-zinc-800 bg-zinc-900/50 p-5 mb-6">
-        <p className="text-sm text-zinc-400 mb-4">
-          Search the iTunes catalogue for an artist and import new releases directly into
-          the database. Existing releases (matched by iTunes ID) are skipped. Artwork is
-          automatically downloaded and stored in Cloudflare R2.
-        </p>
+      <div className="rounded border border-zinc-800 bg-zinc-900/50 p-5 mb-6 space-y-4">
+        <div className="flex flex-wrap gap-2">
+          {(['itunes', 'spotify', 'discogs'] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSource(key)}
+              className={`px-3 py-1.5 text-xs rounded border transition-colors ${
+                source === key
+                  ? 'border-red-600 bg-red-900/30 text-white'
+                  : 'border-zinc-700 text-zinc-400 hover:text-white'
+              }`}
+            >
+              {key === 'itunes' ? 'iTunes' : key === 'spotify' ? 'Spotify' : 'Discogs'}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-sm text-zinc-400">{descriptions[source]}</p>
 
         <form onSubmit={handleSync} className="space-y-4">
           <div>
@@ -67,7 +99,7 @@ export default function ItunesSyncPage() {
                 Syncing…
               </>
             ) : (
-              'Sync from iTunes'
+              `Sync from ${source === 'itunes' ? 'iTunes' : source === 'spotify' ? 'Spotify' : 'Discogs'}`
             )}
           </button>
         </form>

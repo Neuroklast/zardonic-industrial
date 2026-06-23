@@ -2,14 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 import { updateRelease } from '@/app/admin/_actions/releases'
-import { fetchItunesCoverForRelease } from '@/app/admin/_actions/itunesSync'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
+import { ReleaseExternalIdsSection } from '@/app/admin/_components/ReleaseExternalIdsSection'
 import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
 import { useState } from 'react'
 
 interface Props {
   release: Record<string, unknown>
-  /** Pre-resolved cover URL (R2 preferred over raw iTunes CDN). Computed server-side. */
+  /** Pre-resolved cover URL (R2 preferred over raw CDN). Computed server-side. */
   resolvedCoverUrl?: string | null
 }
 
@@ -17,8 +17,10 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
   const router = useRouter()
   const [coverPath, setCoverPath] = useState((release.cover_storage_path as string) ?? '')
   const [coverPreview, setCoverPreview] = useState<string | null>(resolvedCoverUrl ?? null)
+  const [streamingLinksJson, setStreamingLinksJson] = useState(
+    release.streaming_links ? JSON.stringify(release.streaming_links) : '[]',
+  )
   const [error, setError] = useState<string | null>(null)
-  const [fetchingCover, setFetchingCover] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -35,10 +37,6 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
       router.push('/admin/releases')
     }
   }
-
-  const streamingLinksJson = release.streaming_links
-    ? JSON.stringify(release.streaming_links)
-    : '[]'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -68,6 +66,21 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
         <label className="block text-sm text-zinc-300 mb-1">Artists (comma separated)</label>
         <input name="artists" defaultValue={Array.isArray(release.artists) ? (release.artists as string[]).join(', ') : ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
       </div>
+
+      <ReleaseExternalIdsSection
+        releaseId={release.id as string}
+        initialItunesId={(release.itunes_id as string) ?? ''}
+        initialSpotifyId={(release.spotify_id as string) ?? ''}
+        initialDiscogsId={(release.discogs_id as string) ?? ''}
+        onError={(msg) => setError(msg || null)}
+        onSynced={({ coverUrl, coverStoragePath, metadata }) => {
+          if (coverStoragePath) setCoverPath(coverStoragePath)
+          if (coverUrl) setCoverPreview(coverUrl)
+          setStreamingLinksJson(JSON.stringify(metadata.streaming_links))
+          router.refresh()
+        }}
+      />
+
       <div className="space-y-2">
         <MediaSourcePicker
           label="Cover Art"
@@ -80,29 +93,10 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
           }}
           onError={(msg) => setError(msg)}
         />
-        <button
-          type="button"
-          disabled={fetchingCover}
-          onClick={async () => {
-            setFetchingCover(true)
-            setError(null)
-            const result = await fetchItunesCoverForRelease(release.id as string)
-            if (!result.ok) {
-              setError(result.error ?? 'Failed to fetch iTunes cover')
-            } else if (result.coverUrl) {
-              setCoverPath(result.coverStoragePath ?? '')
-              setCoverPreview(result.coverUrl)
-            }
-            setFetchingCover(false)
-          }}
-          className="px-3 py-2 text-xs rounded border border-zinc-700 text-zinc-300 hover:text-white disabled:opacity-50"
-        >
-          {fetchingCover ? 'Fetching…' : 'Cover von iTunes'}
-        </button>
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>
-        <StreamingLinksEditor initialJson={streamingLinksJson} />
+        <StreamingLinksEditor key={streamingLinksJson} initialJson={streamingLinksJson} />
       </div>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">

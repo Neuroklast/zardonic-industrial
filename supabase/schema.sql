@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS public.releases (
   streaming_links jsonb DEFAULT '[]',
   artists text[] DEFAULT '{}',
   itunes_id text,
+  spotify_id text,
+  discogs_id text,
   active boolean DEFAULT true,
   manually_edited boolean NOT NULL DEFAULT false,
   display_order integer DEFAULT 0,
@@ -198,6 +200,8 @@ ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS active boolean NOT NULL
 -- releases columns
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS cover_storage_path text;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS itunes_id text;
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS spotify_id text;
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS discogs_id text;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS manually_edited boolean NOT NULL DEFAULT false;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS artists text[] DEFAULT '{}';
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS streaming_links jsonb DEFAULT '[]';
@@ -219,6 +223,38 @@ $$;
 CREATE INDEX IF NOT EXISTS releases_itunes_id_idx
   ON public.releases (itunes_id)
   WHERE itunes_id IS NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'releases_spotify_id_key'
+      AND conrelid = 'public.releases'::regclass
+  ) THEN
+    ALTER TABLE public.releases ADD CONSTRAINT releases_spotify_id_key UNIQUE (spotify_id);
+  END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'releases_discogs_id_key'
+      AND conrelid = 'public.releases'::regclass
+  ) THEN
+    ALTER TABLE public.releases ADD CONSTRAINT releases_discogs_id_key UNIQUE (discogs_id);
+  END IF;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS releases_spotify_id_idx
+  ON public.releases (spotify_id)
+  WHERE spotify_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS releases_discogs_id_idx
+  ON public.releases (discogs_id)
+  WHERE discogs_id IS NOT NULL;
 
 -- site_config: text value → jsonb, uuid id → key PK
 ALTER TABLE public.site_config ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();

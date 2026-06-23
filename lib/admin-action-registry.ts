@@ -564,6 +564,43 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
       return { ok: true }
     },
   }),
+
+  release_external_sync: register({
+    id: 'release_external_sync',
+    label: 'Sync Release From External ID',
+    schema: z.object({
+      releaseId: z.string().min(1),
+      source: z.enum(['itunes', 'spotify', 'discogs']),
+      externalId: z.string().min(1),
+    }),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  spotify_sync: register({
+    id: 'spotify_sync',
+    label: 'Spotify Sync Releases',
+    schema: z.object({ artist: z.string().min(1) }),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  discogs_sync: register({
+    id: 'discogs_sync',
+    label: 'Discogs Sync Releases',
+    schema: z.object({ artist: z.string().min(1) }),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────

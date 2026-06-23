@@ -46,3 +46,13 @@ export function parseItunesItem(item: ItunesSearchResult): {
 
   return { title, type, release_date, itunes_id: String(rawId), artworkUrl }
 }
+
+const ITUNES_LOOKUP_URL = 'https://itunes.apple.com/lookup'
+
+/** Fetch a single iTunes item by collection/track id. */
+export async function fetchItunesItemById(itunesId: string): Promise<ItunesSearchResult | null> {
+  const res = await fetch(`${ITUNES_LOOKUP_URL}?id=${encodeURIComponent(itunesId)}`, { cache: 'no-store' })
+  if (!res.ok) return null
+  const data = (await res.json()) as { results?: ItunesSearchResult[] }
+  return data.results?.[0] ?? null
+}

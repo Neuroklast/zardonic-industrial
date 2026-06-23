@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
 import { z } from 'zod'
 
 const releaseInputSchema = z.object({
@@ -17,6 +18,9 @@ const releaseInputSchema = z.object({
   cover_url: z.string().optional().nullable(),
   streaming_links: z.string().optional(),
   artists: z.string().optional(),
+  itunes_id: z.string().optional().nullable(),
+  spotify_id: z.string().optional().nullable(),
+  discogs_id: z.string().optional().nullable(),
   display_order: z.coerce.number().optional().default(0),
 })
 
@@ -30,8 +34,21 @@ function parseFormData(formData: FormData) {
     cover_url: formData.get('cover_url') || null,
     streaming_links: formData.get('streaming_links'),
     artists: formData.get('artists'),
+    itunes_id: formData.get('itunes_id') || null,
+    spotify_id: formData.get('spotify_id') || null,
+    discogs_id: formData.get('discogs_id') || null,
     display_order: formData.get('display_order'),
   }
+}
+
+function parseOptionalExternalId(
+  value: string | null | undefined,
+  normalize: (input: string) => string | null,
+): string | null {
+  if (!value || typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed) return null
+  return normalize(trimmed) ?? trimmed
 }
 
 function parseStreamingLinks(streamingLinks: string | undefined) {
@@ -58,6 +75,9 @@ export async function createRelease(formData: FormData) {
       ...row,
       streaming_links: parseStreamingLinks(parsed.data.streaming_links),
       artists: parseArtists(parsed.data.artists),
+      itunes_id: parseOptionalExternalId(parsed.data.itunes_id, normalizeItunesId),
+      spotify_id: parseOptionalExternalId(parsed.data.spotify_id, normalizeSpotifyId),
+      discogs_id: parseOptionalExternalId(parsed.data.discogs_id, normalizeDiscogsId),
       manually_edited: true, // protect user edits from future enrichment/sync
     })
 
@@ -86,6 +106,9 @@ export async function updateRelease(id: string, formData: FormData) {
         ...row,
         streaming_links: parseStreamingLinks(parsed.data.streaming_links),
         artists: parseArtists(parsed.data.artists),
+        itunes_id: parseOptionalExternalId(parsed.data.itunes_id, normalizeItunesId),
+        spotify_id: parseOptionalExternalId(parsed.data.spotify_id, normalizeSpotifyId),
+        discogs_id: parseOptionalExternalId(parsed.data.discogs_id, normalizeDiscogsId),
         manually_edited: true, // protect user edits from future enrichment/sync
       })
       .eq('id', id)
