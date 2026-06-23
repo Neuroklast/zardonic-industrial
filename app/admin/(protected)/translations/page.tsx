@@ -1,5 +1,3 @@
-'use server'
-
 import { createClient } from '@/lib/supabaseServer'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import TranslationsEditor from './TranslationsEditor'

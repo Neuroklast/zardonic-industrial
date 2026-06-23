@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react'
 import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
