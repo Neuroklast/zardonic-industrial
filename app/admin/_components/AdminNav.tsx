@@ -39,6 +39,7 @@ const NAV_ICONS: Record<string, Icon> = {
   '/admin/partners': Users,
   '/admin/music-highlights': Waveform,
   '/admin/releases': Disc,
+  '/admin/releases/sync': Disc,
   '/admin/gigs': Calendar,
   '/admin/merchandise': TShirt,
   '/admin/soundpacks': Package,
@@ -73,8 +74,6 @@ function NavLink({ item, onClick }: { item: AdminNavItemData; onClick?: () => vo
 }
 
 function NavLinks({ onNavClick }: { onNavClick?: () => void }) {
-  const pathname = usePathname()
-
   return (
     <nav className="flex flex-col gap-4 flex-1" aria-label="Admin navigation">
       {ADMIN_NAV_GROUPS.map((group) => (
@@ -89,9 +88,7 @@ function NavLinks({ onNavClick }: { onNavClick?: () => void }) {
           </div>
         </div>
       ))}
-      {pathname.startsWith('/admin/releases/sync') && (
-        <p className="px-3 text-xs text-zinc-500">iTunes Sync — use Discography page or Dashboard quick link.</p>
-      )}
+
     </nav>
   )
 }

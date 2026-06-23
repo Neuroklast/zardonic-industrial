@@ -56,3 +56,25 @@ export async function fetchItunesItemById(itunesId: string): Promise<ItunesSearc
   const data = (await res.json()) as { results?: ItunesSearchResult[] }
   return data.results?.[0] ?? null
 }
+
+/** Fetch albums, songs, and music videos for an iTunes/Apple Music artist id. */
+export async function fetchItunesArtistCatalogue(artistId: string): Promise<ItunesSearchResult[]> {
+  const entities = ['album', 'song', 'musicVideo'] as const
+  const results = await Promise.allSettled(
+    entities.map(async (entity) => {
+      const res = await fetch(
+        `${ITUNES_LOOKUP_URL}?id=${encodeURIComponent(artistId)}&entity=${entity}&limit=200`,
+        { cache: 'no-store' },
+      )
+      if (!res.ok) return [] as ItunesSearchResult[]
+      const data = (await res.json()) as { results?: ItunesSearchResult[] }
+      return data.results ?? []
+    }),
+  )
+
+  const items: ItunesSearchResult[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') items.push(...result.value)
+  }
+  return items
+}

@@ -37,6 +37,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
       { href: '/admin/partners', label: 'Credits & Partners', countKey: 'partners' },
       { href: '/admin/music-highlights', label: 'Music Highlights', countKey: 'musicHighlights' },
       { href: '/admin/releases', label: 'Discography', countKey: 'releases' },
+      { href: '/admin/releases/sync', label: 'Catalogue Sync' },
       { href: '/admin/gigs', label: 'Events', countKey: 'gigs' },
     ],
   },

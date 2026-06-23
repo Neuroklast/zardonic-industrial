@@ -569,5 +569,6 @@ INSERT INTO public.site_config (key, value) VALUES
   ('social',      '{"spotify":"","instagram":"","facebook":"","youtube":"","soundcloud":"","tiktok":""}'::jsonb),
   ('sound',       '{"enabled":false,"volume":0.3,"hoverEnabled":false}'::jsonb),
   ('analytics',   '{"enabled":false,"trackPageViews":false,"trackEvents":false}'::jsonb),
-  ('translations', '{}'::jsonb)
+  ('translations', '{}'::jsonb),
+  ('catalogue_sync', '{"artistName":"Zardonic","itunesArtistId":"","spotifyArtistId":"","discogsArtistId":""}'::jsonb)
 ON CONFLICT (key) DO NOTHING;

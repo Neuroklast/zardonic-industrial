@@ -10,7 +10,16 @@ import {
   buildReleaseUpdateFromMetadata,
   fetchReleaseMetadataByExternalId,
 } from '@/lib/release-external-sync'
-import { normalizeExternalId, type ExternalReleaseSource } from '@/lib/release-external-ids'
+import {
+  parseCatalogueSyncConfig,
+  type CatalogueSyncConfig,
+} from '@/lib/catalogue-sync-config'
+import {
+  normalizeDiscogsArtistId,
+  normalizeExternalId,
+  normalizeSpotifyArtistId,
+  type ExternalReleaseSource,
+} from '@/lib/release-external-ids'
 import type { ReleaseMetadata, StreamingLink } from '@/lib/release-metadata'
 import {
   fetchDiscogsArtistReleases,
@@ -251,28 +260,71 @@ async function bulkImportMetadata(
   return 'error' in actionResult ? { synced: 0, skipped: 0, errors: [actionResult.error] } : actionResult
 }
 
-export async function syncReleasesFromSpotify(artist: string): Promise<BulkExternalSyncResult> {
-  if (!artist.trim()) return { synced: 0, skipped: 0, errors: ['Artist name is required'] }
+async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('site_config')
+    .select('value')
+    .eq('key', 'catalogue_sync')
+    .maybeSingle()
+  return parseCatalogueSyncConfig(data?.value)
+}
 
-  const artistId = await searchSpotifyArtistId(artist.trim())
+export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExternalSyncResult> {
+  const config = await loadCatalogueSyncConfig()
+  const artistName = (artist?.trim() || config.artistName).trim()
+  const configuredId = normalizeSpotifyArtistId(config.spotifyArtistId)
+
+  const artistId = configuredId ?? (artistName ? await searchSpotifyArtistId(artistName) : null)
   if (!artistId) {
-    return { synced: 0, skipped: 0, errors: ['Spotify artist not found or credentials missing'] }
+    return {
+      synced: 0,
+      skipped: 0,
+      errors: [
+        configuredId
+          ? 'Invalid Spotify artist ID in Catalogue Sync settings'
+          : 'Configure a Spotify artist ID or artist name in Catalogue Sync settings',
+      ],
+    }
   }
 
   const albums = await fetchSpotifyArtistAlbums(artistId)
   const items = albums.map((a) => ({ externalId: a.spotify_id, metadata: a.metadata }))
-  return bulkImportMetadata('spotify', 'spotify_id', items, 'spotify_sync', { artist })
+  return bulkImportMetadata('spotify', 'spotify_id', items, 'spotify_sync', {
+    artist: artistName,
+    spotifyArtistId: artistId,
+  })
 }
 
-export async function syncReleasesFromDiscogs(artist: string): Promise<BulkExternalSyncResult> {
-  if (!artist.trim()) return { synced: 0, skipped: 0, errors: ['Artist name is required'] }
+export async function syncReleasesFromDiscogs(artist?: string): Promise<BulkExternalSyncResult> {
+  const config = await loadCatalogueSyncConfig()
+  const artistName = (artist?.trim() || config.artistName).trim()
+  const configuredId = normalizeDiscogsArtistId(config.discogsArtistId)
 
-  const artistId = await searchDiscogsArtistId(artist.trim())
+  let artistId: number | null = null
+  if (configuredId) {
+    const parsed = Number.parseInt(configuredId, 10)
+    artistId = Number.isFinite(parsed) ? parsed : null
+  } else if (artistName) {
+    artistId = await searchDiscogsArtistId(artistName)
+  }
+
   if (!artistId) {
-    return { synced: 0, skipped: 0, errors: ['Discogs artist not found or DISCOGS_TOKEN missing'] }
+    return {
+      synced: 0,
+      skipped: 0,
+      errors: [
+        configuredId
+          ? 'Invalid Discogs artist ID in Catalogue Sync settings'
+          : 'Configure a Discogs artist ID or artist name in Catalogue Sync settings',
+      ],
+    }
   }
 
   const releases = await fetchDiscogsArtistReleases(artistId)
   const items = releases.map((r) => ({ externalId: r.discogs_id, metadata: r.metadata }))
-  return bulkImportMetadata('discogs', 'discogs_id', items, 'discogs_sync', { artist })
+  return bulkImportMetadata('discogs', 'discogs_id', items, 'discogs_sync', {
+    artist: artistName,
+    discogsArtistId: artistId,
+  })
 }

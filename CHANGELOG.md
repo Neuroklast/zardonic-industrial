@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **Release external IDs**: Admin can set iTunes, Spotify, and Discogs IDs (or paste platform URLs) per release and sync metadata + streaming links + cover art from each API.
 - **Catalogue sync**: `/admin/releases/sync` now supports bulk artist import from iTunes, Spotify, and Discogs.
+- **Catalogue artist IDs**: Admin menu entry **Catalogue Sync** stores per-platform artist IDs (`site_config.catalogue_sync`) and uses them for bulk import (with artist-name fallback).
 
 ### Fixed
 - **Admin site-config preview CSP**: Added `'self'` to `frame-src` and set `X-Frame-Options: SAMEORIGIN` so the split-view iframe can load `/?adminPreview=1`.

@@ -6,7 +6,16 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { uploadBufferToR2 } from './r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
-import { parseItunesItem, type ItunesSearchResult } from '@/lib/itunes-sync'
+import {
+  fetchItunesArtistCatalogue,
+  parseItunesItem,
+  type ItunesSearchResult,
+} from '@/lib/itunes-sync'
+import {
+  parseCatalogueSyncConfig,
+  type CatalogueSyncConfig,
+} from '@/lib/catalogue-sync-config'
+import { normalizeItunesArtistId } from '@/lib/release-external-ids'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
@@ -18,46 +27,79 @@ export interface ItunesSyncResult {
   errors: string[]
 }
 
-export async function syncReleasesFromItunes(artist: string): Promise<ItunesSyncResult> {
-  const result: ItunesSyncResult = { synced: 0, skipped: 0, errors: [] }
+async function loadCatalogueSyncConfig(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<CatalogueSyncConfig> {
+  const { data } = await supabase
+    .from('site_config')
+    .select('value')
+    .eq('key', 'catalogue_sync')
+    .maybeSingle()
+  return parseCatalogueSyncConfig(data?.value)
+}
 
-  if (!artist.trim()) {
-    result.errors.push('Artist name is required')
-    return result
+async function fetchItunesItemsForArtist(
+  artistName: string,
+  itunesArtistId: string | null,
+  result: ItunesSyncResult,
+): Promise<ItunesSearchResult[]> {
+  if (itunesArtistId) {
+    const items = await fetchItunesArtistCatalogue(itunesArtistId)
+    if (items.length === 0) result.errors.push('No releases found for configured iTunes artist ID')
+    return items
   }
 
+  const [albumsRes, songsRes, singlesRes] = await Promise.allSettled([
+    fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=album&limit=200`),
+    fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=song&limit=200`),
+    fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=musicVideo&limit=200`),
+  ])
+
+  const items: ItunesSearchResult[] = []
+
+  if (albumsRes.status === 'fulfilled' && albumsRes.value.ok) {
+    const data = (await albumsRes.value.json()) as { results?: ItunesSearchResult[] }
+    items.push(...(data.results ?? []))
+  } else {
+    result.errors.push('Failed to fetch albums from iTunes')
+  }
+
+  if (songsRes.status === 'fulfilled' && songsRes.value.ok) {
+    const data = (await songsRes.value.json()) as { results?: ItunesSearchResult[] }
+    items.push(...(data.results ?? []))
+  }
+
+  if (singlesRes.status === 'fulfilled' && singlesRes.value.ok) {
+    const data = (await singlesRes.value.json()) as { results?: ItunesSearchResult[] }
+    items.push(...(data.results ?? []))
+  }
+
+  return items
+}
+
+export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyncResult> {
+  const result: ItunesSyncResult = { synced: 0, skipped: 0, errors: [] }
+
   const actionResult = await runAdminAction(async () => {
-    const [albumsRes, songsRes, singlesRes] = await Promise.allSettled([
-      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=album&limit=200`),
-      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=song&limit=200`),
-      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artist)}&entity=musicVideo&limit=200`),
-    ])
+    const supabase = createAdminClient()
+    const config = await loadCatalogueSyncConfig(supabase)
+    const artistName = (artist?.trim() || config.artistName).trim()
+    const itunesArtistId = normalizeItunesArtistId(config.itunesArtistId)
 
-    const items: ItunesSearchResult[] = []
-
-    if (albumsRes.status === 'fulfilled' && albumsRes.value.ok) {
-      const data = (await albumsRes.value.json()) as { results?: ItunesSearchResult[] }
-      items.push(...(data.results ?? []))
-    } else {
-      result.errors.push('Failed to fetch albums from iTunes')
+    if (!artistName && !itunesArtistId) {
+      result.errors.push('Configure an artist name or iTunes artist ID in Catalogue Sync settings')
+      return result
     }
 
-    if (songsRes.status === 'fulfilled' && songsRes.value.ok) {
-      const data = (await songsRes.value.json()) as { results?: ItunesSearchResult[] }
-      items.push(...(data.results ?? []))
-    }
-
-    if (singlesRes.status === 'fulfilled' && singlesRes.value.ok) {
-      const data = (await singlesRes.value.json()) as { results?: ItunesSearchResult[] }
-      items.push(...(data.results ?? []))
-    }
-
+    const items = await fetchItunesItemsForArtist(artistName, itunesArtistId, result)
     if (items.length === 0 && result.errors.length > 0) return result
 
-    const supabase = createAdminClient()
-
     // Gate via registry for AGENTS §12 compliance on mutations
-    const dispatchResult = dispatchAdminAction('itunes_sync', { artist }, createSupabaseActionContext(supabase))
+    const dispatchResult = dispatchAdminAction(
+      'itunes_sync',
+      { artist: artistName, itunesArtistId: itunesArtistId ?? undefined },
+      createSupabaseActionContext(supabase),
+    )
     if (!dispatchResult.ok) return { synced: 0, skipped: 0, errors: [dispatchResult.error] }
 
     const { data: existing } = await supabase
@@ -124,7 +166,7 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
         cover_storage_path: coverStoragePath,
         cover_url: coverUrl,
         streaming_links: [],
-        artists: [artist],
+        artists: [artistName],
         display_order: displayOrder,
         active: true,
       })

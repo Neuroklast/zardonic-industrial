@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  normalizeDiscogsArtistId,
   normalizeDiscogsId,
+  normalizeItunesArtistId,
   normalizeItunesId,
+  normalizeSpotifyArtistId,
   normalizeSpotifyId,
 } from '@/lib/release-external-ids'
+import { parseCatalogueSyncConfig } from '@/lib/catalogue-sync-config'
 import { mergeStreamingLinks } from '@/lib/release-metadata'
 
 describe('release external id normalization', () => {
@@ -22,6 +26,29 @@ describe('release external id normalization', () => {
     expect(normalizeDiscogsId('12345')).toBe('12345')
     expect(normalizeDiscogsId('https://www.discogs.com/release/12345-Example')).toBe('12345')
     expect(normalizeDiscogsId('https://www.discogs.com/master/98765-Example')).toBe('98765')
+  })
+
+  it('normalizes platform artist ids from URLs', () => {
+    expect(normalizeSpotifyArtistId('7BqEidErPMNiUXCRE0dV2n')).toBe('7BqEidErPMNiUXCRE0dV2n')
+    expect(normalizeSpotifyArtistId('https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n')).toBe(
+      '7BqEidErPMNiUXCRE0dV2n',
+    )
+    expect(normalizeDiscogsArtistId('https://www.discogs.com/artist/261118-Zardonic')).toBe('261118')
+    expect(normalizeItunesArtistId('https://music.apple.com/us/artist/zardonic/261118434')).toBe('261118434')
+  })
+})
+
+describe('parseCatalogueSyncConfig', () => {
+  it('normalizes stored artist ids and keeps fallback name', () => {
+    const parsed = parseCatalogueSyncConfig({
+      artistName: 'Zardonic',
+      spotifyArtistId: 'https://open.spotify.com/artist/7BqEidErPMNiUXCRE0dV2n',
+      discogsArtistId: '',
+      itunesArtistId: '261118434',
+    })
+    expect(parsed.artistName).toBe('Zardonic')
+    expect(parsed.spotifyArtistId).toBe('7BqEidErPMNiUXCRE0dV2n')
+    expect(parsed.itunesArtistId).toBe('261118434')
   })
 })
 
