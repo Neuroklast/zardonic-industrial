@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { deleteGig } from '@/app/admin/_actions/gigs'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { GigsSyncButton } from './GigsSyncButton'
 
 export default async function GigsPage() {
   let gigs: Array<{ id: string; title: string; city: string | null; event_date: string }> = []
@@ -28,6 +29,9 @@ export default async function GigsPage() {
           </Link>
         }
       />
+      <div className="mb-6">
+        <GigsSyncButton />
+      </div>
       {gigs.length === 0 ? (
         <p className="text-zinc-400 text-sm">No gigs yet.</p>
       ) : (

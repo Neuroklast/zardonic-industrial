@@ -601,6 +601,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
       return { ok: true }
     },
   }),
+
+  bandsintown_gigs_sync: register({
+    id: 'bandsintown_gigs_sync',
+    label: 'Bandsintown Sync Gigs',
+    schema: z.object({}).passthrough(),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────

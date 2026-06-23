@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.gigs (
   ticket_url text,
   festival_name text,
   description text,
+  bandsintown_id text,
   active boolean DEFAULT true,
   created_at timestamptz DEFAULT now()
 );
@@ -198,6 +199,13 @@ ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS active boolean DEFAULT true
 
 -- social_links
 ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;
+
+-- gigs (Bandsintown dedup)
+ALTER TABLE public.gigs ADD COLUMN IF NOT EXISTS bandsintown_id text;
+
+CREATE UNIQUE INDEX IF NOT EXISTS gigs_bandsintown_id_unique
+  ON public.gigs (bandsintown_id)
+  WHERE bandsintown_id IS NOT NULL;
 
 -- releases columns
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS cover_storage_path text;
