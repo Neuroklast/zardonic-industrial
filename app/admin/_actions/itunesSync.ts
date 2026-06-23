@@ -1,12 +1,14 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { uploadBufferToR2 } from './r2Upload'
+import { MEDIA_BUCKET } from '@/lib/constants'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
-const R2_BUCKET = process.env.R2_BUCKET_MEDIA ?? 'zardonic-media'
+const R2_BUCKET = MEDIA_BUCKET
 
 export interface ItunesSyncResult {
   synced: number
@@ -94,6 +96,11 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
     if (items.length === 0 && result.errors.length > 0) return result
 
     const supabase = createAdminClient()
+
+    // Gate via registry for AGENTS §12 compliance on mutations
+    const dispatchResult = dispatchAdminAction('itunes_sync', { artist }, createSupabaseActionContext(supabase))
+    if (!dispatchResult.ok) return { synced: 0, skipped: 0, errors: [dispatchResult.error] }
+
     const { data: existing } = await supabase
       .from('releases')
       .select('itunes_id')

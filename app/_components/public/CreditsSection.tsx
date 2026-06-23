@@ -13,9 +13,10 @@ interface PartnerItem {
 interface CreditsAndEndorsementsProps {
   credits: PartnerItem[]
   endorsements: PartnerItem[]
+  logoBrightness?: number
 }
 
-function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string }) {
+function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; heading: string; logoBrightness?: number }) {
   if (items.length === 0) return null
 
   return (
@@ -29,9 +30,10 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
             <m.img
               src={item.logoUrl}
               alt={item.name}
-              className="chromatic-hover h-10 w-auto object-contain opacity-70 transition-opacity hover:opacity-100 md:h-14"
+              className="chromatic-hover h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14"
+              style={logoBrightness !== undefined ? { filter: `brightness(${logoBrightness})` } : { opacity: 0.7 }}
               initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 0.7, y: 0 }}
+              whileInView={{ opacity: logoBrightness !== undefined ? Math.min(logoBrightness + 0.3, 1) : 0.7, y: 0 }}
               whileHover={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
@@ -87,7 +89,7 @@ function LogoGrid({ items, heading }: { items: PartnerItem[]; heading: string })
   )
 }
 
-export function CreditsSection({ credits, endorsements }: CreditsAndEndorsementsProps) {
+export function CreditsSection({ credits, endorsements, logoBrightness }: CreditsAndEndorsementsProps) {
   const hasItems = credits.length > 0 || endorsements.length > 0
 
   return (
@@ -116,8 +118,8 @@ export function CreditsSection({ credits, endorsements }: CreditsAndEndorsements
 
           {hasItems ? (
             <div className="space-y-12">
-              <LogoGrid items={credits} heading="CREDITS" />
-              <LogoGrid items={endorsements} heading="ENDORSEMENTS" />
+              <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
+              <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
             </div>
           ) : (
             <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">

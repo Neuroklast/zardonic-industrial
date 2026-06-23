@@ -1,5 +1,8 @@
 import { createClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
+import { PageLayout } from '@/layouts/PageLayout'
+import { CookieConsent } from '@/components/CookieConsent'
+import KonamiListener from '@/components/KonamiListener'
 import { BackgroundStack } from './_components/public/BackgroundStack'
 import { GallerySection } from './_components/public/GallerySection'
 import { GlobalEffects } from './_components/public/GlobalEffects'
@@ -178,6 +181,25 @@ export default async function HomePage() {
     .sort((a, b) => a.order - b.order)
     .filter((s) => s.visible)
 
+  // Extract releases style overrides (releaseLayout, columns, variants etc.) from site_config for public parity
+  const sectionsValue = sectionsRaw
+  const releaseOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
+    ? ((sectionsValue as any).styleOverrides?.releases || {})
+    : {}
+  const fullReleaseOverrides = releaseOverrides // for variants etc.
+  const galleryOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
+    ? ((sectionsValue as any).styleOverrides?.gallery || {})
+    : {}
+  const bioOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
+    ? ((sectionsValue as any).styleOverrides?.bio || {})
+    : {}
+  const heroStyleOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
+    ? ((sectionsValue as any).styleOverrides?.hero || {})
+    : {}
+  const creditOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
+    ? ((sectionsValue as any).styleOverrides?.creditHighlights || {})
+    : {}
+
   // Background image: use R2 path or fallback to configured URL or placeholder
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
   const bgFallback = typeof bgConfig.url === 'string' ? bgConfig.url : '/assets/bg-placeholder.jpg'
@@ -288,152 +310,196 @@ export default async function HomePage() {
     return sections.some((s) => s.id === id)
   }
 
+  // Build slots for the mandatory PageLayout (AGENTS §6)
+  const backgroundLayers = (
+    <BackgroundStack
+      imageUrl={backgroundUrl}
+      videoUrl={backgroundVideoUrl ?? undefined}
+      backgroundType={backgroundType}
+      imageOpacity={backgroundOpacity}
+    />
+  )
+
+  const globalEffectsSlot = (
+    <GlobalEffects crtEnabled={crtEnabled} scanlineEnabled={scanlineEnabled} noiseEnabled={noiseEnabled} />
+  )
+
+  const navSlot = <SiteNav />
+
+  const footerSlot = (
+    <SiteFooter
+      socialLinks={social}
+      impressumUrl={String(footerConfig.impressumUrl ?? '/impressum')}
+      privacyUrl={String(footerConfig.privacyUrl ?? '/privacy')}
+    />
+  )
+
+  const systemSlot = (
+    <>
+      <CookieConsent />
+      <KonamiListener />
+    </>
+  )
+
+  // Overlays are managed inside PublicPageClient (release overlay) and other islands.
+  // For strict layering they can be hoisted later; leaving in content preserves current behavior + z.
+  const overlaysSlot = null
+
   return (
-    <div className="min-h-screen text-white">
-      {/* Inject accent colors as CSS custom properties */}
+    <PageLayout
+      backgroundLayers={backgroundLayers}
+      nav={navSlot}
+      footer={footerSlot}
+      globalEffects={globalEffectsSlot}
+      overlays={overlaysSlot}
+      system={systemSlot}
+    >
+      {/* Inject accent colors as CSS custom properties (available to all sections) */}
       <style>{`:root { --accent: ${accentColor}; --accent-secondary: ${accentColorSecondary}; }`}</style>
 
-      <GlobalEffects crtEnabled={crtEnabled} scanlineEnabled={scanlineEnabled} noiseEnabled={noiseEnabled} />
-      <BackgroundStack
-        imageUrl={backgroundUrl}
-        videoUrl={backgroundVideoUrl ?? undefined}
-        backgroundType={backgroundType}
-        imageOpacity={backgroundOpacity}
-      />
+      {/* Main content – sections rendered in DB-controlled order (inside PageLayout <main>) */}
+      {sections.map((section, idx) => {
+        const divider = idx > 0 ? <SectionDivider /> : null
+        switch (section.id) {
+          case 'hero':
+            return (
+              <div key="hero">
+                <HeroSection
+                  headline={String(heroConfig.headline ?? 'ZARDONIC')}
+                  tagline={String(heroConfig.tagline ?? '')}
+                  ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
+                  ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
+                  backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
+                  backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
+                  minHeight={typeof heroStyleOverrides.minHeight === 'string' ? heroStyleOverrides.minHeight : undefined}
+                  imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
+                  paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
+                />
+              </div>
+            )
+          case 'bio':
+            return (
+              <div key="bio">
+                {divider}
+                <BioSection
+                  content={bio}
+                  bodyFontSize={typeof bioOverrides.bodyFontSize === 'string' ? bioOverrides.bodyFontSize : undefined}
+                  readMoreMaxHeight={typeof bioOverrides.readMoreMaxHeight === 'string' ? bioOverrides.readMoreMaxHeight : undefined}
+                />
+              </div>
+            )
+          case 'credits':
+            return (
+              <div key="credits">
+                {divider}
+                <CreditsSection
+                  credits={credits}
+                  endorsements={endorsements}
+                  logoBrightness={typeof creditOverrides.logoBrightness === 'number' ? creditOverrides.logoBrightness : undefined}
+                />
+              </div>
+            )
+          case 'gallery':
+            return (
+              <div key="gallery">
+                {divider}
+                <GallerySection
+                  items={gallery.map(galleryItemMap)}
+                  columns={typeof galleryOverrides.columns === 'string' ? galleryOverrides.columns : '3'}
+                  maxVisible={typeof galleryOverrides.maxVisible === 'number' ? galleryOverrides.maxVisible : undefined}
+                  aspectRatio={typeof galleryOverrides.aspectRatio === 'string' ? galleryOverrides.aspectRatio : undefined}
+                  gap={typeof galleryOverrides.gap === 'string' ? galleryOverrides.gap : undefined}
+                />
+              </div>
+            )
+          case 'music-highlights':
+            return (
+              <div key="music-highlights">
+                {divider}
+                <MusicHighlightsSection highlights={musicHighlights} />
+              </div>
+            )
+          case 'releases':
+            return (
+              <div key="releases">
+                {divider}
+                <PublicPageClient
+                  releases={releaseItems}
+                  artistName={String(heroConfig.headline ?? 'ZARDONIC')}
+                  releaseLayout={typeof releaseOverrides.releaseLayout === 'string' ? releaseOverrides.releaseLayout : 'grid'}
+                  releaseColumns={typeof releaseOverrides.releaseColumns === 'string' ? releaseOverrides.releaseColumns : '4'}
+                  releaseCardVariant={typeof releaseOverrides.releaseCardVariant === 'string' ? releaseOverrides.releaseCardVariant : undefined}
+                  releaseHoverEffect={typeof releaseOverrides.releaseHoverEffect === 'string' ? releaseOverrides.releaseHoverEffect : undefined}
+                />
+              </div>
+            )
+          case 'social':
+            return social.length > 0 ? (
+              <div key="social">
+                {divider}
+                <SocialSection links={social} label={section.label} />
+              </div>
+            ) : null
+          case 'spotify':
+            return (
+              <div key="spotify">
+                {divider}
+                <SpotifySection uri={spotifyUri} label={section.label} />
+              </div>
+            )
+          case 'merchandise':
+            return merch.length > 0 ? (
+              <div key="merchandise">
+                {divider}
+                <MerchandiseSection
+                  items={merch.map(commerceItemMap)}
+                  footerText={String(merchandiseConfig.footerText ?? '')}
+                />
+              </div>
+            ) : null
+          case 'soundpacks':
+            return soundpacks.length > 0 ? (
+              <div key="soundpacks">
+                {divider}
+                <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
+              </div>
+            ) : null
+          case 'gigs':
+            return (
+              <div key="gigs">
+                {divider}
+                <GigsSection upcoming={upcoming} past={past} />
+              </div>
+            )
+          case 'newsletter':
+            return (
+              <div key="newsletter">
+                {divider}
+                <NewsletterSection
+                  heading={String(newsletterConfig.heading ?? 'Mailing List')}
+                  body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
+                />
+              </div>
+            )
+          case 'contact':
+            return (
+              <div key="contact">
+                {divider}
+                <ContactSection />
+              </div>
+            )
+          default:
+            return null
+        }
+      })}
 
-      {/* Fixed navigation */}
-      <SiteNav />
-
-      {/* Main content – sections rendered in DB-controlled order */}
-      <main>
-        {sections.map((section, idx) => {
-          const divider = idx > 0 ? <SectionDivider /> : null
-          switch (section.id) {
-            case 'hero':
-              return (
-                <div key="hero">
-                  <HeroSection
-                    headline={String(heroConfig.headline ?? 'ZARDONIC')}
-                    tagline={String(heroConfig.tagline ?? '')}
-                    ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
-                    ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
-                    backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
-                    backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
-                  />
-                </div>
-              )
-            case 'bio':
-              return (
-                <div key="bio">
-                  {divider}
-                  <BioSection content={bio} />
-                </div>
-              )
-            case 'credits':
-              return (
-                <div key="credits">
-                  {divider}
-                  <CreditsSection credits={credits} endorsements={endorsements} />
-                </div>
-              )
-            case 'gallery':
-              return (
-                <div key="gallery">
-                  {divider}
-                  <GallerySection items={gallery.map(galleryItemMap)} />
-                </div>
-              )
-            case 'music-highlights':
-              return (
-                <div key="music-highlights">
-                  {divider}
-                  <MusicHighlightsSection highlights={musicHighlights} />
-                </div>
-              )
-            case 'releases':
-              return (
-                <div key="releases">
-                  {divider}
-                  <PublicPageClient
-                    releases={releaseItems}
-                    artistName={String(heroConfig.headline ?? 'ZARDONIC')}
-                  />
-                </div>
-              )
-            case 'social':
-              return social.length > 0 ? (
-                <div key="social">
-                  {divider}
-                  <SocialSection links={social} label={section.label} />
-                </div>
-              ) : null
-            case 'spotify':
-              return (
-                <div key="spotify">
-                  {divider}
-                  <SpotifySection uri={spotifyUri} label={section.label} />
-                </div>
-              )
-            case 'merchandise':
-              return merch.length > 0 ? (
-                <div key="merchandise">
-                  {divider}
-                  <MerchandiseSection
-                    items={merch.map(commerceItemMap)}
-                    footerText={String(merchandiseConfig.footerText ?? '')}
-                  />
-                </div>
-              ) : null
-            case 'soundpacks':
-              return soundpacks.length > 0 ? (
-                <div key="soundpacks">
-                  {divider}
-                  <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
-                </div>
-              ) : null
-            case 'gigs':
-              return (
-                <div key="gigs">
-                  {divider}
-                  <GigsSection upcoming={upcoming} past={past} />
-                </div>
-              )
-            case 'newsletter':
-              return (
-                <div key="newsletter">
-                  {divider}
-                  <NewsletterSection
-                    heading={String(newsletterConfig.heading ?? 'Mailing List')}
-                    body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
-                  />
-                </div>
-              )
-            case 'contact':
-              return (
-                <div key="contact">
-                  {divider}
-                  <ContactSection />
-                </div>
-              )
-            default:
-              return null
-          }
-        })}
-
-        {/* Fallback: if sections config is empty or contact not included */}
-        {!isSectionVisible('contact') && (
-          <>
-            <SectionDivider />
-            <ContactSection />
-          </>
-        )}
-      </main>
-
-      <SiteFooter
-        socialLinks={social}
-        impressumUrl={String(footerConfig.impressumUrl ?? '/impressum')}
-        privacyUrl={String(footerConfig.privacyUrl ?? '/privacy')}
-      />
-    </div>
+      {/* Fallback: if sections config is empty or contact not included */}
+      {!isSectionVisible('contact') && (
+        <>
+          <SectionDivider />
+          <ContactSection />
+        </>
+      )}
+    </PageLayout>
   )
 }

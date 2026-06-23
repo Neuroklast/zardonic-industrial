@@ -9,9 +9,23 @@ export const createAdminClient = () => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
-    throw new Error(
-      'Supabase admin access is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
-    )
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'Supabase admin access is not configured. Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      )
+    }
+    console.warn('⚠️ No SUPABASE_SERVICE_ROLE_KEY — admin client stubbed for local dev.')
+    const makeAdminQuery = () => {
+      const b: any = {
+        upsert: () => Promise.resolve({ data: null, error: null }),
+        select: () => b,
+        eq: () => b,
+      }
+      return b
+    }
+    return {
+      from: () => makeAdminQuery(),
+    } as any
   }
 
   return createSupabaseClient(url, key, {

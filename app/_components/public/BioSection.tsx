@@ -6,12 +6,17 @@ import { CaretDown, CaretUp } from '@phosphor-icons/react'
 
 interface BioSectionProps {
   content: string
+  bodyFontSize?: string
+  readMoreMaxHeight?: string
 }
 
-export function BioSection({ content }: BioSectionProps) {
+export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
   const [expanded, setExpanded] = useState(false)
   const hasContent = content.trim().length > 0
   const displayContent = hasContent ? content : 'Biography coming soon.'
+
+  const bioTextClass = bodyFontSize || 'text-lg'
+  const maxH = readMoreMaxHeight || '280px'
 
   return (
     <section
@@ -38,8 +43,9 @@ export function BioSection({ content }: BioSectionProps) {
           </div>
 
           <div
-            className={`overflow-hidden whitespace-pre-wrap font-light text-lg text-muted-foreground leading-relaxed ${expanded ? 'max-h-none' : 'max-h-[280px]'}`}
+            className={`overflow-hidden whitespace-pre-wrap font-light ${bioTextClass} text-muted-foreground leading-relaxed`}
             style={{
+              maxHeight: expanded ? 'none' : maxH,
               maskImage: expanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
               WebkitMaskImage: expanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
               transition: 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), mask-image 0.3s ease, -webkit-mask-image 0.3s ease',

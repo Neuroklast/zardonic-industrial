@@ -1,7 +1,8 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -33,9 +34,14 @@ export async function createGig(formData: FormData) {
   const parsed = gigInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  // Dispatch via registry for AGENTS compliance
+  const dispatchResult = dispatchAdminAction('create_gig', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('gigs').insert(parsed.data)
+    const { error } = await supabaseAdmin.from('gigs').insert(parsed.data)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/gigs')
@@ -48,9 +54,13 @@ export async function updateGig(id: string, formData: FormData) {
   const parsed = gigInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_gig', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('gigs').update(parsed.data).eq('id', id)
+    const { error } = await supabaseAdmin.from('gigs').update(parsed.data).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/gigs')
@@ -61,9 +71,13 @@ export async function updateGig(id: string, formData: FormData) {
 }
 
 export async function deleteGig(id: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('delete_gig', { id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('gigs').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('gigs').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/gigs')
@@ -73,9 +87,13 @@ export async function deleteGig(id: string) {
 }
 
 export async function toggleGigVisibility(id: string, active: boolean) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_gig', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('gigs').update({ active }).eq('id', id)
+    const { error } = await supabaseAdmin.from('gigs').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/gigs')

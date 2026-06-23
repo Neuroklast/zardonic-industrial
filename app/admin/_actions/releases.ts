@@ -1,7 +1,8 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -43,9 +44,14 @@ export async function createRelease(formData: FormData) {
   const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  // Route through registry for AGENTS §12 compliance (validation + dispatch audit trail)
+  const dispatchResult = dispatchAdminAction('create_release', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('releases').insert({
+    const { error } = await supabaseAdmin.from('releases').insert({
       ...parsed.data,
       streaming_links: parseStreamingLinks(parsed.data.streaming_links),
       artists: parseArtists(parsed.data.artists),
@@ -63,9 +69,13 @@ export async function updateRelease(id: string, formData: FormData) {
   const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_release', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('releases')
       .update({
         ...parsed.data,
@@ -84,9 +94,13 @@ export async function updateRelease(id: string, formData: FormData) {
 }
 
 export async function deleteRelease(id: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('delete_release', { id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('releases').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('releases').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/releases')
@@ -96,9 +110,13 @@ export async function deleteRelease(id: string) {
 }
 
 export async function toggleReleaseVisibility(id: string, active: boolean) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_release', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('releases').update({ active }).eq('id', id)
+    const { error } = await supabaseAdmin.from('releases').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/releases')

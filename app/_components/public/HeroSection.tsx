@@ -2,6 +2,7 @@
 
 import { useState, type MouseEvent } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
+import { useLenisContext } from '@/contexts/LenisContext'
 
 const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -12,17 +13,12 @@ interface HeroSectionProps {
   ctaUrl?: string
   backgroundImageUrl?: string
   backgroundImageOpacity?: number
+  minHeight?: string
+  imageBlur?: number
+  paddingTop?: string
 }
 
-function handleAnchorNavigation(event: MouseEvent<HTMLAnchorElement>, target: string) {
-  if (!target.startsWith('#')) return
 
-  const element = document.querySelector<HTMLElement>(target)
-  if (!element) return
-
-  event.preventDefault()
-  element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
 
 export function HeroSection({
   headline,
@@ -31,21 +27,37 @@ export function HeroSection({
   ctaUrl,
   backgroundImageUrl,
   backgroundImageOpacity = 0.35,
+  minHeight,
+  imageBlur,
+  paddingTop,
 }: HeroSectionProps) {
   const [contentLoaded] = useState(true)
   const prefersReducedMotion = useReducedMotion()
+  const { scrollTo } = useLenisContext()
+
+  const sectionStyle: React.CSSProperties = {
+    zIndex: 'var(--z-content)',
+    minHeight: minHeight || undefined,
+    paddingTop: paddingTop || undefined,
+  }
+
+  const bgStyle: React.CSSProperties = {
+    backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
+    filter: imageBlur ? `blur(${imageBlur}px)` : undefined,
+  }
 
   return (
     <section
       className="relative flex min-h-screen items-center justify-center overflow-hidden pt-20 scanline-effect"
-      style={{ zIndex: 'var(--z-content)' }}
+      style={sectionStyle}
       data-theme-color="foreground primary"
     >
       {backgroundImageUrl && (
         <m.div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: `url(${backgroundImageUrl})`,
+            ...bgStyle,
+            opacity: backgroundImageOpacity,
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: backgroundImageOpacity }}
@@ -117,14 +129,21 @@ export function HeroSection({
         >
           <a
             href={ctaUrl || '#releases'}
-            onClick={(event) => handleAnchorNavigation(event, ctaUrl || '#releases')}
+            onClick={(event) => {
+              event.preventDefault()
+              const id = (ctaUrl || '#releases').replace('#', '')
+              scrollTo(id, { offset: -60 })
+            }}
             className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
           >
             <span className="hover-chromatic">{ctaLabel || 'LISTEN NOW'}</span>
           </a>
           <a
             href="#gigs"
-            onClick={(event) => handleAnchorNavigation(event, '#gigs')}
+            onClick={(event) => {
+              event.preventDefault()
+              scrollTo('gigs', { offset: -60 })
+            }}
             className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
           >
             <span className="hover-chromatic">TOUR DATES</span>
