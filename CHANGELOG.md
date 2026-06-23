@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - All changes verified via multiple static audit passes (greps for AGENTS violations, dynamic classes, effects presence, "NO" rules from tester spec).
 
 ### Fixed
+- **Vercel Turbopack build (JSX parse errors)**: Removed stray closing tags in `PublicPageClient.tsx` (extra `</div>`) and `ReleasesSection.tsx` (orphaned `</m.div>`) that caused "Expression expected" / "Unterminated regexp literal" failures. Fixed related TypeScript issues (`mapToLayoutRelease` release type, `ReleaseRow.manually_edited`, `getSectionOverrides` indexing, unused import in `auth.ts`). Reworded CHANGELOG text that Tailwind v4 was mis-parsing as invalid `z-[var(--...)]` CSS utility.
 - Potential performance regression in background scroll video + animated layers while keeping the beloved current aesthetic exactly as requested.
 
 ### Fixed
@@ -28,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Full bug fix sweep from deep research: completed wiring of admin _actions (soundpacks, musicHighlights, gallery, bio, etc.) to ADMIN_ACTION_REGISTRY via dispatch + helper. Centralized ctx to reduce 'as any'.
 - Background video: enforced correct `--z-bg-video` layer (was wrongly using --z-bg-animated), default 50% opacity + solid black container + inner veil for reliably dimmed footage regardless of source video brightness. Default image fallback switched to existing asset to prevent 404.
 - Removed all `as any` from active app/ tree (PublicPageClient mapper + admin ctx shim) using proper types / unknown-as + strict Release shape.
-- Removed invalid Tailwind arbitrary `z-[var(--...)]` (style var() is canonical). All z via var(--z-*) or layer constants.
+- Removed invalid Tailwind arbitrary z-index utilities using CSS var() (inline style var() is canonical). All z via var(--z-*) or layer constants.
 - Uniform sections: converted all content sections (Bio, Gallery, Credits, Gigs, Releases + fancy path) to use shared `SectionWrapper` (no more duplicated manual `<section className="scanline-effect py-section px-card" + container>` boilerplate). Removed per-section `scanline-effect` overlays from content sections (only global effects + nav/hero remain). Shared `SectionEmpty` for DRY empty states. All regular sections now have identical structural wrapper → true einheitliches (uniform) transparent design. Hero kept special as background layer.
 - Migration confirmation: verified PageLayout in public (no root min-h-screen), correct bridge imports, Lenis integration for smooth.
 - Restored look/feel: enhanced SiteNav and Hero with Lenis scrollTo for smooth anchors (offset for fixed nav), preserving cyber classes and glitch.

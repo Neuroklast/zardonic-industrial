@@ -37,6 +37,7 @@ interface ReleaseRow {
   id: string; title: string; type: string; release_date: string | null
   cover_storage_path: string | null; cover_url: string | null
   streaming_links: unknown
+  manually_edited: boolean | null
 }
 interface PartnerRow {
   id: string; name: string; url: string | null
@@ -186,16 +187,20 @@ export default async function HomePage() {
   // Extract section style overrides from site_config (centralized helper to avoid repetition)
   // Note: sections config can be array of sections or object with styleOverrides
   const sectionsValue = sectionsRaw
-  const overridesRoot =
+  const overridesRoot: Record<string, unknown> =
     sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue)
-      ? (sectionsValue as Record<string, unknown>).styleOverrides || (sectionsValue as Record<string, unknown>)
+      ? ((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)
+        ?? (sectionsValue as Record<string, unknown>)
       : {}
 
-  const getSectionOverrides = (key: string) =>
-    (overridesRoot && typeof overridesRoot === 'object') ? (overridesRoot[key] || {}) : {}
+  const getSectionOverrides = (key: string): Record<string, unknown> => {
+    const value = overridesRoot[key]
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
+  }
 
   const releaseOverrides = getSectionOverrides('releases')
-  const fullReleaseOverrides = releaseOverrides
   const galleryOverrides = getSectionOverrides('gallery')
   const bioOverrides = getSectionOverrides('bio')
   const heroStyleOverrides = getSectionOverrides('hero')

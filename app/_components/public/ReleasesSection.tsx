@@ -263,7 +263,6 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
               ) : null}
             </>
           )}
-        </m.div>
     </SectionWrapper>
   )
 }

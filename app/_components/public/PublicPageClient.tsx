@@ -54,11 +54,10 @@ function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
   return {
     id: item.id,
     title: item.title,
-    type: item.type,
+    type: normalizeType(item.type),
     releaseDate: item.release_date ?? undefined,
-    year: item.release_date ? new Date(item.release_date).getFullYear().toString() : undefined,
+    year: item.release_date ? new Date(item.release_date).getFullYear().toString() : '',
     artwork,
-    cover: artwork,
     streamingLinks: streamingLinksArr,
     description: undefined,
     featured: false,
@@ -181,7 +180,6 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
             ) : (
               <Releases3DCarouselLayout releases={layoutReleases} renderCard={renderLayoutCard} />
             )}
-          </div>
         </SectionWrapper>
       )}
 
