@@ -1,11 +1,19 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabaseServer'
+import { createActionClient } from '@/lib/supabaseServer'
 
-async function handleLogout() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
+/**
+ * Logout must be a POST (form submission) for safety.
+ * GET requests (including Next.js <Link> prefetch, RSC prefetch, or direct navigation)
+ * must NOT trigger signOut, otherwise the sidebar Link prefetch will log users out
+ * immediately after login.
+ */
+async function handleLogout(request: Request) {
+  if (request.method === 'POST') {
+    const supabase = await createActionClient()
+    await supabase.auth.signOut()
+  }
   redirect('/admin/login')
 }
 
-export const GET = handleLogout
-export const POST = handleLogout
+export const GET = (req: Request) => handleLogout(req)
+export const POST = (req: Request) => handleLogout(req)
