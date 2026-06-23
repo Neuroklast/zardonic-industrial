@@ -20,23 +20,23 @@ describe('LoginForm (canonical native POST)', () => {
   it('renders email and password fields with a sign-in button', () => {
     render(<LoginForm />)
 
-    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText(/Email/i)).toBeInTheDocument()
     expect(screen.getByLabelText('Password')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
   })
 
   it('renders a native form that POSTs to the canonical server submit handler', () => {
     mockSearchParams.mockReturnValue(new URLSearchParams('redirect=/admin/releases'))
-    render(<LoginForm />)
+    const { container } = render(<LoginForm />)
 
-    const form = screen.getByRole('form') // the only form
-    expect(form).toHaveAttribute('method', 'POST')
-    expect(form).toHaveAttribute('action', '/admin/login/submit')
+    const form = container.querySelector('form') as HTMLFormElement
+    expect(form).toBeTruthy()
+    expect(form.getAttribute('method')).toBe('POST')
+    expect(form.getAttribute('action')).toBe('/admin/login/submit')
 
     // hidden redirectTo is forwarded
-    const hidden = screen.getByDisplayValue('/admin/releases') as HTMLInputElement | null
-    // The hidden input exists (value matches)
-    expect(hidden || screen.getByDisplayValue('/admin/releases')).toBeTruthy()
+    const hidden = container.querySelector('input[name="redirectTo"]') as HTMLInputElement | null
+    expect(hidden?.value).toBe('/admin/releases')
   })
 
   it('shows the forbidden error message when error=forbidden is in the URL', () => {

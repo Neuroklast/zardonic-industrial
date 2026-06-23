@@ -13,7 +13,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
  */
 export async function POST(request: Request) {
   const formData = await request.formData()
-  const email = String(formData.get('email') || '').trim()
+  const rawIdentifier = String(formData.get('email') || formData.get('phone') || '').trim()
   const password = String(formData.get('password') || '')
   const redirectTo = String(formData.get('redirectTo') || '/admin/releases')
 
@@ -25,12 +25,37 @@ export async function POST(request: Request) {
     return NextResponse.redirect(url, 303)
   }
 
+  // Early validation — prevents confusing Supabase "missing email or phone" errors.
+  // Always forward redirect param so user does not lose intended destination after fixing the form values.
+  if (!rawIdentifier) {
+    const errorUrl = new URL('/admin/login', request.url)
+    errorUrl.searchParams.set('msg', 'Email (or phone) is required.')
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
+    return NextResponse.redirect(errorUrl, 303)
+  }
+  if (!password) {
+    const errorUrl = new URL('/admin/login', request.url)
+    errorUrl.searchParams.set('msg', 'Password is required.')
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
+    return NextResponse.redirect(errorUrl, 303)
+  }
+
+  // Build sign-in payload — supports pure email login (phone is not required)
+  // and also allows phone login if a non-email identifier is provided.
+  const signInPayload = rawIdentifier.includes('@')
+    ? { email: rawIdentifier, password }
+    : { phone: rawIdentifier, password }
+
   // Note: even if SERVICE_ROLE_KEY is missing, the profile upsert below is wrapped in try/catch
   // so login itself can still succeed (user gets HttpOnly cookies).
 
   // Prepare the final redirect response FIRST so setAll can attach cookies to it.
   const finalRedirectUrl = redirectTo.startsWith('/') ? redirectTo : '/admin/releases'
-  let response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
+  const response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
 
   const cookieStore = await cookies()
 
@@ -63,13 +88,22 @@ export async function POST(request: Request) {
     },
   })
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword(signInPayload)
 
   if (error) {
     // On failure, redirect back to login with the real error message.
-    // (Do not leak internal details beyond message.)
+    // Improve common confusing Supabase messages.
+    let friendlyMessage = error.message || 'Login failed'
+
+    if (/email or phone/i.test(friendlyMessage) || /provide either an email/i.test(friendlyMessage)) {
+      friendlyMessage = 'Please enter a valid email address.'
+    }
+
     const errorUrl = new URL('/admin/login', request.url)
-    errorUrl.searchParams.set('msg', error.message || 'Login failed')
+    errorUrl.searchParams.set('msg', friendlyMessage)
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
     // For error path we can return a fresh redirect (no valid session cookies to propagate).
     return NextResponse.redirect(errorUrl, 303)
   }

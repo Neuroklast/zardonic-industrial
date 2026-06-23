@@ -1,6 +1,7 @@
 'use server'
 
-import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
+import { runAdminAction } from '@/app/admin/_actions/auth'
+import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'

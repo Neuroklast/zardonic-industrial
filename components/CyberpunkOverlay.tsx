@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect, useMemo, useRef } from 'react'
 import type React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { m } from 'framer-motion'
+
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'

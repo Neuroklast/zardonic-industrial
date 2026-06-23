@@ -85,16 +85,3 @@ export async function runAdminAction<T extends object>(
     return { error: await formatAdminActionError(error, fallback) }
   }
 }
-
-/** Helper to build minimal ctx for Supabase-backed dispatch calls (temp for migration).
- * Uses unknown-as to satisfy AdminActionContext without loose `any`.
- */
-export function createSupabaseActionContext(supabaseAdmin: ReturnType<typeof import('@/lib/supabaseAdmin').createAdminClient>) {
-  return {
-    adminSettings: {} as unknown as AdminSettings,
-    siteData: {} as unknown as SiteData,
-    setAdminSettings: () => {},
-    setSiteData: () => {},
-    supabaseAdmin,
-  }
-}

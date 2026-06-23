@@ -1,6 +1,7 @@
 'use server'
 
-import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
+import { runAdminAction } from '@/app/admin/_actions/auth'
+import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { uploadBufferToR2 } from './r2Upload'
@@ -106,7 +107,7 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
       .select('itunes_id')
       .not('itunes_id', 'is', null)
 
-    const existingIds = new Set((existing ?? []).map((row) => row.itunes_id as string))
+    const existingIds = new Set((existing ?? []).map((row: { itunes_id: string | null }) => row.itunes_id as string))
 
     const { data: maxRow } = await supabase
       .from('releases')

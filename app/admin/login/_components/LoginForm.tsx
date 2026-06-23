@@ -10,8 +10,6 @@ export default function LoginForm() {
   const msgParam = searchParams.get('msg')
   const redirectTo = searchParams.get('redirect') ?? '/admin/releases'
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
   // Server-provided generic auth error message from the /submit handler
@@ -54,17 +52,16 @@ export default function LoginForm() {
           <input type="hidden" name="redirectTo" value={redirectTo} />
 
           <div>
-            <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>
+            <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email (or phone)</label>
             <input
               id="email"
               name="email"
-              type="email"
+              type="text"
+              inputMode="email"
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
+              placeholder="you@example.com"
               autoComplete="email"
-              disabled={isLoading}
             />
           </div>
           <div>
@@ -74,11 +71,8 @@ export default function LoginForm() {
               name="password"
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
               autoComplete="current-password"
-              disabled={isLoading}
             />
           </div>
 

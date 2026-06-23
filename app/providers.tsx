@@ -5,6 +5,7 @@ import { LazyMotion, domAnimation } from 'framer-motion'
 import { ErrorBoundary } from 'react-error-boundary'
 import type { FallbackProps } from 'react-error-boundary'
 import { LenisProvider } from '@/contexts/LenisContext'
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { useState } from 'react'
 
 function ErrorFallback({ error }: FallbackProps) {
@@ -29,11 +30,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LazyMotion features={domAnimation} strict={false}>
       <LenisProvider>
-        <QueryClientProvider client={queryClient}>
-          <ErrorBoundary FallbackComponent={ErrorFallback}>
-            {children}
-          </ErrorBoundary>
-        </QueryClientProvider>
+        <LocaleProvider>
+          <QueryClientProvider client={queryClient}>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              {children}
+            </ErrorBoundary>
+          </QueryClientProvider>
+        </LocaleProvider>
       </LenisProvider>
     </LazyMotion>
   )

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { DEFAULT_KONAMI_CODE } from '@/lib/konami'
 
 interface KonamiListenerProps {
-  onCodeActivated: () => void
+  onCodeActivated?: () => void
   /** Custom key sequence. Falls back to the classic Konami code when omitted. */
   customCode?: string[]
 }
@@ -22,7 +22,7 @@ export default function KonamiListener({ onCodeActivated, customCode }: KonamiLi
         
         if (konamiIndex === code.length) {
           konamiIndex = 0
-          onCodeActivated()
+          onCodeActivated?.()
         }
       } else {
         konamiIndex = 0

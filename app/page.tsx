@@ -421,7 +421,7 @@ export default async function HomePage() {
                 <PublicPageClient
                   releases={releaseItems}
                   artistName={String(heroConfig.headline ?? 'ZARDONIC')}
-                  releaseLayout={typeof releaseOverrides.releaseLayout === 'string' ? releaseOverrides.releaseLayout : 'grid'}
+                  releaseLayout={typeof releaseOverrides.releaseLayout === 'string' && ['grid', 'swipe', 'carousel-3d'].includes(releaseOverrides.releaseLayout) ? (releaseOverrides.releaseLayout as 'grid' | 'swipe' | 'carousel-3d') : 'grid'}
                   releaseColumns={typeof releaseOverrides.releaseColumns === 'string' ? releaseOverrides.releaseColumns : '4'}
                   releaseCardVariant={typeof releaseOverrides.releaseCardVariant === 'string' ? releaseOverrides.releaseCardVariant : undefined}
                   releaseHoverEffect={typeof releaseOverrides.releaseHoverEffect === 'string' ? releaseOverrides.releaseHoverEffect : undefined}

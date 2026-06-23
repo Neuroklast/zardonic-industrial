@@ -1,3 +1,5 @@
+'use client'
+
 /* eslint-disable react-refresh/only-export-components */
 /**
  * LenisContext — Lenis smooth-scroll provider.
