@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 
 /**
  * Verifies that the current request is authenticated as an admin.
@@ -27,12 +28,25 @@ export async function requireAdmin(): Promise<void> {
         cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
         headers?: Record<string, string>,
       ) => {
-        // Pass options unchanged (canonical pattern)
+        // Canonical: spread first, apply secure shim via shared helper, forward headers.
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options)
+          const finalOptions = { ...options }
+          if (shouldForceInsecureCookies(null)) {
+            finalOptions.secure = false
+          }
+          cookieStore.set(name, value, finalOptions)
         })
         if (headers) {
-          // Headers (no-cache etc.) applied at response level by callers
+          // Headers are normally applied by the outer response (mw / route). Keep for completeness.
+          Object.entries(headers).forEach(([k, v]) => {
+            try {
+              // Best effort; server actions have limited header mutation surface.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ;(cookieStore as any).headers?.set?.(k, v)
+            } catch {
+              // intentional: header mutation surface limited in server action context
+            }
+          })
         }
       },
     },

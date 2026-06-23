@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabaseServer'
+import { createActionClient } from '@/lib/supabaseServer'
 
 async function handleLogout() {
-  const supabase = await createClient()
+  const supabase = await createActionClient()
   await supabase.auth.signOut()
   redirect('/admin/login')
 }

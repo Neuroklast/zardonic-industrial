@@ -2,6 +2,78 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 /**
+ * Shared helper: decide whether to force secure=false.
+ * - Always in non-production (npm run dev).
+ * - Also on localhost even under `next start` (prod build) because browsers reject Secure cookies over http.
+ * Used by all setAll adapters (submit, proxy, createClient*, requireAdmin).
+ */
+export function shouldForceInsecureCookies(urlStr?: string | null): boolean {
+  if (process.env.NODE_ENV !== 'production') return true
+  if (!urlStr) return false
+  try {
+    const host = new URL(urlStr).hostname
+    return host === 'localhost' || host === '127.0.0.1'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Internal factory for a safe @supabase/ssr cookies adapter.
+ * Always:
+ *  - spreads options first (enables chunked cookies)
+ *  - applies only the secure shim
+ *  - forwards the headers arg (ssr >= 0.12 no-cache etc.)
+ *  - respects the swallow flag for Server Component contexts
+ */
+function makeCookieAdapter(
+  cookieStore: Awaited<ReturnType<typeof cookies>>,
+  swallow: boolean,
+  requestUrl?: string | null,
+) {
+  return {
+    getAll: () => cookieStore.getAll(),
+    setAll: (
+      cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
+      headers?: Record<string, string>,
+    ) => {
+      const apply = () => {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          const finalOptions = { ...options }
+          if (shouldForceInsecureCookies(requestUrl)) {
+            finalOptions.secure = false
+          }
+          cookieStore.set(name, value, finalOptions)
+        })
+        if (headers) {
+          // Headers (Cache-Control private/no-cache etc.) are best-effort here.
+          // Primary application happens in submit route and middleware/proxy.
+          Object.entries(headers).forEach(([k, v]) => {
+            try {
+              // In some contexts (pure SC) header mutation is a no-op; ignore.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ;(cookieStore as any).headers?.set?.(k, v)
+            } catch {
+              // intentional: headers may not be writable in this context
+            }
+          })
+        }
+      }
+
+      if (swallow) {
+        try {
+          apply()
+        } catch {
+          // setAll called from a Server Component – safe to ignore per @supabase/ssr guidance
+        }
+      } else {
+        apply()
+      }
+    },
+  }
+}
+
+/**
  * Creates a Supabase server client with cookie-based auth.
  * Safe to use in Server Components where cookies are read-only;
  * setAll errors are silently ignored.
@@ -46,30 +118,7 @@ export const createClient = async () => {
   const cookieStore = await cookies()
 
   return createServerClient(url, anonKey, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (
-        cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
-        headers?: Record<string, string>,
-      ) => {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const finalOptions = { ...options };
-            // Local dev shim: Supabase often sets secure:true even on http; browser drops Secure cookies on localhost.
-            if (process.env.NODE_ENV !== 'production') {
-              finalOptions.secure = false;
-            }
-            // Pass through (with dev-only secure tweak)
-            cookieStore.set(name, value, finalOptions);
-          });
-          if (headers) {
-            // Headers applied by callers
-          }
-        } catch {
-          // setAll called from a Server Component – safe to ignore
-        }
-      },
-    },
+    cookies: makeCookieAdapter(cookieStore, true /* swallow for SC */, null),
   })
 }
 
@@ -118,24 +167,6 @@ export const createActionClient = async () => {
   const cookieStore = await cookies()
 
   return createServerClient(url, anonKey, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (
-        cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
-        headers?: Record<string, string>,
-      ) => {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          const finalOptions = { ...options };
-          // Local dev shim: prevent secure cookies breaking on http://localhost
-          if (process.env.NODE_ENV !== 'production') {
-            finalOptions.secure = false;
-          }
-          cookieStore.set(name, value, finalOptions);
-        });
-        if (headers) {
-          // Headers forwarded by route/middleware callers
-        }
-      },
-    },
+    cookies: makeCookieAdapter(cookieStore, false /* do not swallow — actions/layouts must persist refreshes */, null),
   })
 }

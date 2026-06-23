@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 
 /**
  * Canonical admin login POST handler.
@@ -69,15 +70,13 @@ export async function POST(request: Request) {
         headers?: Record<string, string>,
       ) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          // CRITICAL: pass options through unchanged for chunking.
-          // Local dev shim: Supabase often marks cookies secure even on http://localhost.
-          // Browsers refuse Secure cookies over plain http → session "disappears" immediately after login.
-          // We only tweak `secure` in non-prod; other flags (httpOnly, sameSite, path) stay exactly as Supabase gave them.
-          const finalOptions = { ...options };
-          if (process.env.NODE_ENV !== 'production' || request.url.includes('localhost')) {
-            finalOptions.secure = false;
+          // CRITICAL: pass options through unchanged for chunking (per AGENTS.md).
+          // Use shared helper so localhost detection is consistent with middleware + lib.
+          const finalOptions = { ...options }
+          if (shouldForceInsecureCookies(request.url)) {
+            finalOptions.secure = false
           }
-          response.cookies.set(name, value, finalOptions);
+          response.cookies.set(name, value, finalOptions)
         })
         if (headers) {
           Object.entries(headers).forEach(([key, value]) => {
