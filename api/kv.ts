@@ -1,3 +1,9 @@
+/**
+ * LEGACY MIGRATION ARTIFACT
+ * KV/Redis layer from before full Supabase migration.
+ * Main site now uses Supabase tables + R2 for all data.
+ * Only referenced in tests; not loaded by Next app/ or admin.
+ */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { kv, isRedisConfigured } from './_redis.js'
 import { applyRateLimit } from './_ratelimit.js'

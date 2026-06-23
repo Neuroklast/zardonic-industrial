@@ -7,17 +7,21 @@
  */
 
 export interface EnvStatus {
-  UPSTASH_REDIS_REST_URL: boolean
-  UPSTASH_REDIS_REST_TOKEN: boolean
-  ADMIN_SETUP_TOKEN: boolean
+  // Current primary backend (Supabase)
+  NEXT_PUBLIC_SUPABASE_URL: boolean
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: boolean
+  SUPABASE_SERVICE_ROLE_KEY: boolean
+  // Optional / legacy from migration
   RESEND_API_KEY: boolean
+  R2_PUBLIC_HOST: boolean
 }
 
 export const REQUIRED_ENV_VARS: { key: keyof EnvStatus; label: string; description: string; required: boolean }[] = [
-  { key: 'UPSTASH_REDIS_REST_URL', label: 'Upstash Redis URL', description: 'Upstash Redis URL for data persistence', required: true },
-  { key: 'UPSTASH_REDIS_REST_TOKEN', label: 'Upstash Redis Token', description: 'Upstash Redis token for data persistence', required: true },
-  { key: 'ADMIN_SETUP_TOKEN', label: 'Admin Setup Token', description: 'One-time token to create your admin password', required: true },
-  { key: 'RESEND_API_KEY', label: 'Resend API Key', description: 'API key for contact form email forwarding', required: false },
+  { key: 'NEXT_PUBLIC_SUPABASE_URL', label: 'Supabase URL', description: 'Supabase project URL (public + anon key required for data)', required: true },
+  { key: 'NEXT_PUBLIC_SUPABASE_ANON_KEY', label: 'Supabase Anon Key', description: 'Supabase anon/public key', required: true },
+  { key: 'SUPABASE_SERVICE_ROLE_KEY', label: 'Supabase Service Role', description: 'Service role key for admin operations and profile bootstrap', required: true },
+  { key: 'RESEND_API_KEY', label: 'Resend API Key', description: 'API key for contact form email (optional)', required: false },
+  { key: 'R2_PUBLIC_HOST', label: 'R2 Public Host', description: 'Cloudflare R2 public host for media (optional but recommended)', required: false },
 ]
 
 const EMPTY_STATUS: EnvStatus = {

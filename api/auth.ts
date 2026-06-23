@@ -1,3 +1,9 @@
+/**
+ * LEGACY MIGRATION ARTIFACT
+ * This file is from the pre-App-Router / Redis-based admin auth.
+ * Current admin auth is Supabase-only via /admin/login/submit/route.ts .
+ * Only kept for backward compat in some tests/scripts.
+ */
 import { randomBytes, scrypt as nodeScrypt } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { VercelRequest, VercelResponse } from '@vercel/node'

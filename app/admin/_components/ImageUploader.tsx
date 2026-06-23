@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { MEDIA_BUCKET } from '@/lib/constants'
 
 interface ImageUploaderProps {
   label?: string
@@ -28,7 +29,7 @@ export function ImageUploader({
     setUploading(true)
     try {
       const { createSignedUploadUrl } = await import('@/app/admin/_actions/r2Upload')
-      const bucket = process.env.NEXT_PUBLIC_R2_BUCKET_MEDIA ?? 'zardonic-media'
+      const bucket = MEDIA_BUCKET
       const ext = file.name.split('.').pop() ?? 'jpg'
       const path = `uploads/${Date.now()}.${ext}`
       const { url, objectPath, publicUrl } = await createSignedUploadUrl(bucket, path)

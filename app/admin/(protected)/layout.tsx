@@ -23,6 +23,8 @@ export default async function ProtectedAdminLayout({
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
+      {/* Admin shell uses custom dark container (different from public PageLayout).
+          Documented exception per AGENTS §6. All public pages use PageLayout. */}
       <div className="flex flex-1">
         <AdminNav />
         <main className="flex-1 p-4 pt-16 md:p-8 overflow-auto min-w-0">{children}</main>

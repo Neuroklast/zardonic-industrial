@@ -30,10 +30,18 @@ const parseEnv = () => {
   const schema = isServer ? serverEnvSchema : clientEnvSchema
   const parsed = schema.safeParse(process.env)
   if (!parsed.success) {
-    const missing = parsed.error.issues
-      .map((e) => `  ${e.path.join('.')}: ${e.message}`)
-      .join('\n')
-    throw new Error(`\n❌ Invalid environment variables:\n${missing}\n`)
+    if (process.env.NODE_ENV === 'production') {
+      const missing = parsed.error.issues
+        .map((e) => `  ${e.path.join('.')}: ${e.message}`)
+        .join('\n')
+      throw new Error(`\n❌ Invalid environment variables:\n${missing}\n`)
+    }
+    // Dev: allow partial env so the site can at least boot (user said they can't start locally)
+    console.warn('⚠️ env.mjs: Missing required env vars — running in degraded local-dev mode. Public site will use fallbacks.')
+    // Return best-effort partial object (callers must still guard)
+    return Object.fromEntries(
+      Object.keys(schema.shape).map(k => [k, process.env[k]])
+    )
   }
   return parsed.data
 }

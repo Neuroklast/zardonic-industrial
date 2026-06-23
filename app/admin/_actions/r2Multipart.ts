@@ -8,8 +8,7 @@ import {
   abortMultipartUpload,
 } from '@/lib/storage/r2-multipart'
 import type { CompletedPart } from '@/lib/storage/r2-multipart'
-
-const MEDIA_BUCKET = process.env.R2_BUCKET_MEDIA ?? 'zardonic-media'
+import { MEDIA_BUCKET } from '@/lib/constants'
 
 export async function createMultipartUploadAction(
   key: string,
