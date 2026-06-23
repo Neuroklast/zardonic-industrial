@@ -1,10 +1,18 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 
+/**
+ * Canonical admin auth "proxy" (the active protection file per this Next.js version's convention).
+ * Next 16 + Turbopack in this project treats proxy.ts as the auth gate (middleware.ts deprecated).
+ * Exports both a default function and named `proxy` (for tests) + `config`.
+ *
+ * See AGENTS.md for cookie rules this implements.
+ */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Login und Logout immer durchlassen
+  // Always allow login/logout (and non-admin). Login form must reach the submit handler.
   if (
     pathname.startsWith('/admin/login') ||
     pathname.startsWith('/admin/logout')
@@ -12,7 +20,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Nur /admin/* schützen
+  // Protect only /admin/*
   if (!pathname.startsWith('/admin')) {
     return NextResponse.next()
   }
@@ -39,13 +47,13 @@ export async function proxy(request: NextRequest) {
         })
 
         // Pass Supabase options THROUGH UNCHANGED (enables chunked cookies, no silent drop)
+        // Use canonical shared helper for secure flag.
         cookiesToSet.forEach(({ name, value, options }) => {
-          const finalOptions = { ...options };
-          // Local dev shim: prevent "secure" cookies on http://localhost (common cause of immediate logout after login)
-          if (process.env.NODE_ENV !== 'production' || request.url.includes('localhost')) {
-            finalOptions.secure = false;
+          const finalOptions = { ...options }
+          if (shouldForceInsecureCookies(request.url)) {
+            finalOptions.secure = false
           }
-          supabaseResponse.cookies.set(name, value, finalOptions);
+          supabaseResponse.cookies.set(name, value, finalOptions)
         })
 
         // Forward ssr>=0.12 headers (Cache-Control: private, no-cache..., Expires, Pragma)
@@ -58,19 +66,24 @@ export async function proxy(request: NextRequest) {
     },
   })
 
-  // WICHTIG: getUser() direkt nach createServerClient aufrufen (refreshes tokens)
+  // IMPORTANT: call getUser() immediately after createServerClient (refreshes tokens + triggers setAll)
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser()
 
-  // Helper: always copy refreshed cookies + headers from supabaseResponse onto redirect responses
+  // Helper: always copy refreshed cookies + headers from supabaseResponse onto redirect responses.
+  // Per AGENTS.md: "Every NextResponse.redirect() returned from proxy.ts must copy..."
+  // Use explicit 303 (See Other) to force GET after auth decisions, matching the login submit handler.
   function redirectWithCookies(targetUrl: URL) {
-    const redirectResponse = NextResponse.redirect(targetUrl)
+    const redirectResponse = NextResponse.redirect(targetUrl, 303)
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+      // Clean copy: do not pass the raw cookie descriptor (it contains name/value) as options.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { name, value, ...opts } = cookie as any
+      redirectResponse.cookies.set(name, value, opts)
     })
-    // Also propagate any Cache-Control/no-cache headers
+    // Also propagate any Cache-Control/no-cache headers from ssr
     supabaseResponse.headers.forEach((value, key) => {
       redirectResponse.headers.set(key, value)
     })
@@ -83,7 +96,7 @@ export async function proxy(request: NextRequest) {
     return redirectWithCookies(loginUrl)
   }
 
-  // Admin-Role Check (tolerant bei fehlendem Profile-Row)
+  // Admin-Role Check (tolerant if no profiles row yet — submit handler does best-effort upsert)
   let profile: { role?: string } | null = null
   try {
     const { data } = await supabase
@@ -107,3 +120,6 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*'],
 }
+
+// Default export for the runtime "proxy" / middleware loader (and named via declaration)
+export default proxy
