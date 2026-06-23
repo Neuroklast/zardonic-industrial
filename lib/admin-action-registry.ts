@@ -270,7 +270,7 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     label: 'Update Site Config',
     schema: z.object({ key: z.string(), value: z.unknown() }),
     minDisclosure: 'basic',
-    execute({ key, value }, { supabaseAdmin }) {
+    execute({ key: _key, value: _value }, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
       // Placeholder – real mutation stays in _actions until full port
       return { ok: true }
@@ -491,7 +491,7 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     label: 'Update Bio',
     schema: z.object({ content: z.string() }),
     minDisclosure: 'basic',
-    execute({ content }, { supabaseAdmin }) {
+    execute({ content: _content }, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
       return { ok: true }
     },

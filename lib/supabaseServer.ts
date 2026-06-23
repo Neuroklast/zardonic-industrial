@@ -20,6 +20,7 @@ export const createClient = async () => {
     // Fluent stub that supports common chaining: .from().select().eq().order().limit().single()/.maybeSingle()
     // Also thenable so `await supabase.from().select()` works for queries without terminal method.
     const makeQueryBuilder = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const builder: any = {
         select: () => builder,
         eq: () => builder,
@@ -27,6 +28,7 @@ export const createClient = async () => {
         limit: () => builder,
         single: () => Promise.resolve({ data: null, error: null }),
         maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         then: (onF: any, onR: any) => Promise.resolve({ data: [], error: null }).then(onF, onR),
       }
       return builder
@@ -37,6 +39,7 @@ export const createClient = async () => {
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured locally' } }),
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
   }
 
@@ -89,6 +92,7 @@ export const createActionClient = async () => {
     // Fluent stub that supports common chaining: .from().select().eq().order().limit().single()/.maybeSingle()
     // Also thenable so `await supabase.from().select()` works for queries without terminal method.
     const makeQueryBuilder = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const builder: any = {
         select: () => builder,
         eq: () => builder,
@@ -96,6 +100,7 @@ export const createActionClient = async () => {
         limit: () => builder,
         single: () => Promise.resolve({ data: null, error: null }),
         maybeSingle: () => Promise.resolve({ data: null, error: null }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         then: (onF: any, onR: any) => Promise.resolve({ data: [], error: null }).then(onF, onR),
       }
       return builder
@@ -106,6 +111,7 @@ export const createActionClient = async () => {
         getUser: () => Promise.resolve({ data: { user: null }, error: null }),
         signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured locally' } }),
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
   }
 
@@ -118,21 +124,16 @@ export const createActionClient = async () => {
         cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
         headers?: Record<string, string>,
       ) => {
-        try {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            const finalOptions = { ...options };
-            // Local dev shim: prevent secure cookies breaking on http://localhost
-            if (process.env.NODE_ENV !== 'production') {
-              finalOptions.secure = false;
-            }
-            cookieStore.set(name, value, finalOptions);
-          });
-          if (headers) {
-            // Headers forwarded by route/middleware callers
+        cookiesToSet.forEach(({ name, value, options }) => {
+          const finalOptions = { ...options };
+          // Local dev shim: prevent secure cookies breaking on http://localhost
+          if (process.env.NODE_ENV !== 'production') {
+            finalOptions.secure = false;
           }
-        } catch (error) {
-          // Re-throw for action/layout contexts so token refresh cookies persist (do not swallow)
-          throw error
+          cookieStore.set(name, value, finalOptions);
+        });
+        if (headers) {
+          // Headers forwarded by route/middleware callers
         }
       },
     },

@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
   // Prepare the final redirect response FIRST so setAll can attach cookies to it.
   const finalRedirectUrl = redirectTo.startsWith('/') ? redirectTo : '/admin/releases'
-  let response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
+  const response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
 
   const cookieStore = await cookies()
 

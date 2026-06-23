@@ -42,7 +42,7 @@ vi.mock('@supabase/ssr', () => ({
   ),
 }))
 
-import { middleware } from '@/middleware'
+import { proxy } from '@/proxy'
 
 function createRequest(pathname: string): NextRequest {
   const cookieJar = new Map<string, string>()
@@ -79,7 +79,7 @@ describe('middleware admin auth', () => {
       error: new Error('invalid session'),
     })
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBe('https://example.com/admin/login?redirect=%2Fadmin%2Freleases')
     // We expect cookies to not be manually persisted on the redirect, just letting it flow.
@@ -99,7 +99,7 @@ describe('middleware admin auth', () => {
       data: { role: 'admin' },
     })
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBeNull()
     expect(response.cookies.get('sb-refresh-token')?.value).toBe('fresh-refresh-token')
@@ -114,7 +114,7 @@ describe('middleware admin auth', () => {
       data: null,
     })
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBeNull()
   })
@@ -128,7 +128,7 @@ describe('middleware admin auth', () => {
       data: { role: 'user' },
     })
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
@@ -140,7 +140,7 @@ describe('middleware admin auth', () => {
     })
     mockSingle.mockRejectedValue(new Error('temporary lookup failure'))
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBeNull()
   })
@@ -160,7 +160,7 @@ describe('middleware admin auth', () => {
     })
     mockSingle.mockResolvedValue({ data: { role: 'admin' } })
 
-    const response = await middleware(createRequest('/admin/releases'))
+    const response = await proxy(createRequest('/admin/releases'))
 
     expect(response.headers.get('location')).toBeNull()
     expect(response.headers.get('cache-control')).toBe(

@@ -85,15 +85,3 @@ export async function runAdminAction<T extends object>(
   }
 }
 
-/** Helper to build minimal ctx for Supabase-backed dispatch calls (temp for migration).
- * TODO: extend AdminActionContext or create Supabase-only variant to avoid any.
- */
-export function createSupabaseActionContext(supabaseAdmin: ReturnType<typeof import('@/lib/supabaseAdmin').createAdminClient>) {
-  return {
-    adminSettings: {} as any, // temp until full old ctx removal
-    siteData: {} as any,
-    setAdminSettings: () => {},
-    setSiteData: () => {},
-    supabaseAdmin,
-  }
-}

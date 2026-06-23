@@ -16,6 +16,7 @@ export const createAdminClient = () => {
     }
     console.warn('⚠️ No SUPABASE_SERVICE_ROLE_KEY — admin client stubbed for local dev.')
     const makeAdminQuery = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const b: any = {
         upsert: () => Promise.resolve({ data: null, error: null }),
         select: () => b,
@@ -25,6 +26,7 @@ export const createAdminClient = () => {
     }
     return {
       from: () => makeAdminQuery(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
   }
 

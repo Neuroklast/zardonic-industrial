@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type MouseEvent } from 'react'
+import { useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { useLenisContext } from '@/contexts/LenisContext'
 

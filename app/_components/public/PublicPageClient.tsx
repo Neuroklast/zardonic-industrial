@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { m } from 'framer-motion'
+
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
@@ -64,7 +64,7 @@ function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
     tracks: [],
     customLinks: undefined,
     manuallyEdited: false,
-  } as any
+  } as unknown as Release
 }
 
 function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onClick: () => void }) {

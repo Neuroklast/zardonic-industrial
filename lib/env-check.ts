@@ -25,10 +25,11 @@ export const REQUIRED_ENV_VARS: { key: keyof EnvStatus; label: string; descripti
 ]
 
 const EMPTY_STATUS: EnvStatus = {
-  UPSTASH_REDIS_REST_URL: false,
-  UPSTASH_REDIS_REST_TOKEN: false,
-  ADMIN_SETUP_TOKEN: false,
+  NEXT_PUBLIC_SUPABASE_URL: false,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: false,
+  SUPABASE_SERVICE_ROLE_KEY: false,
   RESEND_API_KEY: false,
+  R2_PUBLIC_HOST: false,
 }
 
 export async function fetchEnvStatus(): Promise<EnvStatus> {

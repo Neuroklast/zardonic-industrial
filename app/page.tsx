@@ -184,21 +184,21 @@ export default async function HomePage() {
   // Extract releases style overrides (releaseLayout, columns, variants etc.) from site_config for public parity
   const sectionsValue = sectionsRaw
   const releaseOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.releases || {})
-    : {}
-  const fullReleaseOverrides = releaseOverrides // for variants etc.
+    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.releases || {}) as Record<string, unknown>
+    : {} as Record<string, unknown>
+  const _fullReleaseOverrides = releaseOverrides // for variants etc. (reserved)
   const galleryOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.gallery || {})
-    : {}
+    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.gallery || {}) as Record<string, unknown>
+    : {} as Record<string, unknown>
   const bioOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.bio || {})
-    : {}
+    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.bio || {}) as Record<string, unknown>
+    : {} as Record<string, unknown>
   const heroStyleOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.hero || {})
-    : {}
+    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.hero || {}) as Record<string, unknown>
+    : {} as Record<string, unknown>
   const creditOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? ((sectionsValue as any).styleOverrides?.creditHighlights || {})
-    : {}
+    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.creditHighlights || {}) as Record<string, unknown>
+    : {} as Record<string, unknown>
 
   // Background image: use R2 path or fallback to configured URL or placeholder
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
@@ -426,7 +426,7 @@ export default async function HomePage() {
                 <PublicPageClient
                   releases={releaseItems}
                   artistName={String(heroConfig.headline ?? 'ZARDONIC')}
-                  releaseLayout={typeof releaseOverrides.releaseLayout === 'string' ? releaseOverrides.releaseLayout : 'grid'}
+                  releaseLayout={typeof releaseOverrides.releaseLayout === 'string' && ['grid', 'swipe', 'carousel-3d'].includes(releaseOverrides.releaseLayout) ? (releaseOverrides.releaseLayout as 'grid' | 'swipe' | 'carousel-3d') : 'grid'}
                   releaseColumns={typeof releaseOverrides.releaseColumns === 'string' ? releaseOverrides.releaseColumns : '4'}
                   releaseCardVariant={typeof releaseOverrides.releaseCardVariant === 'string' ? releaseOverrides.releaseCardVariant : undefined}
                   releaseHoverEffect={typeof releaseOverrides.releaseHoverEffect === 'string' ? releaseOverrides.releaseHoverEffect : undefined}

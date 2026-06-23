@@ -1,7 +1,7 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-06-06  
-> **Agent ID:** copilot/architecture-refactor  
+> **Last Updated:** 2026-06-23  
+> **Agent ID:** grok/build-fix-proxy-serveraction  
 
 ---
 
@@ -48,6 +48,7 @@ This document records lessons learned during development sessions. Every coding 
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | Three separate icon libraries are in use (`@heroicons/react`, `@phosphor-icons/react`, `lucide-react`). This inflates the bundle unnecessarily. When adding new icons, always check which library is already dominant in the component you are modifying, and do not introduce a fourth. | Performance | 🟡 Medium |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | There is only one root-level `ErrorBoundary` wrapping the entire app. A single thrown error in any section unmounts the entire UI. Future work must add per-section error boundaries around every major section component. | Architecture | 🟡 Medium |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | The `middleware.ts` constructs a new `Redis` client on every request inside the handler, not at module scope. While Upstash is stateless HTTP, this is still wasteful on the Edge. Always initialise singleton clients at module scope. | Architecture | 🟡 Medium |
+| 2026-06-23 | grok/build-fix-proxy-serveraction | Grok 4 | Next.js `'use server'` files treat *all* top-level function exports as Server Actions — sync helpers (even internal factories returning ctx) are compile errors ("Server Actions must be async"). Always place shared non-action server utils in modules without the directive. Additionally, Next.js 16 deprecated the `middleware.ts` + `export function middleware` convention in favor of `proxy.ts` + `export function proxy`; use the codemod or manual rename+update on first deprecation warning to avoid future hard breaks. | DevOps | 🔴 Critical |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | Offensive security features (`_zipbomb.ts`, `_sql-backfire.ts`, `_log-poisoning.ts`) require a legal review before any jurisdiction-expanding deployment. These features may expose the operator to liability under EU law (Computer Fraud Directives) and US CFAA. | Security | 🟡 Medium |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | The image proxy (`api/image-proxy.ts`) imports `resolve4`/`resolve6` from `node:dns/promises` but DNS pre-resolution must be verified to occur **before** the HTTP fetch, not just at validation. DNS rebinding attacks can bypass host allowlists if the check and the connection happen at different times. | Security | 🟡 Medium |
 | 2026-04-01 | copilot/deep-audit-dokumentation | GitHub Copilot | The `RATE_LIMIT_SALT` env var falls back to a published hardcoded default (`'zd-default-rate-limit-salt-change-me'`). If this env var is not set in a production environment, IP hash anonymisation is trivially defeated. Always fail loudly (warn/error) when security-critical env vars are missing. | Security | 🟠 High |
