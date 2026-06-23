@@ -20,7 +20,6 @@ import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
 import { SocialSection } from './_components/public/SocialSection'
-import { SpotifySection } from './_components/public/SpotifySection'
 import type { Release as OverlayRelease } from '@/lib/app-types'
 
 // Revalidate at most once per minute for quick admin updates
@@ -38,6 +37,7 @@ interface ReleaseRow {
   id: string; title: string; type: string; release_date: string | null
   cover_storage_path: string | null; cover_url: string | null
   streaming_links: unknown
+  manually_edited: boolean | null
 }
 interface PartnerRow {
   id: string; name: string; url: string | null
@@ -77,7 +77,7 @@ async function fetchAll() {
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
       supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').eq('active', true).order('event_date', { ascending: true }),
-      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links, manually_edited').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
@@ -177,42 +177,54 @@ export default async function HomePage() {
   const bgConfig = getConfig(configRows, 'background')
   const appearanceConfig = getConfig(configRows, 'appearance')
   const sectionsRaw = configRows.find((r) => r.key === 'sections')?.value
-  const sections = parseSections(sectionsRaw)
+  let sections = parseSections(sectionsRaw)
     .sort((a, b) => a.order - b.order)
     .filter((s) => s.visible)
 
-  // Extract releases style overrides (releaseLayout, columns, variants etc.) from site_config for public parity
-  const sectionsValue = sectionsRaw
-  const releaseOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.releases || {}) as Record<string, unknown>
-    : {} as Record<string, unknown>
-  const _fullReleaseOverrides = releaseOverrides // for variants etc. (reserved)
-  const galleryOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.gallery || {}) as Record<string, unknown>
-    : {} as Record<string, unknown>
-  const bioOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.bio || {}) as Record<string, unknown>
-    : {} as Record<string, unknown>
-  const heroStyleOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.hero || {}) as Record<string, unknown>
-    : {} as Record<string, unknown>
-  const creditOverrides: Record<string, unknown> = (sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue))
-    ? (((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)?.creditHighlights || {}) as Record<string, unknown>
-    : {} as Record<string, unknown>
+  // Per final spec: CONNECT should not be a full section — small logos live in footer only
+  sections = sections.filter((s) => s.id !== 'social' && s.id !== 'connect' && s.id !== 'spotify')
 
-  // Background image: use R2 path or fallback to configured URL or placeholder
+  // Extract section style overrides from site_config (centralized helper to avoid repetition)
+  // Note: sections config can be array of sections or object with styleOverrides
+  const sectionsValue = sectionsRaw
+  const overridesRoot: Record<string, unknown> =
+    sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue)
+      ? ((sectionsValue as Record<string, unknown>).styleOverrides as Record<string, unknown> | undefined)
+        ?? (sectionsValue as Record<string, unknown>)
+      : {}
+
+  const getSectionOverrides = (key: string): Record<string, unknown> => {
+    const value = overridesRoot[key]
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
+  }
+
+  const releaseOverrides = getSectionOverrides('releases')
+  const galleryOverrides = getSectionOverrides('gallery')
+  const bioOverrides = getSectionOverrides('bio')
+  const heroStyleOverrides = getSectionOverrides('hero')
+  const creditOverrides = getSectionOverrides('creditHighlights')
+
+  // Background: Digicide album cover as primary (per final spec) + keep rich scroll video + animated effects
+  // Default to a safe placeholder (Digicide cover should be uploaded via admin background config / R2)
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
-  const bgFallback = typeof bgConfig.url === 'string' ? bgConfig.url : '/assets/bg-placeholder.jpg'
+  const bgFallback = typeof bgConfig.url === 'string' && bgConfig.url
+    ? bgConfig.url
+    : '/assets/bg-placeholder.jpg'
   const backgroundUrl = resolveImageUrl(bgStoragePath, bgFallback) ?? bgFallback
-  // Background video (optional): R2 path or direct URL
+
+  // Background video (scroll-synced "scroll video") — keep for current look + make performant
   const bgVideoPath = typeof bgConfig.video_storage_path === 'string' ? bgConfig.video_storage_path : null
   const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
   const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
+
   const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
   const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
     ? rawBackgroundType
-    : 'matrix'
-  const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.6
+    : 'matrix' // keep animated layers by default for the beloved current aesthetic
+
+  const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.55 // slightly more visible album art
 
   // Appearance config
   const crtEnabled = typeof appearanceConfig.crtEnabled === 'boolean' ? appearanceConfig.crtEnabled : true
@@ -220,20 +232,6 @@ export default async function HomePage() {
   const noiseEnabled = typeof appearanceConfig.noiseEnabled === 'boolean' ? appearanceConfig.noiseEnabled : true
   const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
-
-  // Spotify: derive embed URI from social_links or site_config
-  const spotifyRow = social.find((s) => s.platform.toLowerCase() === 'spotify')
-  const spotifyUri = (() => {
-    const url = spotifyRow?.url ?? ''
-    if (!url) return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
-    try {
-      const { hostname, pathname } = new URL(url)
-      if (hostname !== 'open.spotify.com' && !hostname.endsWith('.spotify.com')) return url
-      const parts = pathname.replace(/^\//, '').split('/').filter((p) => !p.startsWith('intl-'))
-      if (parts.length >= 2 && parts[0] && parts[1]) return `spotify:${parts[0]}:${parts[1]}`
-    } catch { /* ignore */ }
-    return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
-  })()
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => {
@@ -256,6 +254,7 @@ export default async function HomePage() {
       release_date: r.release_date,
       coverUrl,
       streamingLinks,
+      manually_edited: !!r.manually_edited,
       overlayRelease: {
         id: r.id,
         title: r.title,
@@ -264,6 +263,7 @@ export default async function HomePage() {
         releaseDate,
         streamingLinks,
         type: normalizeReleaseType(r.type),
+        manuallyEdited: !!r.manually_edited,
       },
     }
   })
@@ -440,13 +440,6 @@ export default async function HomePage() {
                 <SocialSection links={social} label={section.label} />
               </div>
             ) : null
-          case 'spotify':
-            return (
-              <div key="spotify">
-                {divider}
-                <SpotifySection uri={spotifyUri} label={section.label} />
-              </div>
-            )
           case 'merchandise':
             return merch.length > 0 ? (
               <div key="merchandise">

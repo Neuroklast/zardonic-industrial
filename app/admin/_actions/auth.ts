@@ -98,4 +98,3 @@ export async function runAdminAction<T extends object>(
     return { error: await formatAdminActionError(error, fallback) }
   }
 }
-
