@@ -5,6 +5,7 @@ import { createRelease } from '@/app/admin/_actions/releases'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { ReleaseExternalIdsSection } from '@/app/admin/_components/ReleaseExternalIdsSection'
 import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
+import { ReleaseTracklistField } from '@/app/admin/_components/ReleaseTracklistField'
 import type { ReleaseMetadata } from '@/lib/release-metadata'
 import { useState } from 'react'
 
@@ -86,6 +87,8 @@ export default function NewReleasePage() {
           }}
           onError={(msg) => setError(msg)}
         />
+        <ReleaseTracklistField initialTracks={[]} />
+
         <div>
           <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>
           <StreamingLinksEditor key={streamingLinksJson} initialJson={streamingLinksJson} />

@@ -306,7 +306,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
                             {artistLine.map((artist, ai) => (
                               <span key={artist}>
                                 {artist.trim().toLowerCase() === mainArtistName.trim().toLowerCase() ? (
-                                  <span className="text-primary font-semibold">{artist}</span>
+                                  <span className="text-primary font-bold">{artist}</span>
                                 ) : (
                                   <span className="text-muted-foreground">{artist}</span>
                                 )}

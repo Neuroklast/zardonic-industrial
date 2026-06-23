@@ -49,22 +49,7 @@ function normalizeType(value: string | null | undefined): ReleaseFilter {
 }
 
 function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
-  const artwork = item.coverUrl ?? ''
-  const streamingLinksArr = (item.streamingLinks || []).map((l) => ({ platform: l.platform, url: l.url }))
-  return {
-    id: item.id,
-    title: item.title,
-    type: normalizeType(item.type),
-    releaseDate: item.release_date ?? undefined,
-    year: item.release_date ? new Date(item.release_date).getFullYear().toString() : '',
-    artwork,
-    streamingLinks: streamingLinksArr,
-    description: undefined,
-    featured: false,
-    tracks: [],
-    customLinks: undefined,
-    manuallyEdited: !!item.manually_edited,
-  }
+  return item.overlayRelease
 }
 
 function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onClick: () => void }) {

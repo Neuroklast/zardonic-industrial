@@ -22,7 +22,10 @@ import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
 import { SocialSection } from './_components/public/SocialSection'
-import type { Release as OverlayRelease } from '@/lib/app-types'
+import {
+  mapReleaseRowToOverlayRelease,
+  type ReleaseDbRow,
+} from '@/lib/release-public-mapper'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -35,12 +38,7 @@ interface GigRow {
   country: string | null; event_date: string; ticket_url: string | null
   festival_name: string | null
 }
-interface ReleaseRow {
-  id: string; title: string; type: string; release_date: string | null
-  cover_storage_path: string | null; cover_url: string | null
-  streaming_links: unknown
-  manually_edited: boolean | null
-}
+type ReleaseRow = ReleaseDbRow
 interface PartnerRow {
   id: string; name: string; url: string | null
   logo_storage_path: string | null; logo_url: string | null; category: string
@@ -62,8 +60,10 @@ interface SectionConfig { id: string; label: string; visible: boolean; order: nu
 // ─── Data fetching ────────────────────────────────────────────────────────────
 async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
   const fullSelect =
+    'id, title, type, release_date, description, cover_storage_path, cover_url, streaming_links, artists, tracks, custom_links, manually_edited'
+  const legacySelect =
     'id, title, type, release_date, cover_storage_path, cover_url, streaming_links, manually_edited'
-  const fallbackSelect =
+  const minimalSelect =
     'id, title, type, release_date, cover_storage_path, cover_url, streaming_links'
 
   const { data, error } = await supabase
@@ -76,25 +76,26 @@ async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>)
 
   console.error('[fetchAll] releases query failed:', error.message)
 
-  if (error.message.includes('manually_edited')) {
-    const { data: fallbackData, error: fallbackError } = await supabase
-      .from('releases')
-      .select(fallbackSelect)
-      .eq('active', true)
-      .order('display_order', { ascending: true })
+  const fallbackSelect = error.message.includes('manually_edited') ? minimalSelect : legacySelect
+  const { data: fallbackData, error: fallbackError } = await supabase
+    .from('releases')
+    .select(fallbackSelect)
+    .eq('active', true)
+    .order('display_order', { ascending: true })
 
-    if (fallbackError) {
-      console.error('[fetchAll] releases fallback query failed:', fallbackError.message)
-      return []
-    }
-
-    return (fallbackData ?? []).map((row: Omit<ReleaseRow, 'manually_edited'>) => ({
-      ...row,
-      manually_edited: false,
-    }))
+  if (fallbackError) {
+    console.error('[fetchAll] releases fallback query failed:', fallbackError.message)
+    return []
   }
 
-  return []
+  return (fallbackData ?? []).map((row: Partial<ReleaseDbRow>) => ({
+    ...(row as ReleaseDbRow),
+    description: null,
+    artists: [],
+    tracks: [],
+    custom_links: [],
+    manually_edited: 'manually_edited' in row ? !!(row as ReleaseDbRow).manually_edited : false,
+  }))
 }
 
 async function fetchAll() {
@@ -202,20 +203,6 @@ function parseSections(raw: unknown): SectionConfig[] {
   return parsed.length > 0 ? parsed : DEFAULT_SECTIONS
 }
 
-function normalizeReleaseType(value: string): OverlayRelease['type'] {
-  const normalized = value.trim().toLowerCase()
-  if (
-    normalized === 'album' ||
-    normalized === 'ep' ||
-    normalized === 'single' ||
-    normalized === 'remix' ||
-    normalized === 'compilation'
-  ) {
-    return normalized
-  }
-  return ''
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function HomePage() {
   const {
@@ -309,16 +296,12 @@ export default async function HomePage() {
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => {
     const coverUrl = resolveImageUrl(r.cover_storage_path, r.cover_url)
-    const releaseDate = r.release_date ?? undefined
-    const releaseDateValue = releaseDate ? new Date(releaseDate) : null
-    const year = releaseDateValue && !Number.isNaN(releaseDateValue.getTime())
-      ? String(releaseDateValue.getFullYear())
-      : '----'
     const streamingLinks = Array.isArray(r.streaming_links)
       ? (r.streaming_links as Array<{ platform: string; url: string }>).filter(
           (l) => typeof l.platform === 'string' && typeof l.url === 'string',
         )
       : []
+    const overlayRelease = mapReleaseRowToOverlayRelease(r, coverUrl)
 
     return {
       id: r.id,
@@ -328,16 +311,7 @@ export default async function HomePage() {
       coverUrl,
       streamingLinks,
       manually_edited: !!r.manually_edited,
-      overlayRelease: {
-        id: r.id,
-        title: r.title,
-        artwork: coverUrl ?? '',
-        year,
-        releaseDate,
-        streamingLinks,
-        type: normalizeReleaseType(r.type),
-        manuallyEdited: !!r.manually_edited,
-      },
+      overlayRelease,
     }
   })
 

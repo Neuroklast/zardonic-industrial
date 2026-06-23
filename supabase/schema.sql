@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS public.releases (
   cover_storage_path text,
   cover_url text,
   streaming_links jsonb DEFAULT '[]',
+  tracks jsonb DEFAULT '[]',
+  custom_links jsonb DEFAULT '[]',
   artists text[] DEFAULT '{}',
   itunes_id text,
   spotify_id text,
@@ -199,6 +201,8 @@ ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS active boolean NOT NULL
 
 -- releases columns
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS cover_storage_path text;
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS tracks jsonb DEFAULT '[]';
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS custom_links jsonb DEFAULT '[]';
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS itunes_id text;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS spotify_id text;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS discogs_id text;

@@ -7,6 +7,7 @@ import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
+import { parseReleaseTracks } from '@/lib/release-public-mapper'
 import { z } from 'zod'
 
 const releaseInputSchema = z.object({
@@ -22,6 +23,7 @@ const releaseInputSchema = z.object({
   spotify_id: z.string().optional().nullable(),
   discogs_id: z.string().optional().nullable(),
   display_order: z.coerce.number().optional().default(0),
+  tracks: z.string().optional(),
 })
 
 function parseFormData(formData: FormData) {
@@ -38,6 +40,16 @@ function parseFormData(formData: FormData) {
     spotify_id: formData.get('spotify_id') || null,
     discogs_id: formData.get('discogs_id') || null,
     display_order: formData.get('display_order'),
+    tracks: formData.get('tracks'),
+  }
+}
+
+function parseTracksField(tracks: string | undefined) {
+  if (!tracks || typeof tracks !== 'string' || !tracks.trim()) return []
+  try {
+    return parseReleaseTracks(JSON.parse(tracks))
+  } catch {
+    return null
   }
 }
 
@@ -63,6 +75,9 @@ export async function createRelease(formData: FormData) {
   const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const tracks = parseTracksField(parsed.data.tracks)
+  if (tracks === null) return { error: 'Tracklist must be valid JSON' }
+
   const supabaseAdmin = createAdminClient()
 
   // Route through registry for AGENTS §12 compliance (validation + dispatch audit trail)
@@ -78,6 +93,7 @@ export async function createRelease(formData: FormData) {
       itunes_id: parseOptionalExternalId(parsed.data.itunes_id, normalizeItunesId),
       spotify_id: parseOptionalExternalId(parsed.data.spotify_id, normalizeSpotifyId),
       discogs_id: parseOptionalExternalId(parsed.data.discogs_id, normalizeDiscogsId),
+      tracks,
       manually_edited: true, // protect user edits from future enrichment/sync
     })
 
@@ -92,6 +108,9 @@ export async function createRelease(formData: FormData) {
 export async function updateRelease(id: string, formData: FormData) {
   const parsed = releaseInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
+
+  const tracks = parseTracksField(parsed.data.tracks)
+  if (tracks === null) return { error: 'Tracklist must be valid JSON' }
 
   const supabaseAdmin = createAdminClient()
 
@@ -109,6 +128,7 @@ export async function updateRelease(id: string, formData: FormData) {
         itunes_id: parseOptionalExternalId(parsed.data.itunes_id, normalizeItunesId),
         spotify_id: parseOptionalExternalId(parsed.data.spotify_id, normalizeSpotifyId),
         discogs_id: parseOptionalExternalId(parsed.data.discogs_id, normalizeDiscogsId),
+        tracks,
         manually_edited: true, // protect user edits from future enrichment/sync
       })
       .eq('id', id)
