@@ -1,7 +1,8 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -25,9 +26,13 @@ export async function createMusicHighlight(formData: FormData) {
   const parsed = schema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('create_music_highlight', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('music_highlights').insert(parsed.data)
+    const { error } = await supabaseAdmin.from('music_highlights').insert(parsed.data)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/music-highlights')
@@ -40,9 +45,13 @@ export async function updateMusicHighlight(id: string, formData: FormData) {
   const parsed = schema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_music_highlight', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('music_highlights').update(parsed.data).eq('id', id)
+    const { error } = await supabaseAdmin.from('music_highlights').update(parsed.data).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/music-highlights')
@@ -53,9 +62,13 @@ export async function updateMusicHighlight(id: string, formData: FormData) {
 }
 
 export async function deleteMusicHighlight(id: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('delete_music_highlight', { id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('music_highlights').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('music_highlights').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/music-highlights')
@@ -65,9 +78,13 @@ export async function deleteMusicHighlight(id: string) {
 }
 
 export async function toggleMusicHighlightVisibility(id: string, active: boolean) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_music_highlight', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('music_highlights').update({ active }).eq('id', id)
+    const { error } = await supabaseAdmin.from('music_highlights').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/music-highlights')

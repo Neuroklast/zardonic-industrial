@@ -23,10 +23,17 @@ export async function requireAdmin(): Promise<void> {
   const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll: () => cookieStore.getAll(),
-      setAll: (cookiesToSet: { name: string; value: string; options?: CookieOptions }[]) => {
+      setAll: (
+        cookiesToSet: { name: string; value: string; options?: CookieOptions }[],
+        headers?: Record<string, string>,
+      ) => {
+        // Pass options unchanged (canonical pattern)
         cookiesToSet.forEach(({ name, value, options }) => {
           cookieStore.set(name, value, options)
         })
+        if (headers) {
+          // Headers (no-cache etc.) applied at response level by callers
+        }
       },
     },
   })
@@ -75,5 +82,18 @@ export async function runAdminAction<T extends object>(
     return await action()
   } catch (error) {
     return { error: await formatAdminActionError(error, fallback) }
+  }
+}
+
+/** Helper to build minimal ctx for Supabase-backed dispatch calls (temp for migration).
+ * TODO: extend AdminActionContext or create Supabase-only variant to avoid any.
+ */
+export function createSupabaseActionContext(supabaseAdmin: ReturnType<typeof import('@/lib/supabaseAdmin').createAdminClient>) {
+  return {
+    adminSettings: {} as any, // temp until full old ctx removal
+    siteData: {} as any,
+    setAdminSettings: () => {},
+    setSiteData: () => {},
+    supabaseAdmin,
   }
 }

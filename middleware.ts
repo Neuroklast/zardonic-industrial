@@ -24,7 +24,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=config', request.url))
   }
 
-  // === SAUBERES PATTERN (offiziell empfohlen) ===
+  // === CANONICAL @supabase/ssr PATTERN (per AGENTS.md) ===
   let supabaseResponse = NextResponse.next({ request: { headers: request.headers } })
 
   const supabase = createServerClient(url, anonKey, {
@@ -33,24 +33,22 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet, headers) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value)
-        })
-
+        // Recreate response so that setAll can mutate cookies safely
         supabaseResponse = NextResponse.next({
           request: { headers: request.headers },
         })
 
+        // Pass Supabase options THROUGH UNCHANGED (enables chunked cookies, no silent drop)
         cookiesToSet.forEach(({ name, value, options }) => {
-          supabaseResponse.cookies.set(name, value, {
-            ...options,
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            path: '/',
-          })
+          const finalOptions = { ...options };
+          // Local dev shim: prevent "secure" cookies on http://localhost (common cause of immediate logout after login)
+          if (process.env.NODE_ENV !== 'production' || request.url.includes('localhost')) {
+            finalOptions.secure = false;
+          }
+          supabaseResponse.cookies.set(name, value, finalOptions);
         })
 
+        // Forward ssr>=0.12 headers (Cache-Control: private, no-cache..., Expires, Pragma)
         if (headers) {
           Object.entries(headers).forEach(([key, value]) =>
             supabaseResponse.headers.set(key, value),
@@ -60,19 +58,32 @@ export async function middleware(request: NextRequest) {
     },
   })
 
-  // WICHTIG: getUser() direkt nach createServerClient aufrufen
+  // WICHTIG: getUser() direkt nach createServerClient aufrufen (refreshes tokens)
   const {
     data: { user },
     error: authError,
   } = await supabase.auth.getUser()
 
+  // Helper: always copy refreshed cookies + headers from supabaseResponse onto redirect responses
+  function redirectWithCookies(targetUrl: URL) {
+    const redirectResponse = NextResponse.redirect(targetUrl)
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    // Also propagate any Cache-Control/no-cache headers
+    supabaseResponse.headers.forEach((value, key) => {
+      redirectResponse.headers.set(key, value)
+    })
+    return redirectResponse
+  }
+
   if (authError || !user) {
     const loginUrl = new URL('/admin/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl) // Supabase cookies werden automatisch mitgenommen
+    return redirectWithCookies(loginUrl)
   }
 
-  // Admin-Role Check (tolerant bei fehlendem Profile-Row, wie bisher)
+  // Admin-Role Check (tolerant bei fehlendem Profile-Row)
   let profile: { role?: string } | null = null
   try {
     const { data } = await supabase
@@ -87,7 +98,7 @@ export async function middleware(request: NextRequest) {
 
   if (profile !== null && profile.role !== 'admin') {
     const forbiddenUrl = new URL('/admin/login?error=forbidden', request.url)
-    return NextResponse.redirect(forbiddenUrl) // Supabase cookies werden automatisch mitgenommen
+    return redirectWithCookies(forbiddenUrl)
   }
 
   return supabaseResponse

@@ -7,7 +7,8 @@ import { createSignedUploadUrl } from '@/app/admin/_actions/r2Upload'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
 
-const R2_BUCKET = process.env.NEXT_PUBLIC_R2_BUCKET_MEDIA ?? 'zardonic-media'
+import { MEDIA_BUCKET } from '@/lib/constants'
+const R2_BUCKET = MEDIA_BUCKET
 
 type BackgroundType = 'matrix' | 'circuit' | 'minimal'
 

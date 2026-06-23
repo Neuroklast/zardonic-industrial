@@ -11,9 +11,13 @@ interface GalleryItem {
 
 interface GallerySectionProps {
   items: GalleryItem[]
+  columns?: string
+  maxVisible?: number
+  aspectRatio?: string
+  gap?: string
 }
 
-export function GallerySection({ items }: GallerySectionProps) {
+export function GallerySection({ items, columns = '3', maxVisible, aspectRatio, gap }: GallerySectionProps) {
   const visibleItems = items.filter((item) => item.imageUrl)
 
   return (
@@ -41,8 +45,14 @@ export function GallerySection({ items }: GallerySectionProps) {
           </div>
 
           {visibleItems.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-              {visibleItems.map((item, index) => (
+            <div
+              className={`grid ${columns === '2' ? 'grid-cols-2' : columns === '4' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'} ${gap ? '' : 'gap-4'}`}
+              style={{
+                gap: gap || undefined,
+                aspectRatio: aspectRatio || undefined,
+              }}
+            >
+              {(maxVisible ? visibleItems.slice(0, maxVisible) : visibleItems).map((item, index) => (
                 <m.div
                   key={item.id}
                   initial={{ opacity: 0, clipPath: 'inset(0 0 100% 0)' }}

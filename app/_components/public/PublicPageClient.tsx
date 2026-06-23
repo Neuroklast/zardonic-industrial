@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { m } from 'framer-motion'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
+import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
+import { Releases3DCarouselLayout } from '@/components/releases/Releases3DCarouselLayout'
 
 interface PublicReleaseCardItem {
   id: string
@@ -18,21 +21,176 @@ interface PublicReleaseCardItem {
 interface PublicPageClientProps {
   releases: PublicReleaseCardItem[]
   artistName?: string
+  releaseLayout?: 'grid' | 'swipe' | 'carousel-3d'
+  releaseColumns?: string
+  releaseCardVariant?: string
+  releaseHoverEffect?: string
 }
 
-export function PublicPageClient({ releases, artistName = '' }: PublicPageClientProps) {
+type ReleaseFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
+
+const FILTERS: Array<{ value: ReleaseFilter; label: string }> = [
+  { value: '', label: 'All' },
+  { value: 'album', label: 'Album' },
+  { value: 'ep', label: 'EP' },
+  { value: 'single', label: 'Single' },
+  { value: 'remix', label: 'Remix' },
+  { value: 'compilation', label: 'Compilation' },
+]
+
+function normalizeType(value: string | null | undefined): ReleaseFilter {
+  const normalized = value?.trim().toLowerCase() ?? ''
+  if (['album', 'ep', 'single', 'remix', 'compilation'].includes(normalized)) {
+    return normalized as ReleaseFilter
+  }
+  return ''
+}
+
+function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
+  return {
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    releaseDate: item.release_date ?? undefined,
+    year: item.release_date ? new Date(item.release_date).getFullYear().toString() : undefined,
+    artwork: item.coverUrl ?? undefined,
+    cover: item.coverUrl ?? undefined,
+    streamingLinks: (item.streamingLinks || []).reduce((acc, l) => {
+      acc[l.platform] = l.url
+      return acc
+    }, {} as Record<string, string>),
+    description: undefined,
+    featured: false,
+    tracks: [],
+    customLinks: undefined,
+    manuallyEdited: false,
+  } as any
+}
+
+function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onClick: () => void }) {
+  return (
+    <div
+      className="cyber-card group overflow-hidden border border-border bg-card/50 transition-all hover:border-primary/50 hover-chromatic cursor-pointer"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+    >
+      <div className="relative aspect-[4/3] overflow-hidden bg-black">
+        {item.coverUrl ? (
+          <img
+            src={item.coverUrl}
+            alt={item.title}
+            className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="h-full w-full flex items-center justify-center text-muted-foreground font-mono text-xs">NO ART</div>
+        )}
+      </div>
+      <div className="p-3">
+        <h3 className="truncate font-mono text-sm font-bold uppercase hover-chromatic" title={item.title}>{item.title}</h3>
+        {item.type && (
+          <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">{item.type}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export function PublicPageClient({ releases, artistName = '', releaseLayout = 'grid', releaseColumns = '4', releaseCardVariant, releaseHoverEffect }: PublicPageClientProps) {
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
+  const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
+
+  const handleReleaseClick = (item: PublicReleaseCardItem) => {
+    setOverlay({ type: 'release', data: item.overlayRelease })
+  }
+
+  const isFancy = releaseLayout === 'swipe' || releaseLayout === 'carousel-3d'
+
+  // For fancy layouts (and potential future), compute filtered list like legacy
+  const filteredReleases = useMemo(() => {
+    const sorted = [...releases].sort((left, right) => {
+      const leftTime = left.release_date ? new Date(left.release_date).getTime() : 0
+      const rightTime = right.release_date ? new Date(right.release_date).getTime() : 0
+      return rightTime - leftTime
+    })
+    if (!activeFilter) return sorted
+    return sorted.filter((release) => normalizeType(release.type) === activeFilter)
+  }, [activeFilter, releases])
+
+  const layoutReleases = filteredReleases.map(mapToLayoutRelease)
+
+  const renderLayoutCard = (rel: Release, index: number) => {
+    const item = filteredReleases[index] || filteredReleases.find(r => r.id === rel.id)
+    if (!item) return null
+    return <PublicReleaseCard item={item} onClick={() => handleReleaseClick(item)} />
+  }
+
+  const handleFilter = (f: ReleaseFilter) => {
+    setActiveFilter(f)
+  }
 
   return (
     <>
-      <ReleasesSection
-        releases={releases}
-        onReleaseClick={(release) => {
-          const selected = releases.find((item) => item.id === release.id)
-          if (!selected) return
-          setOverlay({ type: 'release', data: selected.overlayRelease })
-        }}
-      />
+      {!isFancy ? (
+        <ReleasesSection
+          releases={releases}
+          columns={releaseColumns}
+          cardVariant={releaseCardVariant}
+          hoverEffect={releaseHoverEffect}
+          onReleaseClick={(release) => {
+            const selected = releases.find((item) => item.id === release.id)
+            if (!selected) return
+            setOverlay({ type: 'release', data: selected.overlayRelease })
+          }}
+        />
+      ) : (
+        <section
+          id="releases"
+          className="scanline-effect py-section px-card"
+          style={{ zIndex: 'var(--z-content)' }}
+          data-theme-color="foreground card border primary"
+        >
+          <div className="container mx-auto max-w-6xl">
+            <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+              <h2
+                className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
+                data-text="RELEASES"
+              >
+                RELEASES
+                <span className="animate-pulse">_</span>
+              </h2>
+            </div>
+            <div className="mb-6 flex flex-wrap gap-2">
+              {FILTERS.map((filter) => (
+                <button
+                  key={filter.value || 'all'}
+                  type="button"
+                  onClick={() => handleFilter(filter.value)}
+                  className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                    activeFilter === filter.value
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-muted-foreground hover:border-primary/40'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+
+            {filteredReleases.length === 0 ? (
+              <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
+                Releases coming soon
+              </div>
+            ) : releaseLayout === 'swipe' ? (
+              <ReleasesSwipeLayout releases={layoutReleases} renderCard={renderLayoutCard} />
+            ) : (
+              <Releases3DCarouselLayout releases={layoutReleases} renderCard={renderLayoutCard} />
+            )}
+          </div>
+        </section>
+      )}
 
       <CyberpunkOverlay
         overlay={overlay}

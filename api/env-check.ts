@@ -51,10 +51,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 }
 
 function buildVars(): Record<string, boolean> {
+  // Updated for current Supabase + R2 backend (old Redis/UPSTASH paths are legacy)
   return {
-    UPSTASH_REDIS_REST_URL: !!process.env.UPSTASH_REDIS_REST_URL,
-    UPSTASH_REDIS_REST_TOKEN: !!process.env.UPSTASH_REDIS_REST_TOKEN,
-    ADMIN_SETUP_TOKEN: !!process.env.ADMIN_SETUP_TOKEN,
+    NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    R2_PUBLIC_HOST: !!process.env.R2_PUBLIC_HOST,
     RESEND_API_KEY: !!process.env.RESEND_API_KEY,
   }
 }

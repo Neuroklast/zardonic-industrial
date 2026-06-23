@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useLenisContext } from '@/contexts/LenisContext'
 
 const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -11,12 +12,13 @@ const NAV_LINKS = [
   { href: '#music', label: 'Music' },
   { href: '#releases', label: 'Releases' },
   { href: '#merch', label: 'Merch' },
-  { href: '#events', label: 'Events' },
+  { href: '#gigs', label: 'Events' },
   { href: '#contact', label: 'Contact' },
 ]
 
 export function SiteNav() {
   const [open, setOpen] = useState(false)
+  const { scrollTo } = useLenisContext()
 
   return (
     <header
@@ -41,6 +43,12 @@ export function SiteNav() {
             <a
               key={l.href}
               href={l.href}
+              onClick={(e) => {
+                e.preventDefault()
+                const id = l.href.replace('#', '')
+                scrollTo(id, { offset: -60 })
+                setOpen(false)
+              }}
               className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase hover-chromatic"
             >
               {l.label}
@@ -69,7 +77,12 @@ export function SiteNav() {
             <a
               key={l.href}
               href={l.href}
-              onClick={() => setOpen(false)}
+              onClick={(e) => {
+                e.preventDefault()
+                const id = l.href.replace('#', '')
+                scrollTo(id, { offset: -60 })
+                setOpen(false)
+              }}
               className="font-mono text-xs tracking-widest text-zinc-400 hover:text-white transition-colors uppercase hover-chromatic"
             >
               {l.label}

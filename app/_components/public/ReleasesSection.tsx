@@ -26,6 +26,9 @@ interface Release {
 interface ReleasesSectionProps {
   releases: Release[]
   onReleaseClick?: (release: Release) => void
+  columns?: string
+  cardVariant?: string
+  hoverEffect?: string
 }
 
 type ReleaseFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
@@ -82,7 +85,7 @@ function getPlatformIcon(platform: string) {
   }
 }
 
-export function ReleasesSection({ releases, onReleaseClick }: ReleasesSectionProps) {
+export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant, hoverEffect }: ReleasesSectionProps) {
   const [showAll, setShowAll] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
 
@@ -98,6 +101,18 @@ export function ReleasesSection({ releases, onReleaseClick }: ReleasesSectionPro
   }, [activeFilter, releases])
 
   const visibleReleases = showAll ? filteredReleases : filteredReleases.slice(0, 8)
+
+  const colsClass = (() => {
+    const c = columns ?? '4'
+    if (c === '2') return 'grid-cols-2'
+    if (c === '3') return 'grid-cols-2 md:grid-cols-3'
+    return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+  })()
+
+  const cardExtra = [
+    cardVariant === 'square-cover' ? 'aspect-square' : '',
+    hoverEffect === 'zoom' ? 'hover:scale-[1.03]' : hoverEffect === 'glow' ? 'release-hover-glow' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <section
@@ -149,7 +164,7 @@ export function ReleasesSection({ releases, onReleaseClick }: ReleasesSectionPro
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4">
+              <div className={`grid ${colsClass} gap-6`}>
                 {visibleReleases.map((release, index) => (
                   <m.article
                     key={release.id}
@@ -157,7 +172,7 @@ export function ReleasesSection({ releases, onReleaseClick }: ReleasesSectionPro
                     whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className={`cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic ${
+                    className={`cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic ${cardExtra} ${
                       onReleaseClick ? 'cursor-pointer' : ''
                     }`}
                     onClick={(event) => {

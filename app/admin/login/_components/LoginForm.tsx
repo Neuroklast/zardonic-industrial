@@ -1,11 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabaseClient'
+import { useSearchParams } from 'next/navigation'
 
 export default function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   const errorParam = searchParams.get('error')
@@ -14,30 +12,10 @@ export default function LoginForm() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [errorMsg, setErrorMsg] = useState<string | null>(msgParam)
   const [isLoading, setIsLoading] = useState(false)
 
-  const supabase = createClient()
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setErrorMsg(null)
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setErrorMsg(error.message)
-      setIsLoading(false)
-      return
-    }
-
-    router.push(redirectTo)
-    router.refresh()
-  }
+  // Server-provided generic auth error message from the /submit handler
+  const serverAuthError = msgParam && errorParam !== 'forbidden' && errorParam !== 'config' ? msgParam : null
 
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
@@ -57,13 +35,24 @@ export default function LoginForm() {
             Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
           </div>
         )}
-        {errorMsg && errorParam !== 'forbidden' && errorParam !== 'config' && (
+        {serverAuthError && (
           <div className="mb-4 p-3 rounded bg-red-950 border border-red-800 text-red-300 text-sm">
-            {errorMsg}
+            {serverAuthError}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* NATIVE FORM — canonical path per AGENTS.md.
+           POST goes to server Route Handler which performs signInWithPassword via createServerClient
+           and attaches HttpOnly cookies to the 303 redirect response. */}
+        <form
+          method="POST"
+          action="/admin/login/submit"
+          className="space-y-4"
+          onSubmit={() => setIsLoading(true)}
+        >
+          {/* Forward the intended destination so submit can 303 to it after success */}
+          <input type="hidden" name="redirectTo" value={redirectTo} />
+
           <div>
             <label htmlFor="email" className="block text-sm text-zinc-300 mb-1">Email</label>
             <input

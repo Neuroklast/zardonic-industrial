@@ -1,7 +1,8 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -27,9 +28,13 @@ export async function createPartner(formData: FormData) {
   const parsed = partnerInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('create_partner', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('partners').insert(parsed.data)
+    const { error } = await supabaseAdmin.from('partners').insert(parsed.data)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')
@@ -42,9 +47,13 @@ export async function updatePartner(id: string, formData: FormData) {
   const parsed = partnerInputSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_partner', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('partners').update(parsed.data).eq('id', id)
+    const { error } = await supabaseAdmin.from('partners').update(parsed.data).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')
@@ -54,9 +63,13 @@ export async function updatePartner(id: string, formData: FormData) {
 }
 
 export async function deletePartner(id: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('delete_partner', { id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('partners').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('partners').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')
@@ -66,6 +79,11 @@ export async function deletePartner(id: string) {
 }
 
 export async function togglePartnerVisibility(id: string, active: boolean) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_partner', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
     const supabase = createAdminClient()
     const { error } = await supabase.from('partners').update({ active }).eq('id', id)

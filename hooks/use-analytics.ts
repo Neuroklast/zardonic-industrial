@@ -6,6 +6,7 @@
  */
 import { useEffect } from 'react'
 import { API_ROUTES } from '@/lib/api-routes'
+import { getAnalyticsConsentSync } from '@/lib/consent'
 
 const STORAGE_KEY = 'zd-site-analytics'
 const SESSION_ID_KEY = 'zd-session-id'
@@ -298,6 +299,7 @@ let _lastHeatmapSend = 0
 
 /** Track a page view. Call once on initial page load. */
 export function trackPageView(): void {
+  if (!getAnalyticsConsentSync()) return  // MUST guard per AGENTS §2 (localStorage analytics)
   const analytics = loadLocalAnalytics()
   const today = new Date().toISOString().split('T')[0]
 
@@ -365,6 +367,7 @@ export function trackPageView(): void {
 
 /** Track a section becoming visible (IntersectionObserver) */
 export function trackSectionView(sectionId: string): void {
+  if (!getAnalyticsConsentSync()) return
   // Deduplicate: only track each section once per session
   if (_trackedSections.has(sectionId)) return
   _trackedSections.add(sectionId)
@@ -379,6 +382,7 @@ export function trackSectionView(sectionId: string): void {
 
 /** Track a user interaction (button click, profile open, etc.) */
 export function trackInteraction(action: string): void {
+  if (!getAnalyticsConsentSync()) return
   const analytics = loadLocalAnalytics()
   analytics.interactions[action] = (analytics.interactions[action] || 0) + 1
   const dailyEntry = ensureDailyEntry(analytics)

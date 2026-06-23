@@ -1,7 +1,8 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { runAdminAction, createSupabaseActionContext } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -27,9 +28,13 @@ export async function createMerchandise(formData: FormData) {
   const parsed = schema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('create_merchandise', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('merchandise').insert({
+    const { error } = await supabaseAdmin.from('merchandise').insert({
       ...parsed.data,
       image_url: parsed.data.image_url || null,
       external_url: parsed.data.external_url || null,
@@ -46,9 +51,13 @@ export async function updateMerchandise(id: string, formData: FormData) {
   const parsed = schema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_merchandise', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from('merchandise')
       .update({
         ...parsed.data,
@@ -66,9 +75,13 @@ export async function updateMerchandise(id: string, formData: FormData) {
 }
 
 export async function deleteMerchandise(id: string) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('delete_merchandise', { id }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('merchandise').delete().eq('id', id)
+    const { error } = await supabaseAdmin.from('merchandise').delete().eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/merchandise')
@@ -78,9 +91,13 @@ export async function deleteMerchandise(id: string) {
 }
 
 export async function toggleMerchandiseVisibility(id: string, active: boolean) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminAction('update_merchandise', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
   return runAdminAction(async () => {
-    const supabase = createAdminClient()
-    const { error } = await supabase.from('merchandise').update({ active }).eq('id', id)
+    const { error } = await supabaseAdmin.from('merchandise').update({ active }).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/merchandise')

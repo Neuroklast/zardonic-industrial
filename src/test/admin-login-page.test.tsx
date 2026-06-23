@@ -1,36 +1,20 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { mockSearchParams, mockRouterPush, mockRouterRefresh, mockSignInWithPassword } = vi.hoisted(() => ({
+const { mockSearchParams } = vi.hoisted(() => ({
   mockSearchParams: vi.fn(),
-  mockRouterPush: vi.fn(),
-  mockRouterRefresh: vi.fn(),
-  mockSignInWithPassword: vi.fn(),
 }))
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => mockSearchParams(),
-  useRouter: () => ({
-    push: mockRouterPush,
-    refresh: mockRouterRefresh,
-  }),
-}))
-
-vi.mock('@/lib/supabaseClient', () => ({
-  createClient: () => ({
-    auth: {
-      signInWithPassword: mockSignInWithPassword,
-    },
-  }),
 }))
 
 import LoginForm from '@/app/admin/login/_components/LoginForm'
 
-describe('LoginForm', () => {
+describe('LoginForm (canonical native POST)', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockSearchParams.mockReturnValue(new URLSearchParams())
-    mockSignInWithPassword.mockResolvedValue({ error: null })
   })
 
   it('renders email and password fields with a sign-in button', () => {
@@ -41,38 +25,18 @@ describe('LoginForm', () => {
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument()
   })
 
-  it('handles client-side sign-in and redirect', async () => {
+  it('renders a native form that POSTs to the canonical server submit handler', () => {
     mockSearchParams.mockReturnValue(new URLSearchParams('redirect=/admin/releases'))
     render(<LoginForm />)
 
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@example.com' } })
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
+    const form = screen.getByRole('form') // the only form
+    expect(form).toHaveAttribute('method', 'POST')
+    expect(form).toHaveAttribute('action', '/admin/login/submit')
 
-    await waitFor(() => {
-      expect(mockSignInWithPassword).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123',
-      })
-    })
-
-    expect(mockRouterPush).toHaveBeenCalledWith('/admin/releases')
-    expect(mockRouterRefresh).toHaveBeenCalled()
-  })
-
-  it('displays auth error message on failed sign-in', async () => {
-    mockSignInWithPassword.mockResolvedValueOnce({ error: { message: 'Invalid credentials' } })
-    render(<LoginForm />)
-
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'test@example.com' } })
-    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'wrongpassword' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Sign In' }))
-
-    await waitFor(() => {
-      expect(screen.getByText('Invalid credentials')).toBeInTheDocument()
-    })
-
-    expect(mockRouterPush).not.toHaveBeenCalled()
+    // hidden redirectTo is forwarded
+    const hidden = screen.getByDisplayValue('/admin/releases') as HTMLInputElement | null
+    // The hidden input exists (value matches)
+    expect(hidden || screen.getByDisplayValue('/admin/releases')).toBeTruthy()
   })
 
   it('shows the forbidden error message when error=forbidden is in the URL', () => {
