@@ -145,7 +145,12 @@ export function BackgroundStack({
       ) : null}
 
       {videoUrl ? (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 'var(--z-bg-animated)' }}>
+        <div
+          className="fixed inset-0 pointer-events-none overflow-hidden bg-black"
+          style={{ zIndex: 'var(--z-bg-video)', opacity: 0.5 }}
+        >
+          {/* Video layer is always rendered on solid black at 50% opacity (per spec) */}
+          {/* Extra veil ensures footage is never too bright even for bright source videos */}
           <video
             ref={videoRef}
             className="h-full w-full object-cover"
@@ -157,6 +162,7 @@ export function BackgroundStack({
           >
             <source src={videoUrl} />
           </video>
+          <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
         </div>
       ) : null}
 

@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import type { AdminSettings, SiteData } from '@/lib/types'
 
 /**
  * Verifies that the current request is authenticated as an admin.
@@ -86,12 +87,12 @@ export async function runAdminAction<T extends object>(
 }
 
 /** Helper to build minimal ctx for Supabase-backed dispatch calls (temp for migration).
- * TODO: extend AdminActionContext or create Supabase-only variant to avoid any.
+ * Uses unknown-as to satisfy AdminActionContext without loose `any`.
  */
 export function createSupabaseActionContext(supabaseAdmin: ReturnType<typeof import('@/lib/supabaseAdmin').createAdminClient>) {
   return {
-    adminSettings: {} as any, // temp until full old ctx removal
-    siteData: {} as any,
+    adminSettings: {} as unknown as AdminSettings,
+    siteData: {} as unknown as SiteData,
     setAdminSettings: () => {},
     setSiteData: () => {},
     supabaseAdmin,

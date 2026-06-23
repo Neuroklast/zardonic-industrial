@@ -22,6 +22,13 @@
  * Cron calls must supply `Authorization: Bearer <CRON_SECRET>`.
  * Admin can also trigger it manually (requires valid session).
  */
+/**
+ * LEGACY FILE (Redis/KV). 
+ * Modern stack: Supabase releases table + app/admin/_actions/itunesSync.ts (with manually_edited protection).
+ * See itunesSync for current discovery + R2 artwork.
+ * This may still be called by old crons but core data flow is Supabase.
+ */
+
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getRedisOrNull, isRedisConfigured } from './_redis.js'
 import { fetchWithRetry } from './_fetch-retry.js'

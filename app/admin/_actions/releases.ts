@@ -55,6 +55,7 @@ export async function createRelease(formData: FormData) {
       ...parsed.data,
       streaming_links: parseStreamingLinks(parsed.data.streaming_links),
       artists: parseArtists(parsed.data.artists),
+      manually_edited: true, // protect user edits from future enrichment/sync
     })
 
     if (error) return { error: error.message }
@@ -81,6 +82,7 @@ export async function updateRelease(id: string, formData: FormData) {
         ...parsed.data,
         streaming_links: parseStreamingLinks(parsed.data.streaming_links),
         artists: parseArtists(parsed.data.artists),
+        manually_edited: true, // protect user edits from future enrichment/sync
       })
       .eq('id', id)
 

@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added / Changed for Zardonic v234 Final Spec (while preserving current rich look)
 - Background now defaults to Digicide album cover as primary static layer, with all existing animated effects, scroll video behavior, matrix/circuit layers kept and running on top (high performance tuned).
 - High-performance improvements: throttled scroll-to-video sync, reduced density/speed for animated layers when strong image present, lite-mode friendly.
-- Releases: stronger protection in iTunes sync against overwriting user edits by title; enforced square gallery grid treatment.
+- Releases: stronger protection in iTunes sync (title skip) and admin updates (set manually_edited=true); merge logic protects manual edits by keeping content + add-only streaming links. Odesli enrichment merges instead of overwrite for stability. Spotify: consent-based two-click embed from social_links. iTunes: manual admin sync populates DB + R2 artwork. Odesli: backend enrichment for cross-platform links (via api/odesli and enrich workers). Artwork from iTunes cached to R2 during sync.
 - Sections: Social/Connect reduced to small footer logos only (no full section). SpotifySection deprioritized in favor of YouTube-based Music Highlights.
 - Uniform clean sections enforced (no per-section backgrounds/overlays).
 - All changes verified via multiple static audit passes (greps for AGENTS violations, dynamic classes, effects presence, "NO" rules from tester spec).
@@ -21,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - Full bug fix sweep from deep research: completed wiring of admin _actions (soundpacks, musicHighlights, gallery, bio, etc.) to ADMIN_ACTION_REGISTRY via dispatch + helper. Centralized ctx to reduce 'as any'.
+- Background video: enforced correct `--z-bg-video` layer (was wrongly using --z-bg-animated), default 50% opacity + solid black container + inner veil for reliably dimmed footage regardless of source video brightness. Default image fallback switched to existing asset to prevent 404.
+- Removed all `as any` from active app/ tree (PublicPageClient mapper + admin ctx shim) using proper types / unknown-as + strict Release shape.
+- Removed invalid Tailwind arbitrary `z-[var(--...)]` (style var() is canonical). All z via var(--z-*) or layer constants.
+- Uniform sections: converted all content sections (Bio, Gallery, Credits, Gigs, Releases + fancy path) to use shared `SectionWrapper` (no more duplicated manual `<section className="scanline-effect py-section px-card" + container>` boilerplate). Removed per-section `scanline-effect` overlays from content sections (only global effects + nav/hero remain). Shared `SectionEmpty` for DRY empty states. All regular sections now have identical structural wrapper → true einheitliches (uniform) transparent design. Hero kept special as background layer.
 - Migration confirmation: verified PageLayout in public (no root min-h-screen), correct bridge imports, Lenis integration for smooth.
 - Restored look/feel: enhanced SiteNav and Hero with Lenis scrollTo for smooth anchors (offset for fixed nav), preserving cyber classes and glitch.
 - Performance: existing dynamic imports in BackgroundStack, Next Image usage, liteMode in Lenis respected; added explicit Lenis for nav to avoid native jumpy scroll.
@@ -51,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Dead browser-client login path**: Removed the `handleSubmit` / `router.push` / `router.refresh` browser-client sign-in flow from `app/admin/login/page.tsx`; the canonical sign-in is now the server Route Handler at `app/admin/login/submit/route.ts`.
 
 ### Fixed (continuation)
+- Modern tech stack only: core data (releases, streaming, public) now Supabase + R2. Legacy Redis/KV enrichment (api/releases-enrich*) marked and no longer core path; itunesSync and admin actions are the current. Streaming: iTunes sync (R2 artwork cache), Odesli enrich (links merge), Spotify (social + consent). Releases stability: manually_edited flag on all admin saves + title skip in sync + merge for links. No legacy overwrite of manual edits.
 - Completed full ADMIN_ACTION_REGISTRY wiring for all remaining Supabase content mutations: added registers + dispatch guards for `update_release`/`delete_release`, `update_soundpack`/`delete_soundpack`, `itunes_sync`; updated releases.ts, soundpacks.ts, partners.ts (toggle) and itunesSync.ts to always dispatch before runAdminAction (post-dispatch DB ops + revalidate preserved).
 - Fixed registry update_* schemas (used by toggles) to `.passthrough()` + id-based to prevent Zod validation failures on partial {id, active} toggle payloads (previous calls to update_gig etc. would have errored).
 - Fixed mobile SiteNav: now consistently calls scrollTo + preventDefault (was only desktop; mobile links would native-jump).

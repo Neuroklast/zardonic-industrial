@@ -20,7 +20,6 @@ import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
 import { SocialSection } from './_components/public/SocialSection'
-import { SpotifySection } from './_components/public/SpotifySection'
 import type { Release as OverlayRelease } from '@/lib/app-types'
 
 // Revalidate at most once per minute for quick admin updates
@@ -77,7 +76,7 @@ async function fetchAll() {
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
       supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').eq('active', true).order('event_date', { ascending: true }),
-      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links, manually_edited').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
@@ -189,7 +188,7 @@ export default async function HomePage() {
   const sectionsValue = sectionsRaw
   const overridesRoot =
     sectionsValue && typeof sectionsValue === 'object' && !Array.isArray(sectionsValue)
-      ? (sectionsValue as any).styleOverrides || sectionsValue
+      ? (sectionsValue as Record<string, unknown>).styleOverrides || (sectionsValue as Record<string, unknown>)
       : {}
 
   const getSectionOverrides = (key: string) =>
@@ -203,14 +202,11 @@ export default async function HomePage() {
   const creditOverrides = getSectionOverrides('creditHighlights')
 
   // Background: Digicide album cover as primary (per final spec) + keep rich scroll video + animated effects
-  // We preserve the current "scroll video" + matrix/circuit animated layers the user likes,
-  // but default the static image layer to the Digicide cover when nothing is explicitly configured.
+  // Default to a safe placeholder (Digicide cover should be uploaded via admin background config / R2)
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
-  // Default to Digicide album cover look while allowing override
-  const digicideDefault = '/assets/digicide-cover.jpg' // will be replaced by real R2 path in real config
   const bgFallback = typeof bgConfig.url === 'string' && bgConfig.url
     ? bgConfig.url
-    : digicideDefault
+    : '/assets/bg-placeholder.jpg'
   const backgroundUrl = resolveImageUrl(bgStoragePath, bgFallback) ?? bgFallback
 
   // Background video (scroll-synced "scroll video") — keep for current look + make performant
@@ -231,20 +227,6 @@ export default async function HomePage() {
   const noiseEnabled = typeof appearanceConfig.noiseEnabled === 'boolean' ? appearanceConfig.noiseEnabled : true
   const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
-
-  // Spotify: derive embed URI from social_links or site_config
-  const spotifyRow = social.find((s) => s.platform.toLowerCase() === 'spotify')
-  const spotifyUri = (() => {
-    const url = spotifyRow?.url ?? ''
-    if (!url) return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
-    try {
-      const { hostname, pathname } = new URL(url)
-      if (hostname !== 'open.spotify.com' && !hostname.endsWith('.spotify.com')) return url
-      const parts = pathname.replace(/^\//, '').split('/').filter((p) => !p.startsWith('intl-'))
-      if (parts.length >= 2 && parts[0] && parts[1]) return `spotify:${parts[0]}:${parts[1]}`
-    } catch { /* ignore */ }
-    return 'spotify:artist:7BqEidErPMNiUXCRE0dV2n'
-  })()
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => {
@@ -267,6 +249,7 @@ export default async function HomePage() {
       release_date: r.release_date,
       coverUrl,
       streamingLinks,
+      manually_edited: !!r.manually_edited,
       overlayRelease: {
         id: r.id,
         title: r.title,
@@ -275,6 +258,7 @@ export default async function HomePage() {
         releaseDate,
         streamingLinks,
         type: normalizeReleaseType(r.type),
+        manuallyEdited: !!r.manually_edited,
       },
     }
   })
@@ -451,13 +435,6 @@ export default async function HomePage() {
                 <SocialSection links={social} label={section.label} />
               </div>
             ) : null
-          case 'spotify':
-            return (
-              <div key="spotify">
-                {divider}
-                <SpotifySection uri={spotifyUri} label={section.label} />
-              </div>
-            )
           case 'merchandise':
             return merch.length > 0 ? (
               <div key="merchandise">
