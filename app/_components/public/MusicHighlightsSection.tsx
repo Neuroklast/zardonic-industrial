@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { SectionWrapper } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 
 interface MusicHighlight {
   id: string
@@ -112,9 +112,7 @@ export function MusicHighlightsSection({ highlights }: MusicHighlightsSectionPro
           ))}
         </div>
       ) : (
-        <div className="border border-zinc-800 bg-zinc-950/50 p-12 text-center font-mono text-sm uppercase tracking-[0.3em] text-zinc-500">
-          Music highlights coming soon
-        </div>
+        <SectionEmpty label="Music highlights coming soon" />
       )}
     </SectionWrapper>
   )

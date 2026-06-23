@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import type { AdminSettings, SiteData } from '@/lib/types'
 
 /**
  * Verifies that the current request is authenticated as an admin.
@@ -84,4 +85,3 @@ export async function runAdminAction<T extends object>(
     return { error: await formatAdminActionError(error, fallback) }
   }
 }
-

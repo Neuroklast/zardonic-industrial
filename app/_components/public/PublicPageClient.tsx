@@ -7,6 +7,7 @@ import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
 import { Releases3DCarouselLayout } from '@/components/releases/Releases3DCarouselLayout'
+import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 
 interface PublicReleaseCardItem {
   id: string
@@ -15,6 +16,7 @@ interface PublicReleaseCardItem {
   release_date: string | null
   coverUrl: string | null
   streamingLinks: Array<{ platform: string; url: string }>
+  manually_edited?: boolean
   overlayRelease: Release
 }
 
@@ -47,24 +49,23 @@ function normalizeType(value: string | null | undefined): ReleaseFilter {
 }
 
 function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
+  const artwork = item.coverUrl ?? ''
+  const streamingLinksArr = (item.streamingLinks || []).map((l) => ({ platform: l.platform, url: l.url }))
   return {
     id: item.id,
     title: item.title,
     type: item.type,
     releaseDate: item.release_date ?? undefined,
     year: item.release_date ? new Date(item.release_date).getFullYear().toString() : undefined,
-    artwork: item.coverUrl ?? undefined,
-    cover: item.coverUrl ?? undefined,
-    streamingLinks: (item.streamingLinks || []).reduce((acc, l) => {
-      acc[l.platform] = l.url
-      return acc
-    }, {} as Record<string, string>),
+    artwork,
+    cover: artwork,
+    streamingLinks: streamingLinksArr,
     description: undefined,
     featured: false,
     tracks: [],
     customLinks: undefined,
-    manuallyEdited: false,
-  } as unknown as Release
+    manuallyEdited: !!item.manually_edited,
+  }
 }
 
 function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onClick: () => void }) {
@@ -76,7 +77,7 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
     >
-      <div className="relative aspect-[4/3] overflow-hidden bg-black">
+      <div className="relative aspect-square overflow-hidden bg-black">
         {item.coverUrl ? (
           <img
             src={item.coverUrl}
@@ -108,7 +109,7 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
 
   const isFancy = releaseLayout === 'swipe' || releaseLayout === 'carousel-3d'
 
-  // For fancy layouts (and potential future), compute filtered list like legacy
+  // For fancy layouts (and potential future), compute filtered list
   const filteredReleases = useMemo(() => {
     const sorted = [...releases].sort((left, right) => {
       const leftTime = left.release_date ? new Date(left.release_date).getTime() : 0
@@ -146,22 +147,16 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
           }}
         />
       ) : (
-        <section
-          id="releases"
-          className="scanline-effect py-section px-card"
-          style={{ zIndex: 'var(--z-content)' }}
-          data-theme-color="foreground card border primary"
-        >
-          <div className="container mx-auto max-w-6xl">
-            <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-              <h2
-                className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-                data-text="RELEASES"
-              >
-                RELEASES
-                <span className="animate-pulse">_</span>
-              </h2>
-            </div>
+        <SectionWrapper id="releases" data-theme-color="foreground card border primary">
+          <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+            <h2
+              className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
+              data-text="RELEASES"
+            >
+              RELEASES
+              <span className="animate-pulse">_</span>
+            </h2>
+          </div>
             <div className="mb-6 flex flex-wrap gap-2">
               {FILTERS.map((filter) => (
                 <button
@@ -180,16 +175,14 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
             </div>
 
             {filteredReleases.length === 0 ? (
-              <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
-                Releases coming soon
-              </div>
+              <SectionEmpty label="Releases coming soon" />
             ) : releaseLayout === 'swipe' ? (
               <ReleasesSwipeLayout releases={layoutReleases} renderCard={renderLayoutCard} />
             ) : (
               <Releases3DCarouselLayout releases={layoutReleases} renderCard={renderLayoutCard} />
             )}
           </div>
-        </section>
+        </SectionWrapper>
       )}
 
       <CyberpunkOverlay

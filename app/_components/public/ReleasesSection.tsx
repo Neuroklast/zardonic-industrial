@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { m } from 'framer-motion'
+import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 import {
   ApplePodcastsLogo,
   CaretDown,
@@ -115,28 +116,16 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
   ].filter(Boolean).join(' ')
 
   return (
-    <section
-      id="releases"
-      className="scanline-effect py-section px-card"
-      style={{ zIndex: 'var(--z-content)' }}
-      data-theme-color="foreground card border primary"
-    >
-      <div className="container mx-auto max-w-6xl">
-        <m.div
-          initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
-          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+    <SectionWrapper id="releases" data-theme-color="foreground card border primary">
+      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+        <h2
+          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
+          data-text="RELEASES"
         >
-          <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-            <h2
-              className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-              data-text="RELEASES"
-            >
-              RELEASES
-              <span className="animate-pulse">_</span>
-            </h2>
-          </div>
+          RELEASES
+          <span className="animate-pulse">_</span>
+        </h2>
+      </div>
 
           <div className="mb-6 flex flex-wrap gap-2">
             {FILTERS.map((filter) => (
@@ -159,9 +148,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
           </div>
 
           {filteredReleases.length === 0 ? (
-            <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
-              Releases coming soon
-            </div>
+            <SectionEmpty label="Releases coming soon" />
           ) : (
             <>
               <div className={`grid ${colsClass} gap-6`}>
@@ -191,7 +178,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                     role={onReleaseClick ? 'button' : undefined}
                     aria-label={onReleaseClick ? `Open release details for ${release.title}` : undefined}
                   >
-                    <div className="aspect-square bg-muted">
+                    <div className="aspect-square bg-muted overflow-hidden">
                       {release.coverUrl ? (
                         <img
                           src={release.coverUrl}
@@ -277,7 +264,6 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
             </>
           )}
         </m.div>
-      </div>
-    </section>
+    </SectionWrapper>
   )
 }
