@@ -191,7 +191,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                     role={onReleaseClick ? 'button' : undefined}
                     aria-label={onReleaseClick ? `Open release details for ${release.title}` : undefined}
                   >
-                    <div className="aspect-square bg-muted">
+                    <div className="aspect-square bg-muted overflow-hidden">
                       {release.coverUrl ? (
                         <img
                           src={release.coverUrl}

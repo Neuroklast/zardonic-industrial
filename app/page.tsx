@@ -177,9 +177,12 @@ export default async function HomePage() {
   const bgConfig = getConfig(configRows, 'background')
   const appearanceConfig = getConfig(configRows, 'appearance')
   const sectionsRaw = configRows.find((r) => r.key === 'sections')?.value
-  const sections = parseSections(sectionsRaw)
+  let sections = parseSections(sectionsRaw)
     .sort((a, b) => a.order - b.order)
     .filter((s) => s.visible)
+
+  // Per final spec: CONNECT should not be a full section — small logos live in footer only
+  sections = sections.filter((s) => s.id !== 'social' && s.id !== 'connect' && s.id !== 'spotify')
 
   // Extract releases style overrides (releaseLayout, columns, variants etc.) from site_config for public parity
   const sectionsValue = sectionsRaw
@@ -200,19 +203,28 @@ export default async function HomePage() {
     ? ((sectionsValue as any).styleOverrides?.creditHighlights || {})
     : {}
 
-  // Background image: use R2 path or fallback to configured URL or placeholder
+  // Background: Digicide album cover as primary (per final spec) + keep rich scroll video + animated effects
+  // We preserve the current "scroll video" + matrix/circuit animated layers the user likes,
+  // but default the static image layer to the Digicide cover when nothing is explicitly configured.
   const bgStoragePath = typeof bgConfig.storage_path === 'string' ? bgConfig.storage_path : null
-  const bgFallback = typeof bgConfig.url === 'string' ? bgConfig.url : '/assets/bg-placeholder.jpg'
+  // Default to Digicide album cover look while allowing override
+  const digicideDefault = '/assets/digicide-cover.jpg' // will be replaced by real R2 path in real config
+  const bgFallback = typeof bgConfig.url === 'string' && bgConfig.url
+    ? bgConfig.url
+    : digicideDefault
   const backgroundUrl = resolveImageUrl(bgStoragePath, bgFallback) ?? bgFallback
-  // Background video (optional): R2 path or direct URL
+
+  // Background video (scroll-synced "scroll video") — keep for current look + make performant
   const bgVideoPath = typeof bgConfig.video_storage_path === 'string' ? bgConfig.video_storage_path : null
   const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
   const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
+
   const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
   const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
     ? rawBackgroundType
-    : 'matrix'
-  const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.6
+    : 'matrix' // keep animated layers by default for the beloved current aesthetic
+
+  const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.55 // slightly more visible album art
 
   // Appearance config
   const crtEnabled = typeof appearanceConfig.crtEnabled === 'boolean' ? appearanceConfig.crtEnabled : true

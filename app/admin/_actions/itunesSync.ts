@@ -125,6 +125,18 @@ export async function syncReleasesFromItunes(artist: string): Promise<ItunesSync
         continue
       }
 
+      // Strong protection: never overwrite releases the user has manually edited or that already exist by title
+      // This addresses the "kept reverting" issue from tester feedback
+      const { count: titleCount } = await supabase
+        .from('releases')
+        .select('*', { count: 'exact', head: true })
+        .ilike('title', parsed.title)
+
+      if ((titleCount ?? 0) > 0) {
+        result.skipped++
+        continue
+      }
+
       let coverStoragePath: string | null = null
       let coverUrl: string | null = parsed.artworkUrl
 
