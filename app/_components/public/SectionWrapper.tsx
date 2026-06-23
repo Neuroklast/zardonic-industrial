@@ -5,22 +5,25 @@
  */
 interface SectionWrapperProps {
   id: string
-  heading: string
+  heading?: string
   children: React.ReactNode
   className?: string
 }
 
-export function SectionWrapper({ id, heading, children, className = '' }: SectionWrapperProps) {
+export function SectionWrapper({ id, heading, children, className = '', ...rest }: SectionWrapperProps & React.HTMLAttributes<HTMLElement>) {
   return (
     <section
       id={id}
-      className={`relative z-[var(--z-content)] max-w-6xl mx-auto px-4 py-20 ${className}`}
+      className={`relative max-w-6xl mx-auto px-4 py-20 ${className}`}
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
+      {...rest}
     >
-      <h2 className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-8">
-        <span className="text-zinc-600 mr-2">—</span>
-        {heading}
-      </h2>
+      {heading ? (
+        <h2 className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-8">
+          <span className="text-zinc-600 mr-2">—</span>
+          {heading}
+        </h2>
+      ) : null}
       {children}
     </section>
   )
@@ -35,6 +38,15 @@ export function SectionDivider() {
       aria-hidden="true"
     >
       <hr className="border-zinc-800/60" />
+    </div>
+  )
+}
+
+/** Shared empty state for uniform coming-soon states (DRY) */
+export function SectionEmpty({ label = 'Coming soon' }: { label?: string }) {
+  return (
+    <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
+      {label}
     </div>
   )
 }

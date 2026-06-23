@@ -1,6 +1,7 @@
 'use client'
 
 import { m } from 'framer-motion'
+import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 
 interface PartnerItem {
   id: string
@@ -93,41 +94,25 @@ export function CreditsSection({ credits, endorsements, logoBrightness }: Credit
   const hasItems = credits.length > 0 || endorsements.length > 0
 
   return (
-    <section
-      id="credits"
-      className="scanline-effect py-section px-card"
-      style={{ zIndex: 'var(--z-content)' }}
-      data-theme-color="primary accent card border"
-    >
-      <div className="container mx-auto max-w-6xl">
-        <m.div
-          initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
-          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+    <SectionWrapper id="credits" data-theme-color="primary accent card border">
+      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+        <h2
+          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
+          data-text="CREDIT HIGHLIGHTS"
         >
-          <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-            <h2
-              className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-              data-text="CREDIT HIGHLIGHTS"
-            >
-              CREDIT HIGHLIGHTS
-              <span className="animate-pulse">_</span>
-            </h2>
-          </div>
-
-          {hasItems ? (
-            <div className="space-y-12">
-              <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
-              <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
-            </div>
-          ) : (
-            <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
-              Credits and endorsements coming soon
-            </div>
-          )}
-        </m.div>
+          CREDIT HIGHLIGHTS
+          <span className="animate-pulse">_</span>
+        </h2>
       </div>
-    </section>
+
+      {hasItems ? (
+        <div className="space-y-12">
+          <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
+          <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
+        </div>
+      ) : (
+        <SectionEmpty label="Credits and endorsements coming soon" />
+      )}
+    </SectionWrapper>
   )
 }
