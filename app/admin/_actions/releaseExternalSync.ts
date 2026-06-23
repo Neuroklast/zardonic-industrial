@@ -20,12 +20,15 @@ import {
   normalizeSpotifyArtistId,
   type ExternalReleaseSource,
 } from '@/lib/release-external-ids'
-import type { ReleaseMetadata, StreamingLink } from '@/lib/release-metadata'
+import { mergeStreamingLinks, type ReleaseMetadata, type StreamingLink } from '@/lib/release-metadata'
 import {
   fetchDiscogsArtistReleases,
+  fetchReleaseMetadataFromDiscogs,
   searchDiscogsArtistId,
 } from '@/lib/discogs-sync'
+import { getSpotifyAccessToken } from '@/lib/spotify-client'
 import {
+  fetchReleaseMetadataFromSpotify,
   fetchSpotifyArtistAlbums,
   searchSpotifyArtistId,
 } from '@/lib/spotify-sync'
@@ -195,10 +198,29 @@ async function bulkImportMetadata(
 
     let displayOrder = ((maxRow as { display_order?: number } | null)?.display_order ?? -1) + 1
 
-    for (const { externalId, metadata } of items) {
+    for (const { externalId, metadata: baseMetadata } of items) {
       if (existingIds.has(externalId)) {
         result.skipped++
         continue
+      }
+
+      let metadata = baseMetadata
+      if (source === 'spotify' && metadata.spotify_id) {
+        const enriched = await fetchReleaseMetadataFromSpotify(metadata.spotify_id)
+        if (enriched) {
+          metadata = {
+            ...enriched,
+            streaming_links: mergeStreamingLinks(enriched.streaming_links, metadata.streaming_links),
+          }
+        }
+      } else if (source === 'discogs' && metadata.discogs_id) {
+        const enriched = await fetchReleaseMetadataFromDiscogs(metadata.discogs_id)
+        if (enriched) {
+          metadata = {
+            ...enriched,
+            streaming_links: mergeStreamingLinks(enriched.streaming_links, metadata.streaming_links),
+          }
+        }
       }
 
       const { count: titleCount } = await supabase
@@ -230,6 +252,7 @@ async function bulkImportMetadata(
         description: metadata.description,
         artists: metadata.artists,
         streaming_links: metadata.streaming_links,
+        tracks: metadata.tracks && metadata.tracks.length > 0 ? metadata.tracks : [],
         cover_storage_path: coverStoragePath,
         cover_url: coverUrl,
         display_order: displayOrder,
@@ -271,6 +294,15 @@ async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
 }
 
 export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExternalSyncResult> {
+  const token = await getSpotifyAccessToken()
+  if (!token) {
+    return {
+      synced: 0,
+      skipped: 0,
+      errors: ['Spotify API credentials missing. Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET on the server.'],
+    }
+  }
+
   const config = await loadCatalogueSyncConfig()
   const artistName = (artist?.trim() || config.artistName).trim()
   const configuredId = normalizeSpotifyArtistId(config.spotifyArtistId)

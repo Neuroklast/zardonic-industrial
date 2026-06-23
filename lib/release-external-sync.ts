@@ -63,6 +63,10 @@ export function buildReleaseUpdateFromMetadata(
     manually_edited: true,
   }
 
+  if (metadata.tracks && metadata.tracks.length > 0) {
+    update.tracks = metadata.tracks
+  }
+
   if (metadata.description) update.description = metadata.description
   if (metadata.itunes_id) update.itunes_id = metadata.itunes_id
   if (metadata.spotify_id) update.spotify_id = metadata.spotify_id

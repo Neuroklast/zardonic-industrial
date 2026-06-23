@@ -1,5 +1,10 @@
 import { getSpotifyAccessToken } from '@/lib/spotify-client'
-import { inferReleaseTypeFromTitle, type ReleaseMetadata } from '@/lib/release-metadata'
+import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
+import {
+  inferReleaseTypeFromTitle,
+  type ReleaseMetadata,
+  type ReleaseTrackMetadata,
+} from '@/lib/release-metadata'
 
 interface SpotifyImage {
   url?: string
@@ -10,6 +15,17 @@ interface SpotifyArtistRef {
   name?: string
 }
 
+interface SpotifyTrackItem {
+  name?: string
+  duration_ms?: number
+  artists?: SpotifyArtistRef[]
+}
+
+interface SpotifyAlbumTracksPage {
+  items?: SpotifyTrackItem[]
+  next?: string | null
+}
+
 interface SpotifyAlbumPayload {
   id?: string
   name?: string
@@ -18,6 +34,7 @@ interface SpotifyAlbumPayload {
   images?: SpotifyImage[]
   artists?: SpotifyArtistRef[]
   external_urls?: { spotify?: string }
+  tracks?: SpotifyAlbumTracksPage
 }
 
 interface SpotifyTrackPayload {
@@ -41,7 +58,76 @@ function pickLargestImage(images: SpotifyImage[] | undefined): string | null {
   return sorted[0]?.url ?? null
 }
 
-function parseSpotifyAlbum(data: SpotifyAlbumPayload): ReleaseMetadata | null {
+function formatSpotifyDuration(durationMs: number | undefined): string | undefined {
+  if (!durationMs || durationMs <= 0) return undefined
+  const totalSeconds = Math.floor(durationMs / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
+function parseSpotifyTrackItems(items: SpotifyTrackItem[] | undefined): ReleaseTrackMetadata[] {
+  if (!items?.length) return []
+  const tracks: ReleaseTrackMetadata[] = []
+
+  for (const item of items) {
+    const title = item.name?.trim()
+    if (!title) continue
+    const artistNames = (item.artists ?? [])
+      .map((artist) => artist.name?.trim())
+      .filter((name): name is string => Boolean(name))
+    const track: ReleaseTrackMetadata = { title }
+    const duration = formatSpotifyDuration(item.duration_ms)
+    if (duration) track.duration = duration
+    if (artistNames.length > 0) track.artist = artistNames.join(', ')
+    tracks.push(track)
+  }
+
+  return tracks
+}
+
+async function fetchAllSpotifyAlbumTracks(
+  albumId: string,
+  headers: Record<string, string>,
+  initialPage?: SpotifyAlbumTracksPage,
+): Promise<ReleaseTrackMetadata[]> {
+  const collected: SpotifyTrackItem[] = [...(initialPage?.items ?? [])]
+  let nextUrl = initialPage?.next ?? null
+
+  while (nextUrl) {
+    const res = await fetch(nextUrl, { headers, cache: 'no-store' })
+    if (!res.ok) break
+    const page = (await res.json()) as SpotifyAlbumTracksPage
+    collected.push(...(page.items ?? []))
+    nextUrl = page.next ?? null
+  }
+
+  if (collected.length === 0 && !initialPage) {
+    const res = await fetch(
+      `https://api.spotify.com/v1/albums/${encodeURIComponent(albumId)}/tracks?limit=50`,
+      { headers, cache: 'no-store' },
+    )
+    if (res.ok) {
+      const page = (await res.json()) as SpotifyAlbumTracksPage
+      collected.push(...(page.items ?? []))
+      nextUrl = page.next ?? null
+      while (nextUrl) {
+        const pageRes = await fetch(nextUrl, { headers, cache: 'no-store' })
+        if (!pageRes.ok) break
+        const nextPage = (await pageRes.json()) as SpotifyAlbumTracksPage
+        collected.push(...(nextPage.items ?? []))
+        nextUrl = nextPage.next ?? null
+      }
+    }
+  }
+
+  return parseSpotifyTrackItems(collected)
+}
+
+function parseSpotifyAlbum(
+  data: SpotifyAlbumPayload,
+  tracks: ReleaseTrackMetadata[] = [],
+): ReleaseMetadata | null {
   const title = data.name?.trim()
   const spotifyId = data.id
   if (!title || !spotifyId) return null
@@ -52,11 +138,12 @@ function parseSpotifyAlbum(data: SpotifyAlbumPayload): ReleaseMetadata | null {
   return {
     title,
     type: mapSpotifyAlbumType(data.album_type, title),
-    release_date: data.release_date ? data.release_date.slice(0, 10) : null,
+    release_date: normalizeReleaseDateForDb(data.release_date),
     description: null,
     artists,
     coverUrl: pickLargestImage(data.images),
     streaming_links: [{ platform: 'spotify', url: spotifyUrl }],
+    tracks: tracks.length > 0 ? tracks : undefined,
     spotify_id: spotifyId,
   }
 }
@@ -73,7 +160,7 @@ function parseSpotifyTrack(data: SpotifyTrackPayload): ReleaseMetadata | null {
   return {
     title,
     type: album ? mapSpotifyAlbumType(album.album_type, title) : 'single',
-    release_date: album?.release_date ? album.release_date.slice(0, 10) : null,
+    release_date: normalizeReleaseDateForDb(album?.release_date),
     description: null,
     artists,
     coverUrl: pickLargestImage(album?.images),
@@ -94,7 +181,8 @@ export async function fetchReleaseMetadataFromSpotify(spotifyId: string): Promis
   })
   if (albumRes.ok) {
     const data = (await albumRes.json()) as SpotifyAlbumPayload
-    return parseSpotifyAlbum(data)
+    const tracks = await fetchAllSpotifyAlbumTracks(spotifyId, headers, data.tracks)
+    return parseSpotifyAlbum(data, tracks)
   }
 
   if (albumRes.status !== 404) return null

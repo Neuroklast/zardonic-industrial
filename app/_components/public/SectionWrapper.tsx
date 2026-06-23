@@ -1,20 +1,44 @@
 /**
  * Shared section wrapper for the public homepage.
- * Provides consistent padding, a heading, and the section anchor id.
- * Sections are transparent – no individual backgrounds.
+ * Matches legacy SectionBase spacing with a readable content panel.
  */
 interface SectionWrapperProps {
   id: string
   heading?: string
   children: React.ReactNode
   className?: string
+  /** When false, children render without the frosted card panel. */
+  withPanel?: boolean
 }
 
-export function SectionWrapper({ id, heading, children, className = '', ...rest }: SectionWrapperProps & React.HTMLAttributes<HTMLElement>) {
+export function SectionContentPanel({
+  children,
+  className = '',
+}: {
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div
+      className={`cyber-grid border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8 ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+export function SectionWrapper({
+  id,
+  heading,
+  children,
+  className = '',
+  withPanel = true,
+  ...rest
+}: SectionWrapperProps & React.HTMLAttributes<HTMLElement>) {
   return (
     <section
       id={id}
-      className={`relative max-w-6xl mx-auto px-4 py-20 ${className}`}
+      className={`relative max-w-6xl mx-auto px-card py-section scanline-effect ${className}`}
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
       {...rest}
     >
@@ -24,7 +48,7 @@ export function SectionWrapper({ id, heading, children, className = '', ...rest 
           {heading}
         </h2>
       ) : null}
-      {children}
+      {withPanel ? <SectionContentPanel>{children}</SectionContentPanel> : children}
     </section>
   )
 }

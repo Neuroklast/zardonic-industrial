@@ -83,34 +83,33 @@ export function SocialSection({ links, label = 'CONNECT' }: SocialSectionProps) 
   return (
     <section
       id="connect"
-      className="py-section px-card"
+      className="relative max-w-6xl mx-auto px-card py-section scanline-effect"
       style={{ zIndex: 'var(--z-content)' }}
-      data-theme-color="primary accent"
+      data-theme-color="primary accent card border"
     >
-      <div className="container mx-auto max-w-6xl">
-        <m.div
-          initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
-          whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
-          viewport={{ once: true }}
-          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="mb-12">
-            <h2
-              className="hover-chromatic hover-glitch cyber2077-scan-build font-mono text-4xl font-bold uppercase tracking-tighter text-foreground md:text-6xl"
-              data-text={label}
-            >
-              {label}
-              <span className="animate-pulse">_</span>
-            </h2>
-          </div>
+      <m.div
+        initial={{ opacity: 0, x: -30, filter: 'blur(10px)', clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
+        whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="cyber-grid border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8"
+      >
+        <div className="mb-12">
+          <h2
+            className="hover-chromatic hover-glitch cyber2077-scan-build font-mono text-4xl font-bold uppercase tracking-tighter text-foreground md:text-6xl"
+            data-text={label}
+          >
+            {label}
+            <span className="animate-pulse">_</span>
+          </h2>
+        </div>
 
-          <div className="flex flex-wrap gap-3">
-            {links.map((link) => (
-              <SocialButton key={link.id} link={link} />
-            ))}
-          </div>
-        </m.div>
-      </div>
+        <div className="flex flex-wrap gap-3">
+          {links.map((link) => (
+            <SocialButton key={link.id} link={link} />
+          ))}
+        </div>
+      </m.div>
     </section>
   )
 }

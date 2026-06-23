@@ -59,4 +59,22 @@ describe('CSP connect-src parity', () => {
       .find((h) => h.key === 'X-Frame-Options')?.value
     expect(xfo).toBe('SAMEORIGIN')
   })
+
+  it('img-src allows blob URLs for admin media previews', () => {
+    const root = resolve(__dirname, '../..')
+    const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as {
+      headers: Array<{ headers: Array<{ key: string; value: string }> }>
+    }
+    const nextConfig = readFileSync(resolve(root, 'next.config.mjs'), 'utf8')
+
+    const vercelCsp = vercel.headers
+      .flatMap((group) => group.headers)
+      .find((h) => h.key === 'Content-Security-Policy')?.value
+    expect(vercelCsp).toBeTruthy()
+
+    const vercelImgSrc = extractDirectiveHosts(vercelCsp!, 'img-src')
+    expect(vercelImgSrc).toContain('blob:')
+
+    expect(nextConfig).toContain("img-src 'self' data: blob: https: http:")
+  })
 })

@@ -1,3 +1,5 @@
+import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
+
 export interface ItunesSearchResult {
   collectionId?: number
   trackId?: number
@@ -42,7 +44,7 @@ export function parseItunesItem(item: ItunesSearchResult): {
     ? item.artworkUrl100.replace('100x100bb', '1000x1000bb')
     : null
 
-  const release_date = item.releaseDate ? item.releaseDate.slice(0, 10) : null
+  const release_date = normalizeReleaseDateForDb(item.releaseDate)
 
   return { title, type, release_date, itunes_id: String(rawId), artworkUrl }
 }

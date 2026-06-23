@@ -3,6 +3,13 @@ export interface StreamingLink {
   url: string
 }
 
+export interface ReleaseTrackMetadata {
+  title: string
+  duration?: string
+  artist?: string
+  featuredArtists?: string[]
+}
+
 export interface ReleaseMetadata {
   title: string
   type: 'album' | 'ep' | 'single' | 'remix' | 'compilation' | ''
@@ -11,6 +18,7 @@ export interface ReleaseMetadata {
   artists: string[]
   coverUrl: string | null
   streaming_links: StreamingLink[]
+  tracks?: ReleaseTrackMetadata[]
   itunes_id?: string | null
   spotify_id?: string | null
   discogs_id?: string | null

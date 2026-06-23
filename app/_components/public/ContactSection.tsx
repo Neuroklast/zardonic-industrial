@@ -8,7 +8,7 @@ export function ContactSection() {
   const [state, formAction, pending] = useActionState(submitContact, null)
 
   return (
-    <SectionWrapper id="contact" heading="Contact">
+    <SectionWrapper id="contact" heading="Contact" data-theme-color="foreground card border input">
       <div className="max-w-xl">
         {state?.success ? (
           <p className="font-mono text-sm text-zinc-300 border border-zinc-700 px-4 py-3">

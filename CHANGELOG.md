@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Release modal tracklist**: Public release overlay now loads `tracks` + `artists` from Supabase and renders the pre-migration tracklist rules (site artist in bold, compound-artist dedup, feat. parsing).
 
 ### Fixed
+- **Catalogue sync date errors**: Year-only and year-month release dates from Spotify/Discogs/iTunes are normalized to valid PostgreSQL `date` values (e.g. `2026` → `2026-01-01`) so bulk import no longer fails with `invalid input syntax for type date`.
+- **Spotify/Discogs tracklists on sync**: Per-release and bulk Spotify sync now persist album tracklists; Discogs releases import `tracklist` rows into `releases.tracks` jsonb.
+- **Admin site-config blob previews**: Added `blob:` to production CSP `img-src` in `vercel.json` so local file previews render in the media picker.
+- **Readable public sections**: Biography, Contact, and Stay Connected content panels use frosted `bg-card/55` backgrounds instead of fully transparent sections over animated backgrounds.
 - **Release modal empty / infinite scroll**: Stabilized overlay session key (`getOverlaySessionKey`) so phase timers no longer reset on object identity churn; release overlays skip progressive clip-path FX; malformed track rows are skipped; body scroll locked while modal is open.
 - **Admin site-config preview CSP**: Added `'self'` to `frame-src` and set `X-Frame-Options: SAMEORIGIN` so the split-view iframe can load `/?adminPreview=1`.
 

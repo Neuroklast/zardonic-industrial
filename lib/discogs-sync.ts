@@ -1,4 +1,9 @@
-import { inferReleaseTypeFromTitle, type ReleaseMetadata } from '@/lib/release-metadata'
+import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
+import {
+  inferReleaseTypeFromTitle,
+  type ReleaseMetadata,
+  type ReleaseTrackMetadata,
+} from '@/lib/release-metadata'
 
 const DISCOGS_BASE = 'https://api.discogs.com'
 const DISCOGS_USER_AGENT = `ZardonicWebsite/1.0 +${process.env.SITE_URL || 'https://zardonic.com'}`
@@ -23,7 +28,7 @@ interface DiscogsReleasePayload {
   styles?: string[]
   uri?: string
   notes?: string
-  tracklist?: Array<{ title?: string }>
+  tracklist?: Array<{ title?: string; duration?: string }>
 }
 
 interface DiscogsMasterPayload {
@@ -46,6 +51,23 @@ function discogsHeaders(token: string): Record<string, string> {
   }
 }
 
+function parseDiscogsTracklist(
+  tracklist: DiscogsReleasePayload['tracklist'],
+): ReleaseTrackMetadata[] {
+  if (!tracklist?.length) return []
+  const tracks: ReleaseTrackMetadata[] = []
+  for (const row of tracklist) {
+    const title = row.title?.trim()
+    if (!title || title === 'Video' || title === 'DVD') continue
+    const track: ReleaseTrackMetadata = { title }
+    if (typeof row.duration === 'string' && row.duration.trim()) {
+      track.duration = row.duration.trim()
+    }
+    tracks.push(track)
+  }
+  return tracks
+}
+
 function pickDiscogsCover(images: DiscogsImage[] | undefined): string | null {
   if (!images?.length) return null
   const primary = images.find((img) => img.type === 'primary' && img.uri)
@@ -60,14 +82,17 @@ function parseDiscogsRelease(data: DiscogsReleasePayload, discogsId: string): Re
   const formatHints = (data.formats ?? []).flatMap((f) => [f.name, ...(f.descriptions ?? [])].filter(Boolean) as string[])
   const discogsUrl = data.uri ?? `https://www.discogs.com/release/${discogsId}`
 
+  const tracks = parseDiscogsTracklist(data.tracklist)
+
   return {
     title,
     type: inferReleaseTypeFromTitle(title, [...formatHints, ...(data.genres ?? []), ...(data.styles ?? [])]),
-    release_date: data.year ? String(data.year).slice(0, 10) : null,
+    release_date: normalizeReleaseDateForDb(data.year ? String(data.year) : null),
     description: data.notes?.trim() || null,
     artists,
     coverUrl: pickDiscogsCover(data.images),
     streaming_links: [{ platform: 'discogs', url: discogsUrl }],
+    tracks: tracks.length > 0 ? tracks : undefined,
     discogs_id: discogsId,
   }
 }
@@ -82,7 +107,7 @@ function parseDiscogsMaster(data: DiscogsMasterPayload, discogsId: string): Rele
   return {
     title,
     type: inferReleaseTypeFromTitle(title, [...(data.genres ?? []), ...(data.styles ?? [])]),
-    release_date: data.year ? String(data.year).slice(0, 10) : null,
+    release_date: normalizeReleaseDateForDb(data.year ? String(data.year) : null),
     description: data.notes?.trim() || null,
     artists,
     coverUrl: pickDiscogsCover(data.images),
@@ -180,7 +205,7 @@ export async function fetchDiscogsArtistReleases(artistId: number): Promise<Disc
         metadata: {
           title: item.title.trim(),
           type: inferReleaseTypeFromTitle(item.title),
-          release_date: item.year ? String(item.year) : null,
+          release_date: normalizeReleaseDateForDb(item.year ? String(item.year) : null),
           description: null,
           artists: [],
           coverUrl: item.thumb ? item.thumb.replace('/images/thumb/', '/images/').replace('.jpeg', '.jpg') : null,
