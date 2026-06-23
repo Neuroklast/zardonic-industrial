@@ -8,6 +8,8 @@
  * localStorage and fires the custom DOM event; this module only reads and reacts.
  */
 
+'use client'
+
 import { useState, useEffect } from 'react'
 
 /** Bump this whenever the privacy policy or processing purposes change materially */

@@ -11,6 +11,8 @@
  * - Users can revoke/change consent at any time via footer link
  */
 
+'use client'
+
 import { useState, useEffect, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
