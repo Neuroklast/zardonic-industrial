@@ -62,7 +62,6 @@ export default function LoginForm() {
               className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
               placeholder="you@example.com"
               autoComplete="email"
-              disabled={isLoading}
             />
           </div>
           <div>
@@ -74,7 +73,6 @@ export default function LoginForm() {
               required
               className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-base focus:outline-none focus:border-zinc-500"
               autoComplete="current-password"
-              disabled={isLoading}
             />
           </div>
 

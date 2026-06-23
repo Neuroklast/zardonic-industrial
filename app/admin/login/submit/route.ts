@@ -26,14 +26,21 @@ export async function POST(request: Request) {
   }
 
   // Early validation — prevents confusing Supabase "missing email or phone" errors.
+  // Always forward redirect param so user does not lose intended destination after fixing the form values.
   if (!rawIdentifier) {
     const errorUrl = new URL('/admin/login', request.url)
     errorUrl.searchParams.set('msg', 'Email (or phone) is required.')
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
     return NextResponse.redirect(errorUrl, 303)
   }
   if (!password) {
     const errorUrl = new URL('/admin/login', request.url)
     errorUrl.searchParams.set('msg', 'Password is required.')
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
     return NextResponse.redirect(errorUrl, 303)
   }
 
@@ -94,6 +101,9 @@ export async function POST(request: Request) {
 
     const errorUrl = new URL('/admin/login', request.url)
     errorUrl.searchParams.set('msg', friendlyMessage)
+    if (redirectTo && redirectTo !== '/admin/releases') {
+      errorUrl.searchParams.set('redirect', redirectTo)
+    }
     // For error path we can return a fresh redirect (no valid session cookies to propagate).
     return NextResponse.redirect(errorUrl, 303)
   }
