@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabaseServer'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { SectionsSortable, type SectionConfig } from './SectionsSortable'
 
 const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -51,10 +52,10 @@ export default async function SectionsPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-2">Section Visibility &amp; Order</h1>
-      <p className="text-sm text-zinc-400 mb-6">
-        Drag sections to reorder them on the frontpage. Toggle visibility to hide a section without deleting its content.
-      </p>
+      <AdminPageHeader
+        title="Section Visibility & Order"
+        description="Drag sections to reorder them on the frontpage. Toggle visibility to hide a section without deleting its content."
+      />
       <SectionsSortable initialSections={sections} />
     </div>
   )

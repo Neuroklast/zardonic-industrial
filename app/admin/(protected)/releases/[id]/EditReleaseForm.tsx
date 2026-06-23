@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { updateRelease } from '@/app/admin/_actions/releases'
-import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { fetchItunesCoverForRelease } from '@/app/admin/_actions/itunesSync'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
-import Image from 'next/image'
 import { useState } from 'react'
 
 interface Props {
@@ -18,11 +18,15 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
   const [coverPath, setCoverPath] = useState((release.cover_storage_path as string) ?? '')
   const [coverPreview, setCoverPreview] = useState<string | null>(resolvedCoverUrl ?? null)
   const [error, setError] = useState<string | null>(null)
+  const [fetchingCover, setFetchingCover] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    if (coverPath) formData.set('cover_storage_path', coverPath)
+    if (coverPath) {
+      formData.set('cover_storage_path', coverPath)
+      formData.set('cover_url', '')
+    }
 
     const result = await updateRelease(release.id as string, formData)
     if (result?.error) {
@@ -64,28 +68,37 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
         <label className="block text-sm text-zinc-300 mb-1">Artists (comma separated)</label>
         <input name="artists" defaultValue={Array.isArray(release.artists) ? (release.artists as string[]).join(', ') : ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
       </div>
-      <div>
-        <label className="block text-sm text-zinc-300 mb-2">Cover Art</label>
-        {coverPreview && (
-          <div className="mb-2">
-            <Image
-              src={coverPreview}
-              alt="Cover preview"
-              width={96}
-              height={96}
-              className="rounded border border-zinc-700 object-cover"
-            />
-          </div>
-        )}
-        <ImageUploader
-          label="Replace Cover"
+      <div className="space-y-2">
+        <MediaSourcePicker
+          label="Cover Art"
           currentUrl={coverPreview}
-          onUpload={(path) => {
+          storagePrefix={`releases/covers/${release.id as string}`}
+          onResolved={(path, publicUrl) => {
             setCoverPath(path)
-            setCoverPreview(null)
+            if (publicUrl) setCoverPreview(publicUrl)
+            setError(null)
           }}
           onError={(msg) => setError(msg)}
         />
+        <button
+          type="button"
+          disabled={fetchingCover}
+          onClick={async () => {
+            setFetchingCover(true)
+            setError(null)
+            const result = await fetchItunesCoverForRelease(release.id as string)
+            if (!result.ok) {
+              setError(result.error ?? 'Failed to fetch iTunes cover')
+            } else if (result.coverUrl) {
+              setCoverPath(result.coverStoragePath ?? '')
+              setCoverPreview(result.coverUrl)
+            }
+            setFetchingCover(false)
+          }}
+          className="px-3 py-2 text-xs rounded border border-zinc-700 text-zinc-300 hover:text-white disabled:opacity-50"
+        >
+          {fetchingCover ? 'Fetching…' : 'Cover von iTunes'}
+        </button>
       </div>
       <div>
         <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>

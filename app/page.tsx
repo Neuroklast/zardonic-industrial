@@ -12,6 +12,8 @@ import { BioSection } from './_components/public/BioSection'
 import { CreditsSection } from './_components/public/CreditsSection'
 import { MusicHighlightsSection } from './_components/public/MusicHighlightsSection'
 import { PublicPageClient } from './_components/public/PublicPageClient'
+import { AppearanceBridge } from './_components/public/AppearanceBridge'
+import { AdminDraftListener } from './_components/public/AdminDraftListener'
 import { MerchandiseSection } from './_components/public/MerchandiseSection'
 import { SoundpacksSection } from './_components/public/SoundpacksSection'
 import { GigsSection } from './_components/public/GigsSection'
@@ -58,45 +60,96 @@ interface SocialRow { id: string; platform: string; url: string; label: string |
 interface SectionConfig { id: string; label: string; visible: boolean; order: number }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
+async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
+  const fullSelect =
+    'id, title, type, release_date, cover_storage_path, cover_url, streaming_links, manually_edited'
+  const fallbackSelect =
+    'id, title, type, release_date, cover_storage_path, cover_url, streaming_links'
+
+  const { data, error } = await supabase
+    .from('releases')
+    .select(fullSelect)
+    .eq('active', true)
+    .order('display_order', { ascending: true })
+
+  if (!error) return (data ?? []) as ReleaseRow[]
+
+  console.error('[fetchAll] releases query failed:', error.message)
+
+  if (error.message.includes('manually_edited')) {
+    const { data: fallbackData, error: fallbackError } = await supabase
+      .from('releases')
+      .select(fallbackSelect)
+      .eq('active', true)
+      .order('display_order', { ascending: true })
+
+    if (fallbackError) {
+      console.error('[fetchAll] releases fallback query failed:', fallbackError.message)
+      return []
+    }
+
+    return (fallbackData ?? []).map((row: Omit<ReleaseRow, 'manually_edited'>) => ({
+      ...row,
+      manually_edited: false,
+    }))
+  }
+
+  return []
+}
+
 async function fetchAll() {
   try {
     const supabase = await createClient()
 
     const [
-      { data: configRows },
-      { data: bioRows },
-      { data: gigRows },
-      { data: releaseRows },
-      { data: partnerRows },
-      { data: musicRows },
-      { data: merchRows },
-      { data: soundpackRows },
-      { data: galleryRows },
-      { data: socialRows },
+      configResult,
+      bioResult,
+      gigResult,
+      partnerResult,
+      musicResult,
+      merchResult,
+      soundpackResult,
+      galleryResult,
+      socialResult,
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
       supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').eq('active', true).order('event_date', { ascending: true }),
-      supabase.from('releases').select('id, title, type, release_date, cover_storage_path, cover_url, streaming_links, manually_edited').eq('active', true).order('display_order', { ascending: true }),
-      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').order('display_order', { ascending: true }),
+      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
-      supabase.from('gallery').select('id, alt, storage_path, image_url').order('display_order', { ascending: true }),
+      supabase.from('gallery').select('id, alt, storage_path, image_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
     ])
 
+    const logQueryError = (label: string, error: { message: string } | null) => {
+      if (error) console.error(`[fetchAll] ${label} query failed:`, error.message)
+    }
+
+    logQueryError('site_config', configResult.error)
+    logQueryError('bio', bioResult.error)
+    logQueryError('gigs', gigResult.error)
+    logQueryError('partners', partnerResult.error)
+    logQueryError('music_highlights', musicResult.error)
+    logQueryError('merchandise', merchResult.error)
+    logQueryError('soundpacks', soundpackResult.error)
+    logQueryError('gallery', galleryResult.error)
+    logQueryError('social_links', socialResult.error)
+
+    const releaseRows = await fetchReleases(supabase)
+
     return {
-      configRows: (configRows ?? []) as SiteConfigRow[],
-      bio: (bioRows as BioRow | null)?.content ?? '',
-      gigs: (gigRows ?? []) as GigRow[],
-      releases: (releaseRows ?? []) as ReleaseRow[],
-      partners: (partnerRows ?? []) as PartnerRow[],
-      musicHighlights: (musicRows ?? []) as MusicHighlightRow[],
-      merch: (merchRows ?? []) as CommerceItemRow[],
-      soundpacks: (soundpackRows ?? []) as CommerceItemRow[],
-      gallery: (galleryRows ?? []) as GalleryItemRow[],
-      social: (socialRows ?? []) as SocialRow[],
+      configRows: (configResult.data ?? []) as SiteConfigRow[],
+      bio: (bioResult.data as BioRow | null)?.content ?? '',
+      gigs: (gigResult.data ?? []) as GigRow[],
+      releases: releaseRows,
+      partners: (partnerResult.data ?? []) as PartnerRow[],
+      musicHighlights: (musicResult.data ?? []) as MusicHighlightRow[],
+      merch: (merchResult.data ?? []) as CommerceItemRow[],
+      soundpacks: (soundpackResult.data ?? []) as CommerceItemRow[],
+      gallery: (galleryResult.data ?? []) as GalleryItemRow[],
+      social: (socialResult.data ?? []) as SocialRow[],
     }
   } catch {
     // Return safe empty defaults when Supabase is not configured (local dev)
@@ -232,6 +285,26 @@ export default async function HomePage() {
   const noiseEnabled = typeof appearanceConfig.noiseEnabled === 'boolean' ? appearanceConfig.noiseEnabled : true
   const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
+  const faviconStoragePath =
+    typeof appearanceConfig.faviconStoragePath === 'string' ? appearanceConfig.faviconStoragePath : null
+  const faviconFallback =
+    typeof appearanceConfig.faviconUrl === 'string' ? appearanceConfig.faviconUrl : null
+  const resolvedFaviconUrl = resolveImageUrl(faviconStoragePath, faviconFallback) ?? undefined
+
+  const appearanceBridgeConfig = {
+    crtEnabled,
+    scanlineEnabled,
+    noiseEnabled,
+    accentColor,
+    accentColorSecondary,
+    vignetteOpacity: typeof appearanceConfig.vignetteOpacity === 'number' ? appearanceConfig.vignetteOpacity : 0.3,
+    chromaticStrength: typeof appearanceConfig.chromaticStrength === 'number' ? appearanceConfig.chromaticStrength : 0.5,
+    faviconUrl: resolvedFaviconUrl,
+    theme:
+      appearanceConfig.theme && typeof appearanceConfig.theme === 'object'
+        ? (appearanceConfig.theme as Record<string, string>)
+        : undefined,
+  }
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => {
@@ -280,6 +353,15 @@ export default async function HomePage() {
     }))
   const endorsements = partners
     .filter((p) => p.category === 'endorsement')
+    .map((p) => ({
+      id: p.id,
+      name: p.name,
+      url: p.url,
+      logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
+      category: p.category,
+    }))
+  const partnerFriends = partners
+    .filter((p) => p.category === 'partner' || p.category === 'label' || p.category === 'sponsor')
     .map((p) => ({
       id: p.id,
       name: p.name,
@@ -336,6 +418,8 @@ export default async function HomePage() {
 
   const systemSlot = (
     <>
+      <AppearanceBridge config={appearanceBridgeConfig} />
+      <AdminDraftListener />
       <CookieConsent />
       <KonamiListener />
     </>
@@ -354,9 +438,6 @@ export default async function HomePage() {
       overlays={overlaysSlot}
       system={systemSlot}
     >
-      {/* Inject accent colors as CSS custom properties (available to all sections) */}
-      <style>{`:root { --accent: ${accentColor}; --accent-secondary: ${accentColorSecondary}; }`}</style>
-
       {/* Main content – sections rendered in DB-controlled order (inside PageLayout <main>) */}
       {sections.map((section, idx) => {
         const divider = idx > 0 ? <SectionDivider /> : null
@@ -369,7 +450,12 @@ export default async function HomePage() {
                   tagline={String(heroConfig.tagline ?? '')}
                   ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
                   ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
-                  backgroundImageUrl={typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : backgroundUrl}
+                  backgroundImageUrl={
+                    resolveImageUrl(
+                      typeof heroConfig.backgroundImageStoragePath === 'string' ? heroConfig.backgroundImageStoragePath : null,
+                      typeof heroConfig.backgroundImageUrl === 'string' ? heroConfig.backgroundImageUrl : null,
+                    ) ?? backgroundUrl
+                  }
                   backgroundImageOpacity={typeof heroConfig.backgroundImageOpacity === 'number' ? heroConfig.backgroundImageOpacity : 0.35}
                   minHeight={typeof heroStyleOverrides.minHeight === 'string' ? heroStyleOverrides.minHeight : undefined}
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
@@ -395,6 +481,7 @@ export default async function HomePage() {
                 <CreditsSection
                   credits={credits}
                   endorsements={endorsements}
+                  partners={partnerFriends}
                   logoBrightness={typeof creditOverrides.logoBrightness === 'number' ? creditOverrides.logoBrightness : undefined}
                 />
               </div>

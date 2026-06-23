@@ -1,14 +1,15 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
 import Image from 'next/image'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
-import { createSignedUploadUrl } from '@/app/admin/_actions/r2Upload'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
+import { VideoSourcePicker } from '@/app/admin/_components/VideoSourcePicker'
+import { resolveImageUrl } from '@/lib/r2'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
-
-import { MEDIA_BUCKET } from '@/lib/constants'
-const R2_BUCKET = MEDIA_BUCKET
 
 type BackgroundType = 'matrix' | 'circuit' | 'minimal'
 
@@ -17,47 +18,59 @@ interface BackgroundConfigEditorProps {
 }
 
 export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorProps) {
-  const [imageUrl, setImageUrl] = useState((currentValue.url as string) ?? '')
-  const [videoUrl, setVideoUrl] = useState((currentValue.video_url as string) ?? '')
+  const router = useRouter()
+  const [imageStoragePath, setImageStoragePath] = useState(
+    typeof currentValue.storage_path === 'string' ? currentValue.storage_path : '',
+  )
+  const [imageUrl, setImageUrl] = useState(
+    resolveImageUrl(
+      typeof currentValue.storage_path === 'string' ? currentValue.storage_path : null,
+      typeof currentValue.url === 'string' ? currentValue.url : null,
+    ) ?? '',
+  )
+  const [videoStoragePath, setVideoStoragePath] = useState(
+    typeof currentValue.video_storage_path === 'string' ? currentValue.video_storage_path : '',
+  )
+  const [videoUrl, setVideoUrl] = useState(
+    resolveImageUrl(
+      typeof currentValue.video_storage_path === 'string' ? currentValue.video_storage_path : null,
+      typeof currentValue.video_url === 'string' ? currentValue.video_url : null,
+    ) ?? '',
+  )
   const rawBgType = currentValue.backgroundType as string | undefined
   const [backgroundType, setBackgroundType] = useState<BackgroundType>(
-    rawBgType === 'circuit' || rawBgType === 'minimal' || rawBgType === 'matrix'
-      ? rawBgType
-      : 'matrix',
+    rawBgType === 'circuit' || rawBgType === 'minimal' || rawBgType === 'matrix' ? rawBgType : 'matrix',
   )
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
     typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.6,
   )
-  const [uploadingImage, setUploadingImage] = useState(false)
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const imageInputRef = useRef<HTMLInputElement>(null)
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setUploadingImage(true)
-    setErrorMsg(null)
-    try {
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `background/bg-${Date.now()}.${ext}`
-      const { url, publicUrl } = await createSignedUploadUrl(R2_BUCKET, path)
-      const res = await fetch(url, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } })
-      if (!res.ok) throw new Error('Upload failed')
-      setImageUrl(publicUrl)
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : 'Upload failed')
-    } finally {
-      setUploadingImage(false)
-    }
-  }
+  const draftPayload = useMemo(
+    () => ({
+      storage_path: imageStoragePath || undefined,
+      url: imageUrl || undefined,
+      video_storage_path: videoStoragePath || undefined,
+      video_url: videoUrl || undefined,
+      backgroundType,
+      backgroundImageOpacity,
+    }),
+    [imageStoragePath, imageUrl, videoStoragePath, videoUrl, backgroundType, backgroundImageOpacity],
+  )
+
+  useEffect(() => {
+    broadcastAdminDraft('background', draftPayload)
+  }, [draftPayload])
 
   async function handleSave() {
     setStatus('saving')
     setErrorMsg(null)
     const value = JSON.stringify({
-      url: imageUrl || undefined,
-      video_url: videoUrl || undefined,
+      storage_path: imageStoragePath || undefined,
+      url: imageStoragePath ? imageUrl || undefined : imageUrl || undefined,
+      video_storage_path: videoStoragePath || undefined,
+      video_url: videoStoragePath ? videoUrl || undefined : videoUrl || undefined,
       backgroundType,
       backgroundImageOpacity,
     })
@@ -70,6 +83,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       setErrorMsg(result.error)
     } else {
       setStatus('saved')
+      router.refresh()
       setTimeout(() => setStatus('idle'), 2000)
     }
   }
@@ -79,12 +93,10 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <div>
         <h2 className="text-sm font-semibold text-zinc-200">Background</h2>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Upload or paste a URL for the background image. Optionally add a video URL for a
-          looping video background (video takes precedence when set).
+          Site-wide background image and optional scroll-synced video. All media is cached to R2.
         </p>
       </div>
 
-      {/* Background Type */}
       <div className="space-y-2">
         <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
           Background Animation Type
@@ -110,7 +122,6 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         </RadioGroupPrimitive.Root>
       </div>
 
-      {/* Background Image Opacity */}
       <div className="space-y-2">
         <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
           Background Image Opacity:{' '}
@@ -131,46 +142,35 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         </SliderPrimitive.Root>
       </div>
 
-      {/* Background image */}
-      <div className="space-y-2">
-        <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">Background Image</label>
-        {imageUrl && (
-          <div className="relative w-32 h-20 rounded overflow-hidden border border-zinc-700">
-            <Image src={imageUrl} alt="Background preview" fill className="object-cover" sizes="128px" />
-          </div>
-        )}
-        <div className="flex gap-2 flex-wrap">
-          <button
-            type="button"
-            disabled={uploadingImage}
-            onClick={() => imageInputRef.current?.click()}
-            className="px-3 py-1.5 text-xs rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors disabled:opacity-50"
-          >
-            {uploadingImage ? 'Uploading…' : '↑ Upload image'}
-          </button>
-          <input ref={imageInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-        </div>
-        <input
-          type="url"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://… (or upload above)"
-          className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
-        />
-      </div>
+      <MediaSourcePicker
+        label="Background Image"
+        currentUrl={imageUrl || null}
+        storagePrefix="background/images"
+        onResolved={(path, publicUrl) => {
+          setImageStoragePath(path)
+          if (publicUrl) setImageUrl(publicUrl)
+          setErrorMsg(null)
+        }}
+        onError={setErrorMsg}
+      />
 
-      {/* Background video */}
-      <div className="space-y-2">
-        <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">Background Video URL</label>
-        <p className="text-xs text-zinc-600">Direct video URL (mp4/webm). Leave blank for image-only background.</p>
-        <input
-          type="url"
-          value={videoUrl}
-          onChange={(e) => setVideoUrl(e.target.value)}
-          placeholder="https://… .mp4"
-          className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
-        />
-      </div>
+      {imageUrl && (
+        <div className="relative w-32 h-20 rounded overflow-hidden border border-zinc-700">
+          <Image src={imageUrl} alt="Background preview" fill className="object-cover" sizes="128px" unoptimized />
+        </div>
+      )}
+
+      <VideoSourcePicker
+        label="Background Video (optional)"
+        currentUrl={videoUrl || null}
+        storagePrefix="background/videos"
+        onResolved={(path, publicUrl) => {
+          setVideoStoragePath(path)
+          if (publicUrl) setVideoUrl(publicUrl)
+          setErrorMsg(null)
+        }}
+        onError={setErrorMsg}
+      />
 
       <div className="flex items-center gap-3 pt-1">
         <button

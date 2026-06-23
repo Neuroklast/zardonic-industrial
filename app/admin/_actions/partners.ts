@@ -5,14 +5,19 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
+import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { z } from 'zod'
+
+const partnerCategorySchema = z.enum(['credit', 'endorsement', 'partner', 'label', 'sponsor'])
 
 const partnerInputSchema = z.object({
   name: z.string().min(1),
-  url: z.string().url().optional().nullable().or(z.literal('')).transform(v => v === '' ? null : v),
-  logo_storage_path: z.string().optional().nullable(),
-  category: z.string().optional().default('partner'),
+  url: z.string().url().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
+  logo_storage_path: z.string().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
+  logo_url: z.string().url().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
+  category: partnerCategorySchema.optional().default('partner'),
   display_order: z.coerce.number().optional().default(0),
+  active: z.coerce.boolean().optional(),
 })
 
 function parseFormData(formData: FormData) {
@@ -20,9 +25,17 @@ function parseFormData(formData: FormData) {
     name: formData.get('name'),
     url: formData.get('url') || null,
     logo_storage_path: formData.get('logo_storage_path') || null,
+    logo_url: formData.get('logo_url') || null,
     category: formData.get('category') || 'partner',
     display_order: formData.get('display_order') || 0,
+    active: formData.get('active'),
   }
+}
+
+function withR2LogoPreference<T extends { logo_storage_path?: string | null; logo_url?: string | null }>(
+  data: T,
+): T {
+  return preferR2StoragePath(data, 'logo_storage_path', 'logo_url')
 }
 
 export async function createPartner(formData: FormData) {
@@ -35,7 +48,7 @@ export async function createPartner(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin.from('partners').insert(parsed.data)
+    const { error } = await supabaseAdmin.from('partners').insert(withR2LogoPreference(parsed.data))
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')
@@ -54,7 +67,10 @@ export async function updatePartner(id: string, formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin.from('partners').update(parsed.data).eq('id', id)
+    const { error } = await supabaseAdmin
+      .from('partners')
+      .update(withR2LogoPreference(parsed.data))
+      .eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')

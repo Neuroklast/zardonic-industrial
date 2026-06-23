@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 
 interface SoundConfig {
   enabled: boolean
@@ -48,12 +49,10 @@ export default async function SoundPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold">Sound Settings</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Configure UI sound effects and ambient audio for the public site.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Sound Settings"
+        description="Configure UI sound effects and ambient audio for the public site."
+      />
 
       <form action={saveSoundConfig} className="space-y-4">
         <div className="bg-zinc-900 border border-zinc-800 rounded-lg divide-y divide-zinc-800">

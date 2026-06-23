@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { deleteSoundpack } from '@/app/admin/_actions/soundpacks'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 
 export default async function SoundpacksPage() {
   let items: Array<{ id: string; title: string; display_order: number }> = []
@@ -18,15 +19,18 @@ export default async function SoundpacksPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Soundpacks</h1>
-        <Link
-          href="/admin/soundpacks/new"
-          className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
-        >
-          + New Item
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Soundpacks"
+        description="Manage downloadable soundpack listings with cover art and external purchase links."
+        action={
+          <Link
+            href="/admin/soundpacks/new"
+            className="px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
+          >
+            + New Item
+          </Link>
+        }
+      />
       {items.length === 0 ? (
         <p className="text-zinc-400 text-sm">No soundpacks yet.</p>
       ) : (

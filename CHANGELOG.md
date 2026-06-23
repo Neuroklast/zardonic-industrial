@@ -8,6 +8,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Gallery visibility toggle**: Admin gallery list now shows Visible/Hidden per image (matches releases/partners pattern).
+- **AdminPageHeader rollout**: Consistent page headers on merchandise, soundpacks, gigs, music highlights, social, bio, site config, data, sections, health, analytics, sound, and newsletter admin pages.
+
+### Changed
+- **Single Supabase SQL**: Consolidated all `supabase/migrations/*.sql` files into one idempotent [`supabase/schema.sql`](supabase/schema.sql). Migration folder removed.
+
+### Fixed
+- **Live preview gaps**: `AdminDraftListener` now applies hero background image/opacity and background video URL drafts; `data-draft-target` attributes added to hero bg and bg video elements.
+- **Public gallery filter**: `fetchAll()` now filters gallery by `active = true` (consistent with partners/merch/soundpacks).
+- **Favicon R2 path**: `appearanceBridgeConfig` resolves `faviconStoragePath` via `resolveImageUrl()` on the server.
+- **Admin mobile test**: Login email input test uses `#email` selector (input is `type="text"` for phone-or-email support).
+- **Admin dashboard DB error**: `site_config` count query used non-existent `id` column — now counts by `key`.
+- **Bio JSON import**: Handles exports with or without `bio.id` (update existing row vs insert).
+
+### Added
+- **Video media sourcing**: `VideoSourcePicker` + `cacheRemoteVideoToR2` for background videos (upload / URL / Google Drive → R2, max 50 MB).
+- **Site config media**: Background image + video, hero background, and favicon use `MediaSourcePicker` / `VideoSourcePicker` with `storage_path` fields aligned to public `resolveImageUrl()`.
+- **Gallery edit**: `/admin/gallery/[id]` with image replace via `MediaSourcePicker`.
+- **Admin nav UX**: Grouped sidebar (Overview, Site Design, Content, Commerce, Engagement, System), longest-prefix active state, `AdminPageHeader` on list pages, redesigned dashboard with grouped tiles.
+- **Unified media sourcing (admin)**: `MediaSourcePicker` on partners, releases, gallery, merchandise, and soundpacks — upload to R2, paste HTTPS image URL (server-side fetch + R2 cache), or import from public Google Drive links. `cacheRemoteImageToR2` blocks SSRF/private hosts and enforces 10 MB / image MIME limits.
+- **Partners admin**: Create/edit partners with category (credit / endorsement / partner), visibility toggle, and logo preview; `partner` category now renders in a third grid on the public credits section.
+- **Admin live preview**: Split-view preview pane on `/admin/site-config` with iframe + "open in new tab"; draft changes broadcast via `BroadcastChannel` and applied instantly on the public page (`AdminDraftListener`).
+- **Appearance overhaul**: Tabbed site config with preset gallery (6 built-in + custom saved presets), oklch theme colors, font dropdowns, and `AppearanceBridge` on the public site.
+- **JSON import**: `/admin/data` now supports uploading export JSON backups (upsert by id/key).
+- **Discography tools**: Release visibility toggle, iTunes sync link, per-release "Cover von iTunes" action (R2 cache), improved iTunes sync (`entity=song` + song tracks).
+- **CSP parity test**: `src/test/csp-parity.test.ts` keeps `vercel.json` and `next.config.mjs` `connect-src` in sync.
+
+### Fixed
+- **R2 uploads blocked in production**: Added `https://*.r2.cloudflarestorage.com` and `https://*.r2.dev` to `vercel.json` `connect-src`; enabled `forcePathStyle: true` on all R2 `S3Client` instances so presigned URLs match the CSP wildcard.
+- **Releases not showing**: Added `manually_edited` column migration; `fetchAll()` now logs Supabase errors and falls back when the column is missing.
+- **Cover upload preview**: `EditReleaseForm` now shows `publicUrl` after R2 upload instead of clearing the preview.
+
 ### Added / Changed for Zardonic v234 Final Spec (while preserving current rich look)
 - Background now defaults to Digicide album cover as primary static layer, with all existing animated effects, scroll video behavior, matrix/circuit layers kept and running on top (high performance tuned).
 - High-performance improvements: throttled scroll-to-video sync, reduced density/speed for animated layers when strong image present, lite-mode friendly.

@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabaseServer'
 import { Export } from '@phosphor-icons/react/dist/ssr'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { DataImportClient } from './DataImportClient'
 
 // Server action: build a JSON export of all site data
 async function buildExportData() {
@@ -43,12 +45,10 @@ export default async function DataPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-xl font-bold">Data Export</h1>
-        <p className="text-zinc-400 text-sm mt-1">
-          Download a full JSON backup of all site content from Supabase.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Data Export & Import"
+        description="Download a full JSON backup of all site content or restore from an export file."
+      />
 
       {fetchError && (
         <div className="mb-4 bg-red-900/20 border border-red-700/40 rounded p-3 text-red-300 text-sm">
@@ -98,6 +98,10 @@ export default async function DataPage() {
 
       {/* Client-side script for the download button */}
       <DataExportButton exportJson={exportJson} />
+
+      <div className="mt-6">
+        <DataImportClient />
+      </div>
     </div>
   )
 }

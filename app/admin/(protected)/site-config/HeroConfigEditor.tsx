@@ -1,45 +1,70 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
+import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
+import { resolveImageUrl } from '@/lib/r2'
 import * as SliderPrimitive from '@radix-ui/react-slider'
-
-interface HeroConfig {
-  headline: string
-  tagline: string
-  ctaLabel: string
-  ctaUrl: string
-  backgroundImageOpacity: number
-}
 
 interface HeroConfigEditorProps {
   currentValue: Record<string, unknown>
 }
 
 export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
+  const router = useRouter()
   const [headline, setHeadline] = useState(typeof currentValue.headline === 'string' ? currentValue.headline : 'ZARDONIC')
-  const [tagline, setTagline] = useState(typeof currentValue.tagline === 'string' ? currentValue.tagline : 'Industrial Metal / Drum & Bass')
+  const [tagline, setTagline] = useState(
+    typeof currentValue.tagline === 'string' ? currentValue.tagline : 'Industrial Metal / Drum & Bass',
+  )
   const [ctaLabel, setCtaLabel] = useState(typeof currentValue.ctaLabel === 'string' ? currentValue.ctaLabel : 'Listen Now')
   const [ctaUrl, setCtaUrl] = useState(typeof currentValue.ctaUrl === 'string' ? currentValue.ctaUrl : '#releases')
+  const [backgroundImageStoragePath, setBackgroundImageStoragePath] = useState(
+    typeof currentValue.backgroundImageStoragePath === 'string' ? currentValue.backgroundImageStoragePath : '',
+  )
+  const [backgroundImageUrl, setBackgroundImageUrl] = useState(
+    resolveImageUrl(
+      typeof currentValue.backgroundImageStoragePath === 'string' ? currentValue.backgroundImageStoragePath : null,
+      typeof currentValue.backgroundImageUrl === 'string' ? currentValue.backgroundImageUrl : null,
+    ) ?? '',
+  )
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
     typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.35,
   )
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  const draftPayload = useMemo(
+    () => ({
+      headline,
+      tagline,
+      ctaLabel,
+      ctaUrl,
+      backgroundImageStoragePath: backgroundImageStoragePath || undefined,
+      backgroundImageUrl: backgroundImageUrl || undefined,
+      backgroundImageOpacity,
+    }),
+    [headline, tagline, ctaLabel, ctaUrl, backgroundImageStoragePath, backgroundImageUrl, backgroundImageOpacity],
+  )
+
+  useEffect(() => {
+    broadcastAdminDraft('hero', draftPayload)
+  }, [draftPayload])
+
   async function handleSave() {
     setStatus('saving')
     setErrorMsg(null)
-    const payload: HeroConfig = { headline, tagline, ctaLabel, ctaUrl, backgroundImageOpacity }
     const fd = new FormData()
     fd.set('key', 'hero')
-    fd.set('value', JSON.stringify(payload))
+    fd.set('value', JSON.stringify(draftPayload))
     const result = await updateSiteConfig(fd)
     if (result.error) {
       setStatus('error')
       setErrorMsg(result.error)
     } else {
       setStatus('saved')
+      router.refresh()
       setTimeout(() => setStatus('idle'), 2000)
     }
   }
@@ -48,7 +73,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
     <div className="border border-zinc-800 rounded p-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-zinc-200">Hero Section</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Headline, tagline and call-to-action button shown above the fold.</p>
+        <p className="text-xs text-zinc-500 mt-0.5">Headline, tagline, CTA and optional hero-specific background image.</p>
       </div>
 
       <div className="space-y-3">
@@ -58,7 +83,6 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             type="text"
             value={headline}
             onChange={(e) => setHeadline(e.target.value)}
-            placeholder="ZARDONIC"
             className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
           />
         </div>
@@ -69,7 +93,6 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             type="text"
             value={tagline}
             onChange={(e) => setTagline(e.target.value)}
-            placeholder="Industrial Metal / Drum & Bass"
             className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
           />
         </div>
@@ -81,7 +104,6 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
               type="text"
               value={ctaLabel}
               onChange={(e) => setCtaLabel(e.target.value)}
-              placeholder="Listen Now"
               className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
             />
           </div>
@@ -91,11 +113,23 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
               type="text"
               value={ctaUrl}
               onChange={(e) => setCtaUrl(e.target.value)}
-              placeholder="#releases"
               className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
             />
           </div>
         </div>
+
+        <MediaSourcePicker
+          label="Hero Background Image (optional)"
+          currentUrl={backgroundImageUrl || null}
+          storagePrefix="hero/background"
+          onResolved={(path, publicUrl) => {
+            setBackgroundImageStoragePath(path)
+            if (publicUrl) setBackgroundImageUrl(publicUrl)
+            setErrorMsg(null)
+          }}
+          onError={setErrorMsg}
+        />
+        <p className="text-xs text-zinc-500">Leave empty to use the global site background image.</p>
 
         <div className="space-y-2">
           <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">

@@ -14,6 +14,7 @@ interface PartnerItem {
 interface CreditsAndEndorsementsProps {
   credits: PartnerItem[]
   endorsements: PartnerItem[]
+  partners?: PartnerItem[]
   logoBrightness?: number
 }
 
@@ -90,8 +91,8 @@ function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; he
   )
 }
 
-export function CreditsSection({ credits, endorsements, logoBrightness }: CreditsAndEndorsementsProps) {
-  const hasItems = credits.length > 0 || endorsements.length > 0
+export function CreditsSection({ credits, endorsements, partners = [], logoBrightness }: CreditsAndEndorsementsProps) {
+  const hasItems = credits.length > 0 || endorsements.length > 0 || partners.length > 0
 
   return (
     <SectionWrapper id="credits" data-theme-color="primary accent card border">
@@ -109,6 +110,7 @@ export function CreditsSection({ credits, endorsements, logoBrightness }: Credit
         <div className="space-y-12">
           <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
           <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
+          <LogoGrid items={partners} heading="PARTNERS & FRIENDS" logoBrightness={logoBrightness} />
         </div>
       ) : (
         <SectionEmpty label="Credits and endorsements coming soon" />

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
 import { deleteSocialLink } from '@/app/admin/_actions/social'
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import SocialForm from './SocialForm'
 
 export default async function SocialPage() {
@@ -18,7 +19,10 @@ export default async function SocialPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-xl font-bold mb-6">Social Links</h1>
+      <AdminPageHeader
+        title="Social Links"
+        description="Manage footer and connect links. Social icons appear in the site footer only."
+      />
       <div className="mb-8">
         <h2 className="text-sm font-medium text-zinc-400 mb-4">Add New Link</h2>
         <SocialForm />

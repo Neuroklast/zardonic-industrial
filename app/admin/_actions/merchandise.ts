@@ -5,6 +5,7 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { revalidatePath } from 'next/cache'
+import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -35,11 +36,16 @@ export async function createMerchandise(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin.from('merchandise').insert({
-      ...parsed.data,
-      image_url: parsed.data.image_url || null,
-      external_url: parsed.data.external_url || null,
-    })
+    const row = preferR2StoragePath(
+      {
+        ...parsed.data,
+        image_url: parsed.data.image_url || null,
+        external_url: parsed.data.external_url || null,
+      },
+      'image_storage_path',
+      'image_url',
+    )
+    const { error } = await supabaseAdmin.from('merchandise').insert(row)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/merchandise')
@@ -58,14 +64,16 @@ export async function updateMerchandise(id: string, formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin
-      .from('merchandise')
-      .update({
+    const row = preferR2StoragePath(
+      {
         ...parsed.data,
         image_url: parsed.data.image_url || null,
         external_url: parsed.data.external_url || null,
-      })
-      .eq('id', id)
+      },
+      'image_storage_path',
+      'image_url',
+    )
+    const { error } = await supabaseAdmin.from('merchandise').update(row).eq('id', id)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/merchandise')

@@ -1,29 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
-import SiteConfigEditor from './SiteConfigEditor'
-import { BackgroundConfigEditor } from './BackgroundConfigEditor'
-import { HeroConfigEditor } from './HeroConfigEditor'
-import { AppearanceEditor } from './AppearanceEditor'
-
-const MANAGED_KEYS = [
-  {
-    key: 'newsletter',
-    label: 'Newsletter Section',
-    description: 'Heading and body text for the mailing list section.',
-    example: '{"heading":"Mailing List","body":"Subscribe to get the latest news and releases."}',
-  },
-  {
-    key: 'merchandise',
-    label: 'Merchandise Section',
-    description: 'Footer text shown below the merch grid.',
-    example: '{"footerText":"Visit the official Zardonic Merchandise Store to get these and more!"}',
-  },
-  {
-    key: 'footer',
-    label: 'Footer Links',
-    description: 'Impressum and Privacy Policy page paths.',
-    example: '{"impressumUrl":"/impressum","privacyUrl":"/privacy"}',
-  },
-]
+import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { SiteConfigTabs } from './SiteConfigTabs'
 
 export default async function SiteConfigPage() {
   let rows: Array<{ key: string; value: unknown }> = []
@@ -36,38 +13,22 @@ export default async function SiteConfigPage() {
   }
 
   const rowMap = Object.fromEntries(rows.map((r) => [r.key, r.value]))
-  const bgValue = (rowMap['background'] ?? {}) as Record<string, unknown>
-  const heroValue = (rowMap['hero'] ?? {}) as Record<string, unknown>
-  const appearanceValue = (rowMap['appearance'] ?? {}) as Record<string, unknown>
 
   return (
     <div>
-      <h1 className="text-xl font-bold mb-6">Site Configuration</h1>
-      <div className="space-y-8">
-        {/* Hero section – dedicated form editor */}
-        <HeroConfigEditor currentValue={heroValue} />
-
-        {/* Background has a dedicated UI with upload support */}
-        <BackgroundConfigEditor currentValue={bgValue} />
-
-        {/* Appearance / visual effects */}
-        <AppearanceEditor currentValue={appearanceValue} />
-
-        {MANAGED_KEYS.map((item) => (
-          <SiteConfigEditor
-            key={item.key}
-            configKey={item.key}
-            label={item.label}
-            description={item.description}
-            example={item.example}
-            currentValue={
-              rowMap[item.key] !== undefined
-                ? JSON.stringify(rowMap[item.key], null, 2)
-                : item.example
-            }
-          />
-        ))}
-      </div>
+      <AdminPageHeader
+        title="Site Configuration"
+        description="Edit appearance, hero, background and section text. Use split preview to see changes live."
+      />
+      <SiteConfigTabs
+        heroValue={(rowMap['hero'] ?? {}) as Record<string, unknown>}
+        bgValue={(rowMap['background'] ?? {}) as Record<string, unknown>}
+        appearanceValue={(rowMap['appearance'] ?? {}) as Record<string, unknown>}
+        newsletterValue={(rowMap['newsletter'] ?? {}) as Record<string, unknown>}
+        merchandiseValue={(rowMap['merchandise'] ?? {}) as Record<string, unknown>}
+        footerValue={(rowMap['footer'] ?? {}) as Record<string, unknown>}
+        advancedConfigs={[]}
+      />
     </div>
   )
 }

@@ -184,7 +184,7 @@ describe('Admin table pages — overflow-x-auto wrapper', () => {
 describe('AdminLoginPage — input font size', () => {
   it('email input has text-base class to prevent iOS auto-zoom on focus', () => {
     const { container } = render(<AdminLoginPage />)
-    const emailInput = container.querySelector('input[type="email"]')
+    const emailInput = container.querySelector('#email')
     expect(emailInput?.className).toContain('text-base')
   })
 
