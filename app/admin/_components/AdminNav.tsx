@@ -103,13 +103,15 @@ export function AdminNav() {
         <div className="flex flex-col flex-1 p-3 overflow-y-auto">
           <NavLinks />
           <div className="mt-4 pt-4 border-t border-zinc-800">
-            <Link
-              href="/admin/logout"
-              className="flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
-            >
-              <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Sign Out
-            </Link>
+            <form method="POST" action="/admin/logout" className="contents">
+              <button
+                type="submit"
+                className="w-full flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors text-left"
+              >
+                <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Sign Out
+              </button>
+            </form>
           </div>
         </div>
       </aside>
@@ -162,14 +164,16 @@ export function AdminNav() {
         <div className="flex flex-col flex-1 p-3 overflow-y-auto h-[calc(100vh-56px)]">
           <NavLinks onNavClick={() => setMobileOpen(false)} />
           <div className="mt-4 pt-4 border-t border-zinc-800">
-            <Link
-              href="/admin/logout"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors"
-            >
-              <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Sign Out
-            </Link>
+            <form method="POST" action="/admin/logout" className="contents">
+              <button
+                type="submit"
+                onClick={() => setMobileOpen(false)}
+                className="w-full flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-red-500 hover:bg-zinc-800 hover:text-red-400 border border-transparent transition-colors text-left"
+              >
+                <SignOut className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Sign Out
+              </button>
+            </form>
           </div>
         </div>
       </aside>
