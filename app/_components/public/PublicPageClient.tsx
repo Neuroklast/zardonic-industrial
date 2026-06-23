@@ -126,8 +126,8 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
           hoverEffect={releaseHoverEffect}
           onReleaseClick={(release) => {
             const selected = releases.find((item) => item.id === release.id)
-            if (!selected) return
-            setOverlay({ type: 'release', data: selected.overlayRelease })
+            if (!selected?.overlayRelease?.id) return
+            handleReleaseClick(selected)
           }}
         />
       ) : (

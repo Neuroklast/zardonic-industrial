@@ -290,11 +290,14 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               <div className="data-label mb-3">{tracksLabel}</div>
               <ol className="space-y-1">
                 {data.tracks.map((track, i) => {
-                  const { cleanTitle, extractedArtists } = parseTrackTitle(track.title)
+                  const rawTitle = typeof track?.title === 'string' ? track.title : ''
+                  if (!rawTitle.trim()) return null
+
+                  const { cleanTitle, extractedArtists } = parseTrackTitle(rawTitle)
                   const allFeaturedArtists = [...(track.featuredArtists || []), ...extractedArtists]
 
                   return (
-                  <li key={i} className="flex items-start gap-3 text-sm font-mono text-foreground/80">
+                  <li key={`${i}-${rawTitle}`} className="flex items-start gap-3 text-sm font-mono text-foreground/80">
                     <span className="text-primary/50 w-5 text-right shrink-0 mt-0.5">{i + 1}.</span>
                     <div className="flex-1 min-w-0">
                       <span className="block">{cleanTitle}</span>

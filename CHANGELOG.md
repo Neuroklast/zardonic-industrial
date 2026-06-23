@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Release modal tracklist**: Public release overlay now loads `tracks` + `artists` from Supabase and renders the pre-migration tracklist rules (site artist in bold, compound-artist dedup, feat. parsing).
 
 ### Fixed
+- **Release modal empty / infinite scroll**: Stabilized overlay session key (`getOverlaySessionKey`) so phase timers no longer reset on object identity churn; release overlays skip progressive clip-path FX; malformed track rows are skipped; body scroll locked while modal is open.
 - **Admin site-config preview CSP**: Added `'self'` to `frame-src` and set `X-Frame-Options: SAMEORIGIN` so the split-view iframe can load `/?adminPreview=1`.
 
 ### Added

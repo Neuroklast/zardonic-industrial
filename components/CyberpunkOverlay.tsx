@@ -13,6 +13,7 @@ import {
   OVERLAY_REVEAL_PHASE_DELAY_MS,
 } from '@/lib/config'
 import { getRandomOverlayAnimation } from '@/lib/overlay-animations'
+import { getOverlaySessionKey } from '@/lib/overlay-session'
 import { getRandomProgressiveMode } from '@/lib/progressive-overlay-modes'
 import { ImpressumOverlayContent } from '@/components/overlays/ImpressumOverlayContent'
 import { PrivacyOverlayContent } from '@/components/overlays/PrivacyOverlayContent'
@@ -50,20 +51,17 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
     progressiveOverlayModesRef.current = adminSettings?.progressiveOverlayModes
   }, [adminSettings?.progressiveOverlayModes])
 
-  // Pick a new random animation each time the overlay opens (overlay goes null→truthy).
-  // NOTE: `overlay` is intentionally in the dep array even though getRandomOverlayAnimation()
-  // does not close over it — we rely on the reference change to trigger a new random pick.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const anim = useMemo(() => getRandomOverlayAnimation(), [overlay])
+  const overlaySessionKey = getOverlaySessionKey(overlay)
+
+  // Pick a new random animation each time a new overlay session opens.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- session key is the intentional open trigger, not a closed-over value
+  const anim = useMemo(() => getRandomOverlayAnimation(), [overlaySessionKey])
   const systemLabel = decorativeTexts?.overlaySystemLabel ?? `// ${artistName ? `${artistName.toUpperCase()}.NET` : 'SYSTEM.INTERFACE'} // v${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0'}`
 
   useEffect(() => {
-    if (!overlay) return
-    // Pick a new random progressive content reveal mode using the ref so this
-    // effect only re-runs when `overlay` itself changes, not when adminSettings
-    // updates (which would reset the phase and create an endless loading loop).
-    setProgressiveMode(getRandomProgressiveMode(progressiveOverlayModesRef.current))
+    if (!overlaySessionKey) return
 
+    setProgressiveMode(getRandomProgressiveMode(progressiveOverlayModesRef.current))
     setOverlayPhase('loading')
     setLoadingText(OVERLAY_LOADING_TEXTS[0])
 
@@ -89,7 +87,16 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
       clearTimeout(glitchTimer)
       clearTimeout(revealTimer)
     }
-  }, [overlay])
+  }, [overlaySessionKey])
+
+  useEffect(() => {
+    if (!overlaySessionKey) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [overlaySessionKey])
 
   return (
     <AnimatePresence>
@@ -146,9 +153,9 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               <motion.div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.4, delay: 0.15 }} style={{ transformOrigin: 'right' }} />
 
               {/* Content phases */}
-              <div className="relative overflow-y-auto flex-1 min-h-0">
+              <div className="relative overflow-y-auto flex-1 min-h-0 overscroll-contain">
                 {overlayPhase === 'loading' && (
-                  <div className="flex items-center justify-center min-h-[400px]">
+                  <div className="flex items-center justify-center min-h-[min(400px,50vh)]">
                     <motion.span className="progressive-loading-label text-primary font-mono text-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                       {loadingText}
                     </motion.span>
@@ -156,7 +163,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                 )}
 
                 {overlayPhase === 'glitch' && (
-                  <div className="flex items-center justify-center min-h-[400px]">
+                  <div className="flex items-center justify-center min-h-[min(400px,50vh)]">
                     <motion.div className="glitch-effect text-primary font-mono text-lg" initial={{ opacity: 0 }} animate={{ opacity: [0, 1, 0, 1, 0, 1] }} transition={{ duration: 0.2 }}>
                       {loadingText}
                     </motion.div>
@@ -177,11 +184,23 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                     <AnimatePresence mode="wait">
                       {overlayPhase === 'revealed' && (
                         <motion.div
-                          key={overlay.type}
-                          className={progressiveMode.className}
-                          initial={progressiveMode.containerVariants.loading}
-                          animate={progressiveMode.containerVariants.loaded}
-                          transition={progressiveMode.transition}
+                          key={overlaySessionKey ?? overlay.type}
+                          className={overlay.type === 'release' ? undefined : progressiveMode.className}
+                          initial={
+                            overlay.type === 'release'
+                              ? { opacity: 0, y: 8 }
+                              : progressiveMode.containerVariants.loading
+                          }
+                          animate={
+                            overlay.type === 'release'
+                              ? { opacity: 1, y: 0 }
+                              : progressiveMode.containerVariants.loaded
+                          }
+                          transition={
+                            overlay.type === 'release'
+                              ? { duration: 0.25, ease: 'easeOut' }
+                              : progressiveMode.transition
+                          }
                         >
                           {overlay.type === 'impressum' && (
                             <ImpressumOverlayContent adminSettings={adminSettings} onClose={onClose} decorativeTexts={decorativeTexts} />
@@ -204,7 +223,15 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                           )}
 
                           {overlay.type === 'release' && overlay.data && (
-                            <ReleaseOverlayContent data={overlay.data} sectionLabels={adminSettings?.labels} mainArtistName={artistName} />
+                            <ReleaseOverlayContent
+                              data={overlay.data}
+                              sectionLabels={adminSettings?.labels}
+                              mainArtistName={artistName}
+                            />
+                          )}
+
+                          {overlay.type === 'release' && !overlay.data && (
+                            <p className="text-sm font-mono text-muted-foreground">Release data unavailable.</p>
                           )}
                         </motion.div>
                       )}
