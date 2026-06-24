@@ -283,7 +283,7 @@ async function runPostImportConsolidation(
   const errors = [...result.errors]
   if (result.deleted > 0) {
     errors.unshift(
-      `Consolidated ${result.deleted} duplicate release(s) into ${result.merged} updated row(s)`,
+      `Consolidated ${result.deleted} duplicate release(s) across iTunes/Spotify/Discogs`,
     )
   }
   return { updated: result.deleted, errors }
@@ -312,6 +312,7 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     cursor,
     limit: IMPORT_BATCH_SIZE,
     lightImport: true,
+    linkCrossSource: true,
     existingIds,
     releaseMatchIndex,
     displayOrderStart: payload.displayOrderStart,

@@ -70,7 +70,11 @@ function releaseDatesAlign(a: string | null, b: string | null): boolean {
 
 function typesCompatible(a: string, b: string): boolean {
   if (a === b) return true
-  return ALBUM_FAMILY_TYPES.has(a) && ALBUM_FAMILY_TYPES.has(b)
+  if (ALBUM_FAMILY_TYPES.has(a) && ALBUM_FAMILY_TYPES.has(b)) return true
+  // iTunes singles vs Spotify album listings for the same release
+  if (a === 'single' && ALBUM_FAMILY_TYPES.has(b)) return true
+  if (b === 'single' && ALBUM_FAMILY_TYPES.has(a)) return true
+  return false
 }
 
 function sameExternalId(a: ReleaseConsolidationRow, b: ReleaseConsolidationRow): boolean {

@@ -14,28 +14,26 @@ import {
   type CatalogueSyncConfig,
 } from '@/lib/catalogue-sync-config'
 import {
+  importCatalogueItems,
+  type BulkExternalSyncResult,
+} from '@/lib/catalogue-import'
+import {
   normalizeDiscogsArtistId,
   normalizeExternalId,
   normalizeSpotifyArtistId,
   type ExternalReleaseSource,
 } from '@/lib/release-external-ids'
+import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
 import { mergeStreamingLinks, type ReleaseMetadata, type StreamingLink } from '@/lib/release-metadata'
 import {
   fetchDiscogsArtistReleases,
-  fetchReleaseMetadataFromDiscogs,
   searchDiscogsArtistId,
 } from '@/lib/discogs-sync'
 import { getSpotifyAccessToken } from '@/lib/spotify-client'
 import {
-  fetchReleaseMetadataFromSpotify,
   fetchSpotifyArtistAlbums,
   searchSpotifyArtistId,
 } from '@/lib/spotify-sync'
-import {
-  buildTrackEnrichmentUpdate,
-  releaseTracksAreEmpty,
-  type TracksSource,
-} from '@/lib/release-enrichment'
 import {
   fetchOdesliStreamingLinks,
   mergeOdesliIntoReleaseLinks,
@@ -59,7 +57,6 @@ export interface ReleaseExternalSyncResult {
 }
 
 export type { BulkExternalSyncResult } from '@/lib/catalogue-import'
-import type { BulkExternalSyncResult } from '@/lib/catalogue-import'
 
 async function cacheCoverToR2(
   coverUrl: string,
@@ -176,136 +173,6 @@ export async function syncReleaseFromExternalId(
   return actionResult
 }
 
-interface ExistingReleaseBackfillRow {
-  id: string
-  tracks: unknown
-  streaming_links: unknown
-  manually_edited: boolean | null
-  itunes_id?: string | null
-  spotify_id?: string | null
-  discogs_id?: string | null
-}
-
-function buildBulkBackfillUpdate(
-  existingRow: ExistingReleaseBackfillRow,
-  metadata: ReleaseMetadata,
-  source: ExternalReleaseSource,
-  idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
-  externalId: string,
-): Record<string, unknown> | null {
-  const update: Record<string, unknown> = {}
-  let changed = false
-
-  if (idField === 'spotify_id') {
-    if (!existingRow.spotify_id) {
-      update.spotify_id = externalId
-      changed = true
-    }
-  } else if (idField === 'itunes_id') {
-    if (!existingRow.itunes_id) {
-      update.itunes_id = externalId
-      changed = true
-    }
-  } else if (idField === 'discogs_id') {
-    if (!existingRow.discogs_id) {
-      update.discogs_id = externalId
-      changed = true
-    }
-  }
-
-  if (!existingRow.spotify_id && metadata.spotify_id) {
-    update.spotify_id = metadata.spotify_id
-    changed = true
-  }
-  if (!existingRow.itunes_id && metadata.itunes_id) {
-    update.itunes_id = metadata.itunes_id
-    changed = true
-  }
-  if (!existingRow.discogs_id && metadata.discogs_id) {
-    update.discogs_id = metadata.discogs_id
-    changed = true
-  }
-
-  const existingLinks = Array.isArray(existingRow.streaming_links)
-    ? (existingRow.streaming_links as StreamingLink[])
-    : []
-  const mergedLinks = mergeStreamingLinks(existingLinks, metadata.streaming_links)
-  if (mergedLinks.length > existingLinks.length) {
-    update.streaming_links = mergedLinks
-    changed = true
-  }
-
-  if (
-    releaseTracksAreEmpty(existingRow.tracks) &&
-    metadata.tracks &&
-    metadata.tracks.length > 0 &&
-    (source === 'spotify' || source === 'discogs')
-  ) {
-    Object.assign(update, buildTrackEnrichmentUpdate(metadata.tracks, source as TracksSource))
-    changed = true
-  }
-
-  return changed ? update : null
-}
-
-async function applyBulkBackfillToExistingRelease(
-  supabase: ReturnType<typeof createAdminClient>,
-  existingRow: ExistingReleaseBackfillRow,
-  metadata: ReleaseMetadata,
-  source: ExternalReleaseSource,
-  idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
-  externalId: string,
-  result: BulkExternalSyncResult,
-): Promise<void> {
-  const update = buildBulkBackfillUpdate(existingRow, metadata, source, idField, externalId)
-  if (!update) {
-    result.skipped++
-    return
-  }
-
-  const { error: updateError } = await supabase
-    .from('releases')
-    .update(update)
-    .eq('id', existingRow.id)
-
-  if (updateError) {
-    result.errors.push(`Failed to update "${metadata.title}": ${updateError.message}`)
-    result.skipped++
-    return
-  }
-
-  result.updated++
-}
-
-async function enrichMetadataForBulkImport(
-  source: ExternalReleaseSource,
-  externalId: string,
-  baseMetadata: ReleaseMetadata,
-): Promise<ReleaseMetadata> {
-  if (source === 'spotify') {
-    const enriched = await fetchReleaseMetadataFromSpotify(externalId)
-    if (enriched) {
-      return {
-        ...enriched,
-        streaming_links: mergeStreamingLinks(enriched.streaming_links, baseMetadata.streaming_links),
-      }
-    }
-    return baseMetadata
-  }
-
-  if (source === 'discogs' && baseMetadata.discogs_id) {
-    const enriched = await fetchReleaseMetadataFromDiscogs(baseMetadata.discogs_id)
-    if (enriched) {
-      return {
-        ...enriched,
-        streaming_links: mergeStreamingLinks(enriched.streaming_links, baseMetadata.streaming_links),
-      }
-    }
-  }
-
-  return baseMetadata
-}
-
 async function bulkImportMetadata(
   source: ExternalReleaseSource,
   idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
@@ -313,8 +180,6 @@ async function bulkImportMetadata(
   registryAction: 'itunes_sync' | 'spotify_sync' | 'discogs_sync',
   registryPayload: Record<string, unknown>,
 ): Promise<BulkExternalSyncResult> {
-  const result: BulkExternalSyncResult = { synced: 0, updated: 0, skipped: 0, errors: [] }
-
   const dispatchResult = dispatchAdminActionAsAdmin(
     registryAction,
     registryPayload,
@@ -325,150 +190,39 @@ async function bulkImportMetadata(
   const actionResult = await runAdminAction(async () => {
     const supabase = createAdminClient()
 
-    const { data: existingRows } = await supabase
-      .from('releases')
-      .select(`title, ${idField}`)
-      .not(idField, 'is', null)
-
-    const existingIds = new Set(
-      (existingRows ?? [])
-        .map((row: Record<string, string | null>) => row[idField])
-        .filter((id: string | null | undefined): id is string => Boolean(id)),
-    )
-
-    const { data: maxRow } = await supabase
-      .from('releases')
-      .select('display_order')
-      .order('display_order', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    let displayOrder = ((maxRow as { display_order?: number } | null)?.display_order ?? -1) + 1
-
-    const existingSelect =
-      'id, tracks, streaming_links, manually_edited, itunes_id, spotify_id, discogs_id'
-
-    for (const { externalId, metadata: baseMetadata } of items) {
-      const metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
-      const odesliLinks = await fetchOdesliStreamingLinks({
-        itunes_id: metadata.itunes_id,
-        spotify_id: metadata.spotify_id,
-        streaming_links: metadata.streaming_links,
-      })
-      if (odesliLinks.length > 0) {
-        metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
-      }
-
-      if (existingIds.has(externalId)) {
-        const { data: existingRow, error: existingError } = await supabase
-          .from('releases')
-          .select(existingSelect)
-          .eq(idField, externalId)
-          .maybeSingle()
-
-        if (existingError || !existingRow) {
-          result.errors.push(
-            `Failed to load existing "${metadata.title}": ${existingError?.message ?? 'not found'}`,
-          )
-          result.skipped++
-          continue
+    const importResult = await importCatalogueItems(supabase, {
+      source,
+      idField,
+      items,
+      lightImport: false,
+      linkCrossSource: true,
+      cacheCover: async (coverUrl, coverSource, externalId) => {
+        const objectPath = `releases/${coverSource}-${externalId}.jpg`
+        const cached = await cacheCoverToR2(coverUrl, objectPath)
+        if (!cached) return null
+        return {
+          cover_storage_path: cached.coverStoragePath,
+          cover_url: cached.coverUrl,
         }
+      },
+    })
 
-        await applyBulkBackfillToExistingRelease(
-          supabase,
-          existingRow as ExistingReleaseBackfillRow,
-          metadata,
-          source,
-          idField,
-          externalId,
-          result,
-        )
-        continue
-      }
-
-      const { data: titleMatches, error: titleError } = await supabase
-        .from('releases')
-        .select(existingSelect)
-        .ilike('title', metadata.title)
-        .limit(2)
-
-      if (titleError) {
-        result.errors.push(`Failed to match "${metadata.title}": ${titleError.message}`)
-        result.skipped++
-        continue
-      }
-
-      if ((titleMatches ?? []).length === 1) {
-        await applyBulkBackfillToExistingRelease(
-          supabase,
-          titleMatches![0] as ExistingReleaseBackfillRow,
-          metadata,
-          source,
-          idField,
-          externalId,
-          result,
-        )
-        existingIds.add(externalId)
-        continue
-      }
-
-      if ((titleMatches ?? []).length > 1) {
-        result.errors.push(`Ambiguous title match for "${metadata.title}" — skipped`)
-        result.skipped++
-        continue
-      }
-
-      let coverStoragePath: string | null = null
-      let coverUrl: string | null = metadata.coverUrl
-
-      if (metadata.coverUrl) {
-        const objectPath = `releases/${source}-${externalId}.jpg`
-        const cached = await cacheCoverToR2(metadata.coverUrl, objectPath)
-        if (cached) {
-          coverStoragePath = cached.coverStoragePath
-          coverUrl = cached.coverUrl
-        }
-      }
-
-      const row: Record<string, unknown> = {
-        title: metadata.title,
-        type: metadata.type || 'album',
-        release_date: metadata.release_date,
-        description: metadata.description,
-        artists: metadata.artists,
-        streaming_links: metadata.streaming_links,
-        tracks: metadata.tracks && metadata.tracks.length > 0 ? metadata.tracks : [],
-        tracks_source:
-          metadata.tracks && metadata.tracks.length > 0 && (source === 'spotify' || source === 'discogs')
-            ? source
-            : null,
-        last_enriched_at:
-          metadata.tracks && metadata.tracks.length > 0 ? new Date().toISOString() : null,
-        cover_storage_path: coverStoragePath,
-        cover_url: coverUrl,
-        display_order: displayOrder,
-        active: true,
-        manually_edited: false,
-        [idField]: externalId,
-      }
-
-      if (metadata.itunes_id) row.itunes_id = metadata.itunes_id
-      if (metadata.spotify_id) row.spotify_id = metadata.spotify_id
-      if (metadata.discogs_id) row.discogs_id = metadata.discogs_id
-
-      const { error: insertError } = await supabase.from('releases').insert(row)
-      if (insertError) {
-        result.errors.push(`Failed to insert "${metadata.title}": ${insertError.message}`)
-      } else {
-        result.synced++
-        displayOrder++
-        existingIds.add(externalId)
-      }
+    const consolidation = await consolidateDuplicateReleases(supabase)
+    const errors = [...importResult.errors, ...consolidation.errors]
+    if (consolidation.deleted > 0) {
+      errors.unshift(
+        `Consolidated ${consolidation.deleted} duplicate release(s) across iTunes/Spotify/Discogs`,
+      )
     }
 
     revalidatePath('/admin/releases')
     revalidatePath('/')
-    return result
+    return {
+      synced: importResult.synced,
+      updated: importResult.updated + consolidation.merged,
+      skipped: importResult.skipped + consolidation.skipped,
+      errors,
+    }
   }, `Unable to sync releases from ${source}.`)
 
   return 'error' in actionResult

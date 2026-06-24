@@ -63,6 +63,24 @@ describe('releasesAreDuplicates', () => {
     const b = row({ id: '2', title: 'Revolution', release_date: '2020-03-20' })
     expect(releasesAreDuplicates(a, b)).toBe(false)
   })
+
+  it('merges iTunes single with Spotify album listing for the same title', () => {
+    const a = row({
+      id: '1',
+      title: 'Revolution',
+      type: 'single',
+      release_date: '2015-03-20',
+      itunes_id: '111',
+    })
+    const b = row({
+      id: '2',
+      title: 'Revolution',
+      type: 'album',
+      release_date: '2015-03-20',
+      spotify_id: '222',
+    })
+    expect(releasesAreDuplicates(a, b)).toBe(true)
+  })
 })
 
 describe('findExistingReleaseForImport', () => {

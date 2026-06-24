@@ -2,6 +2,7 @@ import type { createAdminClient } from '@/lib/supabaseAdmin'
 import {
   addReleaseToMatchIndex,
   buildReleaseMatchIndex,
+  dedupeCatalogueImportItems,
   findExistingReleaseForImport,
   type ReleaseConsolidationRow,
   type ReleaseMatchIndex,
@@ -20,6 +21,8 @@ import {
   type StreamingLink,
 } from '@/lib/release-metadata'
 import {
+  extractItunesAlbumIdFromLinks,
+  extractSpotifyAlbumIdFromLinks,
   fetchOdesliStreamingLinks,
   mergeOdesliIntoReleaseLinks,
 } from '@/lib/release-streaming-enrichment'
@@ -47,6 +50,13 @@ export interface ImportCatalogueBatchOptions {
   existingIds?: Set<string>
   releaseMatchIndex?: ReleaseMatchIndex
   displayOrderStart?: number
+  /** Resolve missing Spotify/iTunes ids via Odesli when backfilling cross-source rows. */
+  linkCrossSource?: boolean
+  cacheCover?: (
+    coverUrl: string,
+    source: ExternalReleaseSource,
+    externalId: string,
+  ) => Promise<{ cover_storage_path: string; cover_url: string } | null>
 }
 
 const RELEASE_MATCH_SELECT =
@@ -108,6 +118,19 @@ function buildBulkBackfillUpdate(
   const mergedLinks = mergeStreamingLinks(existingLinks, metadata.streaming_links)
   if (mergedLinks.length > existingLinks.length) {
     update.streaming_links = mergedLinks
+    changed = true
+  }
+
+  const linkedSpotifyId =
+    metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(mergedLinks)
+  const linkedItunesId = metadata.itunes_id ?? extractItunesAlbumIdFromLinks(mergedLinks)
+
+  if (!existingRow.spotify_id && linkedSpotifyId) {
+    update.spotify_id = linkedSpotifyId
+    changed = true
+  }
+  if (!existingRow.itunes_id && linkedItunesId) {
+    update.itunes_id = linkedItunesId
     changed = true
   }
 
@@ -182,6 +205,41 @@ async function enrichMetadataForBulkImport(
   return baseMetadata
 }
 
+async function linkCrossSourceMetadata(
+  source: ExternalReleaseSource,
+  metadata: ReleaseMetadata,
+  existingRow: ExistingReleaseBackfillRow | null,
+  options: { lightImport: boolean; linkCrossSource: boolean },
+): Promise<ReleaseMetadata> {
+  if (!options.linkCrossSource) return metadata
+
+  const existingSpotifyId = existingRow?.spotify_id ?? null
+  const existingItunesId = existingRow?.itunes_id ?? null
+  const needsSpotify =
+    (source === 'itunes' || existingItunesId) && !metadata.spotify_id && !existingSpotifyId
+  const needsItunes =
+    (source === 'spotify' || existingSpotifyId) && !metadata.itunes_id && !existingItunesId
+
+  if (!needsSpotify && !needsItunes) return metadata
+
+  if (!options.lightImport) return metadata
+
+  const odesliLinks = await fetchOdesliStreamingLinks({
+    itunes_id: metadata.itunes_id ?? existingItunesId,
+    spotify_id: metadata.spotify_id ?? existingSpotifyId,
+    streaming_links: metadata.streaming_links,
+  })
+  if (odesliLinks.length === 0) return metadata
+
+  const mergedLinks = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
+  return {
+    ...metadata,
+    streaming_links: mergedLinks,
+    spotify_id: metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(mergedLinks),
+    itunes_id: metadata.itunes_id ?? extractItunesAlbumIdFromLinks(mergedLinks),
+  }
+}
+
 export type ReleaseMatchEntry = Pick<
   ReleaseConsolidationRow,
   | 'id'
@@ -218,6 +276,19 @@ export function toReleaseMatchEntry(row: ReleaseConsolidationRow): ReleaseMatchE
  * Import a slice of catalogue items into Supabase releases.
  * Used by sync jobs (lightImport) and legacy bulk server actions.
  */
+export async function importCatalogueItems(
+  supabase: ReturnType<typeof createAdminClient>,
+  options: Omit<ImportCatalogueBatchOptions, 'cursor' | 'limit'> & { items: CatalogueImportItem[] },
+): Promise<ImportCatalogueBatchResult> {
+  const deduped = dedupeCatalogueImportItems(options.items)
+  return importCatalogueBatch(supabase, {
+    ...options,
+    items: deduped,
+    cursor: 0,
+    limit: deduped.length,
+  })
+}
+
 export async function importCatalogueBatch(
   supabase: ReturnType<typeof createAdminClient>,
   options: ImportCatalogueBatchOptions,
@@ -229,6 +300,7 @@ export async function importCatalogueBatch(
     cursor,
     limit,
     lightImport = false,
+    linkCrossSource = true,
   } = options
 
   const result: ImportCatalogueBatchResult = {
@@ -301,6 +373,8 @@ export async function importCatalogueBatch(
       })
       if (odesliLinks.length > 0) {
         metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
+        metadata.spotify_id = metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(metadata.streaming_links)
+        metadata.itunes_id = metadata.itunes_id ?? extractItunesAlbumIdFromLinks(metadata.streaming_links)
       }
     }
 
@@ -318,6 +392,13 @@ export async function importCatalogueBatch(
         result.skipped++
         continue
       }
+
+      metadata = await linkCrossSourceMetadata(
+        source,
+        metadata,
+        existingRow as ExistingReleaseBackfillRow,
+        { lightImport, linkCrossSource },
+      )
 
       await applyBulkBackfillToExistingRelease(
         supabase,
@@ -347,6 +428,13 @@ export async function importCatalogueBatch(
         continue
       }
 
+      metadata = await linkCrossSourceMetadata(
+        source,
+        metadata,
+        existingRow as ExistingReleaseBackfillRow,
+        { lightImport, linkCrossSource },
+      )
+
       await applyBulkBackfillToExistingRelease(
         supabase,
         existingRow as ExistingReleaseBackfillRow,
@@ -358,6 +446,16 @@ export async function importCatalogueBatch(
       )
       existingIds.add(externalId)
       continue
+    }
+
+    let coverStoragePath: string | null = null
+    let coverUrl: string | null = metadata.coverUrl
+    if (metadata.coverUrl && options.cacheCover) {
+      const cached = await options.cacheCover(metadata.coverUrl, source, externalId)
+      if (cached) {
+        coverStoragePath = cached.cover_storage_path
+        coverUrl = cached.cover_url
+      }
     }
 
     const row: Record<string, unknown> = {
@@ -374,8 +472,8 @@ export async function importCatalogueBatch(
           : null,
       last_enriched_at:
         metadata.tracks && metadata.tracks.length > 0 ? new Date().toISOString() : null,
-      cover_storage_path: null,
-      cover_url: metadata.coverUrl,
+      cover_storage_path: coverStoragePath,
+      cover_url: coverUrl,
       display_order: displayOrder,
       active: true,
       manually_edited: false,

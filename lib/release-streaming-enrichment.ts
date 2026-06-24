@@ -1,6 +1,7 @@
 import { fetchOdesliLinksFromApi, cleanAppleMusicUrl } from '@/lib/odesli'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 import { mergeStreamingLinks, type StreamingLink } from '@/lib/release-metadata'
+import { normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
 import { normalizeStreamingPlatform } from '@/lib/streaming-platforms'
 
 export interface ReleaseStreamingRow {
@@ -58,4 +59,30 @@ export function mergeOdesliIntoReleaseLinks(
   odesliLinks: StreamingLink[],
 ): StreamingLink[] {
   return mergeStreamingLinks(parseStreamingLinks(existing), odesliLinks)
+}
+
+/** Extract a Spotify album id from stored streaming links. */
+export function extractSpotifyAlbumIdFromLinks(links: StreamingLink[]): string | null {
+  for (const link of links) {
+    if (!link.url) continue
+    const isSpotify =
+      normalizeStreamingPlatform(link.platform) === 'spotify' || /spotify/i.test(link.url)
+    if (!isSpotify) continue
+    const id = normalizeSpotifyId(link.url)
+    if (id) return id
+  }
+  return null
+}
+
+/** Extract an iTunes/Apple Music album id from stored streaming links. */
+export function extractItunesAlbumIdFromLinks(links: StreamingLink[]): string | null {
+  for (const link of links) {
+    if (!link.url) continue
+    const isApple =
+      normalizeStreamingPlatform(link.platform) === 'appleMusic' || /music\.apple\.com/i.test(link.url)
+    if (!isApple) continue
+    const id = normalizeItunesId(link.url)
+    if (id) return id
+  }
+  return null
 }

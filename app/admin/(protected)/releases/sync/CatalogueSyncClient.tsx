@@ -295,8 +295,10 @@ export function CatalogueSyncClient({
   }
 
   const descriptions: Record<SyncSource, string> = {
-    itunes: 'Bulk-import releases via iTunes lookup or artist name search.',
-    spotify: 'Bulk-import albums and singles from the configured Spotify artist.',
+    itunes:
+      'Bulk-import releases via iTunes lookup or artist name search. Matches and merges with existing Spotify rows.',
+    spotify:
+      'Bulk-import albums and singles from the configured Spotify artist. Matches and merges with existing iTunes rows.',
     discogs: 'Bulk-import releases from the configured Discogs artist.',
   }
 
