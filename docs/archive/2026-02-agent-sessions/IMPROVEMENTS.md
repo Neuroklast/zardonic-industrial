@@ -1,3 +1,5 @@
+> **DEPRECATED** — Historical document from a prior stack era. Do not use for current development. See [docs/README.md](../../README.md).
+
 # Improvements and Fixes Summary
 
 ## Overview
@@ -144,7 +146,7 @@ All parameters are properly saved and loaded:
 ✅ Terminal commands
 ✅ Shell members
 ✅ Contact info
-✅ Legal content (impressum, privacy)
+✅ Legal Notice & Privacy Policy (`/legal-notice`, `/privacy-policy`, Supabase `site_config.legal`)
 
 ## Testing Results
 

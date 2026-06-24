@@ -35,12 +35,15 @@ We release patches for security vulnerabilities for the latest version of the pr
 
 ## Security Architecture
 
-### Authentication & Access Control
-- **Admin Authentication**: scrypt password hashing (with legacy SHA-256 migration) and constant-time comparison (`timingSafeEqual`)
-- **Setup Token Protection**: Initial admin setup requires a one-time `ADMIN_SETUP_TOKEN` (set via environment variable) to prevent unauthorized setup. Timing-safe comparison prevents token enumeration.
-- **TOTP Two-Factor Authentication**: Optional TOTP (Time-based One-Time Password) via authenticator apps (Google Authenticator, Authy, etc.). Uses `otpauth` library with SHA-1, 6-digit codes, 30-second period, ±1 window for clock skew tolerance. Enrollment requires active session; disabling requires both password and valid TOTP code.
-- **Session Binding**: Session fingerprinting (User-Agent + IP /24 subnet) to prevent session hijacking
-- **Session Cookies**: `HttpOnly; Secure; SameSite=Strict` cookies (`zd-session`) with 4-hour TTL. No client-side JavaScript access to session tokens. All sessions invalidated on password change.
+### Authentication & Access Control (App Router admin)
+- **Admin Authentication**: Supabase Auth (`/admin/login`) with SSR session cookies; `profiles.role = 'admin'` required for protected routes
+- **Session Cookies**: Managed by `@supabase/ssr`; HttpOnly cookies, no client-side session token storage
+- **Role checks**: Server Components and middleware verify admin role before rendering protected pages
+
+### Legacy KV admin auth (`api/auth.ts`)
+Still present for legacy endpoints; being phased out:
+- scrypt password hashing, optional TOTP, `zd-session` HttpOnly cookies (4 h TTL)
+- Initial setup previously used `ADMIN_SETUP_TOKEN` — **not used** for Supabase admin login
 - **CSRF Protection**: No state-changing operations via GET requests
 - **Sensitive Key Protection**: `admin-password-hash`, keys containing `token`, `secret`, `password`, `private`, or `credential` are blocked from API reads without authentication
 
@@ -162,8 +165,8 @@ implemented in `api/auth.ts`).
 
 1. **Environment Variables**: Never commit sensitive API keys or tokens
 2. **Rate Limit Salt**: Set `RATE_LIMIT_SALT` to a unique, random value in production
-3. **Admin Setup Token**: Set `ADMIN_SETUP_TOKEN` to a strong, random value before deploying
-4. **Enable 2FA**: After setting up the admin password, enable TOTP two-factor authentication
+3. **Supabase admin**: Create admin users in Supabase Auth with `profiles.role = 'admin'`; do not expose `SUPABASE_SERVICE_ROLE_KEY` to the client
+4. **Legacy KV admin** (if still used): Set `ADMIN_SETUP_TOKEN` and enable TOTP via legacy `api/` endpoints
 5. **HTTPS**: Always deploy behind HTTPS (HSTS header enforced via vercel.json)
 6. **Regular Updates**: Keep dependencies up to date
 7. **Log Monitoring**: Monitor `[HONEYTOKEN ALERT]` and `[ACCESS VIOLATION]` entries in server logs
@@ -172,5 +175,12 @@ implemented in `api/auth.ts`).
 
 ## Third-Party Services
 
-### Sanity CMS
-The Sanity project ID (`VITE_SANITY_PROJECT_ID`) is embedded in the client bundle and referenced in `vercel.json`. Sanity datasets are **publicly readable by default**. Operators must review their Sanity dataset ACLs at https://www.sanity.io/manage and ensure no sensitive data is stored without appropriate access controls. Write access always requires authenticated API tokens (server-side only, never exposed to the client).
+| Service | Data | Notes |
+|---------|------|-------|
+| Supabase | Content, auth, legal config | Primary store; review RLS policies |
+| Cloudflare R2 | Media uploads | Public CDN URLs for site assets |
+| Vercel | Hosting, logs | Configure env vars per environment |
+| Resend | Contact/newsletter email | API key server-side only |
+| Upstash Redis | Security/sync (`api/`) | Hashed IPs only for rate limiting |
+
+Sanity CMS was evaluated but **not adopted** — no `@sanity/*` dependency in this project.

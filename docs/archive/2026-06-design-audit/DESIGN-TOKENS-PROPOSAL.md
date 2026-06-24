@@ -1,3 +1,5 @@
+> **DEPRECATED** — Historical document from a prior stack era. Do not use for current development. See [docs/README.md](../../README.md).
+
 # Design Tokens Proposal
 
 This document records the full design token proposal derived from the audit in `AUDIT-REPORT.md`.

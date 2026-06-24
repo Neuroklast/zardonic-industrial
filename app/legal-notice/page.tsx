@@ -1,0 +1,29 @@
+import type { Metadata } from 'next'
+import { createClient } from '@/lib/supabaseServer'
+import { DEFAULT_LEGAL_CONFIG, loadLegalConfig, type LegalConfig } from '@/lib/legal-content'
+import { LegalPageShell } from '@/app/_components/public/LegalPageShell'
+import { LegalNoticeContent } from '@/app/_components/public/LegalNoticeContent'
+
+export const metadata: Metadata = {
+  title: 'Legal Notice',
+  description: 'Legal notice and operator information for this website.',
+}
+
+export const revalidate = 60
+
+export default async function LegalNoticePage() {
+  let config: LegalConfig = DEFAULT_LEGAL_CONFIG
+
+  try {
+    const supabase = await createClient()
+    config = await loadLegalConfig(supabase)
+  } catch {
+    // defaults
+  }
+
+  return (
+    <LegalPageShell>
+      <LegalNoticeContent config={config} />
+    </LegalPageShell>
+  )
+}

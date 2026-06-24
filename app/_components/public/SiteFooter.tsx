@@ -1,3 +1,7 @@
+'use client'
+
+import { CookiePreferencesButton } from '@/components/CookieConsent'
+
 interface SocialLink {
   id: string
   platform: string
@@ -7,8 +11,8 @@ interface SocialLink {
 
 interface SiteFooterProps {
   socialLinks: SocialLink[]
-  impressumUrl: string
-  privacyUrl: string
+  legalNoticeUrl: string
+  privacyPolicyUrl: string
 }
 
 // Maps common platform names to SVG icons (simple geometric marks)
@@ -64,30 +68,29 @@ function PlatformIcon({ platform }: { platform: string }) {
       </svg>
     )
 
-  // Default: text abbreviation
   return (
     <span className="font-mono text-xs uppercase tracking-wider">{platform.slice(0, 2)}</span>
   )
 }
 
-export function SiteFooter({ socialLinks, impressumUrl, privacyUrl }: SiteFooterProps) {
+export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: SiteFooterProps) {
   const year = new Date().getFullYear()
+
   return (
     <footer
       className="relative border-t border-zinc-800/60 py-8"
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
     >
       <div className="max-w-6xl mx-auto px-4 flex flex-col items-center gap-6">
-        {/* Social links */}
         {socialLinks.length > 0 && (
-          <nav className="flex items-center gap-5" aria-label="Social media links">
+          <nav className="flex flex-wrap items-center justify-center gap-4 sm:gap-5" aria-label="Social media links">
             {socialLinks.map((link) => (
               <a
                 key={link.id}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-zinc-500 hover:text-zinc-200 transition-colors"
+                className="text-zinc-500 hover:text-zinc-200 transition-colors min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
                 aria-label={link.label ?? link.platform}
                 title={link.label ?? link.platform}
               >
@@ -97,24 +100,31 @@ export function SiteFooter({ socialLinks, impressumUrl, privacyUrl }: SiteFooter
           </nav>
         )}
 
-        {/* Legal links */}
-        <nav className="flex items-center gap-4" aria-label="Legal links">
+        <nav
+          className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 max-w-full"
+          aria-label="Legal links"
+        >
           <a
-            href={impressumUrl}
-            className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest"
+            href={legalNoticeUrl}
+            className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest min-h-[44px] inline-flex items-center px-1"
           >
-            Impressum
+            Legal Notice
           </a>
-          <span className="text-zinc-800">·</span>
+          <span className="text-zinc-800 hidden sm:inline" aria-hidden="true">·</span>
           <a
-            href={privacyUrl}
-            className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest"
+            href={privacyPolicyUrl}
+            className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest min-h-[44px] inline-flex items-center px-1"
           >
             Privacy Policy
           </a>
+          <span className="text-zinc-800 hidden sm:inline" aria-hidden="true">·</span>
+          <CookiePreferencesButton
+            privacyPolicyUrl={privacyPolicyUrl}
+            className="font-mono text-xs text-zinc-600 hover:text-zinc-400 transition-colors uppercase tracking-widest min-h-[44px] inline-flex items-center px-1"
+          />
         </nav>
 
-        <p className="font-mono text-[10px] text-zinc-700 uppercase tracking-widest">
+        <p className="font-mono text-xs text-zinc-700 uppercase tracking-widest text-center">
           © {year} Zardonic
         </p>
       </div>

@@ -1,52 +1,49 @@
-# Accessibility Review - ZARDONIC Band Website
+# Accessibility — ZARDONIC Band Website
 
-## Date: 2026-02-18
+**Last updated:** 2026-06-24
 
-### Current Accessibility Status
+## Status
 
-#### ✅ Implemented Features
-1. **Semantic HTML**: The website uses proper semantic HTML5 elements (nav, main, section, article, footer)
-2. **Keyboard Navigation**: All interactive elements are keyboard-accessible
-3. **Focus Indicators**: Focus rings are visible for keyboard navigation
-4. **Alt Text**: Images have appropriate alt text attributes
-5. **ARIA Labels**: Buttons and interactive elements have descriptive labels
-6. **Touch Targets**: Mobile touch targets are appropriately sized (min 44x44px)
-7. **Color Contrast**: The crimson on black color scheme provides good contrast (WCAG AA compliant)
-8. **Responsive Design**: The site works across different screen sizes and devices
+| Level | Status |
+|-------|--------|
+| WCAG 2.1 A | Compliant |
+| WCAG 2.1 AA | Mostly compliant |
+| WCAG 2.1 AAA | Partial |
 
-#### 🔄 Enhancements Made
-1. **Phosphor Glow Effects**: Configurable to reduce visual effects for users who may be sensitive
-2. **Motion Controls**: Animation effects can be disabled via configuration
-3. **Scanline Effects**: Can be disabled for users sensitive to motion
-4. **Cursor Animations**: Can be disabled via configuration
+## Implemented
 
-#### ⚠️ Recommendations for Future Improvements
-1. **Prefers Reduced Motion**: Add CSS media query support for `prefers-reduced-motion`
-2. **Screen Reader Optimization**: Add more descriptive ARIA labels for complex interactions
-3. **Focus Management**: Improve focus management in modal dialogs
-4. **Skip Links**: Add a "skip to main content" link
-5. **Language Attributes**: Ensure lang attributes are set for multi-language content
+1. **Semantic HTML** — `nav`, `main`, `section`, `article`, `footer` on public pages
+2. **Skip link** — `PageLayout` provides “Skip to content” (`layouts/PageLayout.tsx`)
+3. **Keyboard navigation** — Interactive elements are focusable and operable via keyboard
+4. **Focus indicators** — Visible focus rings on interactive elements
+5. **Alt text** — Images use descriptive `alt` where meaningful
+6. **ARIA labels** — Buttons and icon-only controls have accessible names
+7. **Touch targets** — Minimum ~44×44 px on mobile controls
+8. **Color contrast** — Crimson-on-black theme meets AA for primary text
+9. **Motion controls** — Glitch, scanline, CRT, noise, and circuit effects toggleable in admin
+10. **Cookie consent** — Keyboard-accessible; links to Privacy Policy
 
-### Compliance Status
-- **WCAG 2.1 Level A**: ✅ Compliant
-- **WCAG 2.1 Level AA**: ✅ Mostly Compliant (minor improvements recommended)
-- **WCAG 2.1 Level AAA**: 🔄 Partial Compliance
+## Open improvements
 
-### Testing Recommendations
-1. Test with screen readers (NVDA, JAWS, VoiceOver)
-2. Test keyboard-only navigation
-3. Test with browser zoom at 200%
-4. Test with color blindness simulators
-5. Use automated testing tools (axe, Lighthouse)
+| Item | Notes |
+|------|-------|
+| `prefers-reduced-motion` | Respect OS setting globally, not only per-admin toggle (see TD-009) |
+| Modal focus trap | Release overlay and admin dialogs — verify focus return on close |
+| Screen reader labels | Complex glitch/HUD elements may need more descriptive labels |
+| i18n for ARIA | English-first; translated labels for non-English locales (TD-032) |
 
-## Configuration for Accessibility
+## Admin configuration
 
-All visual effects can be disabled via the admin configuration panel:
-- Phosphor glow effects
-- Moving scanlines
-- HUD metadata displays
-- Blinking cursors
-- Image glitch effects
-- Text decryption effects
+Site administrators can disable visual effects that may affect vestibular sensitivity:
 
-This allows site administrators to balance aesthetic design with accessibility needs.
+- Phosphor glow, scanlines, HUD metadata, cursor animations, image glitch, text decryption
+
+Configure under `/admin/site-config` → Appearance / Effects.
+
+## Testing recommendations
+
+1. Screen readers (NVDA, JAWS, VoiceOver)
+2. Keyboard-only navigation
+3. Browser zoom at 200%
+4. Color blindness simulators
+5. Automated tools (axe, Lighthouse)

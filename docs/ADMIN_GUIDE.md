@@ -1,94 +1,57 @@
-# ZARDONIC - Industrial Artist Landing Page
+# Admin Guide
 
-A cyberpunk-themed landing page for electronic/industrial artist ZARDONIC, featuring admin authentication, edit mode, and Google Drive image caching.
+> **Last updated:** 2026-06-24
 
-## 🚀 Features
+The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabase user that has `profiles.role = 'admin'`.
 
-- **Admin Authentication System** - Password-protected edit mode with SHA-256 hashing
-- **Edit Mode** - Full WYSIWYG editing capabilities for all content
-- **Google Drive Integration** - Automatic image caching and URL conversion for Google Drive links
-- **Cyberpunk UI** - Industrial-themed design with glitch effects and animations
-- **Mobile Responsive** - Optimized for all device sizes
+## Sign-in
 
-## 🔐 Admin Features
+Use the email/password form (native POST to the server route). Do not use browser-side Supabase sign-in for admin — it causes cookie race issues. See [agent/security.md](./agent/security.md).
 
-### First-Time Setup
+## Navigation
 
-1. Navigate to `?admin-setup` in your browser (e.g., `http://localhost:5173/?admin-setup`)
-2. Set your admin password (minimum 6 characters)
-3. You'll be automatically logged in
+| Section | Path | Purpose |
+|---------|------|---------|
+| Dashboard | `/admin` | Overview |
+| Site Config | `/admin/site-config` | Hero, background, appearance, footer URLs |
+| Legal & Privacy | `/admin/legal` | Operator details, privacy policy override |
+| Biography | `/admin/bio` | Bio text |
+| Gallery | `/admin/gallery` | Images |
+| Discography | `/admin/releases` | Releases + sync |
+| Events | `/admin/gigs` | Gigs + Bandsintown sync |
+| Newsletter | `/admin/newsletter` | Subscribers |
+| Data | `/admin/data` | Import/export |
 
-### Login
+Full nav is in `app/admin/_config/nav-groups.ts`.
 
-- Click the "Login" button in the header
-- Enter your admin password
-- Edit mode will become available
+## Legal & Privacy (`/admin/legal`)
 
-### Edit Mode
+Stored in Supabase `site_config.legal`:
 
-Once authenticated, click the pencil icon to enter edit mode. You can:
+- **Operator identity** — name, street, ZIP+city, country, phone, email, VAT ID (injected into `/legal-notice` and `/privacy-policy` without editing full legal text)
+- **Editorial responsibility** — optional; defaults to operator
+- **Privacy policy** — optional full-text override; empty = built-in GDPR template
+- **Footer URLs** — Site Config → Footer & Legal: `legalNoticeUrl`, `privacyPolicyUrl`
 
-- ✏️ Edit artist name
-- 📝 Edit biography
-- 🖼️ Upload hero images
-- 🎵 Add/edit releases with artwork and streaming links
-- 📅 Add/edit gig information
-- 🎨 Add gallery images (file upload or Google Drive URL)
-- 👥 Manage band members
-- 📁 Upload media files
-- 🔗 Edit social media links
+Public pages: `/legal-notice`, `/privacy-policy`.
 
-### Google Drive Image Support
+## Site configuration
 
-Images can be added via:
-1. **File Upload** - Upload from your device
-2. **Google Drive URL** - Paste a Google Drive share link
+`site_config` keys include `hero`, `appearance`, `background`, `sections`, `footer`, `newsletter`, `legal`, `analytics`, etc. Changes revalidate public pages within ~60s (`revalidate` on `app/page.tsx`).
 
-Supported Google Drive URL formats:
-- `https://drive.google.com/file/d/{fileId}/view`
-- `https://drive.google.com/open?id={fileId}`
-- `https://drive.google.com/uc?export=view&id={fileId}`
-- `https://lh3.googleusercontent.com/d/{fileId}`
+## Media uploads
 
-All Google Drive URLs are automatically converted to use the `wsrv.nl` proxy for optimal loading and CORS support.
+Images and video upload to **Cloudflare R2** via admin upload actions. URLs are stored as `*_storage_path` columns with optional legacy URL fallbacks.
 
-## 🛠️ Development
+## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Run development server
+cp .env.example .env   # Supabase + R2 keys required for full functionality
 npm run dev
-
-# Build for production
-npm run build
-
-# Run linter
-npm run lint
-
-# Run tests
-npm test
+npm run migrate        # seed site_config (see scripts/MIGRATION.md)
 ```
 
-## 📦 Tech Stack
+## Agent reference
 
-- **React 19** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool
-- **Tailwind CSS** - Styling
-- **Framer Motion** - Animations
-- **Radix UI** - Accessible components
-- **IndexedDB** - Image caching
-- **localStorage** - Data persistence
-
-## 🔒 Security
-
-- Passwords are hashed using SHA-256 before storage
-- Admin tokens stored in localStorage
-- Edit mode protected behind authentication
-- No sensitive data exposed in client code
-
-## 📄 License
-
-For Spark Template Resources: MIT License, Copyright GitHub, Inc.
+[AGENTS.md](../AGENTS.md) · [agent/admin.md](./agent/admin.md)

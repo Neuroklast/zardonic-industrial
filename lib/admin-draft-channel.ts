@@ -1,6 +1,6 @@
 export const ADMIN_DRAFT_CHANNEL = 'zardonic-admin-draft'
 
-export type AdminDraftKey = 'appearance' | 'hero' | 'background' | 'newsletter' | 'merchandise' | 'footer'
+export type AdminDraftKey = 'appearance' | 'hero' | 'background' | 'newsletter' | 'merchandise' | 'footer' | 'legal'
 
 export interface AdminDraftMessage {
   type: 'draft'

@@ -1,3 +1,5 @@
+> **DEPRECATED** — Historical document from a prior stack era. Do not use for current development. See [docs/README.md](../../README.md).
+
 # Security Findings — Zardonic Industrial
 
 > **Last Updated:** 2026-04-08  

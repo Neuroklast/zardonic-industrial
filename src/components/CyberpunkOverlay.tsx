@@ -13,8 +13,6 @@ import {
 import { getRandomOverlayAnimation } from '@/lib/overlay-animations'
 import { getOverlaySessionKey } from '@/lib/overlay-session'
 import { getRandomProgressiveMode } from '@/lib/progressive-overlay-modes'
-import { ImpressumOverlayContent } from '@/components/overlays/ImpressumOverlayContent'
-import { PrivacyOverlayContent } from '@/components/overlays/PrivacyOverlayContent'
 import { ContactOverlayContent } from '@/components/overlays/ContactOverlayContent'
 import { MemberOverlayContent } from '@/components/overlays/MemberOverlayContent'
 import { GigOverlayContent } from '@/components/overlays/GigOverlayContent'
@@ -200,14 +198,6 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                               : progressiveMode.transition
                           }
                         >
-                          {overlay.type === 'impressum' && (
-                            <ImpressumOverlayContent adminSettings={adminSettings} onClose={onClose} decorativeTexts={decorativeTexts} />
-                          )}
-
-                          {overlay.type === 'privacy' && (
-                            <PrivacyOverlayContent adminSettings={adminSettings} artistName={artistName} decorativeTexts={decorativeTexts} />
-                          )}
-
                           {overlay.type === 'contact' && (
                             <ContactOverlayContent adminSettings={adminSettings} decorativeTexts={decorativeTexts} />
                           )}

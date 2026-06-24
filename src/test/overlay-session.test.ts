@@ -48,8 +48,7 @@ describe('getOverlaySessionKey', () => {
   })
 
   it('returns overlay type for static overlays', () => {
-    expect(getOverlaySessionKey({ type: 'impressum' })).toBe('impressum')
-    expect(getOverlaySessionKey({ type: 'privacy' })).toBe('privacy')
+    expect(getOverlaySessionKey({ type: 'contact' })).toBe('contact')
     expect(getOverlaySessionKey({ type: 'contact' })).toBe('contact')
   })
 

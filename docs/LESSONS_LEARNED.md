@@ -1,6 +1,6 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-06-23  
+> **Last Updated:** 2026-06-24
 > **Agent ID:** grok/build-fix-proxy-serveraction  
 
 ---
@@ -36,6 +36,9 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-06-24 | grok/markdown-cleanup | Grok | Legacy markdown (Vite audits, Sanity setup, `?admin-setup`, KV-first GDPR) causes agent confusion long after stack migration — archive obsolete files under `docs/archive/`, add deprecation banners, rewrite canonical docs only, and point README at `docs/README.md` instead of listing moved paths. | Process | 🟠 High |
+| 2026-06-24 | grok/agent-docs-debloat | Grok | Root AGENTS.md beyond ~50 lines wastes context on every task — split into `docs/agent/*.md` with progressive disclosure; root file keeps only session gate + links. Update linked docs when conventions change, not the root file. | Process | 🟢 Low |
+| 2026-06-24 | grok/legal-pages-supabase | Grok | Legal Notice and Privacy Policy must live in Supabase `site_config.legal` and render as real App Router pages — footer links to `/impressum` 404'd because overlay/KV legal data was never wired to the public Next.js site. Structured operator fields inject into templates so address changes do not require editing the full policy text. | Architecture | 🟠 High |
 | 2026-06-24 | grok/release-sync-hydration | Grok | React #418 on public pages was caused by `toLocaleDateString()` / local `getDate()` in client components that still SSR in the App Router — server (UTC) and browser (local TZ) rendered different text. Fix: parse `YYYY-MM-DD` literally or pass `timeZone: 'UTC'`. Bulk Spotify sync skipped existing `spotify_id` rows entirely, so tracklists never backfilled — re-sync must update rows with empty `tracks`. Production CSP lives in `vercel.json`, not `next.config.mjs`; YouTube embeds must use `youtube-nocookie.com` to match `frame-src`. | Debugging | 🟠 High |
 | 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | Use `useState(() => expensiveInit())` lazy initializers instead of `useEffect` + `setState` for one-time config reads. The lazy form avoids an extra render cycle, removes the need for `eslint-disable react-hooks/set-state-in-effect`, and is the canonical React pattern. | Architecture | 🟡 Medium |
 | 2026-05-26 | copilot/legacy-cleanup | GitHub Copilot | `vi.mock` factory functions are hoisted to the top of the file before variable declarations. Referencing a `const` inside the factory throws "Cannot access before initialization". Use `vi.hoisted(() => ({ myMock: vi.fn() }))` to define mocks that are safe to reference inside `vi.mock` factories. | Testing | 🟠 High |
