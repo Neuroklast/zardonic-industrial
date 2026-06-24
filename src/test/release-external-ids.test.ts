@@ -14,12 +14,19 @@ describe('release external id normalization', () => {
   it('normalizes iTunes numeric and URL ids', () => {
     expect(normalizeItunesId('1441234567')).toBe('1441234567')
     expect(normalizeItunesId('https://music.apple.com/us/album/example/id1441234567')).toBe('1441234567')
+    expect(normalizeItunesId('https://geo.music.apple.com/de/album/example/id1441234567?uo=4')).toBe('1441234567')
+    expect(normalizeItunesId('https://itunes.apple.com/us/album/example/id1441234567')).toBe('1441234567')
   })
 
   it('normalizes Spotify ids and URLs', () => {
     expect(normalizeSpotifyId('6TElDMiCO7UEj3G0S2B8X0')).toBe('6TElDMiCO7UEj3G0S2B8X0')
     expect(normalizeSpotifyId('https://open.spotify.com/album/6TElDMiCO7UEj3G0S2B8X0')).toBe('6TElDMiCO7UEj3G0S2B8X0')
+    expect(normalizeSpotifyId('https://open.spotify.com/album/6TElDMiCO7UEj3G0S2B8X0?si=abc')).toBe('6TElDMiCO7UEj3G0S2B8X0')
+    expect(normalizeSpotifyId('https://open.spotify.com/intl-de/album/6TElDMiCO7UEj3G0S2B8X0/')).toBe(
+      '6TElDMiCO7UEj3G0S2B8X0',
+    )
     expect(normalizeSpotifyId('spotify:track:6TElDMiCO7UEj3G0S2B8X0')).toBe('6TElDMiCO7UEj3G0S2B8X0')
+    expect(normalizeSpotifyId('https://embed.spotify.com/album/6TElDMiCO7UEj3G0S2B8X0')).toBe('6TElDMiCO7UEj3G0S2B8X0')
   })
 
   it('normalizes Discogs ids and URLs', () => {

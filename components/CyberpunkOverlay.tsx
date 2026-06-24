@@ -117,7 +117,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
             animate={anim.modal.animate}
             exit={anim.modal.exit}
             transition={anim.modal.transition ?? { duration: 0.3 }}
-            className="fixed inset-0 flex items-center justify-center p-4 md:p-8 pointer-events-none"
+            className="fixed inset-0 flex items-end md:items-center justify-center p-0 md:p-8 pointer-events-none"
             style={{ zIndex: 'var(--z-overlay)', perspective: '1000px' } as React.CSSProperties}
           >
             <motion.div
@@ -131,7 +131,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               }}
               data-theme-color="card card-foreground border"
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[90vh] flex flex-col scanline-effect cyber-card"
+              className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[100dvh] md:max-h-[90vh] h-[100dvh] md:h-auto flex flex-col scanline-effect cyber-card rounded-none md:rounded-[var(--radius)]"
               style={{ borderRadius: 'var(--radius)' } as React.CSSProperties}
               onClick={(e) => e.stopPropagation()}
             >
@@ -169,11 +169,11 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                 )}
 
                 {overlayPhase === 'revealed' && (
-                  <div className="p-8 md:p-12 pt-12">
+                  <div className="p-4 pt-14 md:p-12 md:pt-12">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-4 right-4 text-foreground hover:text-primary hover:bg-primary/10 z-10"
+                      className="absolute top-3 right-3 md:top-4 md:right-4 min-h-[44px] min-w-[44px] text-foreground hover:text-primary hover:bg-primary/10 z-10"
                       onClick={onClose}
                     >
                       <X className="w-6 h-6" />

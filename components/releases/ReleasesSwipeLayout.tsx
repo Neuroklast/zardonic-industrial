@@ -40,7 +40,7 @@ export function ReleasesSwipeLayout({ releases, renderCard }: ReleasesSwipeLayou
           {releases.map((release, index) => (
             <CarouselItem
               key={release.id}
-              className="pl-3 basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
+              className="pl-3 basis-full xs:basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5"
             >
               {renderCard(release, index)}
             </CarouselItem>
@@ -53,7 +53,7 @@ export function ReleasesSwipeLayout({ releases, renderCard }: ReleasesSwipeLayou
         <button
           onClick={() => api?.scrollPrev()}
           disabled={!canScrollPrev}
-          className="p-2 border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-mono"
+          className="p-3 min-h-[44px] min-w-[44px] border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-mono"
           aria-label="Previous releases"
         >
           <CaretLeft className="w-4 h-4" />
@@ -61,7 +61,7 @@ export function ReleasesSwipeLayout({ releases, renderCard }: ReleasesSwipeLayou
         <button
           onClick={() => api?.scrollNext()}
           disabled={!canScrollNext}
-          className="p-2 border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-mono"
+          className="p-3 min-h-[44px] min-w-[44px] border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-30 disabled:cursor-not-allowed font-mono"
           aria-label="Next releases"
         >
           <CaretRight className="w-4 h-4" />

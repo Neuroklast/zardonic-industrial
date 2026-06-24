@@ -219,6 +219,8 @@ ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS artists text[] DEFAULT '{}'
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS streaming_links jsonb DEFAULT '[]';
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS display_order integer DEFAULT 0;
 ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS last_enriched_at timestamptz;
+ALTER TABLE public.releases ADD COLUMN IF NOT EXISTS tracks_source text;
 
 DO $$
 BEGIN

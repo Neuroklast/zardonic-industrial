@@ -101,9 +101,9 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
 
   const colsClass = (() => {
     const c = columns ?? '4'
-    if (c === '2') return 'grid-cols-2'
-    if (c === '3') return 'grid-cols-2 md:grid-cols-3'
-    return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+    if (c === '2') return 'grid-cols-1 xs:grid-cols-2'
+    if (c === '3') return 'grid-cols-1 xs:grid-cols-2 md:grid-cols-3'
+    return 'grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
   })()
 
   const cardExtra = [
@@ -132,7 +132,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                   setActiveFilter(filter.value)
                   setShowAll(false)
                 }}
-                className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                className={`border px-3 py-2 min-h-[44px] font-mono text-xs uppercase tracking-wider transition-colors ${
                   activeFilter === filter.value
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-muted-foreground hover:border-primary/40'

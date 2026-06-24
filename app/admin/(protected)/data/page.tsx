@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabaseServer'
 import { Export } from '@phosphor-icons/react/dist/ssr'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { DataImportClient } from './DataImportClient'
+import { DataMaintenanceClient } from './DataMaintenanceClient'
 
 // Server action: build a JSON export of all site data
 async function buildExportData() {
@@ -99,7 +100,8 @@ export default async function DataPage() {
       {/* Client-side script for the download button */}
       <DataExportButton exportJson={exportJson} />
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-6">
+        <DataMaintenanceClient />
         <DataImportClient />
       </div>
     </div>

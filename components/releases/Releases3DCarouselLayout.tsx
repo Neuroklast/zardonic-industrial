@@ -102,7 +102,7 @@ export function Releases3DCarouselLayout({ releases, renderCard }: Releases3DCar
       <div className="flex items-center justify-center gap-4 mt-6">
         <button
           onClick={prev}
-          className="p-2 border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors font-mono"
+          className="p-3 min-h-[44px] min-w-[44px] border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors font-mono"
           aria-label="Previous release"
         >
           <CaretLeft className="w-5 h-5" />
@@ -114,17 +114,22 @@ export function Releases3DCarouselLayout({ releases, renderCard }: Releases3DCar
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
-              className={`w-1.5 h-1.5 rounded-full transition-all ${
-                i === activeIndex ? 'bg-primary w-3' : 'bg-border hover:bg-primary/50'
-              }`}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center"
               aria-label={`Go to release ${i + 1}`}
-            />
+            >
+              <span
+                className={`block rounded-full transition-all ${
+                  i === activeIndex ? 'bg-primary w-3 h-3' : 'bg-border hover:bg-primary/50 w-1.5 h-1.5'
+                }`}
+                aria-hidden="true"
+              />
+            </button>
           ))}
         </div>
 
         <button
           onClick={next}
-          className="p-2 border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors font-mono"
+          className="p-3 min-h-[44px] min-w-[44px] border border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors font-mono"
           aria-label="Next release"
         >
           <CaretRight className="w-5 h-5" />

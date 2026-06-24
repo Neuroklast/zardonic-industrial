@@ -612,6 +612,89 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
       return { ok: true }
     },
   }),
+
+  enrich_release_tracks: register({
+    id: 'enrich_release_tracks',
+    label: 'Enrich Release Tracklist',
+    schema: z.object({
+      releaseId: z.string().min(1),
+      force: z.boolean().optional(),
+    }),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  enrich_all_release_tracks: register({
+    id: 'enrich_all_release_tracks',
+    label: 'Enrich All Release Tracklists',
+    schema: z.object({
+      force: z.boolean().optional(),
+      limit: z.number().int().positive().max(100).optional(),
+    }),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  purge_releases: register({
+    id: 'purge_releases',
+    label: 'Purge Auto-Synced Releases',
+    schema: z.object({ scope: z.literal('auto_synced') }),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  purge_gigs: register({
+    id: 'purge_gigs',
+    label: 'Purge All Gigs',
+    schema: z.object({}),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  reset_release_tracklists: register({
+    id: 'reset_release_tracklists',
+    label: 'Reset Release Tracklists',
+    schema: z.object({}),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  purge_and_sync_releases: register({
+    id: 'purge_and_sync_releases',
+    label: 'Purge and Sync Releases',
+    schema: z.object({}),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  purge_and_sync_gigs: register({
+    id: 'purge_and_sync_gigs',
+    label: 'Purge and Sync Gigs',
+    schema: z.object({}),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────

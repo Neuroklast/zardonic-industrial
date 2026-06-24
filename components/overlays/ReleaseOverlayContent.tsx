@@ -5,7 +5,7 @@ import type { SectionLabels } from '@/lib/types'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { parseTrackTitle } from '@/lib/track-parser'
 import { displayReleaseType } from '@/lib/release-type'
-import { STREAMING_PLATFORMS } from '@/lib/config'
+import { getVisibleStreamingLinks, formatStreamingPlatformLabel } from '@/lib/streaming-platforms'
 
 interface ReleaseOverlayContentProps {
   data: Release
@@ -111,10 +111,8 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
   const tracksLabel = sectionLabels?.releaseTracksLabel ?? 'Tracklist'
   const statusLabel = sectionLabels?.releaseStatusLabel ?? '// MEDIA.STATUS: [AVAILABLE]'
 
-  const getLink = (platform: string) =>
-    data.streamingLinks?.find(l => l.platform === platform)?.url
-
-  const hasStreamLinks = STREAMING_PLATFORMS.some(p => getLink(p))
+  const streamingLinks = getVisibleStreamingLinks(data.streamingLinks)
+  const hasStreamLinks = streamingLinks.length > 0
 
   const releaseArtists = parseReleaseArtists(data, mainArtistName)
   const { cleanTitle: cleanReleaseTitle } = parseTrackTitle(data.title)
@@ -129,7 +127,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="grid md:grid-cols-[300px_1fr] gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8">
         <motion.div
           className="aspect-square bg-muted relative cyber-card border border-primary/30"
           initial={{ opacity: 0 }}
@@ -152,7 +150,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             transition={{ delay: 0.2 }}
           >
             <div className="data-label mb-2">{infoLabel}</div>
-            <h2 className="text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic crt-flash-in break-words" data-text={cleanReleaseTitle}>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase font-mono mb-2 hover-chromatic crt-flash-in break-words" data-text={cleanReleaseTitle}>
               {cleanReleaseTitle}
             </h2>
             {showReleaseArtists && (
@@ -201,7 +199,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             >
               <div className="flex flex-wrap gap-4">
                 {data.customLinks.map((link, i) => (
-                  <Button key={i} asChild variant="outline" className="font-mono">
+                  <Button key={i} asChild variant="outline" className="font-mono min-h-[44px]">
                     <a href={link.url} target="_blank" rel="noopener noreferrer">
                       <span className="hover-chromatic">{link.label}</span>
                     </a>
@@ -219,63 +217,19 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             transition={{ delay: 0.3 }}
           >
             <div className="data-label mb-3">{streamLabel}</div>
-            <div className="flex flex-wrap gap-4">
-              {getLink('spotify') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('spotify')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Spotify</span>
+            <div className="flex flex-wrap gap-3">
+              {streamingLinks.map((link) => (
+                <Button
+                  key={`${link.platform}-${link.url}`}
+                  asChild
+                  variant="outline"
+                  className="font-mono min-h-[44px]"
+                >
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <span className="hover-chromatic">{formatStreamingPlatformLabel(link.platform)}</span>
                   </a>
                 </Button>
-              )}
-              {getLink('youtube') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('youtube')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">YouTube</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('soundcloud') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('soundcloud')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">SoundCloud</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('bandcamp') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('bandcamp')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Bandcamp</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('appleMusic') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('appleMusic')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Apple Music</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('deezer') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('deezer')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Deezer</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('tidal') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('tidal')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Tidal</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('amazonMusic') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('amazonMusic')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Amazon Music</span>
-                  </a>
-                </Button>
-              )}
+              ))}
             </div>
           </motion.div>
           )}
@@ -288,7 +242,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               transition={{ delay: 0.35 }}
             >
               <div className="data-label mb-3">{tracksLabel}</div>
-              <ol className="space-y-1">
+              <ol className="space-y-2 md:space-y-1 max-h-[40vh] md:max-h-none overflow-y-auto overscroll-contain pr-1">
                 {data.tracks.map((track, i) => {
                   const rawTitle = typeof track?.title === 'string' ? track.title : ''
                   if (!rawTitle.trim()) return null
@@ -297,7 +251,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
                   const allFeaturedArtists = [...(track.featuredArtists || []), ...extractedArtists]
 
                   return (
-                  <li key={`${i}-${rawTitle}`} className="flex items-start gap-3 text-sm font-mono text-foreground/80">
+                  <li key={`${i}-${rawTitle}`} className="flex items-start gap-3 text-sm md:text-sm font-mono text-foreground/80 py-1">
                     <span className="text-primary/50 w-5 text-right shrink-0 mt-0.5">{i + 1}.</span>
                     <div className="flex-1 min-w-0">
                       <span className="block">{cleanTitle}</span>

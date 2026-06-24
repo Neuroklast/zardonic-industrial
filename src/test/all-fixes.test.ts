@@ -91,8 +91,8 @@ describe('AdminSettings.sound', () => {
 describe('SoundTab wiring', () => {
   it('SoundTab module can be imported', async () => {
     const mod = await import('@/components/admin/SoundTab')
-    expect(mod.default).toBeTruthy()
-  })
+    expect(mod.default).toBeTypeOf('function')
+  }, 15_000)
 })
 
 // ── 5. Progressive overlay mode selection ────────────────────────────────────

@@ -27,7 +27,7 @@ export default async function ProtectedAdminLayout({
           Documented exception per AGENTS §6. All public pages use PageLayout. */}
       <div className="flex flex-1">
         <AdminNav />
-        <main className="flex-1 p-4 pt-16 md:p-8 overflow-auto min-w-0">{children}</main>
+        <main className="flex-1 p-4 pt-16 md:pt-8 md:p-8 overflow-auto min-w-0">{children}</main>
       </div>
     </div>
   )

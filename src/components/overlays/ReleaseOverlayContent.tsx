@@ -5,7 +5,7 @@ import type { SectionLabels } from '@/lib/types'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { parseTrackTitle } from '@/lib/track-parser'
 import { displayReleaseType } from '@/lib/release-type'
-import { STREAMING_PLATFORMS } from '@/lib/config'
+import { getVisibleStreamingLinks, formatStreamingPlatformLabel } from '@/lib/streaming-platforms'
 
 interface ReleaseOverlayContentProps {
   data: Release
@@ -111,10 +111,8 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
   const tracksLabel = sectionLabels?.releaseTracksLabel ?? 'Tracklist'
   const statusLabel = sectionLabels?.releaseStatusLabel ?? '// MEDIA.STATUS: [AVAILABLE]'
 
-  const getLink = (platform: string) =>
-    data.streamingLinks?.find(l => l.platform === platform)?.url
-
-  const hasStreamLinks = STREAMING_PLATFORMS.some(p => getLink(p))
+  const streamingLinks = getVisibleStreamingLinks(data.streamingLinks)
+  const hasStreamLinks = streamingLinks.length > 0
 
   const releaseArtists = parseReleaseArtists(data, mainArtistName)
   const { cleanTitle: cleanReleaseTitle } = parseTrackTitle(data.title)
@@ -219,63 +217,19 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
             transition={{ delay: 0.3 }}
           >
             <div className="data-label mb-3">{streamLabel}</div>
-            <div className="flex flex-wrap gap-4">
-              {getLink('spotify') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('spotify')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Spotify</span>
+            <div className="flex flex-wrap gap-3">
+              {streamingLinks.map((link) => (
+                <Button
+                  key={`${link.platform}-${link.url}`}
+                  asChild
+                  variant="outline"
+                  className="font-mono min-h-[44px]"
+                >
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <span className="hover-chromatic">{formatStreamingPlatformLabel(link.platform)}</span>
                   </a>
                 </Button>
-              )}
-              {getLink('youtube') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('youtube')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">YouTube</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('soundcloud') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('soundcloud')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">SoundCloud</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('bandcamp') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('bandcamp')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Bandcamp</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('appleMusic') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('appleMusic')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Apple Music</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('deezer') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('deezer')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Deezer</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('tidal') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('tidal')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Tidal</span>
-                  </a>
-                </Button>
-              )}
-              {getLink('amazonMusic') && (
-                <Button asChild variant="outline" className="font-mono">
-                  <a href={getLink('amazonMusic')} target="_blank" rel="noopener noreferrer">
-                    <span className="hover-chromatic">Amazon Music</span>
-                  </a>
-                </Button>
-              )}
+              ))}
             </div>
           </motion.div>
           )}

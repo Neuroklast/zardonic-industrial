@@ -32,6 +32,14 @@ import {
   fetchSpotifyArtistAlbums,
   searchSpotifyArtistId,
 } from '@/lib/spotify-sync'
+import {
+  buildTrackEnrichmentUpdate,
+  releaseTracksAreEmpty,
+} from '@/lib/release-enrichment'
+import {
+  fetchOdesliStreamingLinks,
+  mergeOdesliIntoReleaseLinks,
+} from '@/lib/release-streaming-enrichment'
 import { revalidatePath } from 'next/cache'
 
 const R2_BUCKET = MEDIA_BUCKET
@@ -129,6 +137,18 @@ export async function syncReleaseFromExternalId(
 
     const update = buildReleaseUpdateFromMetadata(metadata, existingLinks, source)
 
+    const odesliLinks = await fetchOdesliStreamingLinks({
+      itunes_id: metadata.itunes_id ?? (source === 'itunes' ? normalized : null),
+      spotify_id: metadata.spotify_id ?? (source === 'spotify' ? normalized : null),
+      streaming_links: update.streaming_links ?? existingLinks,
+    })
+    if (odesliLinks.length > 0) {
+      update.streaming_links = mergeOdesliIntoReleaseLinks(
+        update.streaming_links ?? existingLinks,
+        odesliLinks,
+      )
+    }
+
     if (metadata.coverUrl) {
       const ext = metadata.coverUrl.includes('.png') ? 'png' : 'jpg'
       const objectPath = `releases/${source}-${normalized}.${ext}`
@@ -158,10 +178,6 @@ export async function syncReleaseFromExternalId(
 
   if ('error' in actionResult) return { ok: false, error: actionResult.error }
   return actionResult
-}
-
-function releaseTracksAreEmpty(tracks: unknown): boolean {
-  return !Array.isArray(tracks) || tracks.length === 0
 }
 
 async function enrichMetadataForBulkImport(
@@ -254,12 +270,27 @@ async function bulkImportMetadata(
 
         if (canUpdateTracks) {
           const metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
-          if (metadata.tracks && metadata.tracks.length > 0) {
+          const odesliLinks = await fetchOdesliStreamingLinks({
+            itunes_id: metadata.itunes_id,
+            spotify_id: metadata.spotify_id,
+            streaming_links: metadata.streaming_links,
+          })
+          if (odesliLinks.length > 0) {
+            metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
+          }
+
+          const hasTracks = Boolean(metadata.tracks && metadata.tracks.length > 0)
+          const hasStreamingLinks = metadata.streaming_links.length > 0
+          if (hasTracks || hasStreamingLinks) {
             const existingLinks = Array.isArray(existingRow.streaming_links)
               ? (existingRow.streaming_links as StreamingLink[])
               : []
             const update = buildReleaseUpdateFromMetadata(metadata, existingLinks, source)
-            update.manually_edited = false
+            if (hasTracks && metadata.tracks) {
+              Object.assign(update, buildTrackEnrichmentUpdate(metadata.tracks, source))
+            } else {
+              update.manually_edited = false
+            }
 
             const { error: updateError } = await supabase
               .from('releases')
@@ -267,7 +298,7 @@ async function bulkImportMetadata(
               .eq('id', existingRow.id)
 
             if (updateError) {
-              result.errors.push(`Failed to update tracks for "${metadata.title}": ${updateError.message}`)
+              result.errors.push(`Failed to update "${metadata.title}": ${updateError.message}`)
               result.skipped++
             } else {
               result.updated++
@@ -281,6 +312,14 @@ async function bulkImportMetadata(
       }
 
       const metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
+      const odesliLinks = await fetchOdesliStreamingLinks({
+        itunes_id: metadata.itunes_id,
+        spotify_id: metadata.spotify_id,
+        streaming_links: metadata.streaming_links,
+      })
+      if (odesliLinks.length > 0) {
+        metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
+      }
 
       const { count: titleCount } = await supabase
         .from('releases')
@@ -312,6 +351,12 @@ async function bulkImportMetadata(
         artists: metadata.artists,
         streaming_links: metadata.streaming_links,
         tracks: metadata.tracks && metadata.tracks.length > 0 ? metadata.tracks : [],
+        tracks_source:
+          metadata.tracks && metadata.tracks.length > 0 && (source === 'spotify' || source === 'discogs')
+            ? source
+            : null,
+        last_enriched_at:
+          metadata.tracks && metadata.tracks.length > 0 ? new Date().toISOString() : null,
         cover_storage_path: coverStoragePath,
         cover_url: coverUrl,
         display_order: displayOrder,
