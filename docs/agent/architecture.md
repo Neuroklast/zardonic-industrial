@@ -72,6 +72,7 @@ Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` acti
 | Streaming links | `lib/release-streaming-enrichment.ts` + `lib/odesli.ts` | Odesli merge into `streaming_links` |
 | Cron | `app/api/releases-track-enrich/route.ts` | Daily batch (15 releases/call) |
 | Admin | `app/admin/_actions/releaseTrackEnrichment.ts` | Manual + bulk triggers |
+| Async jobs | `sync_jobs` table + `app/api/sync-jobs/**` | Chunked Spotify/Discogs import, purge+sync |
 
 Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited`.
 

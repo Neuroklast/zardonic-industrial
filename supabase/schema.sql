@@ -140,6 +140,20 @@ CREATE TABLE IF NOT EXISTS public.soundpacks (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- ─── sync_jobs (async catalogue / maintenance workers) ───────
+CREATE TABLE IF NOT EXISTS public.sync_jobs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  type text NOT NULL,
+  status text NOT NULL DEFAULT 'pending',
+  phase text,
+  payload jsonb NOT NULL DEFAULT '{}',
+  progress jsonb NOT NULL DEFAULT '{"processed":0,"total":null,"synced":0,"updated":0,"skipped":0,"errors":[]}',
+  created_by uuid REFERENCES public.profiles(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  completed_at timestamptz
+);
+
 -- ─── newsletter_subscribers ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -431,6 +445,15 @@ ALTER TABLE public.music_highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchandise ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.soundpacks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sync_jobs ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='sync_jobs' AND policyname='Admin all sync_jobs') THEN
+    EXECUTE $p$CREATE POLICY "Admin all sync_jobs" ON public.sync_jobs USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+END; $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='profiles' AND policyname='Admin read') THEN

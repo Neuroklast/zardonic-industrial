@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { z } from 'zod'
@@ -32,7 +32,7 @@ export async function createSoundpack(formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('create_soundpack', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('create_soundpack', parsed.data, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -60,7 +60,7 @@ export async function updateSoundpack(id: string, formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_soundpack', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_soundpack', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -86,7 +86,7 @@ export async function updateSoundpack(id: string, formData: FormData) {
 export async function deleteSoundpack(id: string) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('delete_soundpack', { id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('delete_soundpack', { id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -102,7 +102,7 @@ export async function deleteSoundpack(id: string) {
 export async function toggleSoundpackVisibility(id: string, active: boolean) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_soundpack', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_soundpack', { id, active }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

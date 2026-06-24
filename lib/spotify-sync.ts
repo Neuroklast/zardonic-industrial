@@ -202,29 +202,53 @@ export interface SpotifyArtistAlbumItem {
   metadata: ReleaseMetadata
 }
 
-/** Fetch album/single/compilation groups for a Spotify artist id. */
-export async function fetchSpotifyArtistAlbums(artistId: string): Promise<SpotifyArtistAlbumItem[]> {
+export interface SpotifyArtistAlbumsPageResult {
+  items: SpotifyArtistAlbumItem[]
+  nextUrl: string | null
+  ok: boolean
+}
+
+/** Fetch one page of Spotify artist albums (for chunked sync jobs). */
+export async function fetchSpotifyArtistAlbumsPage(
+  artistId: string,
+  nextUrl?: string | null,
+): Promise<SpotifyArtistAlbumsPageResult> {
   const token = await getSpotifyAccessToken()
-  if (!token) return []
+  if (!token) return { items: [], nextUrl: null, ok: false }
 
   const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-  const items: SpotifyArtistAlbumItem[] = []
-  let url: string | null =
+  const url =
+    nextUrl ??
     `https://api.spotify.com/v1/artists/${encodeURIComponent(artistId)}/albums?include_groups=album,single,compilation&limit=50`
 
-  while (url) {
-    const res = await fetch(url, { headers, cache: 'no-store' })
-    if (!res.ok) break
-    const data = (await res.json()) as {
-      items?: SpotifyAlbumPayload[]
-      next?: string | null
-    }
-    for (const album of data.items ?? []) {
-      const metadata = parseSpotifyAlbum(album)
-      if (metadata?.spotify_id) items.push({ spotify_id: metadata.spotify_id, metadata })
-    }
-    url = data.next ?? null
+  const res = await fetch(url, { headers, cache: 'no-store' })
+  if (!res.ok) return { items: [], nextUrl: null, ok: false }
+
+  const data = (await res.json()) as {
+    items?: SpotifyAlbumPayload[]
+    next?: string | null
   }
+
+  const items: SpotifyArtistAlbumItem[] = []
+  for (const album of data.items ?? []) {
+    const metadata = parseSpotifyAlbum(album)
+    if (metadata?.spotify_id) items.push({ spotify_id: metadata.spotify_id, metadata })
+  }
+
+  return { items, nextUrl: data.next ?? null, ok: true }
+}
+
+/** Fetch album/single/compilation groups for a Spotify artist id. */
+export async function fetchSpotifyArtistAlbums(artistId: string): Promise<SpotifyArtistAlbumItem[]> {
+  const items: SpotifyArtistAlbumItem[] = []
+  let nextUrl: string | null = null
+
+  do {
+    const page = await fetchSpotifyArtistAlbumsPage(artistId, nextUrl)
+    if (!page.ok) break
+    items.push(...page.items)
+    nextUrl = page.nextUrl
+  } while (nextUrl)
 
   return items
 }

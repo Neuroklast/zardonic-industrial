@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
@@ -81,7 +81,7 @@ export async function createRelease(formData: FormData) {
   const supabaseAdmin = createAdminClient()
 
   // Route through registry for AGENTS §12 compliance (validation + dispatch audit trail)
-  const dispatchResult = dispatchAdminAction('create_release', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('create_release', parsed.data, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -114,7 +114,7 @@ export async function updateRelease(id: string, formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_release', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_release', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -145,7 +145,7 @@ export async function updateRelease(id: string, formData: FormData) {
 export async function deleteRelease(id: string) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('delete_release', { id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('delete_release', { id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -161,7 +161,7 @@ export async function deleteRelease(id: string) {
 export async function toggleReleaseVisibility(id: string, active: boolean) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_release', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_release', { id, active }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

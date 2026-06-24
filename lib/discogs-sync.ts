@@ -166,57 +166,94 @@ export async function searchDiscogsArtistId(artistName: string): Promise<number 
   return (exact ?? first)?.id ?? null
 }
 
-export async function fetchDiscogsArtistReleases(artistId: number): Promise<DiscogsArtistReleaseItem[]> {
-  const token = await getApiSecret('discogs_token')
-  if (!token) return []
+export interface DiscogsArtistReleasesPageResult {
+  items: DiscogsArtistReleaseItem[]
+  page: number
+  totalPages: number
+  ok: boolean
+}
 
+function parseDiscogsArtistReleaseRow(item: {
+  id?: number
+  title?: string
+  year?: number
+  type?: string
+  main_release?: number
+  thumb?: string
+  resource_url?: string
+}): DiscogsArtistReleaseItem | null {
+  const releaseId = item.type === 'master' ? item.main_release ?? item.id : item.id
+  if (!releaseId || !item.title) return null
+
+  const discogsId = String(releaseId)
+  const discogsUrl =
+    item.resource_url?.replace('api.discogs.com/releases', 'www.discogs.com/release') ??
+    `https://www.discogs.com/release/${discogsId}`
+
+  return {
+    discogs_id: discogsId,
+    metadata: {
+      title: item.title.trim(),
+      type: inferReleaseTypeFromTitle(item.title),
+      release_date: normalizeReleaseDateForDb(item.year ? String(item.year) : null),
+      description: null,
+      artists: [],
+      coverUrl: item.thumb ? item.thumb.replace('/images/thumb/', '/images/').replace('.jpeg', '.jpg') : null,
+      streaming_links: [{ platform: 'discogs', url: discogsUrl }],
+      discogs_id: discogsId,
+    },
+  }
+}
+
+/** Fetch a single page of an artist's Discogs releases (for chunked sync jobs). */
+export async function fetchDiscogsArtistReleasesPage(
+  artistId: number,
+  page: number,
+): Promise<DiscogsArtistReleasesPageResult> {
+  const token = await getApiSecret('discogs_token')
+  if (!token) return { items: [], page, totalPages: 0, ok: false }
+
+  const url = `${DISCOGS_BASE}/artists/${artistId}/releases?per_page=100&page=${page}&sort=year&sort_order=desc`
+  const res = await fetch(url, { headers: discogsHeaders(token), cache: 'no-store' })
+  if (!res.ok) return { items: [], page, totalPages: 0, ok: false }
+
+  const data = (await res.json()) as {
+    releases?: Array<{
+      id?: number
+      title?: string
+      year?: number
+      type?: string
+      main_release?: number
+      thumb?: string
+      resource_url?: string
+    }>
+    pagination?: { pages?: number }
+  }
+
+  const items: DiscogsArtistReleaseItem[] = []
+  for (const row of data.releases ?? []) {
+    const parsed = parseDiscogsArtistReleaseRow(row)
+    if (parsed) items.push(parsed)
+  }
+
+  return {
+    items,
+    page,
+    totalPages: data.pagination?.pages ?? 1,
+    ok: true,
+  }
+}
+
+export async function fetchDiscogsArtistReleases(artistId: number): Promise<DiscogsArtistReleaseItem[]> {
   const items: DiscogsArtistReleaseItem[] = []
   let page = 1
   let totalPages = 1
 
   do {
-    const url = `${DISCOGS_BASE}/artists/${artistId}/releases?per_page=100&page=${page}&sort=year&sort_order=desc`
-    const res = await fetch(url, { headers: discogsHeaders(token), cache: 'no-store' })
-    if (!res.ok) break
-
-    const data = (await res.json()) as {
-      releases?: Array<{
-        id?: number
-        title?: string
-        year?: number
-        type?: string
-        main_release?: number
-        thumb?: string
-        resource_url?: string
-      }>
-      pagination?: { pages?: number }
-    }
-
-    for (const item of data.releases ?? []) {
-      const releaseId = item.type === 'master' ? item.main_release ?? item.id : item.id
-      if (!releaseId || !item.title) continue
-
-      const discogsId = String(releaseId)
-      const discogsUrl =
-        item.resource_url?.replace('api.discogs.com/releases', 'www.discogs.com/release') ??
-        `https://www.discogs.com/release/${discogsId}`
-
-      items.push({
-        discogs_id: discogsId,
-        metadata: {
-          title: item.title.trim(),
-          type: inferReleaseTypeFromTitle(item.title),
-          release_date: normalizeReleaseDateForDb(item.year ? String(item.year) : null),
-          description: null,
-          artists: [],
-          coverUrl: item.thumb ? item.thumb.replace('/images/thumb/', '/images/').replace('.jpeg', '.jpg') : null,
-          streaming_links: [{ platform: 'discogs', url: discogsUrl }],
-          discogs_id: discogsId,
-        },
-      })
-    }
-
-    totalPages = data.pagination?.pages ?? 1
+    const result = await fetchDiscogsArtistReleasesPage(artistId, page)
+    if (!result.ok) break
+    items.push(...result.items)
+    totalPages = result.totalPages
     page++
     if (page <= totalPages) {
       await new Promise<void>((resolve) => setTimeout(resolve, 600))

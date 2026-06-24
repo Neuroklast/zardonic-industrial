@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -30,7 +30,7 @@ export async function updateSiteConfig(formData: FormData) {
   const supabaseAdmin = createAdminClient()
 
   // Dispatch via registry (AGENTS §12)
-  const dispatchResult = dispatchAdminAction('update_site_config', { key: parsed.data.key, value: parsedJson }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_site_config', { key: parsed.data.key, value: parsedJson }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

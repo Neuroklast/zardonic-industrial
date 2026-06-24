@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -29,7 +29,7 @@ export async function createSocialLink(formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('create_social_link', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('create_social_link', parsed.data, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -48,7 +48,7 @@ export async function updateSocialLink(id: string, formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_social_link', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_social_link', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -64,7 +64,7 @@ export async function updateSocialLink(id: string, formData: FormData) {
 export async function deleteSocialLink(id: string) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('delete_social_link', { id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('delete_social_link', { id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

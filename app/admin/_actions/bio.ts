@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 
 export async function updateBio(formData: FormData) {
@@ -12,7 +12,7 @@ export async function updateBio(formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_bio', { content }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_bio', { content }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

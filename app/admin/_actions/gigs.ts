@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -38,7 +38,7 @@ export async function createGig(formData: FormData) {
   const supabaseAdmin = createAdminClient()
 
   // Dispatch via registry for AGENTS compliance
-  const dispatchResult = dispatchAdminAction('create_gig', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('create_gig', parsed.data, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -57,7 +57,7 @@ export async function updateGig(id: string, formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_gig', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_gig', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -74,7 +74,7 @@ export async function updateGig(id: string, formData: FormData) {
 export async function deleteGig(id: string) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('delete_gig', { id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('delete_gig', { id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -90,7 +90,7 @@ export async function deleteGig(id: string) {
 export async function toggleGigVisibility(id: string, active: boolean) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_gig', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_gig', { id, active }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

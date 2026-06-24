@@ -1,15 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { syncReleasesFromItunes, type ItunesSyncResult } from '@/app/admin/_actions/itunesSync'
-import {
-  syncReleasesFromDiscogs,
-  syncReleasesFromSpotify,
-  type BulkExternalSyncResult,
-} from '@/app/admin/_actions/releaseExternalSync'
+import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
 import { CatalogueSyncSettings } from '@/app/admin/_components/CatalogueSyncSettings'
+import { useSyncJobPoll } from '@/hooks/useSyncJobPoll'
 import type { CatalogueSyncConfig } from '@/lib/catalogue-sync-config'
+import type { BulkExternalSyncResult } from '@/lib/catalogue-import'
+import { startSyncJob } from '@/lib/sync-job-client'
 
 type SyncSource = 'itunes' | 'spotify' | 'discogs'
 
@@ -21,6 +19,7 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
   const [source, setSource] = useState<SyncSource>('itunes')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<ItunesSyncResult | BulkExternalSyncResult | null>(null)
+  const { job, error: jobError, polling, startPolling } = useSyncJobPoll()
 
   async function handleSync(e: React.FormEvent) {
     e.preventDefault()
@@ -30,10 +29,19 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
       if (source === 'itunes') {
         setResult(await syncReleasesFromItunes())
       } else if (source === 'spotify') {
-        setResult(await syncReleasesFromSpotify())
+        const { jobId } = await startSyncJob('spotify_sync')
+        startPolling(jobId)
       } else {
-        setResult(await syncReleasesFromDiscogs())
+        const { jobId } = await startSyncJob('discogs_sync')
+        startPolling(jobId)
       }
+    } catch (err) {
+      setResult({
+        synced: 0,
+        updated: 0,
+        skipped: 0,
+        errors: [err instanceof Error ? err.message : 'Sync failed'],
+      })
     } finally {
       setLoading(false)
     }
@@ -43,9 +51,9 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
     itunes:
       'Import releases using the saved iTunes artist ID (lookup API) or artist name search fallback.',
     spotify:
-      'Import albums/singles using the saved Spotify artist ID. Requires Spotify credentials in Admin → API Keys.',
+      'Import albums/singles using the saved Spotify artist ID. Runs as a background job with progress polling.',
     discogs:
-      'Import releases using the saved Discogs artist ID. Requires Discogs token in Admin → API Keys.',
+      'Import releases using the saved Discogs artist ID. Runs as a background job to avoid gateway timeouts.',
   }
 
   const configuredId: Record<SyncSource, string> = {
@@ -55,6 +63,7 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
   }
 
   const canSync = Boolean(configuredId[source]) || Boolean(initialConfig.artistName.trim())
+  const isAsyncSource = source === 'spotify' || source === 'discogs'
 
   return (
     <div className="max-w-xl space-y-6">
@@ -93,39 +102,37 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
         <form onSubmit={handleSync} className="space-y-4">
           <button
             type="submit"
-            disabled={loading || !canSync}
+            disabled={loading || polling || !canSync}
             className="flex items-center gap-2 px-4 py-2 rounded bg-red-900/80 hover:bg-red-800 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? (
+            {loading || polling ? (
               <>
                 <span
                   className="inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
                   aria-hidden="true"
                 />
-                Syncing…
+                {polling ? 'Sync job running…' : 'Starting…'}
               </>
             ) : (
               `Sync from ${source === 'itunes' ? 'iTunes' : source === 'spotify' ? 'Spotify' : 'Discogs'}`
             )}
           </button>
         </form>
+
+        {jobError && <p className="text-xs text-red-400">{jobError}</p>}
       </div>
 
-      {result && (
+      {job && isAsyncSource && <SyncJobStatus job={job} />}
+
+      {result && source === 'itunes' && (
         <div className="rounded border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-zinc-200">Sync Result</h2>
 
-          <div className={`grid gap-3 ${'updated' in result ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
               <div className="text-2xl font-bold text-green-400">{result.synced}</div>
               <div className="text-xs text-zinc-500 mt-1">Imported</div>
             </div>
-            {'updated' in result ? (
-              <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
-                <div className="text-2xl font-bold text-cyan-400">{result.updated}</div>
-                <div className="text-xs text-zinc-500 mt-1">Tracklists updated</div>
-              </div>
-            ) : null}
             <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
               <div className="text-2xl font-bold text-zinc-400">{result.skipped}</div>
               <div className="text-xs text-zinc-500 mt-1">Already existed</div>
@@ -133,27 +140,13 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
           </div>
 
           {result.errors.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-red-400 mb-2">
-                {result.errors.length} warning{result.errors.length > 1 ? 's' : ''}
-              </p>
-              <ul className="space-y-1 max-h-48 overflow-y-auto">
-                {result.errors.map((err, i) => (
-                  <li key={i} className="text-xs text-red-300 font-mono bg-red-950/30 rounded px-2 py-1">
-                    {err}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {(result.synced > 0 || ('updated' in result && result.updated > 0)) && (
-            <Link
-              href="/admin/releases"
-              className="inline-block text-sm text-zinc-300 hover:text-white transition-colors underline underline-offset-2"
-            >
-              View imported releases →
-            </Link>
+            <ul className="space-y-1 max-h-48 overflow-y-auto">
+              {result.errors.map((err, i) => (
+                <li key={i} className="text-xs text-red-300 font-mono bg-red-950/30 rounded px-2 py-1">
+                  {err}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

@@ -2,13 +2,10 @@
 
 import { useCallback, useEffect, useState, useTransition } from 'react'
 import { Warning, ArrowsClockwise, Trash } from '@phosphor-icons/react'
-import {
-  purgeAndSyncGigs,
-  purgeAndSyncReleases,
-  purgeGigs,
-  purgeReleases,
-  resetReleaseTracklists,
-} from '@/app/admin/_actions/dataMaintenance'
+import { purgeGigs, purgeReleases, resetReleaseTracklists } from '@/app/admin/_actions/dataMaintenance'
+import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
+import { useSyncJobPoll } from '@/hooks/useSyncJobPoll'
+import { startSyncJob } from '@/lib/sync-job-client'
 import {
   countReleasesNeedingTrackEnrichment,
   enrichAllReleasesTracks,
@@ -91,6 +88,7 @@ export function DataMaintenanceClient() {
   const [needsEnrichment, setNeedsEnrichment] = useState<number | null>(null)
   const [enrichProgress, setEnrichProgress] = useState<string | null>(null)
   const [openAction, setOpenAction] = useState<MaintenanceAction | null>(null)
+  const { job: syncJob, error: syncJobError, polling: syncJobPolling, startPolling } = useSyncJobPoll()
 
   const refreshEnrichmentCount = useCallback(async () => {
     const result = await countReleasesNeedingTrackEnrichment()
@@ -145,19 +143,15 @@ export function DataMaintenanceClient() {
             break
           }
           case 'purgeAndSyncReleases': {
-            const result = await purgeAndSyncReleases()
-            if ('error' in result) throw new Error(result.error)
-            setMessage(
-              `Purged ${result.purge.deleted} release(s). Spotify sync: ${JSON.stringify(result.sync)}`,
-            )
+            const { jobId } = await startSyncJob('purge_and_sync_releases')
+            startPolling(jobId)
+            setMessage('Purge + Spotify sync job started — progress below.')
             break
           }
           case 'purgeAndSyncGigs': {
-            const result = await purgeAndSyncGigs()
-            if ('error' in result) throw new Error(result.error)
-            setMessage(
-              `Purged ${result.purge.deleted} gig(s). Bandsintown sync: ${JSON.stringify(result.sync)}`,
-            )
+            const { jobId } = await startSyncJob('purge_and_sync_gigs')
+            startPolling(jobId)
+            setMessage('Purge + Bandsintown sync job started — progress below.')
             break
           }
           case 'resetTracklists': {
@@ -211,7 +205,7 @@ export function DataMaintenanceClient() {
         <AlertDialogTrigger asChild>
           <button
             type="button"
-            disabled={pending}
+            disabled={pending || syncJobPolling}
             className={`inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium transition-colors disabled:opacity-50 min-h-[44px] ${baseClass}`}
           >
             <Icon className="h-4 w-4" aria-hidden="true" />
@@ -278,7 +272,9 @@ export function DataMaintenanceClient() {
         <MaintenanceButton action="purgeGigs" label="Purge gigs" icon={Trash} />
       </div>
 
-      <StatusMessage message={message} error={error} />
+      <StatusMessage message={message} error={error ?? syncJobError} />
+
+      {syncJob && <SyncJobStatus job={syncJob} />}
     </div>
   )
 }

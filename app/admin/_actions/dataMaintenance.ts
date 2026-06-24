@@ -6,7 +6,7 @@ import { syncGigsFromBandsintown } from '@/app/admin/_actions/gigsSync'
 import { syncReleasesFromSpotify } from '@/app/admin/_actions/releaseExternalSync'
 import { enrichAllReleasesTracks } from '@/app/admin/_actions/releaseTrackEnrichment'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 
 export interface PurgeResult {
@@ -38,7 +38,7 @@ async function purgeAllGigs(): Promise<PurgeResult> {
 }
 
 export async function purgeReleases(): Promise<PurgeResult | { error: string }> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'purge_releases',
     { scope: 'auto_synced' },
     createSupabaseActionContext(createAdminClient()),
@@ -54,7 +54,7 @@ export async function purgeReleases(): Promise<PurgeResult | { error: string }> 
 }
 
 export async function purgeGigs(): Promise<PurgeResult | { error: string }> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'purge_gigs',
     {},
     createSupabaseActionContext(createAdminClient()),
@@ -70,7 +70,7 @@ export async function purgeGigs(): Promise<PurgeResult | { error: string }> {
 }
 
 export async function resetReleaseTracklists(): Promise<PurgeResult | { error: string }> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'reset_release_tracklists',
     {},
     createSupabaseActionContext(createAdminClient()),
@@ -98,7 +98,7 @@ export async function resetReleaseTracklists(): Promise<PurgeResult | { error: s
 }
 
 export async function purgeAndSyncReleases(): Promise<MaintenanceSyncResult | { error: string }> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'purge_and_sync_releases',
     {},
     createSupabaseActionContext(createAdminClient()),
@@ -124,7 +124,7 @@ export async function purgeAndSyncReleases(): Promise<MaintenanceSyncResult | { 
 }
 
 export async function purgeAndSyncGigs(): Promise<MaintenanceSyncResult | { error: string }> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'purge_and_sync_gigs',
     {},
     createSupabaseActionContext(createAdminClient()),

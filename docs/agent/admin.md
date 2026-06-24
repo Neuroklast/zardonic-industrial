@@ -35,6 +35,20 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 
 Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance.ts`, `releaseExternalSync.ts`.
 
+Authenticated admin dispatches use `dispatchAdminActionAsAdmin()` (`expert` disclosure). Real auth is `requireAdmin()`.
+
+### Async sync jobs
+
+Long catalogue / maintenance syncs use `sync_jobs` (Supabase) + API workers:
+
+| Route | Purpose |
+|-------|---------|
+| `POST /api/sync-jobs` | Start job (`discogs_sync`, `spotify_sync`, `purge_and_sync_*`) |
+| `GET /api/sync-jobs/[id]` | Poll status |
+| `POST /api/sync-jobs/[id]/tick` | Process one chunk (cron self-chain + reap cron) |
+
+UI: `CatalogueSyncClient`, `DataMaintenanceClient` + `hooks/useSyncJobPoll.ts`.
+
 ## Data maintenance UI
 
 `/admin/data` → `DataMaintenanceClient.tsx` — AlertDialog confirmations, progress for batch enrichment.
