@@ -1,34 +1,24 @@
 'use server'
 
-import { createHash } from 'node:crypto'
 import { runAdminAction } from '@/app/admin/_actions/auth'
-import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
-import { MEDIA_BUCKET } from '@/lib/constants'
-import { optimizeImageBuffer } from '@/lib/optimize-image'
 import {
   assertRemoteImageSize,
   isAllowedImageContentType,
   resolveRemoteImageUrl,
 } from '@/lib/remote-image-url'
+import { shouldOpenImageEditor } from '@/lib/image-crop-math'
 
-export interface CacheRemoteImageResult {
+export interface FetchRemoteImageForEditResult {
   ok: boolean
-  storagePath?: string
-  publicUrl?: string
-  source?: 'direct' | 'google_drive' | 'upload'
+  dataUrl?: string
+  mimeType?: string
+  canEdit?: boolean
   error?: string
 }
 
-function buildObjectPath(prefix: string, ext: string, sourceUrl: string): string {
-  const hash = createHash('sha256').update(sourceUrl).digest('hex').slice(0, 12)
-  const safePrefix = prefix.replace(/[^a-z0-9/_-]/gi, '').replace(/^\/+|\/+$/g, '') || 'imports'
-  return `${safePrefix}/${Date.now()}-${hash}.${ext}`
-}
-
-export async function cacheRemoteImageToR2(
+export async function fetchRemoteImageForEdit(
   sourceUrl: string,
-  options?: { prefix?: string },
-): Promise<CacheRemoteImageResult> {
+): Promise<FetchRemoteImageForEditResult> {
   const result = await runAdminAction(async () => {
     const resolved = resolveRemoteImageUrl(sourceUrl)
     if (!resolved) {
@@ -61,27 +51,16 @@ export async function cacheRemoteImageToR2(
         }
       }
 
+      const mimeType = contentType?.split(';')[0].trim().toLowerCase() ?? 'image/jpeg'
       const buffer = Buffer.from(await response.arrayBuffer())
       assertRemoteImageSize(buffer.byteLength)
 
-      const mimeType = contentType?.split(';')[0].trim() ?? 'image/jpeg'
-      const optimized = await optimizeImageBuffer(buffer, mimeType)
-
-      const prefix = options?.prefix ?? 'imports'
-      const objectPath = buildObjectPath(prefix, optimized.extension, resolved.url)
-
-      const { publicUrl, objectPath: storedPath } = await uploadBufferToR2(
-        MEDIA_BUCKET,
-        objectPath,
-        optimized.buffer,
-        optimized.contentType,
-      )
-
+      const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`
       return {
         ok: true as const,
-        storagePath: storedPath,
-        publicUrl,
-        source: resolved.source,
+        dataUrl,
+        mimeType,
+        canEdit: shouldOpenImageEditor(mimeType),
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -89,12 +68,12 @@ export async function cacheRemoteImageToR2(
       }
       return {
         ok: false as const,
-        error: error instanceof Error ? error.message : 'Failed to cache remote image',
+        error: error instanceof Error ? error.message : 'Failed to fetch remote image',
       }
     } finally {
       clearTimeout(timeout)
     }
-  }, 'Unable to cache remote image.')
+  }, 'Unable to fetch remote image.')
 
   if ('error' in result && !('ok' in result)) {
     return { ok: false, error: result.error }

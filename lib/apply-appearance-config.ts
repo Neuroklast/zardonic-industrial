@@ -11,6 +11,8 @@ export interface AppearanceConfigInput {
   vignetteOpacity?: number
   chromaticStrength?: number
   sectionPanelOpacity?: number
+  /** Accent grid lines on section panels (0 = off). */
+  sectionGridOpacity?: number
   cardSurfaceOpacity?: number
   faviconUrl?: string
   theme?: AppearanceTheme
@@ -18,6 +20,7 @@ export interface AppearanceConfigInput {
 
 const DEFAULT_CARD_COLOR = 'oklch(0.045 0.008 230)'
 export const DEFAULT_SECTION_PANEL_OPACITY = 0.55
+export const DEFAULT_SECTION_GRID_OPACITY = 0
 export const DEFAULT_CARD_SURFACE_OPACITY = 0.85
 
 function parseOklchComponents(oklchStr: string): { l: number; c: number; h: number } | null {
@@ -60,7 +63,22 @@ function applySurfaceVars(
     sectionPanelOpacity > 0 ? 'blur(4px)' : 'none',
     applied,
   )
+
+  const borderOpacity =
+    sectionPanelOpacity <= 0
+      ? 0
+      : Math.min(sectionPanelOpacity * (0.6 / DEFAULT_SECTION_PANEL_OPACITY), 1)
+  setVar(root, '--surface-section-border-opacity', String(borderOpacity), applied)
 }
+
+const FOREGROUND_ALIAS_VARS = [
+  '--card-foreground',
+  '--popover-foreground',
+  '--primary-foreground',
+  '--secondary-foreground',
+  '--accent-foreground',
+  '--destructive-foreground',
+] as const
 
 function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Record<string, string>) {
   const mappings: Array<[keyof AppearanceTheme, string]> = [
@@ -75,9 +93,6 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
     ['fontHeading', '--font-heading'],
     ['fontBody', '--font-body'],
     ['fontMono', '--font-mono'],
-    ['headingFontSize', '--heading-font-size'],
-    ['bodyFontSize', '--body-font-size'],
-    ['monoFontSize', '--mono-font-size'],
   ]
 
   for (const [key, cssVar] of mappings) {
@@ -85,6 +100,12 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
     if (!raw) continue
     const value = key.endsWith('Color') ? toCssColor(raw) : raw
     setVar(root, cssVar, value, applied)
+
+    if (key === 'foregroundColor') {
+      for (const alias of FOREGROUND_ALIAS_VARS) {
+        setVar(root, alias, value, applied)
+      }
+    }
 
     if (key === 'accentColor') {
       setVar(root, '--hover-color', value, applied)
@@ -100,6 +121,19 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
       const fontName = extractGoogleFontName(value)
       if (fontName) loadGoogleFont(fontName)
     }
+  }
+
+  if (theme.headingFontSize) {
+    setVar(root, '--font-size-heading', theme.headingFontSize, applied)
+  }
+
+  if (theme.bodyFontSize) {
+    setVar(root, '--font-size-body', theme.bodyFontSize, applied)
+    setVar(root, '--body-font-size', theme.bodyFontSize, applied)
+  }
+
+  if (theme.monoFontSize) {
+    setVar(root, '--mono-font-size', theme.monoFontSize, applied)
   }
 }
 
@@ -143,6 +177,14 @@ export function applyAppearanceConfig(
       : DEFAULT_CARD_SURFACE_OPACITY
 
   applySurfaceVars(root, config.theme, sectionPanelOpacity, cardSurfaceOpacity, applied)
+
+  const sectionGridOpacity =
+    typeof config.sectionGridOpacity === 'number'
+      ? config.sectionGridOpacity
+      : sectionPanelOpacity > 0
+        ? DEFAULT_SECTION_GRID_OPACITY
+        : 0
+  setVar(root, '--section-grid-opacity', String(sectionGridOpacity), applied)
 
   if (config.faviconUrl) {
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')

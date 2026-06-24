@@ -8,7 +8,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface MusicHighlight {
   id: string
@@ -95,12 +96,17 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
 
 interface MusicHighlightsSectionProps {
   highlights: MusicHighlight[]
+  heading?: string
+  intro?: string
 }
 
-export function MusicHighlightsSection({ highlights }: MusicHighlightsSectionProps) {
+export function MusicHighlightsSection({ highlights, heading, intro }: MusicHighlightsSectionProps) {
+  const title = formatSectionHeading(heading, 'music-highlights')
+
   return (
     <SectionWrapper id="music" data-theme-color="foreground card border primary">
-      <SectionHeading dataText="MUSIC HIGHLIGHTS">MUSIC HIGHLIGHTS</SectionHeading>
+      <SectionHeading sectionId="music-highlights" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="music-highlights">{intro}</SectionIntro>
       {highlights.length > 0 ? (
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {highlights.map((h) => (

@@ -1,4 +1,5 @@
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { SquareImageGrid } from './SquareImageGrid'
 
 interface GridItem {
@@ -10,13 +11,18 @@ interface GridItem {
 
 interface MerchandiseSectionProps {
   items: GridItem[]
+  heading?: string
+  intro?: string
   footerText: string
 }
 
-export function MerchandiseSection({ items, footerText }: MerchandiseSectionProps) {
+export function MerchandiseSection({ items, heading, intro, footerText }: MerchandiseSectionProps) {
+  const title = formatSectionHeading(heading, 'merchandise')
+
   return (
     <SectionWrapper id="merch" data-theme-color="foreground card border primary">
-      <SectionHeading dataText="MERCHANDISE">MERCHANDISE</SectionHeading>
+      <SectionHeading sectionId="merchandise" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="merchandise">{intro}</SectionIntro>
       {items.length > 0 ? (
         <SquareImageGrid items={items} footerText={footerText} />
       ) : (

@@ -11,7 +11,8 @@ import {
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import {
   ApplePodcastsLogo,
   ArrowRight,
@@ -34,6 +35,8 @@ interface Release {
 
 interface ReleasesSectionProps {
   releases: Release[]
+  heading?: string
+  intro?: string
   onReleaseClick?: (release: Release) => void
   columns?: string
   cardVariant?: string
@@ -64,9 +67,18 @@ function getPlatformIcon(platform: string) {
   }
 }
 
-export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant, hoverEffect }: ReleasesSectionProps) {
+export function ReleasesSection({
+  releases,
+  heading,
+  intro,
+  onReleaseClick,
+  columns,
+  cardVariant,
+  hoverEffect,
+}: ReleasesSectionProps) {
   const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
   const prefersReducedMotion = useReducedMotion()
+  const title = formatSectionHeading(heading, 'releases')
 
   const filteredReleases = useMemo(() => {
     const sorted = sortReleasesByDate(releases)
@@ -90,7 +102,8 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
 
   return (
     <SectionWrapper id="releases" data-theme-color="foreground card border primary">
-      <SectionHeading dataText="RELEASES">RELEASES</SectionHeading>
+      <SectionHeading sectionId="releases" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="releases">{intro}</SectionIntro>
 
           <div className="mb-6 flex flex-wrap gap-2">
             {RELEASE_TYPE_FILTERS.map((filter) => (
@@ -165,7 +178,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                         <div className="data-label" data-theme-color="data-label">
                           // REL.{release.release_date?.slice(0, 4) ?? '----'}
                         </div>
-                        <h3 className="truncate font-mono text-sm font-bold uppercase hover-chromatic" title={release.title}>
+                        <h3 className="truncate font-mono text-sm font-bold uppercase text-foreground hover-chromatic" title={release.title}>
                           {release.title}
                         </h3>
                         <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">

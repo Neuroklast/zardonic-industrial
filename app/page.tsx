@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { createClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import { PageLayout } from '@/layouts/PageLayout'
@@ -14,6 +15,7 @@ import { MusicHighlightsSection } from './_components/public/MusicHighlightsSect
 import { PublicPageClient } from './_components/public/PublicPageClient'
 import { AppearanceBridge } from './_components/public/AppearanceBridge'
 import { AdminDraftListener } from './_components/public/AdminDraftListener'
+import { DraftSectionShell } from './_components/public/DraftSectionShell'
 import { MerchandiseSection } from './_components/public/MerchandiseSection'
 import { SoundpacksSection } from './_components/public/SoundpacksSection'
 import { GigsSection } from './_components/public/GigsSection'
@@ -27,6 +29,7 @@ import {
   mapReleaseRowToOverlayRelease,
   type ReleaseDbRow,
 } from '@/lib/release-public-mapper'
+import { resolveHeroLogoUrl } from '@/lib/hero-defaults'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -57,7 +60,13 @@ interface GalleryItemRow {
   storage_path: string | null; image_url: string | null
 }
 interface SocialRow { id: string; platform: string; url: string; label: string | null }
-interface SectionConfig { id: string; label: string; visible: boolean; order: number }
+interface SectionConfig {
+  id: string
+  label: string
+  intro?: string
+  visible: boolean
+  order: number
+}
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
@@ -198,6 +207,7 @@ function parseSections(raw: unknown): SectionConfig[] {
     .map((item) => ({
       id: typeof item.id === 'string' ? item.id : '',
       label: typeof item.label === 'string' ? item.label : '',
+      intro: typeof item.intro === 'string' ? item.intro : undefined,
       visible: typeof item.visible === 'boolean' ? item.visible : true,
       order: typeof item.order === 'number' ? item.order : 0,
     }))
@@ -205,8 +215,20 @@ function parseSections(raw: unknown): SectionConfig[] {
   return parsed.length > 0 ? parsed : DEFAULT_SECTIONS
 }
 
+const EXCLUDED_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
+
+function withoutExcludedSections(items: SectionConfig[]): SectionConfig[] {
+  return items.filter((s) => !EXCLUDED_SECTION_IDS.has(s.id))
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ adminPreview?: string }>
+}) {
+  const { adminPreview } = await searchParams
+  const isAdminPreview = adminPreview === '1'
   const {
     configRows, bio, gigs, releases, partners,
     musicHighlights, merch, soundpacks, gallery, social,
@@ -219,12 +241,12 @@ export default async function HomePage() {
   const bgConfig = getConfig(configRows, 'background')
   const appearanceConfig = getConfig(configRows, 'appearance')
   const sectionsRaw = configRows.find((r) => r.key === 'sections')?.value
-  let sections = parseSections(sectionsRaw)
-    .sort((a, b) => a.order - b.order)
-    .filter((s) => s.visible)
-
-  // Per final spec: CONNECT should not be a full section — small logos live in footer only
-  sections = sections.filter((s) => s.id !== 'social' && s.id !== 'connect' && s.id !== 'spotify')
+  const allSections = withoutExcludedSections(
+    parseSections(sectionsRaw).sort((a, b) => a.order - b.order),
+  )
+  const sections = isAdminPreview
+    ? allSections
+    : allSections.filter((s) => s.visible)
 
   // Extract section style overrides from site_config (centralized helper to avoid repetition)
   // Note: sections config can be array of sections or object with styleOverrides
@@ -308,6 +330,10 @@ export default async function HomePage() {
       typeof appearanceConfig.sectionPanelOpacity === 'number'
         ? appearanceConfig.sectionPanelOpacity
         : undefined,
+    sectionGridOpacity:
+      typeof appearanceConfig.sectionGridOpacity === 'number'
+        ? appearanceConfig.sectionGridOpacity
+        : undefined,
     cardSurfaceOpacity:
       typeof appearanceConfig.cardSurfaceOpacity === 'number'
         ? appearanceConfig.cardSurfaceOpacity
@@ -374,9 +400,23 @@ export default async function HomePage() {
   const upcoming = gigs.filter((g) => new Date(g.event_date) >= now)
   const past = gigs.filter((g) => new Date(g.event_date) < now).reverse()
 
-  // Helper: is a section visible?
+  // Helper: is a section visible in the saved site config?
   function isSectionVisible(id: string) {
-    return sections.some((s) => s.id === id)
+    return allSections.some((s) => s.id === id && s.visible)
+  }
+
+  function wrapForPreview(content: ReactNode, section: SectionConfig) {
+    if (!isAdminPreview) return content
+    return (
+      <DraftSectionShell
+        key={section.id}
+        sectionId={section.id}
+        order={section.order}
+        visible={section.visible}
+      >
+        {content}
+      </DraftSectionShell>
+    )
   }
 
   // Build slots for the mandatory PageLayout (AGENTS §6)
@@ -440,10 +480,15 @@ export default async function HomePage() {
         const divider = idx > 0 ? <SectionDivider /> : null
         switch (section.id) {
           case 'hero':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="hero" sectionName="Hero">
                 <HeroSection
                   headline={String(heroConfig.headline ?? 'ZARDONIC')}
+                  logoImageUrl={resolveHeroLogoUrl(
+                    typeof heroConfig.logoImageStoragePath === 'string' ? heroConfig.logoImageStoragePath : null,
+                    typeof heroConfig.logoImageUrl === 'string' ? heroConfig.logoImageUrl : null,
+                    resolveImageUrl,
+                  )}
                   tagline={String(heroConfig.tagline ?? '')}
                   ctaLabel={String(heroConfig.ctaLabel ?? 'LISTEN NOW')}
                   ctaUrl={String(heroConfig.ctaUrl ?? '#releases')}
@@ -459,118 +504,153 @@ export default async function HomePage() {
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
                   showTourDatesCta={isSectionVisible('gigs')}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'bio':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="bio" sectionName="Bio">
                 {divider}
                 <BioSection
                   content={bio}
+                  heading={section.label}
+                  intro={section.intro}
                   bodyFontSize={typeof bioOverrides.bodyFontSize === 'string' ? bioOverrides.bodyFontSize : undefined}
                   readMoreMaxHeight={typeof bioOverrides.readMoreMaxHeight === 'string' ? bioOverrides.readMoreMaxHeight : undefined}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'credits':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="credits" sectionName="Credits">
                 {divider}
                 <CreditsSection
                   credits={credits}
                   endorsements={endorsements}
                   partners={partnerFriends}
+                  heading={section.label}
+                  intro={section.intro}
                   logoBrightness={typeof creditOverrides.logoBrightness === 'number' ? creditOverrides.logoBrightness : undefined}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'gallery':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="gallery" sectionName="Gallery">
                 {divider}
                 <GallerySection
                   items={gallery.map(galleryItemMap)}
+                  heading={section.label}
+                  intro={section.intro}
                   columns={typeof galleryOverrides.columns === 'string' ? galleryOverrides.columns : '3'}
                   maxVisible={typeof galleryOverrides.maxVisible === 'number' ? galleryOverrides.maxVisible : undefined}
                   aspectRatio={typeof galleryOverrides.aspectRatio === 'string' ? galleryOverrides.aspectRatio : undefined}
                   gap={typeof galleryOverrides.gap === 'string' ? galleryOverrides.gap : undefined}
                   lightbox={galleryOverrides.lightbox !== false}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'music-highlights':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="music-highlights" sectionName="Music Highlights">
                 {divider}
-                <MusicHighlightsSection highlights={musicHighlights} />
-              </SectionErrorBoundary>
+                <MusicHighlightsSection
+                  highlights={musicHighlights}
+                  heading={section.label}
+                  intro={section.intro}
+                />
+              </SectionErrorBoundary>,
+              section,
             )
           case 'releases':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="releases" sectionName="Releases">
                 {divider}
                 <PublicPageClient
                   releases={releaseItems}
                   artistName={String(heroConfig.headline ?? 'ZARDONIC')}
+                  heading={section.label}
+                  intro={section.intro}
                   releaseLayout={typeof releaseOverrides.releaseLayout === 'string' && ['grid', 'swipe', 'carousel-3d'].includes(releaseOverrides.releaseLayout) ? (releaseOverrides.releaseLayout as 'grid' | 'swipe' | 'carousel-3d') : 'grid'}
                   releaseColumns={typeof releaseOverrides.releaseColumns === 'string' ? releaseOverrides.releaseColumns : '4'}
                   releaseCardVariant={typeof releaseOverrides.releaseCardVariant === 'string' ? releaseOverrides.releaseCardVariant : undefined}
                   releaseHoverEffect={typeof releaseOverrides.releaseHoverEffect === 'string' ? releaseOverrides.releaseHoverEffect : undefined}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'social':
-            return social.length > 0 ? (
-              <SectionErrorBoundary key="social" sectionName="Social">
-                {divider}
-                <SocialSection links={social} label={section.label} />
-              </SectionErrorBoundary>
-            ) : null
+            return social.length > 0
+              ? wrapForPreview(
+                  <SectionErrorBoundary key="social" sectionName="Social">
+                    {divider}
+                    <SocialSection links={social} label={section.label} />
+                  </SectionErrorBoundary>,
+                  section,
+                )
+              : null
           case 'merchandise':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="merchandise" sectionName="Merchandise">
                 {divider}
                 <MerchandiseSection
                   items={merch.map(commerceItemMap)}
+                  heading={section.label}
+                  intro={section.intro}
                   footerText={String(merchandiseConfig.footerText ?? '')}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'soundpacks':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="soundpacks" sectionName="Soundpacks">
                 {divider}
-                <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
-              </SectionErrorBoundary>
+                <SoundpacksSection
+                  items={soundpacks.map(commerceItemMap)}
+                  heading={section.label}
+                  intro={section.intro}
+                />
+              </SectionErrorBoundary>,
+              section,
             )
           case 'gigs':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="gigs" sectionName="Events">
                 {divider}
                 <GigsSection
                   upcoming={upcoming}
                   past={past}
                   artistName={String(heroConfig.headline ?? 'ZARDONIC')}
+                  heading={section.label}
+                  intro={section.intro}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'newsletter':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="newsletter" sectionName="Newsletter">
                 {divider}
                 <NewsletterSection
-                  heading={String(newsletterConfig.heading ?? 'Mailing List')}
+                  heading={section.label}
+                  intro={section.intro}
                   body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
                   privacyPolicyUrl={privacyPolicyUrl}
                 />
-              </SectionErrorBoundary>
+              </SectionErrorBoundary>,
+              section,
             )
           case 'contact':
-            return (
+            return wrapForPreview(
               <SectionErrorBoundary key="contact" sectionName="Contact">
                 {divider}
-                <ContactSection />
-              </SectionErrorBoundary>
+                <ContactSection heading={section.label} intro={section.intro} />
+              </SectionErrorBoundary>,
+              section,
             )
           default:
             return null
@@ -578,10 +658,10 @@ export default async function HomePage() {
       })}
 
       {/* Fallback: if sections config is empty or contact not included */}
-      {!isSectionVisible('contact') && (
+      {!isAdminPreview && !isSectionVisible('contact') && (
         <SectionErrorBoundary sectionName="Contact">
           <SectionDivider />
-          <ContactSection />
+          <ContactSection heading="Contact" />
         </SectionErrorBoundary>
       )}
     </PageLayout>

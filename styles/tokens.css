@@ -43,6 +43,8 @@
   --surface-card-bg-fallback: rgba(0, 0, 1, 0.85);
   --surface-card-bg: oklch(0.045 0.008 230 / 0.85);
   --surface-section-backdrop: blur(4px);
+  --surface-section-border-opacity: 0.6;
+  --section-grid-opacity: 0;
 
   /* ── Design Token System ────────────────────────────────────────────────────
    * Single source of truth for spacing, typography, colors, and radius.

@@ -3,15 +3,19 @@
 import { useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
-import { SectionWrapper, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface BioSectionProps {
   content: string
+  heading?: string
+  intro?: string
   bodyFontSize?: string
   readMoreMaxHeight?: string
 }
 
-export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
+export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
+  const title = formatSectionHeading(heading, 'bio')
   const [expanded, setExpanded] = useState(false)
   const prefersReducedMotion = useReducedMotion()
   const hasContent = content.trim().length > 0
@@ -22,7 +26,8 @@ export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSect
 
   return (
     <SectionWrapper id="bio" data-theme-color="foreground muted-foreground card border">
-      <SectionHeading dataText="BIOGRAPHY">BIOGRAPHY</SectionHeading>
+      <SectionHeading sectionId="bio" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="bio">{intro}</SectionIntro>
 
       <div
         className={`overflow-hidden whitespace-pre-wrap font-light ${bioTextClass} text-muted-foreground leading-relaxed`}

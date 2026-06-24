@@ -81,9 +81,9 @@ export function SiteConfigTabs({
         {activeTab === 'sections' && (
           <div className="border border-zinc-800 rounded p-4 space-y-3">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-200">Section Order &amp; Visibility</h2>
+              <h2 className="text-sm font-semibold text-zinc-200">Sections</h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Choose which sections appear on the homepage and drag to reorder them.
+                Order, headings, subtitles and visibility for each homepage section.
               </p>
             </div>
             <SectionsSortable initialSections={sections as SectionConfig[]} />
@@ -93,10 +93,9 @@ export function SiteConfigTabs({
           <div className="space-y-6">
             <SimpleTextConfigEditor
               configKey="newsletter"
-              title="Newsletter Section"
-              description="Heading and body text for the mailing list section."
+              title="Newsletter"
+              description="Body text below the heading (heading is edited in the Sections tab)."
               fields={[
-                { key: 'heading', label: 'Heading', placeholder: 'Mailing List' },
                 { key: 'body', label: 'Body', type: 'textarea', placeholder: 'Subscribe for news and releases.' },
               ]}
               currentValue={newsletterValue}

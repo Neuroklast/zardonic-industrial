@@ -1,7 +1,8 @@
 'use client'
 
 import { m } from 'framer-motion'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface PartnerItem {
   id: string
@@ -32,6 +33,8 @@ interface CreditsAndEndorsementsProps {
   credits: PartnerItem[]
   endorsements: PartnerItem[]
   partners?: PartnerItem[]
+  heading?: string
+  intro?: string
   logoBrightness?: number
 }
 
@@ -108,12 +111,21 @@ function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; he
   )
 }
 
-export function CreditsSection({ credits, endorsements, partners = [], logoBrightness }: CreditsAndEndorsementsProps) {
+export function CreditsSection({
+  credits,
+  endorsements,
+  partners = [],
+  heading,
+  intro,
+  logoBrightness,
+}: CreditsAndEndorsementsProps) {
   const hasItems = credits.length > 0 || endorsements.length > 0 || partners.length > 0
+  const title = formatSectionHeading(heading, 'credits')
 
   return (
     <SectionWrapper id="credits" data-theme-color="primary accent card border">
-      <SectionHeading dataText="CREDIT HIGHLIGHTS">CREDIT HIGHLIGHTS</SectionHeading>
+      <SectionHeading sectionId="credits" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="credits">{intro}</SectionIntro>
 
       {hasItems ? (
         <div className="space-y-12">

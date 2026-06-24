@@ -3,7 +3,11 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { ImageUploader } from '@/app/admin/_components/ImageUploader'
+import { ImageCropEditor } from '@/app/admin/_components/ImageCropEditor'
+import { fetchRemoteImageForEdit } from '@/app/admin/_actions/fetchRemoteImageForEdit'
 import { cacheRemoteImageToR2 } from '@/app/admin/_actions/cacheRemoteImage'
+import { submitOptimizedUpload } from '@/app/admin/_lib/submitOptimizedUpload'
+import { shouldOpenImageEditor, type CropFitMode } from '@/lib/image-crop-math'
 
 type SourceMode = 'upload' | 'url' | 'drive'
 
@@ -14,6 +18,10 @@ interface MediaSourcePickerProps {
   onResolved: (storagePath: string, publicUrl?: string) => void
   onError?: (message: string) => void
   accept?: string
+  enableEditor?: boolean
+  editorAspectRatio?: number | null
+  editorFitMode?: CropFitMode
+  maxOutputDimension?: number
 }
 
 export function MediaSourcePicker({
@@ -23,17 +31,74 @@ export function MediaSourcePicker({
   onResolved,
   onError,
   accept = 'image/*',
+  enableEditor = true,
+  editorAspectRatio = null,
+  editorFitMode = 'cover',
+  maxOutputDimension = 2400,
 }: MediaSourcePickerProps) {
   const [mode, setMode] = useState<SourceMode>('upload')
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
   const [linkInput, setLinkInput] = useState('')
   const [caching, setCaching] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorSrc, setEditorSrc] = useState<string | null>(null)
+
+  async function finalizeUpload(blob: Blob) {
+    setCaching(true)
+    setStatus(null)
+    try {
+      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix)
+      if (publicUrl) setPreview(publicUrl)
+      onResolved(storagePath, publicUrl || undefined)
+      setStatus('Uploaded to R2 (optimized)')
+      setLinkInput('')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed'
+      setStatus(msg)
+      onError?.(msg)
+    } finally {
+      setCaching(false)
+    }
+  }
 
   async function handleCacheLink(input: string, sourceLabel: string) {
     const trimmed = input.trim()
     if (!trimmed) {
       onError?.('Please enter a URL')
+      return
+    }
+
+    if (enableEditor) {
+      setCaching(true)
+      setStatus(null)
+      try {
+        const fetched = await fetchRemoteImageForEdit(trimmed)
+        if (!fetched.ok || !fetched.dataUrl) {
+          const msg = fetched.error ?? 'Failed to fetch image'
+          setStatus(msg)
+          onError?.(msg)
+          return
+        }
+
+        if (fetched.canEdit && fetched.mimeType && shouldOpenImageEditor(fetched.mimeType)) {
+          setEditorSrc(fetched.dataUrl)
+          setEditorOpen(true)
+          setStatus(`${sourceLabel} ready — adjust framing before upload`)
+          return
+        }
+
+        const response = await fetch(fetched.dataUrl)
+        const blob = await response.blob()
+        await finalizeUpload(blob)
+        setStatus(`${sourceLabel} cached to R2 (optimized)`)
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Failed to fetch image'
+        setStatus(msg)
+        onError?.(msg)
+      } finally {
+        setCaching(false)
+      }
       return
     }
 
@@ -105,10 +170,14 @@ export function MediaSourcePicker({
           currentUrl={preview}
           storagePrefix={storagePrefix}
           accept={accept}
+          enableEditor={enableEditor}
+          editorAspectRatio={editorAspectRatio}
+          editorFitMode={editorFitMode}
+          maxOutputDimension={maxOutputDimension}
           onUpload={(path, publicUrl) => {
             if (publicUrl) setPreview(publicUrl)
             onResolved(path, publicUrl)
-            setStatus('Uploaded to R2')
+            setStatus('Uploaded to R2 (optimized)')
           }}
           onError={(msg) => {
             setStatus(msg)
@@ -127,15 +196,15 @@ export function MediaSourcePicker({
             className="w-full font-mono text-xs bg-zinc-900 border border-zinc-700 rounded px-3 py-2 text-zinc-300"
           />
           <p className="text-xs text-zinc-500">
-            Image is downloaded server-side and stored in R2 (cached on your CDN).
+            Image is fetched for editing, then optimized and stored in R2.
           </p>
           <button
             type="button"
-            disabled={caching}
-            onClick={() => handleCacheLink(linkInput, 'Image')}
+            disabled={caching || editorOpen}
+            onClick={() => void handleCacheLink(linkInput, 'Image')}
             className="px-3 py-1.5 text-xs rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white disabled:opacity-50"
           >
-            {caching ? 'Caching…' : 'Fetch & cache to R2'}
+            {caching ? 'Fetching…' : 'Fetch, adjust & upload'}
           </button>
         </div>
       )}
@@ -154,16 +223,36 @@ export function MediaSourcePicker({
           </p>
           <button
             type="button"
-            disabled={caching}
-            onClick={() => handleCacheLink(linkInput, 'Google Drive file')}
+            disabled={caching || editorOpen}
+            onClick={() => void handleCacheLink(linkInput, 'Google Drive file')}
             className="px-3 py-1.5 text-xs rounded bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white disabled:opacity-50"
           >
-            {caching ? 'Caching…' : 'Import from Drive → R2'}
+            {caching ? 'Importing…' : 'Import, adjust & upload'}
           </button>
         </div>
       )}
 
       {status && <p className="text-xs text-zinc-500">{status}</p>}
+
+      {editorSrc && (
+        <ImageCropEditor
+          open={editorOpen}
+          imageSrc={editorSrc}
+          title="Adjust & crop image"
+          aspectRatio={editorAspectRatio}
+          fitMode={editorFitMode}
+          maxOutputDimension={maxOutputDimension}
+          onCancel={() => {
+            setEditorOpen(false)
+            setEditorSrc(null)
+          }}
+          onConfirm={(blob) => {
+            setEditorOpen(false)
+            setEditorSrc(null)
+            void finalizeUpload(blob)
+          }}
+        />
+      )}
     </div>
   )
 }

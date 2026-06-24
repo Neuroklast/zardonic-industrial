@@ -1,6 +1,9 @@
 export interface SectionConfig {
   id: string
+  /** Public section heading (shown uppercase on the site). */
   label: string
+  /** Optional subtitle below the heading. */
+  intro?: string
   visible: boolean
   order: number
 }
@@ -29,6 +32,7 @@ export function parseSections(raw: unknown): SectionConfig[] {
     .map((item) => ({
       id: typeof item.id === 'string' ? item.id : '',
       label: typeof item.label === 'string' ? item.label : '',
+      intro: typeof item.intro === 'string' ? item.intro : undefined,
       visible: typeof item.visible === 'boolean' ? item.visible : true,
       order: typeof item.order === 'number' ? item.order : 0,
     }))

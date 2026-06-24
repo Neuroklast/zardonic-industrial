@@ -216,6 +216,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         label="Background image"
         currentUrl={imageUrl || null}
         storagePrefix="background/images"
+        editorAspectRatio={16 / 9}
+        editorFitMode="cover"
         onResolved={(path, publicUrl) => {
           setImageStoragePath(path)
           if (publicUrl) setImageUrl(publicUrl)

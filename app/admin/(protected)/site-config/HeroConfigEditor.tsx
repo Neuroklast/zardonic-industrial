@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
+import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
 import { resolveImageUrl } from '@/lib/r2'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 
@@ -20,6 +21,15 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   )
   const [ctaLabel, setCtaLabel] = useState(typeof currentValue.ctaLabel === 'string' ? currentValue.ctaLabel : 'Listen Now')
   const [ctaUrl, setCtaUrl] = useState(typeof currentValue.ctaUrl === 'string' ? currentValue.ctaUrl : '#releases')
+  const [logoImageStoragePath, setLogoImageStoragePath] = useState(
+    typeof currentValue.logoImageStoragePath === 'string' ? currentValue.logoImageStoragePath : '',
+  )
+  const [logoImageUrl, setLogoImageUrl] = useState(
+    resolveImageUrl(
+      typeof currentValue.logoImageStoragePath === 'string' ? currentValue.logoImageStoragePath : null,
+      typeof currentValue.logoImageUrl === 'string' ? currentValue.logoImageUrl : null,
+    ) ?? '',
+  )
   const [backgroundImageStoragePath, setBackgroundImageStoragePath] = useState(
     typeof currentValue.backgroundImageStoragePath === 'string' ? currentValue.backgroundImageStoragePath : '',
   )
@@ -35,22 +45,39 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
+  const resolvedLogoPreview = logoImageUrl || DEFAULT_HERO_LOGO_URL
+
   const draftPayload = useMemo(
     () => ({
       headline,
       tagline,
       ctaLabel,
       ctaUrl,
+      logoImageStoragePath: logoImageStoragePath || undefined,
+      logoImageUrl: logoImageUrl || undefined,
       backgroundImageStoragePath: backgroundImageStoragePath || undefined,
       backgroundImageUrl: backgroundImageUrl || undefined,
       backgroundImageOpacity,
     }),
-    [headline, tagline, ctaLabel, ctaUrl, backgroundImageStoragePath, backgroundImageUrl, backgroundImageOpacity],
+    [
+      headline,
+      tagline,
+      ctaLabel,
+      ctaUrl,
+      logoImageStoragePath,
+      logoImageUrl,
+      backgroundImageStoragePath,
+      backgroundImageUrl,
+      backgroundImageOpacity,
+    ],
   )
 
   useEffect(() => {
-    broadcastAdminDraft('hero', draftPayload)
-  }, [draftPayload])
+    broadcastAdminDraft('hero', {
+      ...draftPayload,
+      logoImageUrl: resolvedLogoPreview,
+    })
+  }, [draftPayload, resolvedLogoPreview])
 
   async function handleSave() {
     setStatus('saving')
@@ -73,12 +100,42 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
     <div className="border border-zinc-800 rounded p-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold text-zinc-200">Hero Section</h2>
-        <p className="text-xs text-zinc-500 mt-0.5">Headline, tagline, CTA and optional hero-specific background image.</p>
+        <p className="text-xs text-zinc-500 mt-0.5">
+          Wordmark image, tagline, CTAs and optional hero-only background overlay.
+        </p>
       </div>
 
       <div className="space-y-3">
+        <MediaSourcePicker
+          label="Hero Wordmark Image"
+          currentUrl={logoImageUrl || DEFAULT_HERO_LOGO_URL}
+          storagePrefix="hero/logo"
+          editorFitMode="contain"
+          onResolved={(path, publicUrl) => {
+            setLogoImageStoragePath(path)
+            if (publicUrl) setLogoImageUrl(publicUrl)
+            setErrorMsg(null)
+          }}
+          onError={setErrorMsg}
+        />
+        <p className="text-xs text-zinc-500">
+          PNG or WebP with transparency works best. Leave empty to use the default Zardonic wordmark.
+        </p>
+        {logoImageUrl ? (
+          <button
+            type="button"
+            onClick={() => {
+              setLogoImageStoragePath('')
+              setLogoImageUrl('')
+            }}
+            className="text-xs text-zinc-500 hover:text-zinc-300 underline"
+          >
+            Reset to default wordmark
+          </button>
+        ) : null}
+
         <div className="space-y-1">
-          <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">Headline</label>
+          <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">Alt text</label>
           <input
             type="text"
             value={headline}
@@ -119,9 +176,11 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
         </div>
 
         <MediaSourcePicker
-          label="Hero Background Image (optional)"
+          label="Hero Background Overlay (optional)"
           currentUrl={backgroundImageUrl || null}
           storagePrefix="hero/background"
+          editorAspectRatio={16 / 9}
+          editorFitMode="cover"
           onResolved={(path, publicUrl) => {
             setBackgroundImageStoragePath(path)
             if (publicUrl) setBackgroundImageUrl(publicUrl)
@@ -129,11 +188,13 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           }}
           onError={setErrorMsg}
         />
-        <p className="text-xs text-zinc-500">Leave empty to use the global site background image.</p>
+        <p className="text-xs text-zinc-500">
+          Full-bleed image behind the wordmark only — not the logo itself. Leave empty to use the global site background.
+        </p>
 
         <div className="space-y-2">
           <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
-            Background Image Opacity:{' '}
+            Background Overlay Opacity:{' '}
             <span className="text-zinc-300 font-mono">{backgroundImageOpacity.toFixed(2)}</span>
           </label>
           <SliderPrimitive.Root
