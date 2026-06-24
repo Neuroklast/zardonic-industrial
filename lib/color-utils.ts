@@ -61,6 +61,20 @@ export function ensureContrast(fgOklch: string, bgOklch: string): string {
   return fgOklch
 }
 
+/** Convert a hex color to an rgba() string with the given alpha (0–1). */
+export function hexToRgba(hex: string, alpha: number): string {
+  const rgb = cssColorToRgb(hex)
+  if (!rgb) return `rgba(0, 0, 1, ${alpha})`
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
+}
+
+/** Append an alpha channel to an oklch() color string. */
+export function oklchWithAlpha(oklch: string, alpha: number): string {
+  const match = oklch.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/)
+  if (!match) return `oklch(0.045 0.008 230 / ${alpha})`
+  return `oklch(${match[1]} ${match[2]} ${match[3]} / ${alpha})`
+}
+
 export function hexToOklch(hex: string): string {
   const rgb = cssColorToRgb(hex)
   if (rgb) {

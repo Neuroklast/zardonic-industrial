@@ -68,7 +68,7 @@ function SocialButton({ link }: { link: SocialLink }) {
       transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.97 }}
-      className="flex items-center gap-3 border border-primary/30 bg-card/40 hover:border-primary/60 hover:bg-primary/5 px-5 py-3 font-mono text-sm uppercase tracking-wider transition-all"
+      className="surface-card flex items-center gap-3 border border-primary/30 hover:border-primary/60 hover:bg-primary/5 px-5 py-3 font-mono text-sm uppercase tracking-wider transition-all"
       style={{ '--icon-color': color } as React.CSSProperties}
     >
       <Icon size={20} weight="bold" style={{ color }} aria-hidden="true" />
@@ -92,7 +92,7 @@ export function SocialSection({ links, label = 'CONNECT' }: SocialSectionProps) 
         whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
         viewport={{ once: true }}
         transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="cyber-grid border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8"
+        className="cyber-grid surface-section-panel border border-border/60 p-6 md:p-8"
       >
         <div className="mb-12">
           <h2

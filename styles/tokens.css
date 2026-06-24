@@ -37,6 +37,13 @@
   --accent-c: 0.06;
   --accent-h: 215;
 
+  /* Content surface backgrounds — hex fallback first, oklch second */
+  --surface-section-bg-fallback: rgba(0, 0, 1, 0.55);
+  --surface-section-bg: oklch(0.045 0.008 230 / 0.55);
+  --surface-card-bg-fallback: rgba(0, 0, 1, 0.85);
+  --surface-card-bg: oklch(0.045 0.008 230 / 0.85);
+  --surface-section-backdrop: blur(4px);
+
   /* ── Design Token System ────────────────────────────────────────────────────
    * Single source of truth for spacing, typography, colors, and radius.
    * Use Tailwind utilities (py-section, text-heading, etc.) in components

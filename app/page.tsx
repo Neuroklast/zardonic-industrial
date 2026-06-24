@@ -261,6 +261,22 @@ export default async function HomePage() {
   const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
   const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
 
+  const bgMobileVideoPath =
+    typeof bgConfig.video_mobile_storage_path === 'string' ? bgConfig.video_mobile_storage_path : null
+  const bgMobileVideoFallback =
+    typeof bgConfig.video_mobile_url === 'string' ? bgConfig.video_mobile_url : null
+  const backgroundMobileVideoUrl = resolveImageUrl(bgMobileVideoPath, bgMobileVideoFallback)
+
+  const mobileVideoMode =
+    bgConfig.mobileVideoMode === 'separate' || bgConfig.mobileVideoMode === 'off'
+      ? bgConfig.mobileVideoMode
+      : 'same'
+
+  const backgroundVideoOpacity =
+    typeof bgConfig.backgroundVideoOpacity === 'number'
+      ? bgConfig.backgroundVideoOpacity
+      : undefined
+
   const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
   const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
     ? rawBackgroundType
@@ -288,6 +304,14 @@ export default async function HomePage() {
     accentColorSecondary,
     vignetteOpacity: typeof appearanceConfig.vignetteOpacity === 'number' ? appearanceConfig.vignetteOpacity : 0.3,
     chromaticStrength: typeof appearanceConfig.chromaticStrength === 'number' ? appearanceConfig.chromaticStrength : 0.5,
+    sectionPanelOpacity:
+      typeof appearanceConfig.sectionPanelOpacity === 'number'
+        ? appearanceConfig.sectionPanelOpacity
+        : undefined,
+    cardSurfaceOpacity:
+      typeof appearanceConfig.cardSurfaceOpacity === 'number'
+        ? appearanceConfig.cardSurfaceOpacity
+        : undefined,
     faviconUrl: resolvedFaviconUrl,
     theme:
       appearanceConfig.theme && typeof appearanceConfig.theme === 'object'
@@ -360,8 +384,11 @@ export default async function HomePage() {
     <BackgroundStack
       imageUrl={backgroundUrl}
       videoUrl={backgroundVideoUrl ?? undefined}
+      mobileVideoUrl={backgroundMobileVideoUrl ?? undefined}
+      mobileVideoMode={mobileVideoMode}
       backgroundType={backgroundType}
       imageOpacity={backgroundOpacity}
+      videoOpacity={backgroundVideoOpacity}
     />
   )
 

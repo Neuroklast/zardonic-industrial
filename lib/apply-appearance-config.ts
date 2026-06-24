@@ -1,5 +1,5 @@
 import { extractGoogleFontName, loadGoogleFont } from '@/lib/font-loader'
-import { hexToOklch } from '@/lib/color-utils'
+import { hexToOklch, hexToRgba, oklchToHex, oklchWithAlpha } from '@/lib/color-utils'
 import type { AppearanceTheme } from '@/lib/appearance-presets'
 
 export interface AppearanceConfigInput {
@@ -10,9 +10,15 @@ export interface AppearanceConfigInput {
   accentColorSecondary?: string
   vignetteOpacity?: number
   chromaticStrength?: number
+  sectionPanelOpacity?: number
+  cardSurfaceOpacity?: number
   faviconUrl?: string
   theme?: AppearanceTheme
 }
+
+const DEFAULT_CARD_COLOR = 'oklch(0.045 0.008 230)'
+export const DEFAULT_SECTION_PANEL_OPACITY = 0.55
+export const DEFAULT_CARD_SURFACE_OPACITY = 0.85
 
 function parseOklchComponents(oklchStr: string): { l: number; c: number; h: number } | null {
   const match = oklchStr.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)/)
@@ -31,6 +37,29 @@ function toCssColor(value: string): string {
 function setVar(root: HTMLElement, prop: string, value: string, applied: Record<string, string>) {
   root.style.setProperty(prop, value)
   applied[prop] = value
+}
+
+function applySurfaceVars(
+  root: HTMLElement,
+  theme: AppearanceTheme | undefined,
+  sectionPanelOpacity: number,
+  cardSurfaceOpacity: number,
+  applied: Record<string, string>,
+) {
+  const cardColorRaw = theme?.cardColor ?? DEFAULT_CARD_COLOR
+  const cardColor = toCssColor(cardColorRaw)
+  const cardHex = isHexColor(cardColorRaw) ? cardColorRaw : oklchToHex(cardColor)
+
+  setVar(root, '--surface-section-bg-fallback', hexToRgba(cardHex, sectionPanelOpacity), applied)
+  setVar(root, '--surface-section-bg', oklchWithAlpha(cardColor, sectionPanelOpacity), applied)
+  setVar(root, '--surface-card-bg-fallback', hexToRgba(cardHex, cardSurfaceOpacity), applied)
+  setVar(root, '--surface-card-bg', oklchWithAlpha(cardColor, cardSurfaceOpacity), applied)
+  setVar(
+    root,
+    '--surface-section-backdrop',
+    sectionPanelOpacity > 0 ? 'blur(4px)' : 'none',
+    applied,
+  )
 }
 
 function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Record<string, string>) {
@@ -95,12 +124,25 @@ export function applyAppearanceConfig(
   }
 
   if (typeof config.vignetteOpacity === 'number') {
-    setVar(root, '--vignette-opacity', String(config.vignetteOpacity), applied)
+    const vignette = String(config.vignetteOpacity)
+    setVar(root, '--vignette-opacity', vignette, applied)
+    setVar(root, '--crt-vignette-opacity', vignette, applied)
   }
 
   if (typeof config.chromaticStrength === 'number') {
     setVar(root, '--chromatic-strength', String(config.chromaticStrength), applied)
   }
+
+  const sectionPanelOpacity =
+    typeof config.sectionPanelOpacity === 'number'
+      ? config.sectionPanelOpacity
+      : DEFAULT_SECTION_PANEL_OPACITY
+  const cardSurfaceOpacity =
+    typeof config.cardSurfaceOpacity === 'number'
+      ? config.cardSurfaceOpacity
+      : DEFAULT_CARD_SURFACE_OPACITY
+
+  applySurfaceVars(root, config.theme, sectionPanelOpacity, cardSurfaceOpacity, applied)
 
   if (config.faviconUrl) {
     let link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
