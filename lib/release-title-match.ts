@@ -11,9 +11,11 @@ export interface ReleaseTitleMatchOptions {
 
 export interface ReleaseMatchableRow {
   title: string
-  type: string
+  type?: string
   release_date: string | null
   streaming_links: unknown
+  cover_url?: string | null
+  cover_storage_path?: string | null
   spotify_id: string | null
   itunes_id: string | null
   discogs_id: string | null
@@ -79,6 +81,10 @@ function titleTokens(key: string): Set<string> {
     if (token.length > 1) tokens.add(token)
   }
   return tokens
+}
+
+export function releaseTitleTokenOverlap(a: string, b: string): number {
+  return tokenOverlapRatio(a, b)
 }
 
 function tokenOverlapRatio(a: string, b: string): number {
@@ -181,4 +187,93 @@ export function releaseDatesAlign(a: string | null, b: string | null): boolean {
   if (a.slice(0, 7) === b.slice(0, 7)) return true
   if (a.slice(0, 4) === b.slice(0, 4)) return true
   return false
+}
+
+function stripUrlQuery(url: string): string {
+  try {
+    const parsed = new URL(url.trim())
+    return `${parsed.origin}${parsed.pathname}`.toLowerCase()
+  } catch {
+    return url.trim().toLowerCase().split('?')[0]?.split('#')[0] ?? ''
+  }
+}
+
+/** Platform-agnostic fingerprint for cover art URLs (size variants collapse to one id). */
+export function normalizeCoverArtFingerprint(url: string | null | undefined): string | null {
+  if (!url?.trim()) return null
+  const cleaned = stripUrlQuery(url)
+
+  const scdn = cleaned.match(/\/image\/([a-f0-9]{16,})/i)
+  if (scdn) return `scdn:${scdn[1]}`
+
+  const mzSized = cleaned.match(/mzstatic\.com\/image\/thumb\/(.+?)\/\d+x\d+bb\.[a-z0-9]+$/i)
+  if (mzSized) return `mzstatic:${mzSized[1].replace(/\//g, '-')}`
+
+  const mz = cleaned.match(/mzstatic\.com\/image\/thumb\/(.+)/i)
+  if (mz) return `mzstatic:${mz[1].replace(/\//g, '-')}`
+
+  const discogs = cleaned.match(/img\.discogs\.com\/[^/]+\/([a-z0-9]+-[a-z0-9]+)/i)
+  if (discogs) return `discogs-img:${discogs[1]}`
+
+  return `url:${cleaned}`
+}
+
+export function releaseCoverFingerprints(row: ReleaseMatchableRow): Set<string> {
+  const fingerprints = new Set<string>()
+
+  const storagePath = row.cover_storage_path?.trim().toLowerCase()
+  if (storagePath) fingerprints.add(`storage:${storagePath}`)
+
+  const coverFingerprint = normalizeCoverArtFingerprint(row.cover_url)
+  if (coverFingerprint) fingerprints.add(coverFingerprint)
+
+  return fingerprints
+}
+
+export function sharedCoverFingerprint(
+  a: ReleaseMatchableRow,
+  b: ReleaseMatchableRow,
+): string | null {
+  const fa = releaseCoverFingerprints(a)
+  const fb = releaseCoverFingerprints(b)
+  for (const fingerprint of fa) {
+    if (fb.has(fingerprint)) return fingerprint
+  }
+  return null
+}
+
+const LOOSE_CATALOGUE_TYPES = new Set(['album', 'ep', 'compilation', 'single', 'remix'])
+
+function catalogueTypesLooselyCompatible(a: string, b: string): boolean {
+  if (a === b) return true
+  return LOOSE_CATALOGUE_TYPES.has(a) && LOOSE_CATALOGUE_TYPES.has(b)
+}
+
+function isStrongCoverFingerprint(fingerprint: string): boolean {
+  return (
+    fingerprint.startsWith('scdn:') ||
+    fingerprint.startsWith('mzstatic:') ||
+    fingerprint.startsWith('discogs-img:') ||
+    fingerprint.startsWith('storage:')
+  )
+}
+
+/** Same artwork is a strong duplicate signal when dates or catalogue ids align. */
+export function releasesMatchByCoverArt(
+  a: ReleaseMatchableRow,
+  b: ReleaseMatchableRow,
+  options?: ReleaseTitleMatchOptions,
+): boolean {
+  const sharedCover = sharedCoverFingerprint(a, b)
+  if (!sharedCover) return false
+  if (!catalogueTypesLooselyCompatible(a.type ?? 'album', b.type ?? 'album')) return false
+
+  if (releaseDatesAlign(a.release_date, b.release_date)) return true
+  if (hasComplementaryExternalIds(a, b)) return true
+
+  const keyA = normalizeReleaseTitleKey(a.title, options)
+  const keyB = normalizeReleaseTitleKey(b.title, options)
+  if (releaseTitleTokenOverlap(keyA, keyB) >= 0.35) return true
+
+  return isStrongCoverFingerprint(sharedCover)
 }

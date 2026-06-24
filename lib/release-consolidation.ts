@@ -6,6 +6,7 @@ import {
   hasComplementaryExternalIds,
   normalizeReleaseTitleKey,
   releaseDatesAlign,
+  releasesMatchByCoverArt,
   releaseTitleKeysMatch,
   sharedStreamingFingerprint,
   type ReleaseTitleMatchOptions,
@@ -88,6 +89,8 @@ export function releasesAreDuplicates(
   const sharedFingerprint = sharedStreamingFingerprint(a, b)
   if (sharedFingerprint) return true
 
+  if (releasesMatchByCoverArt(a, b, options)) return true
+
   const keysMatch = titleKeysMatch(a.title, b.title, options)
   const datesAlign = releaseDatesAlign(a.release_date, b.release_date)
   const complementaryIds = hasComplementaryExternalIds(a, b)
@@ -112,7 +115,7 @@ function metadataAsConsolidationRow(metadata: ReleaseMetadata): ReleaseConsolida
     tracks_source: null,
     last_enriched_at: null,
     cover_storage_path: null,
-    cover_url: metadata.coverUrl,
+    cover_url: metadata.coverUrl ?? null,
     display_order: null,
     active: true,
     manually_edited: false,

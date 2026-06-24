@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
   hasComplementaryExternalIds,
+  normalizeCoverArtFingerprint,
   normalizeReleaseTitleKey,
+  releasesMatchByCoverArt,
   releaseTitleKeysMatch,
+  sharedCoverFingerprint,
   sharedStreamingFingerprint,
 } from '@/lib/release-title-match'
 import { releasesAreDuplicates } from '@/lib/release-consolidation'
@@ -71,6 +74,55 @@ describe('hasComplementaryExternalIds', () => {
     const a = row({ id: '1', title: 'A', itunes_id: '111' })
     const b = row({ id: '2', title: 'B', spotify_id: '222' })
     expect(hasComplementaryExternalIds(a, b)).toBe(true)
+  })
+})
+
+describe('cover art fingerprints', () => {
+  it('normalizes Apple Music size variants to the same fingerprint', () => {
+    const small = normalizeCoverArtFingerprint(
+      'https://is1-ssl.mzstatic.com/image/thumb/Music/1/2/3/abc/100x100bb.jpg',
+    )
+    const large = normalizeCoverArtFingerprint(
+      'https://is1-ssl.mzstatic.com/image/thumb/Music/1/2/3/abc/1000x1000bb.jpg',
+    )
+    expect(small).toBe(large)
+  })
+
+  it('matches duplicates with same Spotify artwork but different titles', () => {
+    const cover = 'https://i.scdn.co/image/ab67616d0000b273deadbeefcafebabe'
+    const a = row({
+      id: '1',
+      title: 'Totally Different Title A',
+      release_date: '2016-01-01',
+      cover_url: cover,
+      spotify_id: '111',
+    })
+    const b = row({
+      id: '2',
+      title: 'Another Name Entirely',
+      release_date: '2016-05-01',
+      cover_url: `${cover}?t=1`,
+      itunes_id: '222',
+    })
+    expect(sharedCoverFingerprint(a, b)).toBe('scdn:ab67616d0000b273deadbeefcafebabe')
+    expect(releasesMatchByCoverArt(a, b)).toBe(true)
+    expect(releasesAreDuplicates(a, b)).toBe(true)
+  })
+
+  it('matches rows that share the same R2 storage path', () => {
+    const a = row({
+      id: '1',
+      title: 'Name A',
+      cover_storage_path: 'releases/shared-cover.jpg',
+      cover_url: 'https://cdn.example.com/releases/shared-cover.jpg',
+    })
+    const b = row({
+      id: '2',
+      title: 'Name B',
+      cover_storage_path: 'releases/shared-cover.jpg',
+      cover_url: 'https://other.example.com/old.jpg',
+    })
+    expect(releasesMatchByCoverArt(a, b)).toBe(true)
   })
 })
 
