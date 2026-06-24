@@ -6,6 +6,7 @@ import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { ReleaseExternalIdsSection } from '@/app/admin/_components/ReleaseExternalIdsSection'
 import { StreamingLinksEditor } from '@/app/admin/_components/StreamingLinksEditor'
 import { ReleaseTracklistField } from '@/app/admin/_components/ReleaseTracklistField'
+import { ReloadTracklistButton } from '@/app/admin/_components/ReloadTracklistButton'
 import { useState } from 'react'
 
 interface Props {
@@ -95,7 +96,10 @@ export default function EditReleaseForm({ release, resolvedCoverUrl }: Props) {
           onError={(msg) => setError(msg)}
         />
       </div>
-      <ReleaseTracklistField initialTracks={release.tracks} />
+      <div className="space-y-2">
+        <ReloadTracklistButton releaseId={release.id as string} />
+        <ReleaseTracklistField initialTracks={release.tracks} />
+      </div>
 
       <div>
         <label className="block text-sm text-zinc-300 mb-2">Streaming Links</label>

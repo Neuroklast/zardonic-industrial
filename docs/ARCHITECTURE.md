@@ -56,7 +56,7 @@ Rate limiting, security profiles, legacy KV endpoints — not the source of trut
 | Site design | `/admin/site-config` |
 | Legal & privacy | `/admin/legal` |
 | Content | `/admin/bio`, `/admin/releases`, `/admin/gigs`, … |
-| Data | `/admin/data` (import/export) |
+| Data | `/admin/data` (import/export + maintenance: enrich, purge/sync) |
 
 `site_config` updates go through `app/admin/_actions/siteConfig.ts` → `update_site_config` in `lib/admin-action-registry.ts`.
 
@@ -81,7 +81,9 @@ Legacy `AdminPanel.tsx` / `cms/AdminShell.tsx` (KV-based) still exist in the rep
 
 ## App Router API routes
 
-Examples under `app/api/`: `bandsintown`, `gigs-sync`. Legacy handlers live under root `api/` for Vercel serverless compatibility.
+Examples under `app/api/`: `bandsintown`, `gigs-sync`, `releases-track-enrich` (daily cron). Legacy handlers live under root `api/` for Vercel serverless compatibility.
+
+Release enrichment stack: `lib/release-enrichment.ts`, `lib/release-streaming-enrichment.ts`, `lib/odesli.ts` — see [agent/architecture.md](./agent/architecture.md).
 
 ## Testing & quality
 

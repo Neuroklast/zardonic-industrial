@@ -9,14 +9,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Release track enrichment**: Spotify → Discogs → iTunes tracklist fetch with `tracks_source` and `last_enriched_at` columns; respects `manually_edited`.
+- **Odesli streaming links**: Server + client APIs in `lib/odesli.ts`; merge into `streaming_links` on sync and enrichment; public release modal renders dynamic platform buttons from stored links.
+- **Admin data maintenance** (`/admin/data`): Enrich all tracklists, reset tracklists, purge + sync releases/gigs with AlertDialog confirmations.
+- **Per-release Reload tracklist**: Force refresh tracks + Odesli on the release edit form.
+- **Daily enrichment cron**: `POST /api/releases-track-enrich` (Vercel `0 4 * * *`, `CRON_SECRET`).
+- **URL parsing**: Spotify `intl-*`, embed URLs, query/hash stripping; Apple Music geo paths; Discogs slugs in `lib/release-external-ids.ts`.
+- **Tests**: `release-enrichment`, `odesli`, extended `release-external-ids` and `ReleaseOverlayContent` coverage.
 - **Legal Notice & Privacy Policy pages**: English routes `/legal-notice` and `/privacy-policy` with GDPR/DDG-compliant default templates (Vercel, Supabase, R2, Resend, wsrv.nl, cookie consent, contact, newsletter, embeds).
 - **Admin Legal & Privacy**: `/admin/legal` editor for structured operator fields (name, address, contact) and optional custom privacy policy override; stored in Supabase `site_config.legal`.
 - **Footer legal links**: `SiteFooter` shows Legal Notice, Privacy Policy, and Cookie Preferences; legacy `/impressum`, `/privacy`, `/datenschutz` redirect to new routes.
 
 ### Changed
+- **Release overlay**: Streaming buttons derived from `streaming_links` (not a fixed platform list).
+- **Catalogue sync**: Bulk import sets enrichment metadata; Odesli merge on external sync.
+- **Mobile admin & releases**: Admin nav scroll lock, overlay fullscreen on small screens, larger touch targets, responsive release grid/carousel.
 - **Legal data source**: Legal content moved from legacy KV/overlays to Supabase `site_config` only; removed impressum CMS schema and overlay components.
 - **Agent documentation**: Debloated root `AGENTS.md` (~220 lines → ~40); detailed rules moved to `docs/agent/` (architecture, security, admin, UI, session-checklist). Slimmed `docs/CODING_AGENT_WORKFLOW.md`.
 - **Documentation cleanup**: Rewrote `README.md`, `GDPR_COMPLIANCE.md`, `ACCESSIBILITY.md`, `ARCHITECTURE_DECISION_RECORDS.md`, and `SECURITY.md` for the Next.js + Supabase stack; moved legacy docs to `docs/archive/` with deprecation banners; canonical index at `docs/README.md`; fixed broken links in `TECH_DEBT_TRACKER.md`.
+
+### Fixed
+- **Vitest on Node 22+**: Full `localStorage`/`sessionStorage` mock in `src/test/setup.ts` (TD-036).
+- **Test timeouts**: Static imports in `layer-contract`, `bio-section-font`, and extended timeout for `SoundTab` import.
+- **Odesli API split**: Restored client `fetchOdesliLinks` alongside server `fetchOdesliLinksFromApi` so release editor keeps working.
 
 ### Added
 - **Release external IDs**: Admin can set iTunes, Spotify, and Discogs IDs (or paste platform URLs) per release and sync metadata + streaming links + cover art from each API.

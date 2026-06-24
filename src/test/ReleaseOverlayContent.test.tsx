@@ -17,6 +17,28 @@ const mockRelease: Release = {
   ]
 }
 
+describe('ReleaseOverlayContent streaming links', () => {
+  it('renders a button for every stored platform link', () => {
+    const releaseWithLinks: Release = {
+      ...mockRelease,
+      streamingLinks: [
+        { platform: 'spotify', url: 'https://open.spotify.com/album/a' },
+        { platform: 'deezer', url: 'https://deezer.com/album/a' },
+        { platform: 'napster', url: 'https://napster.com/a' },
+      ],
+    }
+
+    render(<ReleaseOverlayContent data={releaseWithLinks} mainArtistName="Main Artist" />)
+
+    expect(screen.getByRole('link', { name: 'Spotify' })).toHaveAttribute(
+      'href',
+      'https://open.spotify.com/album/a',
+    )
+    expect(screen.getByRole('link', { name: 'Deezer' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Napster' })).toBeInTheDocument()
+  })
+})
+
 describe('ReleaseOverlayContent Track Rendering', () => {
   it('extracts featured artists from title and renders them', () => {
     render(<ReleaseOverlayContent data={mockRelease} mainArtistName="Main Artist" />)

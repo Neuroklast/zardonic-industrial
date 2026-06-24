@@ -74,7 +74,8 @@ Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2
 | TD-030 | No barrel index files | 🟢 | S | Brittle imports | 🔴 Open | [A-08](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-08) |
 | TD-031 | `index.css` monolith | 🟢 | M | Hard to navigate | 🔴 Open | [A-10](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-10) |
 | TD-032 | ARIA labels not translated | 🟢 | S | i18n gap | 🔴 Open | [C-06](./archive/2026-04-vite-audit/DEEP_AUDIT.md#c-06) |
-| TD-033 | No responsive test coverage | 🟢 | M | Layout regressions | 🔴 Open | [C-05](./archive/2026-04-vite-audit/DEEP_AUDIT.md#c-05) |
+| TD-033 | No responsive test coverage | 🟢 | M | Layout regressions | 🔄 In Progress | `admin-mobile.test.tsx`; mobile overlay/carousel fixes |
+| TD-036 | Vitest localStorage broken on Node 22+ | 🟠 | XS | 98 test failures | ✅ Resolved | `src/test/setup.ts` Storage mock |
 | TD-034 | Magic numbers in middleware | 🟢 | XS | Not configurable | 🔴 Open | [E-03](./archive/2026-04-vite-audit/DEEP_AUDIT.md#e-03) |
 
 ---
@@ -94,6 +95,7 @@ Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2
 | TD-028 | package.json `1.0.0` | 2026-06-24 |
 | TD-029 | CHANGELOG maintained | 2026-06-18 |
 | TD-035 | Legal pages + Supabase config | 2026-06-24 |
+| TD-036 | Vitest Storage mock in setup | 2026-06-24 |
 
 ---
 
@@ -102,10 +104,10 @@ Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2
 | Priority | Total | Open | Resolved / Superseded |
 |----------|-------|------|------------------------|
 | 🔴 Critical | 2 | 0 | 2 |
-| 🟠 High | 10 | 7 | 3 |
+| 🟠 High | 11 | 7 | 4 |
 | 🟡 Medium | 16 | 11 | 5 |
 | 🟢 Low | 7 | 5 | 2 |
-| **Total** | **35** | **23** | **12** |
+| **Total** | **36** | **22** | **14** |
 
 ---
 

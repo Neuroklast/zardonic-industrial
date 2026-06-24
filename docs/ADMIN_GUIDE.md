@@ -20,7 +20,7 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Discography | `/admin/releases` | Releases + sync |
 | Events | `/admin/gigs` | Gigs + Bandsintown sync |
 | Newsletter | `/admin/newsletter` | Subscribers |
-| Data | `/admin/data` | Import/export |
+| Data | `/admin/data` | Import/export + **data maintenance** |
 
 Full nav is in `app/admin/_config/nav-groups.ts`.
 
@@ -42,6 +42,27 @@ Public pages: `/legal-notice`, `/privacy-policy`.
 ## Media uploads
 
 Images and video upload to **Cloudflare R2** via admin upload actions. URLs are stored as `*_storage_path` columns with optional legacy URL fallbacks.
+
+## Data maintenance (`/admin/data`)
+
+**Data Maintenance** panel (below export/import):
+
+| Action | Effect |
+|--------|--------|
+| Enrich all tracklists | Fetches missing/stale tracklists (Spotify → Discogs → iTunes) + Odesli platform links for non-manual releases |
+| Reset tracklists | Clears `tracks` on auto-synced releases (keeps `manually_edited`) |
+| Purge + sync releases | Deletes auto-synced releases, re-imports Spotify catalogue, enriches tracklists |
+| Purge + sync gigs | Deletes all gigs, runs Bandsintown sync |
+
+Per-release: edit form → **Reload tracklist** (force refresh tracks + Odesli).
+
+Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
+
+## Catalogue sync & external IDs
+
+`/admin/releases/sync` — bulk iTunes / Spotify / Discogs import.
+
+Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, cover, and Odesli links.
 
 ## Development
 

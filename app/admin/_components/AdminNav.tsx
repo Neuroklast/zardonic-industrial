@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SignOut, List, X } from '@phosphor-icons/react'
 import {
   House,
@@ -97,6 +97,15 @@ function NavLinks({ onNavClick }: { onNavClick?: () => void }) {
 export function AdminNav() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  useEffect(() => {
+    if (!mobileOpen) return
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [mobileOpen])
+
   return (
     <>
       <aside className="hidden md:flex flex-col w-64 shrink-0 bg-zinc-950 border-r border-zinc-800 min-h-screen sticky top-0 h-screen">
@@ -145,7 +154,7 @@ export function AdminNav() {
 
       <aside
         className={[
-          'md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-zinc-950 border-r border-zinc-800',
+          'md:hidden fixed inset-y-0 left-0 z-[60] w-64 bg-zinc-950 border-r border-zinc-800',
           'transform transition-transform duration-200',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}

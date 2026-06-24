@@ -15,11 +15,29 @@ New public-facing config → **Supabase `site_config`**, not KV.
 
 Revalidate paths include `/`, `/legal-notice`, `/privacy-policy` after saves.
 
-## AdminActionRegistry (legacy panel)
+## AdminActionRegistry
 
-Mutations to `AdminSettings` / `SiteData` from legacy panel go through `dispatchAdminAction`. Register new actions with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.
+Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.
 
-Common IDs: `update_admin_value`, `update_site_config`, `set_section_visibility`, …
+### Release & data maintenance actions
+
+| ID | Disclosure | Purpose |
+|----|------------|---------|
+| `enrich_release_tracks` | basic | Single-release tracklist + Odesli enrichment |
+| `enrich_all_release_tracks` | basic | Batch enrichment (limit param) |
+| `purge_releases` | expert | Delete `manually_edited = false` releases |
+| `purge_gigs` | expert | Delete all gigs |
+| `reset_release_tracklists` | expert | Clear tracks on auto-synced releases |
+| `purge_and_sync_releases` | expert | Purge + Spotify sync + enrichment |
+| `purge_and_sync_gigs` | expert | Purge + Bandsintown sync |
+| `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
+| `release_external_sync` | basic | Per-release ID sync |
+
+Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance.ts`, `releaseExternalSync.ts`.
+
+## Data maintenance UI
+
+`/admin/data` → `DataMaintenanceClient.tsx` — AlertDialog confirmations, progress for batch enrichment.
 
 ## Legal editor
 

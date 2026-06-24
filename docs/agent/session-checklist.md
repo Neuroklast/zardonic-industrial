@@ -27,5 +27,7 @@
 | Redis short-circuit | `api/auth.ts:validateSession` | Return false if `!isRedisConfigured()` |
 | WebGL cleanup | `ModelBackground.tsx` | Dispose geometry/material/texture before renderer |
 | Upload unmount | `useVideoUpload.ts`, `useMediaUpload.ts` | `isMountedRef` guard |
+| Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
+| Odesli dual API | `lib/odesli.ts` | Server: `fetchOdesliLinksFromApi`; client editor: `fetchOdesliLinks` via `/api/odesli` queue |
 
 Full historical notes remain in git history and [LESSONS_LEARNED.md](../LESSONS_LEARNED.md).

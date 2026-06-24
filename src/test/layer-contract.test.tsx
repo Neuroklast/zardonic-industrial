@@ -13,6 +13,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import React from 'react'
 import { LAYERS, LAYER_INVARIANTS } from '@/lib/layer-contract'
+import AppFooter from '@/components/AppFooter'
 
 // ---------------------------------------------------------------------------
 // 1. Layer contract invariants
@@ -162,20 +163,7 @@ vi.mock('@/components/CookieConsent', () => ({
 }))
 
 describe('AppFooter visibility', () => {
-  async function renderFooter() {
-    const AppFooter = (
-      await vi.importActual<typeof import('@/components/AppFooter')>(
-        '@/components/AppFooter'
-      )
-    ).default as React.ComponentType<{
-      artistName: string
-      isOwner: boolean
-      hasPassword: boolean
-      setShowLoginDialog: (v: boolean) => void
-      setShowSetupDialog: (v: boolean) => void
-      setCyberpunkOverlay: (o: { type: 'contact' } | null) => void
-    }>
-
+  function renderFooter() {
     return render(
       React.createElement(AppFooter, {
         artistName: 'Zardonic',
@@ -184,26 +172,26 @@ describe('AppFooter visibility', () => {
         setShowLoginDialog: vi.fn(),
         setShowSetupDialog: vi.fn(),
         setCyberpunkOverlay: vi.fn(),
-      })
+      }),
     )
   }
 
-  it('renders a <footer> element', async () => {
-    const { container } = await renderFooter()
+  it('renders a <footer> element', () => {
+    const { container } = renderFooter()
     const footer = container.querySelector('footer')
     expect(footer).not.toBeNull()
   })
 
-  it('footer element has no fixed positioning (must scroll with content)', async () => {
-    const { container } = await renderFooter()
+  it('footer element has no fixed positioning (must scroll with content)', () => {
+    const { container } = renderFooter()
     const footer = container.querySelector('footer')!
     const classes = footer.className.split(/\s+/)
     expect(classes).not.toContain('fixed')
     expect(classes).not.toContain('absolute')
   })
 
-  it('footer element does NOT have a z-index below CONTENT layer', async () => {
-    const { container } = await renderFooter()
+  it('footer element does NOT have a z-index below CONTENT layer', () => {
+    const { container } = renderFooter()
     const footer = container.querySelector('footer')!
     // If z-index is set inline it must be >= CONTENT. If absent, stacking context
     // of parent div is responsible (verified separately by DOM-structure tests).
@@ -217,23 +205,23 @@ describe('AppFooter visibility', () => {
     }
   })
 
-  it('footer renders its copyright text', async () => {
-    const { getByText } = await renderFooter()
+  it('footer renders its copyright text', () => {
+    const { getByText } = renderFooter()
     expect(getByText(/Zardonic/)).not.toBeNull()
   })
 
-  it('footer renders the Legal Notice link', async () => {
-    const { getByText } = await renderFooter()
+  it('footer renders the Legal Notice link', () => {
+    const { getByText } = renderFooter()
     expect(getByText(/Legal Notice/i)).not.toBeNull()
   })
 
-  it('footer renders the Privacy Policy link', async () => {
-    const { getByText } = await renderFooter()
+  it('footer renders the Privacy Policy link', () => {
+    const { getByText } = renderFooter()
     expect(getByText(/Privacy/i)).not.toBeNull()
   })
 
-  it('footer renders the Contact link', async () => {
-    const { getByText } = await renderFooter()
+  it('footer renders the Contact link', () => {
+    const { getByText } = renderFooter()
     expect(getByText(/Contact/i)).not.toBeNull()
   })
 })

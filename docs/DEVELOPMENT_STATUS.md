@@ -13,7 +13,7 @@
 | Content DB | Supabase (`supabase/schema.sql`) |
 | Media | Cloudflare R2 |
 | Legacy `api/` + Redis | Partial — security, enrichment crons |
-| Tests | Vitest suite (`npm run test`) |
+| Tests | Vitest — 1558 tests (`npm run test`) |
 | Tech debt | [TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md) |
 
 ## Public features
@@ -33,7 +33,8 @@
 - [x] Site config, sections, appearance, legal editor
 - [x] CRUD for releases, gigs, gallery, partners, etc.
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
-- [x] Data import/export
+- [x] Data import/export + **data maintenance** (purge/sync, track enrichment)
+- [x] Odesli cross-platform links on releases (sync + enrichment + public modal)
 - [ ] Full retirement of legacy KV `AdminPanel` / CMS shell
 
 ## Open work

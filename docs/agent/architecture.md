@@ -60,8 +60,20 @@ Key-value rows in `site_config`. Public homepage and legal pages read from here.
 | `legal` | Operator identity + privacy override — see [security.md](./security.md) |
 | `footer` | `legalNoticeUrl`, `privacyPolicyUrl` |
 | `appearance`, `hero`, `sections`, … | Site chrome |
+| `catalogue_sync` | Artist IDs for iTunes / Spotify / Discogs bulk import |
 
 Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` action.
+
+## Release enrichment (Supabase)
+
+| Layer | File | Role |
+|-------|------|------|
+| Tracklists | `lib/release-enrichment.ts` | Spotify → Discogs → iTunes; respects `manually_edited` |
+| Streaming links | `lib/release-streaming-enrichment.ts` + `lib/odesli.ts` | Odesli merge into `streaming_links` |
+| Cron | `app/api/releases-track-enrich/route.ts` | Daily batch (15 releases/call) |
+| Admin | `app/admin/_actions/releaseTrackEnrichment.ts` | Manual + bulk triggers |
+
+Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited`.
 
 ## Legal pages
 

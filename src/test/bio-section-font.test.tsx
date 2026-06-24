@@ -22,6 +22,15 @@ import type { AdminSettings } from '@/lib/types'
 // Mock framer-motion to avoid IntersectionObserver requirement in jsdom.
 // The motion.div / motion.section components render as plain divs so we
 // can still query DOM attributes and class names.
+vi.mock('sonner', () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}))
+
+vi.mock('@/components/sections/SectionBase', () => ({
+  SectionBase: ({ children, ...props }: { children: React.ReactNode }) =>
+    React.createElement('section', props, children),
+}))
+
 vi.mock('framer-motion', async () => {
   const actual = await vi.importActual<typeof import('framer-motion')>('framer-motion')
   return {
@@ -40,8 +49,9 @@ vi.mock('framer-motion', async () => {
 
 const noop = vi.fn()
 
-async function renderBioSection(adminSettings?: AdminSettings) {
-  const { default: AppBioSection } = await import('@/components/AppBioSection')
+import AppBioSection from '@/components/AppBioSection'
+
+function renderBioSection(adminSettings?: AdminSettings) {
   return render(
     <AppBioSection
       bio="Artist biography text here."
@@ -56,7 +66,7 @@ async function renderBioSection(adminSettings?: AdminSettings) {
 }
 
 describe('AppBioSection — font binding', () => {
-  it('bio text uses var(--font-body) as inline fontFamily — never a literal font stack', async () => {
+  it('bio text uses var(--font-body) as inline fontFamily — never a literal font stack', () => {
     const adminSettings: AdminSettings = {
       design: {
         theme: {
@@ -64,7 +74,7 @@ describe('AppBioSection — font binding', () => {
         },
       },
     }
-    const { container } = await renderBioSection(adminSettings)
+    const { container } = renderBioSection(adminSettings)
 
     // Find the bio text wrapper that has the fontFamily inline style
     const bioText = container.querySelector('[style*="font-family"]')
@@ -75,24 +85,24 @@ describe('AppBioSection — font binding', () => {
     expect(bioText!.getAttribute('style')).not.toMatch(/font-family:\s*['"]?Inter/)
   })
 
-  it('bio text uses var(--font-body) even when adminSettings fontBody is undefined', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio text uses var(--font-body) even when adminSettings fontBody is undefined', () => {
+    const { container } = renderBioSection(undefined)
 
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText).not.toBeNull()
     expect(bioText!.getAttribute('style')).toContain('var(--font-body)')
   })
 
-  it('bio section h2 heading has font-mono class by default (no custom headingFontFamily)', async () => {
-    const { container } = await renderBioSection()
+  it('bio section h2 heading has font-mono class by default (no custom headingFontFamily)', () => {
+    const { container } = renderBioSection()
     const heading = container.querySelector('h2')
     expect(heading).not.toBeNull()
     // font-mono is the Share Tech Mono default — must be present when no custom heading font is set
     expect(heading!.classList.contains('font-mono')).toBe(true)
   })
 
-  it('bio section h2 heading does NOT have font-mono when headingFontFamily is configured', async () => {
-    const { container } = await renderBioSection({
+  it('bio section h2 heading does NOT have font-mono when headingFontFamily is configured', () => {
+    const { container } = renderBioSection({
       design: { typography: { headingFontFamily: "'Orbitron', sans-serif" } },
     })
     const heading = container.querySelector('h2')
@@ -101,7 +111,7 @@ describe('AppBioSection — font binding', () => {
     expect(heading!.classList.contains('font-mono')).toBe(false)
   })
 
-  it('bio text font size reflects adminSettings bodyFontSize via inline style', async () => {
+  it('bio text font size reflects adminSettings bodyFontSize via inline style', () => {
     const adminSettings: AdminSettings = {
       sections: {
         styleOverrides: {
@@ -111,20 +121,20 @@ describe('AppBioSection — font binding', () => {
         },
       },
     }
-    const { container } = await renderBioSection(adminSettings)
+    const { container } = renderBioSection(adminSettings)
     // The bio text div should carry the configured font size as an inline style (1.25rem for text-xl)
     const bioText = container.querySelector('[style*="1.25rem"]')
     expect(bioText).not.toBeNull()
   })
 
-  it('bio text font size defaults to var(--body-font-size) when bodyFontSize is not set', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio text font size defaults to var(--body-font-size) when bodyFontSize is not set', () => {
+    const { container } = renderBioSection(undefined)
     // Without override, the div uses the CSS variable fallback in its inline font-size style
     const bioText = container.querySelector('[style*="font-size"]')
     expect(bioText).not.toBeNull()
   })
-  it('bio section h2 provides fallback classes when adminSettings typography is unset', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio section h2 provides fallback classes when adminSettings typography is unset', () => {
+    const { container } = renderBioSection(undefined)
     const heading = container.querySelector('h2')
     expect(heading).not.toBeNull()
     expect(heading!.classList.contains('text-4xl')).toBe(true)
@@ -133,8 +143,8 @@ describe('AppBioSection — font binding', () => {
     expect(heading!.classList.contains('tracking-tighter')).toBe(true)
   })
 
-  it('bio section h2 removes fallback sizing classes when headingFontSize is configured', async () => {
-    const { container } = await renderBioSection({
+  it('bio section h2 removes fallback sizing classes when headingFontSize is configured', () => {
+    const { container } = renderBioSection({
       design: { typography: { headingFontSize: '5rem' } }
     })
     const heading = container.querySelector('h2')
@@ -142,31 +152,31 @@ describe('AppBioSection — font binding', () => {
     expect(heading!.classList.contains('md:text-6xl')).toBe(false)
   })
 
-  it('bio section h2 removes fallback font-weight when headingFontWeight is configured', async () => {
-    const { container } = await renderBioSection({
+  it('bio section h2 removes fallback font-weight when headingFontWeight is configured', () => {
+    const { container } = renderBioSection({
       design: { typography: { headingFontWeight: '300' } }
     })
     const heading = container.querySelector('h2')
     expect(heading!.classList.contains('font-bold')).toBe(false)
   })
 
-  it('bio text provides fallback classes when adminSettings typography is unset', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio text provides fallback classes when adminSettings typography is unset', () => {
+    const { container } = renderBioSection(undefined)
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText!.classList.contains('font-light')).toBe(true)
     expect(bioText!.classList.contains('leading-relaxed')).toBe(true)
   })
 
-  it('bio text removes fallback leading-relaxed class when bodyLineHeight is configured', async () => {
-    const { container } = await renderBioSection({
+  it('bio text removes fallback leading-relaxed class when bodyLineHeight is configured', () => {
+    const { container } = renderBioSection({
       design: { typography: { bodyLineHeight: '2.0' } }
     })
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText!.classList.contains('leading-relaxed')).toBe(false)
   })
 
-  it('collapsed bio text has max-h-[280px] class', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('collapsed bio text has max-h-[280px] class', () => {
+    const { container } = renderBioSection(undefined)
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText).not.toBeNull()
     expect(bioText!.classList.contains('max-h-[280px]')).toBe(true)
@@ -174,8 +184,8 @@ describe('AppBioSection — font binding', () => {
     expect(bioText!.classList.contains('max-h-none')).toBe(false)
   })
 
-  it('expanded bio uses max-h-none — never max-h-[2000px] — so long bios are never cut off', async () => {
-    const { container, getByText } = await renderBioSection(undefined)
+  it('expanded bio uses max-h-none — never max-h-[2000px] — so long bios are never cut off', () => {
+    const { container, getByText } = renderBioSection(undefined)
     // Click the "Read More" button to expand the bio
     fireEvent.click(getByText('Read More'))
     const bioText = container.querySelector('[style*="font-family"]')
@@ -186,15 +196,15 @@ describe('AppBioSection — font binding', () => {
     expect(bioText!.classList.contains('max-h-[2000px]')).toBe(false)
   })
 
-  it('bio text has whitespace-pre-wrap class so line breaks and paragraphs render correctly', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio text has whitespace-pre-wrap class so line breaks and paragraphs render correctly', () => {
+    const { container } = renderBioSection(undefined)
     const bioText = container.querySelector('[style*="font-family"]')
     expect(bioText).not.toBeNull()
     expect(bioText!.classList.contains('whitespace-pre-wrap')).toBe(true)
   })
 
-  it('bio section has no inline background style (section backgrounds removed)', async () => {
-    const { container } = await renderBioSection({
+  it('bio section has no inline background style (section backgrounds removed)', () => {
+    const { container } = renderBioSection({
       sections: { styleOverrides: { bio: { primaryColor: 'red' } } },
     })
     const section = container.querySelector('section#bio')
@@ -203,8 +213,8 @@ describe('AppBioSection — font binding', () => {
     expect(section!.getAttribute('style') ?? '').not.toContain('background-color')
   })
 
-  it('bio section has no inline background style when backgroundOpacity is not set', async () => {
-    const { container } = await renderBioSection(undefined)
+  it('bio section has no inline background style when backgroundOpacity is not set', () => {
+    const { container } = renderBioSection(undefined)
     const section = container.querySelector('section#bio')
     expect(section).not.toBeNull()
     // No inline background-color when using default class-based bg

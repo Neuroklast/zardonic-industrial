@@ -13,6 +13,8 @@ export interface ReleaseDbRow {
   tracks?: unknown
   custom_links?: unknown
   manually_edited: boolean | null
+  last_enriched_at?: string | null
+  tracks_source?: string | null
 }
 
 export type OverlayReleaseTrack = NonNullable<Release['tracks']>[number]
