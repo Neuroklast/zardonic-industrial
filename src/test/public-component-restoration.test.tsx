@@ -141,8 +141,8 @@ describe('restored public homepage components', () => {
           ]}
         />
         <CreditsSection
-          credits={[{ id: 'credit-1', name: 'Label', url: null, logoUrl: 'https://example.com/logo-a.png', category: 'credit', logoHoverWhite: true }]}
-          endorsements={[{ id: 'endorsement-1', name: 'Brand', url: 'https://example.com', logoUrl: 'https://example.com/logo-b.png', category: 'endorsement' }]}
+          credits={[{ id: 'credit-1', name: 'Label', url: null, logoUrl: 'https://example.com/logo-a.png', category: 'credit', logoWhite: true }]}
+          endorsements={[{ id: 'endorsement-1', name: 'Brand', url: 'https://example.com', logoUrl: 'https://example.com/logo-b.png', category: 'endorsement', logoWhite: false }]}
         />
       </>,
     )

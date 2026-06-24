@@ -43,7 +43,7 @@ type ReleaseRow = ReleaseDbRow
 interface PartnerRow {
   id: string; name: string; url: string | null
   logo_storage_path: string | null; logo_url: string | null; category: string
-  logo_hover_white?: boolean | null
+  logo_white?: boolean | null
 }
 interface MusicHighlightRow {
   id: string; title: string; youtube_url: string; description: string | null
@@ -118,7 +118,7 @@ async function fetchAll() {
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
       supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name, description').eq('active', true).order('event_date', { ascending: true }),
-      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category, logo_hover_white').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category, logo_white').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
@@ -324,7 +324,7 @@ export default async function HomePage() {
     url: p.url,
     logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
     category: p.category,
-    logoHoverWhite: p.logo_hover_white !== false,
+    logoWhite: p.logo_white !== false,
   })
 
   const credits = partners.filter((p) => p.category === 'credit').map(mapPartnerItem)

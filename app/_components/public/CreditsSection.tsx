@@ -9,16 +9,17 @@ interface PartnerItem {
   url: string | null
   logoUrl: string | null
   category: string
-  logoHoverWhite?: boolean
+  logoWhite?: boolean
 }
 
 function logoImageClassName(item: PartnerItem): string {
   const base = 'h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14'
-  return item.logoHoverWhite ? `logo-white ${base}` : `chromatic-hover ${base}`
+  const useWhiteFill = item.logoWhite !== false
+  return useWhiteFill ? `logo-white ${base}` : `chromatic-hover ${base}`
 }
 
 function logoImageStyle(item: PartnerItem, logoBrightness?: number): React.CSSProperties {
-  if (item.logoHoverWhite) {
+  if (item.logoWhite !== false) {
     if (logoBrightness !== undefined) {
       return { ['--logo-brightness' as string]: String(logoBrightness) }
     }

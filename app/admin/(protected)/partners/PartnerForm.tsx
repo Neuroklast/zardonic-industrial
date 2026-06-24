@@ -71,12 +71,12 @@ export default function PartnerForm() {
       <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
         <input
           type="checkbox"
-          name="logo_hover_white"
+          name="logo_white"
           value="true"
           defaultChecked
           className="rounded border-zinc-600"
         />
-        White logo (permanent, transparent background)
+        White logo fill (default — hover uses chromatic aberration only)
       </label>
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <button
