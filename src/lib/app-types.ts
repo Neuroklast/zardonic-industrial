@@ -131,7 +131,7 @@ export const DEFAULT_SITE_DATA: SiteData = {
 
 /** Discriminated union so TypeScript narrows `data` to the correct type per overlay variant. */
 export type CyberpunkOverlayState =
-  | { type: 'impressum' | 'privacy' | 'contact'; data?: never }
+  | { type: 'contact'; data?: never }
   | { type: 'gig'; data: Gig }
   | { type: 'release'; data: Release }
   | { type: 'member'; data: Member }

@@ -9,6 +9,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Legal Notice & Privacy Policy pages**: English routes `/legal-notice` and `/privacy-policy` with GDPR/DDG-compliant default templates (Vercel, Supabase, R2, Resend, wsrv.nl, cookie consent, contact, newsletter, embeds).
+- **Admin Legal & Privacy**: `/admin/legal` editor for structured operator fields (name, address, contact) and optional custom privacy policy override; stored in Supabase `site_config.legal`.
+- **Footer legal links**: `SiteFooter` shows Legal Notice, Privacy Policy, and Cookie Preferences; legacy `/impressum`, `/privacy`, `/datenschutz` redirect to new routes.
+
+### Changed
+- **Legal data source**: Legal content moved from legacy KV/overlays to Supabase `site_config` only; removed impressum CMS schema and overlay components.
+- **Agent documentation**: Debloated root `AGENTS.md` (~220 lines → ~40); detailed rules moved to `docs/agent/` (architecture, security, admin, UI, session-checklist). Slimmed `docs/CODING_AGENT_WORKFLOW.md`.
+- **Documentation cleanup**: Rewrote `README.md`, `GDPR_COMPLIANCE.md`, `ACCESSIBILITY.md`, `ARCHITECTURE_DECISION_RECORDS.md`, and `SECURITY.md` for the Next.js + Supabase stack; moved legacy docs to `docs/archive/` with deprecation banners; canonical index at `docs/README.md`; fixed broken links in `TECH_DEBT_TRACKER.md`.
+
+### Added
 - **Release external IDs**: Admin can set iTunes, Spotify, and Discogs IDs (or paste platform URLs) per release and sync metadata + streaming links + cover art from each API.
 - **Catalogue sync**: `/admin/releases/sync` now supports bulk artist import from iTunes, Spotify, and Discogs.
 - **Catalogue artist IDs**: Admin menu entry **Catalogue Sync** stores per-platform artist IDs (`site_config.catalogue_sync`) and uses them for bulk import (with artist-name fallback).

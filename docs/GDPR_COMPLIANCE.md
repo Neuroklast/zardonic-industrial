@@ -1,130 +1,108 @@
 # GDPR Compliance Review — ZARDONIC Band Website
 
-## Date: 2026-02-20
+**Last updated:** 2026-06-24
 
-### Overview
-This document reviews the GDPR compliance status of the ZARDONIC band website.
+## Overview
 
-### Data Collection & Processing
+This document reviews the GDPR compliance status of the ZARDONIC band website (Next.js App Router, Supabase, Cloudflare R2).
 
-#### ✅ Compliant Features
+## Public legal pages
 
-1. **Cookie Banner**
-   - Implemented cookie consent banner (CookieConsent component)
-   - Users can accept or reject cookie usage
-   - Clear notice about Local Storage and IndexedDB usage
-   - Link to privacy policy (Datenschutz / Privacy Policy)
+| Route | Content |
+|-------|---------|
+| `/legal-notice` | Operator details from `site_config.legal`, DDG/MStV boilerplate (English) |
+| `/privacy-policy` | GDPR template (Vercel, Supabase, R2, Resend, wsrv.nl, cookies, contact, newsletter, embeds); override via `privacyPolicyCustom` |
+| Cookie banner | Links to `/privacy-policy`; footer offers Cookie Preferences |
+| Admin | `/admin/legal` — structured operator fields + optional privacy override |
 
-2. **Local Storage First**
-   - Analytics data stored in localStorage
-   - No third-party cookies
-   - No tracking cookies
-   - User preferences stay in browser
+Legacy paths `/impressum`, `/privacy`, `/datenschutz` redirect to the routes above.
 
-3. **Transparent Data Usage**
-   - Clear privacy policy accessible to users
-   - Explains data processing purposes
+## Data collection & processing
 
-4. **User Rights**
-   - Admin can reset analytics data
-   - Users can clear localStorage
-   - No personal data stored on servers
+### Compliant features
 
-#### 📋 Data Processing Activities
+1. **Cookie consent** — `CookieConsent` component; users accept or reject non-essential storage; link to Privacy Policy
+2. **Minimal third-party tracking** — No advertising or analytics cookies; no third-party tracking pixels
+3. **Transparent processing** — Privacy Policy describes processors and purposes
+4. **User rights** — Cookie preferences revocable from footer; browser data clearable by user; contact form for data requests (see Privacy Policy)
 
-**Local Storage Items:**
-- `zardonic-band-data` (local cache): Band information and content
-- `admin-password-hash` (legacy): SHA-256 hashed admin password — being migrated to scrypt
-- `font-sizes`: User interface preferences
-- `analytics`: Anonymous usage statistics
-- `sound-settings`: Audio preferences
-- Image cache (IndexedDB)
+### Primary data stores (Supabase)
 
-**Server-Side Data (Upstash Redis):**
-- Band content and configuration (`zardonic-band-data`)
-- Admin password hash (scrypt, with legacy SHA-256 migration)
-- Session tokens: SHA-256 random token, 4-hour TTL (`zd-session:*`)
-- Rate-limit state: SHA-256 hashed IP + salt, auto-expires after 10 seconds (`zd-rl:*`)
-- Honeytoken alert log: hashed IPs only, no plaintext (`zd-honeytoken-alerts`)
-- Threat scores: hashed IPs, 1-hour TTL (`zd-threat:*`)
-- Hard-block list: hashed IPs with reason and TTL (`zd-blocked:*`)
-- Attacker profiles: hashed IPs with behavioral aggregates, 30-day TTL (`zd-profile:*`)
-- Security configuration: anonymous settings object (`zd-security-settings`)
+| Data | Purpose | Legal basis |
+|------|---------|-------------|
+| `site_config` | Theme, footer, legal text, catalogue sync IDs | Legitimate interest / contract (site operation) |
+| `releases`, `gigs`, `gallery`, etc. | Public site content | Legitimate interest |
+| `contact_submissions` | Contact form messages | Consent / pre-contractual steps |
+| `newsletter_subscribers` | Newsletter signups | Consent |
+| `profiles` | Admin authentication role | Contract (admin access) |
 
-**External Services:**
-- iTunes API: Fetches public release information (server-side proxy)
-- Bandsintown API: Fetches upcoming events (server-side proxy)
+Supabase region and DPA: configure in Supabase dashboard; referenced in Privacy Policy template.
 
-#### ⚠️ Privacy Considerations
+### Media & email processors
 
-1. **Rate Limiting & Attack Defense (Art. 6(1)(f) GDPR)**
-   - IP addresses are pseudonymised using SHA-256 + secret salt before processing
-   - Hashed IP is used solely for rate-limit enforcement (5 requests / 10 s)
-   - Rate-limit state is ephemeral: auto-deleted after the 10-second window
-   - No plaintext IP addresses are stored or logged
-   - Legal basis: Legitimate interest in protecting the website from automated attacks
+| Processor | Data | Purpose |
+|-----------|------|---------|
+| Cloudflare R2 | Uploaded media (images, video, favicon) | CDN hosting |
+| Resend | Email address, message body (contact/newsletter) | Transactional email |
+| Vercel | Request logs, deployment metadata | Hosting |
 
-2. **Honeytokens (Intrusion Detection) — Art. 6(1)(f) GDPR**
-   - Decoy records in the database trigger silent alarms on unauthorised access
-   - Alert logs contain only hashed IPs and timestamps — no plaintext personal data
-   - Legal basis: Legitimate interest in IT security
+### Client-side storage
 
-3. **robots.txt Access Violations — Art. 6(1)(f) GDPR**
-   - Violations of robots.txt Disallow rules are logged for security monitoring
-   - Logs contain only hashed IPs — no plaintext personal data stored
-   - Legal basis: Legitimate interest in IT security
+| Store | Data | Purpose |
+|-------|------|---------|
+| `localStorage` | Cookie consent choice, UI preferences | Consent / user preference |
+| IndexedDB | Image pre-cache during loading screen | Performance (essential) |
 
-4. **Attacker Profiling — Art. 6(1)(f) GDPR**
-   - Behavioral profiles are maintained for IPs that have demonstrated malicious intent
-   - All profiles use hashed IPs exclusively — no plaintext personal data
-   - Profiles auto-expire after 30 days of inactivity
-   - Legal basis: Legitimate interest in protecting the website and its users
+No admin credentials are stored in the browser. Admin auth uses Supabase SSR session cookies.
 
-5. **Session Fingerprinting — Art. 6(1)(f) GDPR**
-   - Sessions are bound to User-Agent + IP /24 subnet prefix (SHA-256 hashed)
-   - Purpose: Detect session hijacking attempts
-   - Data is ephemeral: lives only for the 4-hour session TTL
+### Legacy server-side data (Upstash Redis — `api/`)
 
-### GDPR Rights Implementation
+Still used for security and sync workers not yet migrated to App Router:
 
-✅ **Right to Access**: Users control their localStorage data  
-✅ **Right to Erasure**: Users can clear browser data; all server-side security data auto-expires  
-✅ **Right to Rectification**: Admin can update all content  
-✅ **Right to Data Portability**: JSON export/import supported  
-✅ **Right to Object**: Users can reject cookie consent  
-✅ **Transparency**: Clear privacy policy provided  
+| Key pattern | Data | Retention |
+|-------------|------|-----------|
+| `zd-rl:*` | Hashed IP rate-limit counters | ~60 s window |
+| `zd-threat:*`, `zd-blocked:*` | Hashed IP threat scores / blocks | 1 h – 7 d TTL |
+| `zd-honeytoken-alerts` | Security incident log (hashed IPs) | Rolling 500 entries |
+| `zd-profile:*` | Attacker behavioural aggregates (hashed IPs) | 30 d TTL |
 
-### Security Measures (Art. 32 GDPR)
+IP addresses are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage. Legal basis: Art. 6(1)(f) — legitimate interest in IT security.
+
+### External APIs (server-side)
+
+| API | Data sent | Purpose |
+|-----|-----------|---------|
+| iTunes / Spotify / Discogs | Artist/release IDs, public metadata | Catalogue sync |
+| Bandsintown | Artist ID | Tour dates |
+| Odesli | Release URLs | Streaming link enrichment |
+| wsrv.nl | Image URLs (public images only) | Image optimisation proxy |
+
+## GDPR rights implementation
+
+| Right | Implementation |
+|-------|----------------|
+| Access | Contact operator via Legal Notice; admin can export JSON |
+| Erasure | Admin can delete submissions; security data auto-expires |
+| Rectification | Admin updates content via `/admin` |
+| Portability | JSON export/import in admin |
+| Object | Cookie consent reject; no non-essential tracking |
+| Transparency | Privacy Policy + Legal Notice |
+
+## Security measures (Art. 32)
 
 | Measure | Implementation |
-|---|---|
-| Password hashing | scrypt (with legacy SHA-256 migration), constant-time comparison |
-| Session tokens | Random 32-byte hex, HttpOnly cookies, 4-hour TTL |
-| TOTP 2FA | Optional TOTP via otpauth library |
-| Input validation | Zod schemas on all API endpoints |
-| Rate limiting | Fixed-window counter, GDPR-compliant IP hashing |
-| Intrusion detection | Honeytoken decoy records with silent alarms |
-| Behavioral IDS | Threat scoring system with auto-escalation |
-| XSS prevention | Content sanitisation, restrictive CSP headers |
-| Timing attack prevention | Constant-time string comparison (timingSafeEqual) |
-| Transport security | HSTS header (2-year max-age, preload) |
-| Clickjacking prevention | X-Frame-Options: DENY |
+|---------|----------------|
+| Admin auth | Supabase Auth + `profiles.role` check |
+| Session cookies | HttpOnly, Secure, SameSite (Supabase SSR) |
+| Input validation | Zod on API routes and server actions |
+| Rate limiting | Upstash Redis, hashed IPs |
+| CSP / headers | `vercel.json` + `next.config.mjs` parity |
+| Transport | HTTPS, HSTS |
 
-### Compliance Status
+## Compliance status
 
-**Overall GDPR Compliance: ✅ Good**
+**Overall: Good** — transparent policies, consent for cookies, Supabase as primary store with documented processors, pseudonymised security logging, automatic TTL on security data.
 
-The website demonstrates strong GDPR compliance with:
-- Transparent data practices
-- User consent mechanisms
-- Minimal data collection
-- Local-first data storage
-- Clear privacy policy
-- User control over data
-- GDPR-compliant attack defense (pseudonymised rate limiting)
-- All security logging uses hashed IPs only
-- Automatic data expiry for all server-side security data
+## Contact
 
-### Contact
-
-For GDPR-related questions, refer to the Impressum / Privacy Policy for contact information.
+For GDPR-related questions, see the [Legal Notice](/legal-notice) and [Privacy Policy](/privacy-policy).

@@ -490,8 +490,18 @@ const SITE_CONFIG: SiteConfigEntry[] = [
   {
     key: 'footer',
     value: {
-      impressumUrl: '/impressum',
-      privacyUrl: '/privacy',
+      legalNoticeUrl: '/legal-notice',
+      privacyPolicyUrl: '/privacy-policy',
+    },
+  },
+  {
+    key: 'legal',
+    value: {
+      operatorName: '',
+      street: '',
+      zipCity: '',
+      country: 'Germany',
+      email: '',
     },
   },
   {

@@ -1,5 +1,7 @@
 # Design System
 
+> **Note:** Token files live under `src/` (`layers.css`, `layer-contract.ts`). The Next.js app may import equivalent modules from the repo root — conventions are the same.
+
 This document is the authoritative reference for design tokens, component patterns, and
 styling conventions in `zardonic-industrial`. All new components **must** follow these
 guidelines. When editing existing components, migrate opportunistically to the new system.

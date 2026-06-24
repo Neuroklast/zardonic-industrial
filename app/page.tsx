@@ -382,11 +382,18 @@ export default async function HomePage() {
 
   const navSlot = <SiteNav />
 
+  const legalNoticeUrl = String(
+    footerConfig.legalNoticeUrl ?? footerConfig.impressumUrl ?? '/legal-notice',
+  )
+  const privacyPolicyUrl = String(
+    footerConfig.privacyPolicyUrl ?? footerConfig.privacyUrl ?? '/privacy-policy',
+  )
+
   const footerSlot = (
     <SiteFooter
       socialLinks={social}
-      impressumUrl={String(footerConfig.impressumUrl ?? '/impressum')}
-      privacyUrl={String(footerConfig.privacyUrl ?? '/privacy')}
+      legalNoticeUrl={legalNoticeUrl}
+      privacyPolicyUrl={privacyPolicyUrl}
     />
   )
 
@@ -394,7 +401,7 @@ export default async function HomePage() {
     <>
       <AppearanceBridge config={appearanceBridgeConfig} />
       <AdminDraftListener />
-      <CookieConsent />
+      <CookieConsent privacyPolicyUrl={privacyPolicyUrl} />
       <KonamiListener />
     </>
   )

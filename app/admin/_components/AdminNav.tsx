@@ -33,6 +33,7 @@ import {
 const NAV_ICONS: Record<string, Icon> = {
   '/admin': House,
   '/admin/site-config': Gear,
+  '/admin/legal': Gear,
   '/admin/translations': Translate,
   '/admin/bio': TextAlignLeft,
   '/admin/gallery': Images,

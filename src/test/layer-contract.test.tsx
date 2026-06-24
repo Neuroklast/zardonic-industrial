@@ -173,7 +173,7 @@ describe('AppFooter visibility', () => {
       hasPassword: boolean
       setShowLoginDialog: (v: boolean) => void
       setShowSetupDialog: (v: boolean) => void
-      setCyberpunkOverlay: (o: { type: 'impressum' | 'privacy' | 'contact' } | null) => void
+      setCyberpunkOverlay: (o: { type: 'contact' } | null) => void
     }>
 
     return render(
@@ -222,9 +222,9 @@ describe('AppFooter visibility', () => {
     expect(getByText(/Zardonic/)).not.toBeNull()
   })
 
-  it('footer renders the Impressum link', async () => {
+  it('footer renders the Legal Notice link', async () => {
     const { getByText } = await renderFooter()
-    expect(getByText(/Impressum/i)).not.toBeNull()
+    expect(getByText(/Legal Notice/i)).not.toBeNull()
   })
 
   it('footer renders the Privacy Policy link', async () => {

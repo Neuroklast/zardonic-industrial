@@ -11,6 +11,8 @@
  * - Users can revoke/change consent at any time via footer link
  */
 
+'use client'
+
 import { useState, useEffect, useCallback } from 'react'
 import type { CSSProperties } from 'react'
 import { m, AnimatePresence } from 'framer-motion'
@@ -36,13 +38,49 @@ export { getAnalyticsConsentSync, dispatchConsentEvent, useAnalyticsConsent, get
 
 interface CookieConsentProps {
   onPreferencesChange?: (preferences: ConsentPreferences) => void
-  /** Called when user clicks the Privacy Policy link */
+  /** Called when user clicks the Privacy Policy link (legacy overlay path) */
   onOpenPrivacyPolicy?: () => void
+  /** Route to the privacy policy page — preferred over onOpenPrivacyPolicy */
+  privacyPolicyUrl?: string
+}
+
+function PrivacyPolicyLink({
+  privacyPolicyUrl,
+  onOpenPrivacyPolicy,
+  className,
+}: {
+  privacyPolicyUrl?: string
+  onOpenPrivacyPolicy?: () => void
+  className?: string
+}) {
+  const { t } = useLocale()
+
+  if (privacyPolicyUrl) {
+    return (
+      <a href={privacyPolicyUrl} className={className ?? 'text-primary hover:underline focus:underline focus:outline-none'}>
+        {t('cookie.privacyPolicyLink')}
+      </a>
+    )
+  }
+
+  if (onOpenPrivacyPolicy) {
+    return (
+      <button
+        type="button"
+        onClick={onOpenPrivacyPolicy}
+        className={className ?? 'text-primary hover:underline focus:underline focus:outline-none'}
+      >
+        {t('cookie.privacyPolicyLink')}
+      </button>
+    )
+  }
+
+  return null
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy }: CookieConsentProps) {
+export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy, privacyPolicyUrl }: CookieConsentProps) {
   const { t } = useLocale()
   const [showBanner, setShowBanner] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
@@ -108,14 +146,10 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy }: Cook
                     </h3>
                     <p className="text-xs text-muted-foreground font-mono leading-relaxed">
                       {t('cookie.bannerText')}{' '}
-                      {onOpenPrivacyPolicy && (
-                        <button
-                          onClick={onOpenPrivacyPolicy}
-                          className="text-primary hover:underline focus:underline focus:outline-none"
-                        >
-                          {t('cookie.privacyPolicyLink')}
-                        </button>
-                      )}
+                      <PrivacyPolicyLink
+                        privacyPolicyUrl={privacyPolicyUrl}
+                        onOpenPrivacyPolicy={onOpenPrivacyPolicy}
+                      />
                     </p>
                   </div>
                 </div>
@@ -212,14 +246,10 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy }: Cook
 
                 <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
                   <p className="text-xs text-muted-foreground font-mono">
-                    {onOpenPrivacyPolicy && (
-                      <button
-                        onClick={onOpenPrivacyPolicy}
-                        className="text-primary hover:underline focus:underline focus:outline-none"
-                      >
-                        {t('cookie.privacyPolicyLink')}
-                      </button>
-                    )}
+                    <PrivacyPolicyLink
+                      privacyPolicyUrl={privacyPolicyUrl}
+                      onOpenPrivacyPolicy={onOpenPrivacyPolicy}
+                    />
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button onClick={handleRejectAll} variant="ghost" size="sm" className="font-mono">
@@ -247,6 +277,7 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy }: Cook
 interface CookiePreferencesButtonProps {
   onPreferencesChange?: (preferences: ConsentPreferences) => void
   onOpenPrivacyPolicy?: () => void
+  privacyPolicyUrl?: string
   className?: string
 }
 
@@ -254,7 +285,7 @@ interface CookiePreferencesButtonProps {
  * Small button that re-opens the cookie preferences banner.
  * Place in footer for GDPR revocation requirement.
  */
-export function CookiePreferencesButton({ onPreferencesChange, onOpenPrivacyPolicy, className }: CookiePreferencesButtonProps) {
+export function CookiePreferencesButton({ onPreferencesChange, onOpenPrivacyPolicy, privacyPolicyUrl, className }: CookiePreferencesButtonProps) {
   const { t } = useLocale()
   const [showBanner, setShowBanner] = useState(false)
 
@@ -278,6 +309,7 @@ export function CookiePreferencesButton({ onPreferencesChange, onOpenPrivacyPoli
             onPreferencesChange?.(prefs)
           }}
           onOpenPrivacyPolicy={onOpenPrivacyPolicy}
+          privacyPolicyUrl={privacyPolicyUrl}
         />
       )}
     </>

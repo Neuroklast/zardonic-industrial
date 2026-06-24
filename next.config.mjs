@@ -15,6 +15,13 @@ const r2Hostname = r2PublicHostname()
 const DEFAULT_FAVICON = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
 const nextConfig = {
+  async redirects() {
+    return [
+      { source: '/impressum', destination: '/legal-notice', permanent: true },
+      { source: '/privacy', destination: '/privacy-policy', permanent: true },
+      { source: '/datenschutz', destination: '/privacy-policy', permanent: true },
+    ]
+  },
   async rewrites() {
     return [
       { source: '/favicon.ico', destination: DEFAULT_FAVICON },

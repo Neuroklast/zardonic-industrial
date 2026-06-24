@@ -32,7 +32,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'background', label: 'Background' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'sections', label: 'Sections' },
-  { id: 'text', label: 'Footer & Text' },
+  { id: 'text', label: 'Footer & Legal' },
   { id: 'advanced', label: 'Advanced JSON' },
 ]
 
@@ -50,7 +50,7 @@ export function SiteConfigTabs({
   return (
     <AdminPreviewPane>
       <div className="space-y-4" data-admin-ui="true">
-        <nav className="flex flex-wrap gap-2 border-b border-zinc-800 pb-3">
+        <nav className="flex flex-wrap gap-2 border-b border-zinc-800 pb-3 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -113,10 +113,10 @@ export function SiteConfigTabs({
             <SimpleTextConfigEditor
               configKey="footer"
               title="Footer Links"
-              description="Impressum and Privacy Policy page paths."
+              description="Legal Notice and Privacy Policy page paths."
               fields={[
-                { key: 'impressumUrl', label: 'Impressum URL', type: 'url', placeholder: '/impressum' },
-                { key: 'privacyUrl', label: 'Privacy URL', type: 'url', placeholder: '/privacy' },
+                { key: 'legalNoticeUrl', label: 'Legal Notice URL', type: 'url', placeholder: '/legal-notice' },
+                { key: 'privacyPolicyUrl', label: 'Privacy Policy URL', type: 'url', placeholder: '/privacy-policy' },
               ]}
               currentValue={footerValue}
             />

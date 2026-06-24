@@ -118,7 +118,6 @@ async function loadAllSchemas() {
     creditHighlightsSectionSchema,
     shellSectionSchema,
     footerSectionSchema,
-    impressumSectionSchema,
   } = await import('@/cms/section-schemas')
 
   return [
@@ -136,7 +135,6 @@ async function loadAllSchemas() {
     creditHighlightsSectionSchema,
     shellSectionSchema,
     footerSectionSchema,
-    impressumSectionSchema,
   ]
 }
 
@@ -185,12 +183,12 @@ describe('Section schema shape invariants', () => {
     }
   })
 
-  it('all schemas have 15 unique sectionIds', async () => {
+  it('all schemas have 14 unique sectionIds', async () => {
     const schemas = await loadAllSchemas()
     const ids = schemas.map(s => s.sectionId)
     const unique = new Set(ids)
     expect(unique.size).toBe(ids.length)
-    expect(ids).toHaveLength(15)
+    expect(ids).toHaveLength(14)
   })
 
   it('getDefaultData() returns an object (non-null)', async () => {
@@ -285,35 +283,6 @@ describe('SECTION_REGISTRY adminSchemaId bridge', () => {
   })
 })
 
-// ─── AdminSectionSchema validation helper ─────────────────────────────────────
-
-describe('AdminSectionSchema validate function (impressum)', () => {
-  it('returns error when name is empty', async () => {
-    const { impressumSectionSchema } = await import('@/cms/section-schemas')
-    expect(impressumSectionSchema.validate).toBeDefined()
-    const errors = impressumSectionSchema.validate!({
-      name: '',
-      careOf: '', street: '', zipCity: '', phone: '', email: '',
-      responsibleName: '', responsibleAddress: '',
-      nameEn: '', careOfEn: '', streetEn: '', zipCityEn: '',
-      responsibleNameEn: '', responsibleAddressEn: '',
-    })
-    expect(errors['name']).toBeTruthy()
-  })
-
-  it('returns no errors when name is provided', async () => {
-    const { impressumSectionSchema } = await import('@/cms/section-schemas')
-    const errors = impressumSectionSchema.validate!({
-      name: 'Max Mustermann',
-      careOf: '', street: '', zipCity: '', phone: '', email: '',
-      responsibleName: '', responsibleAddress: '',
-      nameEn: '', careOfEn: '', streetEn: '', zipCityEn: '',
-      responsibleNameEn: '', responsibleAddressEn: '',
-    })
-    expect(Object.keys(errors)).toHaveLength(0)
-  })
-})
-
 // ─── AdminSectionSchema group field ──────────────────────────────────────────
 
 describe('AdminSectionSchema group field', () => {
@@ -330,7 +299,7 @@ describe('AdminSectionSchema group field', () => {
     }
   })
 
-  it('all 15 schemas have a group set', async () => {
+  it('all 14 schemas have a group set', async () => {
     const schemas = await loadAllSchemas()
     for (const schema of schemas) {
       expect(

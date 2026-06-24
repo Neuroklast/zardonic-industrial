@@ -29,7 +29,6 @@ import './sponsoring-schema'
 import './credit-highlights-schema'
 import './shell-schema'
 import './footer-schema'
-import './impressum-schema'
 
 // ─── Named re-exports for direct import ──────────────────────────────────────
 export { heroSectionSchema } from './hero-schema'
@@ -47,4 +46,3 @@ export { sponsoringSectionSchema } from './sponsoring-schema'
 export { creditHighlightsSectionSchema } from './credit-highlights-schema'
 export { shellSectionSchema } from './shell-schema'
 export { footerSectionSchema } from './footer-schema'
-export { impressumSectionSchema } from './impressum-schema'

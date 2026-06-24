@@ -1,8 +1,9 @@
 # Migration Guide
 
-This guide explains how to migrate existing components to the new design token system
-introduced in this PR. Migrations are **incremental** — existing code continues to work
-unchanged. Only migrate when you are already editing a component.
+> **Note:** Paths below use `src/` as in the original migration. The Next.js runtime also mirrors many modules at the repo root (`components/`, `lib/`, `layouts/`, `styles/`). Prefer whichever path your import alias resolves to.
+
+This guide explains how to migrate existing components to the design token system.
+Migrations are **incremental** — existing code continues to work unchanged. Only migrate when you are already editing a component.
 
 ---
 

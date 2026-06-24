@@ -1,17 +1,18 @@
 # Technical Debt Register — Zardonic Industrial
 
-> **Last Updated:** 2026-04-01  
-> **Agent ID:** copilot/deep-audit-dokumentation  
+> **Last Updated:** 2026-06-24
 
 ---
 
 ## Overview
 
-This document tracks all known technical debt items. Each item has a unique ID, severity, estimated effort, business impact, and current status.
+Known technical debt with severity, effort, and status. Historical Vite-only items are marked **Superseded** after the App Router migration (ADR-007).
 
 **Severity:** 🔴 Critical / 🟠 High / 🟡 Medium / 🟢 Low  
 **Effort:** XS (<1h) / S (1–4h) / M (4–8h) / L (1–3d) / XL (>3d)  
-**Status:** 🔴 Open / 🔄 In Progress / ✅ Resolved / ❌ Wont Fix  
+**Status:** 🔴 Open / 🔄 In Progress / ✅ Resolved / ❌ Superseded / ❌ Wont Fix
+
+Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2026-04-vite-audit/DEEP_AUDIT.md) (historical).
 
 ---
 
@@ -19,8 +20,8 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
-| TD-001 | `App.tsx` God Object (3 638 lines) — entire app state and UI in one file | 🔴 | XL | Every new feature causes merge conflicts; onboarding impossible | ✅ Resolved | [A-01](./DEEP_AUDIT.md#a-01) |
-| TD-002 | `tsc --noCheck` in build script — TypeScript errors silently pass to production | 🔴 | XS | Type errors in production; runtime crashes | ✅ Resolved | [B-03](./DEEP_AUDIT.md#b-03) |
+| TD-001 | `App.tsx` God Object | 🔴 | XL | Merge conflicts, onboarding | ✅ Resolved | ADR-007 |
+| TD-002 | `tsc --noCheck` in build | 🔴 | XS | Type errors in production | ✅ Resolved | — |
 
 ---
 
@@ -28,15 +29,16 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
-| TD-003 | Hardcoded default `RATE_LIMIT_SALT` in `middleware.ts` | 🟠 | XS | IP anonymisation bypassed if env var not set | 🔴 Open | [B-01](./DEEP_AUDIT.md#b-01) |
-| TD-004 | CSP allows `'unsafe-inline'` for styles (`vercel.json`) | 🟠 | S | CSS injection attack vector | 🔴 Open | [B-02](./DEEP_AUDIT.md#b-02) |
-| TD-005 | Near-zero test coverage — critical paths untested | 🟠 | XL | Regressions undetected; deploy confidence low | ✅ Resolved | [D-01](./DEEP_AUDIT.md#d-01) |
-| TD-006 | `next-themes` incompatible with Vite/React SPA | 🟠 | S | Potential hydration issues; wrong package | 🔴 Open | [F-02](./DEEP_AUDIT.md#f-02) |
-| TD-007 | 7 unmerged Dependabot PRs (security patches pending) | 🟠 | M | Known vulnerabilities unpatched | 🔴 Open | [F-01](./DEEP_AUDIT.md#f-01) |
-| TD-008 | JS obfuscation in build pipeline — 30–80% bundle size increase | 🟠 | S | Poor Core Web Vitals; security-through-obscurity | 🔴 Open | [G-01](./DEEP_AUDIT.md#g-01) |
-| TD-009 | No `prefers-reduced-motion` support — accessibility risk | 🟠 | M | WCAG 2.1 AA violation; epilepsy/vestibular risk | 🔴 Open | [C-01](./DEEP_AUDIT.md#c-01) |
-| TD-010 | ESLint ignores entire `api/` directory | 🟠 | XS | Security-critical code has no static analysis | 🔴 Open | [B-04](./DEEP_AUDIT.md#b-04) |
-| TD-011 | `EditControls.tsx` — 1 007 lines, too much responsibility | 🟠 | L | Hard to test; frequent merge conflicts | 🔴 Open | [A-02](./DEEP_AUDIT.md#a-02) |
+| TD-003 | Hardcoded default `RATE_LIMIT_SALT` | 🟠 | XS | IP anonymisation bypass | 🔴 Open | [B-01](./archive/2026-04-vite-audit/DEEP_AUDIT.md#b-01) |
+| TD-004 | CSP `'unsafe-inline'` styles | 🟠 | S | CSS injection vector | 🔴 Open | [B-02](./archive/2026-04-vite-audit/DEEP_AUDIT.md#b-02) |
+| TD-005 | Near-zero test coverage | 🟠 | XL | Regressions undetected | ✅ Resolved | — |
+| TD-006 | `next-themes` incompatible with Vite SPA | 🟠 | S | Wrong package for Vite | ❌ Superseded | App Router uses Next.js |
+| TD-007 | Unmerged Dependabot PRs | 🟠 | M | Known vulnerabilities | 🔴 Open | [F-01](./archive/2026-04-vite-audit/DEEP_AUDIT.md#f-01) |
+| TD-008 | JS obfuscation in build | 🟠 | S | Bundle bloat | 🔴 Open | [G-01](./archive/2026-04-vite-audit/DEEP_AUDIT.md#g-01) |
+| TD-009 | No `prefers-reduced-motion` | 🟠 | M | WCAG risk | 🔴 Open | [C-01](./archive/2026-04-vite-audit/DEEP_AUDIT.md#c-01) |
+| TD-010 | ESLint ignores `api/` | 🟠 | XS | No static analysis on APIs | 🔴 Open | [B-04](./archive/2026-04-vite-audit/DEEP_AUDIT.md#b-04) |
+| TD-011 | `EditControls.tsx` monolith | 🟠 | L | Hard to test | 🔴 Open | [A-02](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-02) |
+| TD-035 | Legal pages missing | 🟠 | M | Footer 404 / compliance | ✅ Resolved | `/legal-notice`, `/privacy-policy` |
 
 ---
 
@@ -44,22 +46,22 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
-| TD-012 | No client-side router — no URL navigation | 🟡 | L | No deep-linking, no browser history, no code splitting | 🔴 Open | [A-06](./DEEP_AUDIT.md#a-06) |
-| TD-013 | No state management library — prop-drilling throughout | 🟡 | L | Increasing complexity; re-render performance issues | 🔴 Open | [A-05](./DEEP_AUDIT.md#a-05) |
-| TD-014 | Only 1 root-level `ErrorBoundary` — any error crashes entire page | 🟡 | M | Poor user experience on partial errors | 🔴 Open | [E-04](./DEEP_AUDIT.md#e-04) |
-| TD-015 | `ThemeCustomizerDialog.tsx` — 795 lines | 🟡 | M | Hard to maintain; monolithic dialog | 🔴 Open | [A-02](./DEEP_AUDIT.md#a-02) |
-| TD-016 | Flat component directory — 70+ files without structure | 🟡 | S | Discoverability poor; no feature isolation | 🔴 Open | [A-03](./DEEP_AUDIT.md#a-03) |
-| TD-017 | Only `LocaleContext` — auth/theme state not in contexts | 🟡 | M | Prop-drilling for auth/theme state | 🔴 Open | [A-04](./DEEP_AUDIT.md#a-04) |
-| TD-018 | Missing `strict: true` in `tsconfig.json` | 🟡 | XS | Weaker type safety | 🔴 Open | [B-05](./DEEP_AUDIT.md#b-05) |
-| TD-019 | No barrel exports (`index.ts`) in components/hooks/lib | 🟡 | S | Verbose imports; refactoring harder | 🔴 Open | [A-08](./DEEP_AUDIT.md#a-08) |
-| TD-020 | Three icon libraries in use (`heroicons`, `phosphor`, `lucide`) | 🟡 | M | Bundle bloat; visual inconsistency | 🔴 Open | [F-03](./DEEP_AUDIT.md#f-03) |
-| TD-021 | No lazy loading for heavy components (Three.js, D3, Recharts) | 🟡 | M | Slow initial page load; poor LCP | 🔴 Open | [G-02](./DEEP_AUDIT.md#g-02) |
-| TD-022 | `middleware.ts` creates new Redis client per request | 🟡 | XS | Unnecessary object allocation on Edge | 🔴 Open | [A-09](./DEEP_AUDIT.md#a-09) |
-| TD-023 | Missing skip-to-content link | 🟡 | XS | WCAG 2.1 AA violation | 🔴 Open | [C-02](./DEEP_AUDIT.md#c-02) |
-| TD-024 | `CookieBanner.tsx` + `CookieConsent.tsx` — duplicated cookie UI | 🟡 | S | Confusing UX; inconsistent consent state | 🔴 Open | [A-07](./DEEP_AUDIT.md#a-07) |
-| TD-025 | Legacy `x-session-token` header — XSS-vulnerable session transport | 🟡 | M | XSS can exfiltrate session token | 🔴 Open | [B-08](./DEEP_AUDIT.md#b-08) |
-| TD-026 | Image proxy DNS pre-resolution timing — SSRF risk | 🟡 | M | DNS rebinding could bypass SSRF protection | 🔴 Open | [B-06](./DEEP_AUDIT.md#b-06) |
-| TD-027 | Unix-only build script (`export NODE_OPTIONS=`) — Windows broken | 🟡 | XS | Windows developers cannot build | 🔴 Open | [D-05](./DEEP_AUDIT.md#d-05) |
+| TD-012 | No client-side router | 🟡 | L | No deep-linking | ❌ Superseded | Next.js App Router |
+| TD-013 | No state management library | 🟡 | L | Prop-drilling | 🔄 In Progress | RSC + server state |
+| TD-014 | Single root `ErrorBoundary` | 🟡 | M | Full-page crash | 🔴 Open | [E-04](./archive/2026-04-vite-audit/DEEP_AUDIT.md#e-04) |
+| TD-015 | `ThemeCustomizerDialog.tsx` size | 🟡 | M | Hard to maintain | 🔴 Open | [A-02](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-02) |
+| TD-016 | Flat component directory | 🟡 | S | Poor discoverability | 🔴 Open | [A-03](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-03) |
+| TD-017 | Auth/theme not in contexts | 🟡 | M | Prop-drilling | ❌ Superseded | Supabase SSR sessions |
+| TD-018 | Missing `strict: true` in tsconfig | 🟡 | XS | Weaker types | 🔴 Open | [B-05](./archive/2026-04-vite-audit/DEEP_AUDIT.md#b-05) |
+| TD-019 | No barrel exports | 🟡 | S | Verbose imports | 🔴 Open | [A-08](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-08) |
+| TD-020 | Three icon libraries | 🟡 | M | Bundle bloat | 🔴 Open | ADR-005 |
+| TD-021 | No lazy loading (Three.js, etc.) | 🟡 | M | Poor LCP | 🔴 Open | [G-02](./archive/2026-04-vite-audit/DEEP_AUDIT.md#g-02) |
+| TD-022 | Redis client per request | 🟡 | XS | Edge waste | 🔴 Open | [A-09](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-09) |
+| TD-023 | Missing skip-to-content link | 🟡 | XS | WCAG | ✅ Resolved | `PageLayout` |
+| TD-024 | Duplicate cookie UI | 🟡 | S | Confusing UX | ✅ Resolved | `CookieConsent` only |
+| TD-025 | Legacy `x-session-token` header | 🟡 | M | XSS session theft | 🔴 Open | Legacy `api/` only |
+| TD-026 | Image proxy DNS timing | 🟡 | M | SSRF risk | 🔴 Open | [B-06](./archive/2026-04-vite-audit/DEEP_AUDIT.md#b-06) |
+| TD-027 | Unix-only build script | 🟡 | XS | Windows broken | 🔴 Open | [D-05](./archive/2026-04-vite-audit/DEEP_AUDIT.md#d-05) |
 
 ---
 
@@ -67,42 +69,48 @@ This document tracks all known technical debt items. Each item has a unique ID, 
 
 | ID | Title | Severity | Effort | Impact | Status | Ref |
 |----|-------|----------|--------|--------|--------|-----|
-| TD-028 | Version `0.0.0` in `package.json` — no SemVer | 🟢 | XS | No release history | 🔴 Open | [D-03](./DEEP_AUDIT.md#d-03) |
-| TD-029 | No `CHANGELOG.md` | 🟢 | XS | No release notes for users/contributors | ✅ Resolved | [D-04](./DEEP_AUDIT.md#d-04) |
-| TD-030 | No barrel index files (`index.ts`) for components/hooks/lib | 🟢 | S | Verbose, brittle import paths | 🔴 Open | [A-08](./DEEP_AUDIT.md#a-08) |
-| TD-031 | `index.css` — 1 990 lines, not split by concern | 🟢 | M | Hard to find styles; accidental overrides | 🔴 Open | [A-10](./DEEP_AUDIT.md#a-10) |
-| TD-032 | ARIA labels not translated (i18n gap) | 🟢 | S | Accessibility gap for non-English screen reader users | 🔴 Open | [C-06](./DEEP_AUDIT.md#c-06) |
-| TD-033 | No responsive breakpoint test coverage | 🟢 | M | Layout regressions go undetected | 🔴 Open | [C-05](./DEEP_AUDIT.md#c-05) |
-| TD-034 | Magic numbers in `middleware.ts` (`THRESHOLD=500`, `COOLDOWN_SECONDS=300`) | 🟢 | XS | Not configurable; unclear meaning | 🔴 Open | [E-03](./DEEP_AUDIT.md#e-03) |
+| TD-028 | Version `0.0.0` in package.json | 🟢 | XS | No SemVer | ✅ Resolved | Now `1.0.0` |
+| TD-029 | No CHANGELOG | 🟢 | XS | No release notes | ✅ Resolved | CHANGELOG.md |
+| TD-030 | No barrel index files | 🟢 | S | Brittle imports | 🔴 Open | [A-08](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-08) |
+| TD-031 | `index.css` monolith | 🟢 | M | Hard to navigate | 🔴 Open | [A-10](./archive/2026-04-vite-audit/DEEP_AUDIT.md#a-10) |
+| TD-032 | ARIA labels not translated | 🟢 | S | i18n gap | 🔴 Open | [C-06](./archive/2026-04-vite-audit/DEEP_AUDIT.md#c-06) |
+| TD-033 | No responsive test coverage | 🟢 | M | Layout regressions | 🔴 Open | [C-05](./archive/2026-04-vite-audit/DEEP_AUDIT.md#c-05) |
+| TD-034 | Magic numbers in middleware | 🟢 | XS | Not configurable | 🔴 Open | [E-03](./archive/2026-04-vite-audit/DEEP_AUDIT.md#e-03) |
 
 ---
 
-## Resolved Items
+## Resolved / superseded summary
 
-| ID | Title | Resolved Date | Agent |
-|----|-------|---------------|-------|
-| TD-001 | `App.tsx` God Object — migrated to Next.js App Router; each section is its own component | 2026-06-18 | copilot/schema-drift-ui-parity |
-| TD-002 | `tsc --noCheck` — removed; `npm run typecheck` runs strict `tsc --noEmit` with 0 errors | 2026-06-18 | copilot/schema-drift-ui-parity |
-| TD-005 | Near-zero test coverage — 1 746 tests now pass across 126 test files | 2026-06-18 | copilot/schema-drift-ui-parity |
-| TD-029 | No `CHANGELOG.md` — `CHANGELOG.md` added and maintained per Keep-a-Changelog format | 2026-06-18 | copilot/schema-drift-ui-parity |
+| ID | Resolution | Date |
+|----|------------|------|
+| TD-001 | Next.js App Router migration | 2026-06-18 |
+| TD-002 | Strict `tsc --noEmit` | 2026-06-18 |
+| TD-005 | Vitest suite expanded | 2026-06-18 |
+| TD-006 | Vite SPA obsolete | 2026-06-24 |
+| TD-012 | Next.js file-based routing | 2026-06-24 |
+| TD-017 | Supabase SSR auth | 2026-06-24 |
+| TD-023 | Skip link in PageLayout | 2026-06-24 |
+| TD-024 | Single CookieConsent | 2026-06-24 |
+| TD-028 | package.json `1.0.0` | 2026-06-24 |
+| TD-029 | CHANGELOG maintained | 2026-06-18 |
+| TD-035 | Legal pages + Supabase config | 2026-06-24 |
 
 ---
 
 ## Summary
 
-| Priority | Count | Status |
-|----------|-------|--------|
-| 🔴 Critical | 2 | 2 resolved |
-| 🟠 High | 9 | 1 resolved (TD-005), 8 open |
-| 🟡 Medium | 16 | All open |
-| 🟢 Low | 7 | 1 resolved (TD-029), 6 open |
-| **Total** | **34** | **4 resolved, 30 open** |
+| Priority | Total | Open | Resolved / Superseded |
+|----------|-------|------|------------------------|
+| 🔴 Critical | 2 | 0 | 2 |
+| 🟠 High | 10 | 7 | 3 |
+| 🟡 Medium | 16 | 11 | 5 |
+| 🟢 Low | 7 | 5 | 2 |
+| **Total** | **35** | **23** | **12** |
 
 ---
 
-## Process Notes
+## Process
 
-- Items are prioritised by Severity → Impact → Effort (lowest effort for highest impact = quick wins)
-- Items marked `✅ Resolved` should include the PR number that resolved them
-- Do not delete resolved items; they serve as an audit trail
-- When resolving a TD item, also update `docs/DEVELOPMENT_STATUS.md`
+- Prioritise: Severity → Impact → Effort
+- Do not delete resolved items — audit trail
+- Update `docs/DEVELOPMENT_STATUS.md` when resolving items

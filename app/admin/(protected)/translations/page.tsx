@@ -14,7 +14,7 @@ const DEFAULT_STRINGS: Record<string, { de: string; en: string }> = {
   'contact.send': { en: 'Send Message', de: 'Nachricht senden' },
   'contact.namePlaceholder': { en: 'Your name', de: 'Dein Name' },
   'contact.emailPlaceholder': { en: 'Your email', de: 'Deine E-Mail' },
-  'footer.impressum': { en: 'Legal Notice', de: 'Impressum' },
+  'footer.legalNotice': { en: 'Legal Notice', de: 'Impressum' },
   'footer.privacy': { en: 'Privacy Policy', de: 'Datenschutz' },
 }
 

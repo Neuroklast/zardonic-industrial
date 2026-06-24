@@ -1,3 +1,5 @@
+> **DEPRECATED** — Historical document from a prior stack era. Do not use for current development. See [docs/README.md](../../README.md).
+
 # ZARDONIC Artist Landing Page
 
 A dark, industrial single-page application showcasing the hard techno/industrial artist ZARDONIC with automatic iTunes integration, music player, event listings, and comprehensive content management.
