@@ -21,6 +21,7 @@ import {
   consolidateDuplicateReleases,
   dedupeCatalogueImportItems,
   type ReleaseConsolidationRow,
+  type ReleaseTitleMatchOptions,
 } from '@/lib/release-consolidation'
 import { fetchDiscogsArtistReleasesPage, searchDiscogsArtistId } from '@/lib/discogs-sync'
 import { runCatalogueEnrichmentBatch } from '@/lib/release-enrichment'
@@ -147,11 +148,12 @@ async function tickItunesFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResu
   }
 
   const { items, errors } = await buildItunesCatalogueImportItems({ artistName, itunesArtistId })
+  const matchOptions = buildTitleMatchOptions(config)
   const nextPayload: SyncJobPayload = {
     ...job.payload,
     source: 'itunes',
     artistName,
-    stagedItems: dedupeCatalogueImportItems(items),
+    stagedItems: dedupeCatalogueImportItems(items, matchOptions),
     importCursor: 0,
   }
 
@@ -173,6 +175,8 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     return tickItunesFetchPhase(job)
   }
 
+  const config = await loadCatalogueSyncConfig()
+  const matchOptions = buildTitleMatchOptions(config)
   const payload = await initCataloguePayload(job.payload.source ?? 'spotify', job.payload)
   const stagedItems: CatalogueImportItem[] = [...(payload.stagedItems ?? [])]
 
@@ -200,7 +204,7 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     }
 
     if (fetchDone) {
-      nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems)
+      nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems, matchOptions)
       const updated = await updateSyncJob(job.id, {
         status: 'running',
         phase: 'import',
@@ -246,7 +250,7 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   }
 
   if (fetchDone) {
-    nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems)
+    nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems, matchOptions)
     const updated = await updateSyncJob(job.id, {
       status: 'running',
       phase: 'import',
@@ -270,7 +274,14 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   return { job: updated, done: false }
 }
 
-async function loadReleaseMatchIndex(supabase: ReturnType<typeof createAdminClient>) {
+function buildTitleMatchOptions(config: CatalogueSyncConfig): ReleaseTitleMatchOptions {
+  return { artistNames: [config.artistName] }
+}
+
+async function loadReleaseMatchIndex(
+  supabase: ReturnType<typeof createAdminClient>,
+  matchOptions?: ReleaseTitleMatchOptions,
+) {
   const { data, error } = await supabase
     .from('releases')
     .select(
@@ -278,7 +289,7 @@ async function loadReleaseMatchIndex(supabase: ReturnType<typeof createAdminClie
     )
 
   if (error) throw new Error(`Failed to load releases for duplicate matching: ${error.message}`)
-  return buildReleaseMatchIndex((data ?? []) as ReleaseConsolidationRow[])
+  return buildReleaseMatchIndex((data ?? []) as ReleaseConsolidationRow[], matchOptions)
 }
 
 async function runPostImportConsolidation(
@@ -305,10 +316,12 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const cursor = payload.importCursor ?? 0
 
   const supabase = createAdminClient()
+  const config = await loadCatalogueSyncConfig()
+  const matchOptions = buildTitleMatchOptions(config)
   const existingIds = payload.existingIds
     ? new Set(payload.existingIds)
     : undefined
-  const releaseMatchIndex = await loadReleaseMatchIndex(supabase)
+  const releaseMatchIndex = await loadReleaseMatchIndex(supabase, matchOptions)
 
   const batch = await importCatalogueBatch(supabase, {
     source,
@@ -318,6 +331,7 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     limit: IMPORT_BATCH_SIZE,
     lightImport: true,
     linkCrossSource: true,
+    matchOptions,
     existingIds,
     releaseMatchIndex,
     displayOrderStart: payload.displayOrderStart,

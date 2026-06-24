@@ -104,10 +104,13 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
       items,
       lightImport: false,
       linkCrossSource: true,
+      matchOptions: { artistNames: [artistName] },
       cacheCover: (coverUrl, _source, externalId) => cacheItunesCover(coverUrl, externalId),
     })
 
-    const consolidation = await consolidateDuplicateReleases(supabase)
+    const consolidation = await consolidateDuplicateReleases(supabase, {
+      artistNames: [artistName],
+    })
     const enrichment = await runFullCatalogueEnrichment(supabase, artistName || 'Zardonic')
 
     const errors = [...fetchErrors, ...importResult.errors, ...consolidation.errors, ...enrichment.errors]

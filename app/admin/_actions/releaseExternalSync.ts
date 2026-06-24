@@ -191,12 +191,14 @@ async function bulkImportMetadata(
   const actionResult = await runAdminAction(async () => {
     const supabase = createAdminClient()
 
+    const config = await loadCatalogueSyncConfig()
     const importResult = await importCatalogueItems(supabase, {
       source,
       idField,
       items,
       lightImport: false,
       linkCrossSource: true,
+      matchOptions: { artistNames: [config.artistName] },
       cacheCover: async (coverUrl, coverSource, externalId) => {
         const objectPath = `releases/${coverSource}-${externalId}.jpg`
         const cached = await cacheCoverToR2(coverUrl, objectPath)
@@ -208,8 +210,9 @@ async function bulkImportMetadata(
       },
     })
 
-    const consolidation = await consolidateDuplicateReleases(supabase)
-    const config = await loadCatalogueSyncConfig()
+    const consolidation = await consolidateDuplicateReleases(supabase, {
+      artistNames: [config.artistName],
+    })
     const enrichment = await runFullCatalogueEnrichment(
       supabase,
       config.artistName || 'Zardonic',

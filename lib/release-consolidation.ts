@@ -1,6 +1,15 @@
 import type { createAdminClient } from '@/lib/supabaseAdmin'
 import type { CatalogueImportItem } from '@/lib/catalogue-import'
+import { parseCatalogueSyncConfig } from '@/lib/catalogue-sync-config'
 import { releaseTracksAreEmpty } from '@/lib/release-enrichment'
+import {
+  hasComplementaryExternalIds,
+  normalizeReleaseTitleKey,
+  releaseDatesAlign,
+  releaseTitleKeysMatch,
+  sharedStreamingFingerprint,
+  type ReleaseTitleMatchOptions,
+} from '@/lib/release-title-match'
 import {
   mergeStreamingLinks,
   type ReleaseMetadata,
@@ -44,72 +53,50 @@ export interface ConsolidateReleasesResult {
   errors: string[]
 }
 
+export type { ReleaseTitleMatchOptions } from '@/lib/release-title-match'
+export { normalizeReleaseTitleKey } from '@/lib/release-title-match'
+
 const ALBUM_FAMILY_TYPES = new Set(['album', 'ep', 'compilation'])
-
-/** Normalize a release title for fuzzy duplicate detection. */
-export function normalizeReleaseTitleKey(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/\s*[-–—]\s*(ep|single|remix(?:es)?|deluxe(?:\s+edition)?|special\s+edition|expanded\s+edition)\s*$/i, '')
-    .replace(
-      /\s*\((feat\.[^)]*|deluxe[^)]*|expanded[^)]*|remaster(?:ed)?[^)]*|special[^)]*|bonus[^)]*)\)/gi,
-      '',
-    )
-    .replace(/\s*\[[^\]]*\]/g, '')
-    .replace(/[''`]/g, "'")
-    .replace(/[^\w\s']/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function releaseDatesAlign(a: string | null, b: string | null): boolean {
-  if (!a || !b) return true
-  if (a === b) return true
-  if (a.slice(0, 7) === b.slice(0, 7)) return true
-  if (a.slice(0, 4) === b.slice(0, 4) && (a.length === 4 || b.length === 4)) return true
-  return false
-}
+const LOOSE_CATALOGUE_TYPES = new Set(['album', 'ep', 'compilation', 'single', 'remix'])
 
 function typesCompatible(a: string, b: string): boolean {
   if (a === b) return true
   if (ALBUM_FAMILY_TYPES.has(a) && ALBUM_FAMILY_TYPES.has(b)) return true
-  // iTunes singles vs Spotify album listings for the same release
-  if (a === 'single' && ALBUM_FAMILY_TYPES.has(b)) return true
-  if (b === 'single' && ALBUM_FAMILY_TYPES.has(a)) return true
+  if (LOOSE_CATALOGUE_TYPES.has(a) && LOOSE_CATALOGUE_TYPES.has(b)) return true
   return false
 }
 
-function sameExternalId(a: ReleaseConsolidationRow, b: ReleaseConsolidationRow): boolean {
-  return (
-    (Boolean(a.spotify_id) && a.spotify_id === b.spotify_id) ||
-    (Boolean(a.itunes_id) && a.itunes_id === b.itunes_id) ||
-    (Boolean(a.discogs_id) && a.discogs_id === b.discogs_id)
+function titleKeysMatch(
+  a: string,
+  b: string,
+  options?: ReleaseTitleMatchOptions,
+): boolean {
+  return releaseTitleKeysMatch(
+    normalizeReleaseTitleKey(a, options),
+    normalizeReleaseTitleKey(b, options),
   )
-}
-
-function titleKeysMatch(a: string, b: string): boolean {
-  if (!a || !b) return false
-  if (a === b) return true
-  const shorter = a.length <= b.length ? a : b
-  const longer = a.length > b.length ? a : b
-  return longer.startsWith(shorter) && shorter.length >= longer.length * 0.7
 }
 
 /** Whether two stored releases represent the same catalogue entry. */
 export function releasesAreDuplicates(
   a: ReleaseConsolidationRow,
   b: ReleaseConsolidationRow,
+  options?: ReleaseTitleMatchOptions,
 ): boolean {
-  if (a.id === b.id) return false
-  if (sameExternalId(a, b)) return true
+  if (a.id && b.id && a.id === b.id) return false
 
-  const keyA = normalizeReleaseTitleKey(a.title)
-  const keyB = normalizeReleaseTitleKey(b.title)
-  if (!titleKeysMatch(keyA, keyB)) return false
-  if (!releaseDatesAlign(a.release_date, b.release_date)) return false
+  const sharedFingerprint = sharedStreamingFingerprint(a, b)
+  if (sharedFingerprint) return true
 
-  if (typesCompatible(a.type, b.type)) return true
-  return a.release_date !== null && a.release_date === b.release_date
+  const keysMatch = titleKeysMatch(a.title, b.title, options)
+  const datesAlign = releaseDatesAlign(a.release_date, b.release_date)
+  const complementaryIds = hasComplementaryExternalIds(a, b)
+
+  if (keysMatch && complementaryIds) return true
+  if (!keysMatch) return false
+  if (!datesAlign) return false
+
+  return typesCompatible(a.type, b.type)
 }
 
 function metadataAsConsolidationRow(metadata: ReleaseMetadata): ReleaseConsolidationRow {
@@ -155,7 +142,10 @@ export function scoreReleaseForCanonical(row: ReleaseConsolidationRow): number {
   return score
 }
 
-export function buildReleaseMatchIndex(rows: ReleaseConsolidationRow[]): ReleaseMatchIndex {
+export function buildReleaseMatchIndex(
+  rows: ReleaseConsolidationRow[],
+  options?: ReleaseTitleMatchOptions,
+): ReleaseMatchIndex {
   const index: ReleaseMatchIndex = {
     bySpotifyId: new Map(),
     byItunesId: new Map(),
@@ -168,7 +158,7 @@ export function buildReleaseMatchIndex(rows: ReleaseConsolidationRow[]): Release
     if (row.itunes_id) index.byItunesId.set(row.itunes_id, row)
     if (row.discogs_id) index.byDiscogsId.set(row.discogs_id, row)
 
-    const titleKey = normalizeReleaseTitleKey(row.title)
+    const titleKey = normalizeReleaseTitleKey(row.title, options)
     if (!titleKey) continue
     const bucket = index.byTitleKey.get(titleKey) ?? []
     bucket.push(row)
@@ -181,12 +171,13 @@ export function buildReleaseMatchIndex(rows: ReleaseConsolidationRow[]): Release
 export function addReleaseToMatchIndex(
   index: ReleaseMatchIndex,
   row: ReleaseConsolidationRow,
+  options?: ReleaseTitleMatchOptions,
 ): void {
   if (row.spotify_id) index.bySpotifyId.set(row.spotify_id, row)
   if (row.itunes_id) index.byItunesId.set(row.itunes_id, row)
   if (row.discogs_id) index.byDiscogsId.set(row.discogs_id, row)
 
-  const titleKey = normalizeReleaseTitleKey(row.title)
+  const titleKey = normalizeReleaseTitleKey(row.title, options)
   if (!titleKey) return
   const bucket = index.byTitleKey.get(titleKey) ?? []
   if (!bucket.some((entry) => entry.id === row.id)) {
@@ -198,6 +189,7 @@ export function addReleaseToMatchIndex(
 function collectTitleCandidates(
   index: ReleaseMatchIndex,
   titleKey: string,
+  options?: ReleaseTitleMatchOptions,
 ): ReleaseConsolidationRow[] {
   const seen = new Set<string>()
   const candidates: ReleaseConsolidationRow[] = []
@@ -212,7 +204,7 @@ function collectTitleCandidates(
 
   for (const [key, rows] of index.byTitleKey) {
     if (key === titleKey) continue
-    if (titleKeysMatch(titleKey, key)) {
+    if (releaseTitleKeysMatch(titleKey, key)) {
       for (const row of rows) add(row)
     }
   }
@@ -224,6 +216,7 @@ function collectTitleCandidates(
 export function findExistingReleaseForImport(
   metadata: ReleaseMetadata,
   index: ReleaseMatchIndex,
+  options?: ReleaseTitleMatchOptions,
 ): ReleaseConsolidationRow | null {
   if (metadata.spotify_id) {
     const hit = index.bySpotifyId.get(metadata.spotify_id)
@@ -239,11 +232,11 @@ export function findExistingReleaseForImport(
   }
 
   const probe = metadataAsConsolidationRow(metadata)
-  const titleKey = normalizeReleaseTitleKey(metadata.title)
+  const titleKey = normalizeReleaseTitleKey(metadata.title, options)
   if (!titleKey) return null
 
-  for (const candidate of collectTitleCandidates(index, titleKey)) {
-    if (releasesAreDuplicates(candidate, probe)) return candidate
+  for (const candidate of collectTitleCandidates(index, titleKey, options)) {
+    if (releasesAreDuplicates(candidate, probe, options)) return candidate
   }
 
   return null
@@ -263,14 +256,37 @@ function scoreImportItem(item: CatalogueImportItem): number {
 }
 
 /** Collapse duplicate staged catalogue items before import (e.g. Spotify album groups). */
-export function dedupeCatalogueImportItems(items: CatalogueImportItem[]): CatalogueImportItem[] {
-  const groups = new Map<string, CatalogueImportItem[]>()
+export function dedupeCatalogueImportItems(
+  items: CatalogueImportItem[],
+  options?: ReleaseTitleMatchOptions,
+): CatalogueImportItem[] {
+  if (items.length <= 1) return items
 
-  for (const item of items) {
-    const key = normalizeReleaseTitleKey(item.metadata.title)
-    const bucket = groups.get(key) ?? []
-    bucket.push(item)
-    groups.set(key, bucket)
+  const parent = items.map((_, index) => index)
+  const find = (index: number): number => {
+    if (parent[index] !== index) parent[index] = find(parent[index])
+    return parent[index]
+  }
+  const union = (left: number, right: number) => {
+    const rootLeft = find(left)
+    const rootRight = find(right)
+    if (rootLeft !== rootRight) parent[rootRight] = rootLeft
+  }
+
+  const probes = items.map((item) => metadataAsConsolidationRow(item.metadata))
+
+  for (let i = 0; i < items.length; i++) {
+    for (let j = i + 1; j < items.length; j++) {
+      if (releasesAreDuplicates(probes[i], probes[j], options)) union(i, j)
+    }
+  }
+
+  const groups = new Map<number, CatalogueImportItem[]>()
+  for (let i = 0; i < items.length; i++) {
+    const root = find(i)
+    const group = groups.get(root) ?? []
+    group.push(items[i])
+    groups.set(root, group)
   }
 
   const deduped: CatalogueImportItem[] = []
@@ -279,15 +295,20 @@ export function dedupeCatalogueImportItems(items: CatalogueImportItem[]): Catalo
       deduped.push(group[0])
       continue
     }
-    deduped.push(group.reduce((best, current) =>
-      scoreImportItem(current) > scoreImportItem(best) ? current : best,
-    ))
+    deduped.push(
+      group.reduce((best, current) =>
+        scoreImportItem(current) > scoreImportItem(best) ? current : best,
+      ),
+    )
   }
 
   return deduped
 }
 
-export function groupDuplicateReleases(rows: ReleaseConsolidationRow[]): ReleaseConsolidationRow[][] {
+export function groupDuplicateReleases(
+  rows: ReleaseConsolidationRow[],
+  options?: ReleaseTitleMatchOptions,
+): ReleaseConsolidationRow[][] {
   const parent = rows.map((_, index) => index)
 
   const find = (index: number): number => {
@@ -304,7 +325,7 @@ export function groupDuplicateReleases(rows: ReleaseConsolidationRow[]): Release
   for (let i = 0; i < rows.length; i++) {
     for (let j = i + 1; j < rows.length; j++) {
       if (rows[i].manually_edited && rows[j].manually_edited) continue
-      if (releasesAreDuplicates(rows[i], rows[j])) union(i, j)
+      if (releasesAreDuplicates(rows[i], rows[j], options)) union(i, j)
     }
   }
 
@@ -409,30 +430,26 @@ export function buildConsolidatedReleaseUpdate(
 const CONSOLIDATION_SELECT =
   'id, title, type, release_date, description, artists, streaming_links, tracks, tracks_source, last_enriched_at, cover_storage_path, cover_url, display_order, active, manually_edited, itunes_id, spotify_id, discogs_id'
 
-/** Merge duplicate release rows in Supabase and delete redundant copies. */
-export async function consolidateDuplicateReleases(
+const MAX_CONSOLIDATION_PASSES = 20
+
+async function loadTitleMatchOptions(
   supabase: ReturnType<typeof createAdminClient>,
-): Promise<ConsolidateReleasesResult> {
-  const result: ConsolidateReleasesResult = {
-    merged: 0,
-    deleted: 0,
-    skipped: 0,
-    errors: [],
-  }
+): Promise<ReleaseTitleMatchOptions> {
+  const { data } = await supabase
+    .from('site_config')
+    .select('value')
+    .eq('key', 'catalogue_sync')
+    .maybeSingle()
 
-  const { data, error } = await supabase
-    .from('releases')
-    .select(CONSOLIDATION_SELECT)
-    .order('display_order', { ascending: true })
+  const config = parseCatalogueSyncConfig(data?.value)
+  return { artistNames: [config.artistName] }
+}
 
-  if (error) {
-    result.errors.push(error.message)
-    return result
-  }
-
-  const rows = (data ?? []) as ReleaseConsolidationRow[]
-  const groups = groupDuplicateReleases(rows)
-
+async function mergeDuplicateGroups(
+  supabase: ReturnType<typeof createAdminClient>,
+  groups: ReleaseConsolidationRow[][],
+  result: ConsolidateReleasesResult,
+): Promise<void> {
   for (const group of groups) {
     const sorted = [...group].sort(
       (a, b) => scoreReleaseForCanonical(b) - scoreReleaseForCanonical(a),
@@ -469,6 +486,41 @@ export async function consolidateDuplicateReleases(
 
       result.deleted++
     }
+  }
+}
+
+/** Merge duplicate release rows in Supabase and delete redundant copies. */
+export async function consolidateDuplicateReleases(
+  supabase: ReturnType<typeof createAdminClient>,
+  options?: ReleaseTitleMatchOptions,
+): Promise<ConsolidateReleasesResult> {
+  const result: ConsolidateReleasesResult = {
+    merged: 0,
+    deleted: 0,
+    skipped: 0,
+    errors: [],
+  }
+
+  const matchOptions = options ?? (await loadTitleMatchOptions(supabase))
+
+  for (let pass = 0; pass < MAX_CONSOLIDATION_PASSES; pass++) {
+    const { data, error } = await supabase
+      .from('releases')
+      .select(CONSOLIDATION_SELECT)
+      .order('display_order', { ascending: true })
+
+    if (error) {
+      result.errors.push(error.message)
+      return result
+    }
+
+    const rows = (data ?? []) as ReleaseConsolidationRow[]
+    const groups = groupDuplicateReleases(rows, matchOptions)
+    if (groups.length === 0) break
+
+    const deletedBefore = result.deleted
+    await mergeDuplicateGroups(supabase, groups, result)
+    if (result.deleted === deletedBefore) break
   }
 
   return result

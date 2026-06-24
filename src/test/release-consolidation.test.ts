@@ -37,6 +37,7 @@ describe('normalizeReleaseTitleKey', () => {
   it('strips deluxe suffixes and parentheticals', () => {
     expect(normalizeReleaseTitleKey('Villain (Deluxe Edition)')).toBe('villain')
     expect(normalizeReleaseTitleKey('Villain - EP')).toBe('villain')
+    expect(normalizeReleaseTitleKey('Zardonic - Villain', { artistNames: ['Zardonic'] })).toBe('villain')
   })
 })
 
@@ -112,6 +113,44 @@ describe('findExistingReleaseForImport', () => {
 })
 
 describe('dedupeCatalogueImportItems', () => {
+  it('fuzzy-dedupes artist-prefixed titles', () => {
+    const deduped = dedupeCatalogueImportItems(
+      [
+        {
+          externalId: 'itunes-1',
+          metadata: {
+            title: 'Zardonic - Revolution',
+            type: 'album',
+            release_date: '2015-01-01',
+            description: null,
+            artists: [],
+            coverUrl: null,
+            streaming_links: [],
+            itunes_id: '1',
+          },
+        },
+        {
+          externalId: 'spotify-1',
+          metadata: {
+            title: 'Revolution (Remastered)',
+            type: 'album',
+            release_date: '2015-01-01',
+            description: null,
+            artists: [],
+            coverUrl: null,
+            streaming_links: [],
+            spotify_id: '2',
+            tracks: [{ title: 'Track 1' }],
+          },
+        },
+      ],
+      { artistNames: ['Zardonic'] },
+    )
+
+    expect(deduped).toHaveLength(1)
+    expect(deduped[0].externalId).toBe('spotify-1')
+  })
+
   it('keeps the richest staged item for the same title', () => {
     const deduped = dedupeCatalogueImportItems([
       {

@@ -6,6 +6,7 @@ import {
   findExistingReleaseForImport,
   type ReleaseConsolidationRow,
   type ReleaseMatchIndex,
+  type ReleaseTitleMatchOptions,
 } from '@/lib/release-consolidation'
 import {
   buildTrackEnrichmentUpdate,
@@ -52,6 +53,7 @@ export interface ImportCatalogueBatchOptions {
   displayOrderStart?: number
   /** Resolve missing Spotify/iTunes ids via Odesli when backfilling cross-source rows. */
   linkCrossSource?: boolean
+  matchOptions?: ReleaseTitleMatchOptions
   cacheCover?: (
     coverUrl: string,
     source: ExternalReleaseSource,
@@ -294,7 +296,7 @@ export async function importCatalogueItems(
   supabase: ReturnType<typeof createAdminClient>,
   options: Omit<ImportCatalogueBatchOptions, 'cursor' | 'limit'> & { items: CatalogueImportItem[] },
 ): Promise<ImportCatalogueBatchResult> {
-  const deduped = dedupeCatalogueImportItems(options.items)
+  const deduped = dedupeCatalogueImportItems(options.items, options.matchOptions)
   return importCatalogueBatch(supabase, {
     ...options,
     items: deduped,
@@ -315,6 +317,7 @@ export async function importCatalogueBatch(
     limit,
     lightImport = false,
     linkCrossSource = true,
+    matchOptions,
   } = options
 
   const result: ImportCatalogueBatchResult = {
@@ -359,7 +362,10 @@ export async function importCatalogueBatch(
       return result
     }
 
-    releaseMatchIndex = buildReleaseMatchIndex((matchRows ?? []) as ReleaseConsolidationRow[])
+    releaseMatchIndex = buildReleaseMatchIndex(
+      (matchRows ?? []) as ReleaseConsolidationRow[],
+      matchOptions,
+    )
   }
 
   let displayOrder = options.displayOrderStart
@@ -387,7 +393,11 @@ export async function importCatalogueBatch(
       })
       if (odesliLinks.length > 0) {
         metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
-        const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(metadata.streaming_links), metadata)
+        const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(metadata.streaming_links), {
+          spotify_id: metadata.spotify_id,
+          itunes_id: metadata.itunes_id,
+          discogs_id: metadata.discogs_id,
+        })
         metadata.spotify_id = metadata.spotify_id ?? linkedIds.spotify_id ?? null
         metadata.itunes_id = metadata.itunes_id ?? linkedIds.itunes_id ?? null
         metadata.discogs_id = metadata.discogs_id ?? linkedIds.discogs_id ?? null
@@ -428,7 +438,7 @@ export async function importCatalogueBatch(
       continue
     }
 
-    const matchedRelease = findExistingReleaseForImport(metadata, releaseMatchIndex)
+    const matchedRelease = findExistingReleaseForImport(metadata, releaseMatchIndex, matchOptions)
     if (matchedRelease) {
       const { data: existingRow, error: existingError } = await supabase
         .from('releases')
@@ -514,7 +524,7 @@ export async function importCatalogueBatch(
       existingIds.add(externalId)
       if (insertedRow) {
         const consolidationRow = insertedRow as ReleaseConsolidationRow
-        addReleaseToMatchIndex(releaseMatchIndex, consolidationRow)
+        addReleaseToMatchIndex(releaseMatchIndex, consolidationRow, matchOptions)
         result.addedMatchEntries.push(toReleaseMatchEntry(consolidationRow))
       }
     }
