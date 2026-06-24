@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { isApiSecretConfigured } from './_api-secrets.js'
 import { getRedis, isRedisConfigured } from './_redis.js'
 import { validateSession } from './auth.js'
 import { createRequire } from 'node:module'
@@ -29,16 +30,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // behind session auth to avoid unauthenticated infrastructure enumeration.
   const isAuthenticated = await validateSession(req)
 
+  const [spotifyOk, bandsintownOk, discogsOk] = isAuthenticated
+    ? await Promise.all([
+        Promise.all([
+          isApiSecretConfigured('spotify_client_id'),
+          isApiSecretConfigured('spotify_client_secret'),
+        ]).then(([id, secret]) => id && secret),
+        isApiSecretConfigured('bandsintown_api_key'),
+        isApiSecretConfigured('discogs_token'),
+      ])
+    : [false, false, false]
+
   const body = isAuthenticated
     ? {
         status: overallStatus,
         timestamp: new Date().toISOString(),
         services: {
           kv: kvStatus,
-          spotify: process.env.SPOTIFY_CLIENT_ID && process.env.SPOTIFY_CLIENT_SECRET ? 'configured' : 'unconfigured',
-          bandsintown: process.env.BANDSINTOWN_API_KEY ? 'configured' : 'unconfigured',
+          spotify: spotifyOk ? 'configured' : 'unconfigured',
+          bandsintown: bandsintownOk ? 'configured' : 'unconfigured',
           itunes: process.env.ITUNES_ARTIST_ID ? 'configured' : 'unconfigured',
-          discogs: process.env.DISCOGS_TOKEN ? 'configured' : 'unconfigured',
+          discogs: discogsOk ? 'configured' : 'unconfigured',
           musicbrainz: 'ok',
           odesli: 'ok',
           imageProxy: 'ok',

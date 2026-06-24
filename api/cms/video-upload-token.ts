@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client'
 import { applyRateLimit } from '../_ratelimit.js'
+import { getApiSecret, isApiSecretConfigured } from '../_api-secrets.js'
 import { validateSession } from '../auth.js'
 
 const MAX_VIDEO_SIZE = 500 * 1024 * 1024 // 500 MB
@@ -19,16 +20,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const allowed = await applyRateLimit(req, res)
   if (!allowed) return
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!(await isApiSecretConfigured('blob_read_write_token'))) {
     return res.status(503).json({
       error: 'Service Unavailable',
-      details: ['BLOB_READ_WRITE_TOKEN environment variable is not set.'],
+      details: ['Vercel Blob token is not configured. Set it in Admin → API Keys.'],
     })
+  }
+
+  const blobToken = await getApiSecret('blob_read_write_token')
+  if (!blobToken) {
+    return res.status(503).json({ error: 'Service Unavailable' })
   }
 
   try {
     const jsonResponse = await handleUpload({
-      token: process.env.BLOB_READ_WRITE_TOKEN,
+      token: blobToken,
       request: req,
       body: req.body as HandleUploadBody,
       onBeforeGenerateToken: async (_pathname: string) => {

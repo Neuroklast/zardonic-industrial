@@ -12,6 +12,12 @@ vi.mock('../../api/_ratelimit.js', () => ({
   getClientIp: vi.fn().mockReturnValue('1.2.3.4'),
 }))
 
+const mockGetApiSecret = vi.fn()
+
+vi.mock('../../api/_api-secrets.js', () => ({
+  getApiSecret: (...args: unknown[]) => mockGetApiSecret(...args),
+}))
+
 // ---------------------------------------------------------------------------
 // Mock global fetch
 // ---------------------------------------------------------------------------
@@ -39,6 +45,12 @@ describe('Drive folder API (Google Drive v3)', () => {
     vi.clearAllMocks()
     mockApplyRateLimit.mockResolvedValue(true)
     process.env.GOOGLE_DRIVE_API_KEY = 'test-api-key'
+    mockGetApiSecret.mockImplementation(async (key: string) => {
+      if (key === 'google_drive_api_key') {
+        return process.env.GOOGLE_DRIVE_API_KEY ?? null
+      }
+      return null
+    })
   })
 
   it('rejects non-GET methods with 405', async () => {

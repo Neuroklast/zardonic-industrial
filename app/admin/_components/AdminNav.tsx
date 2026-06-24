@@ -22,6 +22,7 @@ import {
   Export,
   Translate,
   SpeakerHigh,
+  Key,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import {
@@ -48,6 +49,7 @@ const NAV_ICONS: Record<string, Icon> = {
   '/admin/newsletter': EnvelopeSimple,
   '/admin/sound': SpeakerHigh,
   '/admin/analytics': ChartBar,
+  '/admin/api-keys': Key,
   '/admin/health': Heartbeat,
   '/admin/data': Export,
 }

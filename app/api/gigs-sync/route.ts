@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { getApiSecret } from '@/lib/api-secrets'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 import {
@@ -55,9 +56,9 @@ export async function POST(request: Request) {
     }
   }
 
-  const apiKey = process.env.BANDSINTOWN_API_KEY
+  const apiKey = await getApiSecret('bandsintown_api_key')
   if (!apiKey) {
-    return NextResponse.json({ error: 'BANDSINTOWN_API_KEY not configured' }, { status: 503 })
+    return NextResponse.json({ error: 'Bandsintown API key not configured' }, { status: 503 })
   }
 
   try {

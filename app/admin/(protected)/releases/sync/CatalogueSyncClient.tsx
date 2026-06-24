@@ -43,9 +43,9 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
     itunes:
       'Import releases using the saved iTunes artist ID (lookup API) or artist name search fallback.',
     spotify:
-      'Import albums/singles using the saved Spotify artist ID. Requires SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET.',
+      'Import albums/singles using the saved Spotify artist ID. Requires Spotify credentials in Admin → API Keys.',
     discogs:
-      'Import releases using the saved Discogs artist ID. Requires DISCOGS_TOKEN.',
+      'Import releases using the saved Discogs artist ID. Requires Discogs token in Admin → API Keys.',
   }
 
   const configuredId: Record<SyncSource, string> = {

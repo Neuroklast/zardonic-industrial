@@ -47,6 +47,8 @@ import {
   fetchOdesliLinks,
   type StreamingLink,
 } from './_odesli.js'
+import { isApiSecretConfigured, getApiSecret } from './_api-secrets.js'
+import { respondIfLegacyApiRetired } from './_legacy-deprecation.js'
 import { getSpotifyAccessToken } from './_spotify-client.js'
 import { inferReleaseDescription, parseTrackArtists } from './_featured-artists.js'
 import { mergeWithExistingReleases } from './_release-merge.js'
@@ -391,7 +393,7 @@ export function aggregateReleases(itunesReleases: Release[], discogsReleases: Re
  * variants (type='release') are skipped to avoid duplicates.
  */
 async function fetchDiscogsReleases(artistName: string): Promise<Release[]> {
-  const token = process.env.DISCOGS_TOKEN
+  const token = await getApiSecret('discogs_token')
   if (!token) return []
 
   // Find the artist ID via /database/search
@@ -605,6 +607,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
   if (req.method === 'OPTIONS') { res.status(200).end(); return }
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return }
+  if (respondIfLegacyApiRetired(res, 'Use Admin catalogue sync + POST /api/releases-track-enrich')) return
 
   const authHeader = req.headers.authorization ?? ''
   const isCron = authHeader.startsWith('Bearer ') && verifyCronSecret(authHeader.slice(7))
@@ -631,7 +634,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
         console.warn('[releases-enrich] iTunes fetch failed:', err)
         return [] as Release[]
       }),
-      process.env.DISCOGS_TOKEN
+      (await isApiSecretConfigured('discogs_token'))
         ? fetchDiscogsReleases(artistName).catch((err: unknown) => {
             console.warn('[releases-enrich] Discogs fetch failed:', err)
             return [] as Release[]

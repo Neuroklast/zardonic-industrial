@@ -1,3 +1,4 @@
+import { getApiSecret, getApiSecretsStatus } from '@/lib/api-secrets'
 import { createClient } from '@/lib/supabaseServer'
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
@@ -49,9 +50,9 @@ async function checkR2(): Promise<CheckResult> {
 async function checkResend(): Promise<CheckResult> {
   const start = Date.now()
   try {
-    const key = process.env.RESEND_API_KEY
+    const key = await getApiSecret('resend_api_key')
     if (!key) {
-      return { name: 'Resend Email API', ok: false, ms: Date.now() - start, detail: 'RESEND_API_KEY not set' }
+      return { name: 'Resend Email API', ok: false, ms: Date.now() - start, detail: 'Resend API key not set' }
     }
     const res = await fetch('https://api.resend.com/domains', {
       headers: { Authorization: 'Bearer ' + key },
@@ -81,12 +82,12 @@ const ENV_VARS = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
+  'SECRETS_ENCRYPTION_KEY',
   'R2_ACCOUNT_ID',
   'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY',
   'R2_BUCKET_MEDIA',
   'R2_PUBLIC_HOST',
-  'RESEND_API_KEY',
   'CONTACT_EMAIL',
 ]
 
@@ -104,14 +105,22 @@ function StatusBadge({ ok }: { ok: boolean }) {
 }
 
 export default async function HealthPage() {
-  const [supabaseResult, r2Result, resendResult, itunesResult] = await Promise.all([
+  const [supabaseResult, r2Result, resendResult, itunesResult, apiSecretsStatus] = await Promise.all([
     checkSupabase(),
     checkR2(),
     checkResend(),
     checkItunes(),
+    getApiSecretsStatus(),
   ])
 
   const checks: CheckResult[] = [supabaseResult, r2Result, resendResult, itunesResult]
+
+  const integrationKeys = [
+    { label: 'Spotify', ok: apiSecretsStatus.spotify_client_id && apiSecretsStatus.spotify_client_secret },
+    { label: 'Discogs', ok: apiSecretsStatus.discogs_token },
+    { label: 'Bandsintown', ok: apiSecretsStatus.bandsintown_api_key },
+    { label: 'Resend', ok: apiSecretsStatus.resend_api_key },
+  ]
 
   const envStatus = ENV_VARS.map((name) => ({
     name,
@@ -122,7 +131,7 @@ export default async function HealthPage() {
     <div>
       <AdminPageHeader
         title="API Health"
-        description="Connectivity checks for Supabase, R2, Resend, and iTunes. Verify environment variables are set."
+        description="Connectivity checks for Supabase, R2, Resend, and iTunes. Integration keys are managed under Admin → API Keys."
         action={<RefreshButton />}
       />
 
@@ -155,9 +164,34 @@ export default async function HealthPage() {
         </div>
       </div>
 
+      {/* Integration API keys */}
+      <div className="space-y-3 mb-8">
+        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Integration API Keys</h2>
+        <div className="border border-zinc-800 rounded overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-800 bg-zinc-900/60">
+                <th className="text-left px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-widest">Service</th>
+                <th className="text-left px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-widest">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {integrationKeys.map(({ label, ok }) => (
+                <tr key={label} className="border-b border-zinc-800/60 last:border-0">
+                  <td className="px-4 py-2.5 text-zinc-200 font-medium">{label}</td>
+                  <td className="px-4 py-2.5">
+                    <StatusBadge ok={ok} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Environment variables */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Environment Variables</h2>
+        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Infrastructure Environment Variables</h2>
         <div className="border border-zinc-800 rounded overflow-hidden">
           <table className="w-full text-sm">
             <thead>

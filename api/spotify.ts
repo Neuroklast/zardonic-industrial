@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { isApiSecretConfigured, getApiSecret } from './_api-secrets.js'
 import { getRedisOrNull } from './_redis.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { fetchWithRetry } from './_fetch-retry.js'
@@ -20,8 +21,10 @@ async function getAccessToken(): Promise<string> {
     }
   }
 
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+  const [clientId, clientSecret] = await Promise.all([
+    getApiSecret('spotify_client_id'),
+    getApiSecret('spotify_client_secret'),
+  ])
   if (!clientId || !clientSecret) {
     throw new Error('Spotify credentials are not configured')
   }
@@ -62,10 +65,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!allowed) return
 
   // Check credentials
-  if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+  const [spotifyId, spotifySecret] = await Promise.all([
+    isApiSecretConfigured('spotify_client_id'),
+    isApiSecretConfigured('spotify_client_secret'),
+  ])
+  if (!spotifyId || !spotifySecret) {
     return res.status(503).json({
       error: 'Service unavailable',
-      message: 'Spotify API is not configured. Please set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables.',
+      message: 'Spotify API is not configured. Set credentials in Admin → API Keys.',
     })
   }
 

@@ -12,6 +12,7 @@
  *   500 { error: string }                                             — upstream failure
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getApiSecret } from './_api-secrets.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { setlistfmQuerySchema, validate } from './_schemas.js'
 import { fetchWithRetry } from './_fetch-retry.js'
@@ -62,12 +63,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const { mbid, p } = parsed.data
 
   // Return empty result when API key is not configured
-  const apiKey = process.env.SETLISTFM_API_KEY
+  const apiKey = await getApiSecret('setlistfm_api_key')
   if (!apiKey) {
     res
       .setHeader('Cache-Control', 'public, max-age=300')
       .status(200)
-      .json({ setlists: [], error: 'SETLISTFM_API_KEY not configured' })
+      .json({ setlists: [], error: 'Setlist.fm API key not configured' })
     return
   }
 

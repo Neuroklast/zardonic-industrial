@@ -1,6 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getApiSecret } from './_api-secrets.js'
 import { kv, isRedisConfigured } from './_redis.js'
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
+import { decryptSecret, encryptSecret, getSecretsEncryptionKey } from '../lib/secrets-encryption.js'
 import { applyRateLimit, getClientIp } from './_ratelimit.js'
 import { validateSession } from './auth.js'
 interface OAuthProvider {
@@ -9,8 +11,8 @@ interface OAuthProvider {
   tokenUrl: string
   profileUrl: string
   scope: string
-  clientId: () => string | undefined
-  clientSecret: () => string | undefined
+  clientId: () => Promise<string | undefined>
+  clientSecret: () => Promise<string | undefined>
 }
 
 interface TokenRecord {
@@ -43,34 +45,17 @@ const OAUTH_LOGS_KEY = 'oauth:logs'
 const MAX_LOG_ENTRIES = 100
 const STATE_TTL = 300 // 5 minutes
 
+/** @deprecated Use getSecretsEncryptionKey from lib/secrets-encryption */
 export function getEncryptionKey(): Buffer {
-  const key = process.env.OAUTH_ENCRYPTION_KEY
-  if (!key) throw new Error('OAUTH_ENCRYPTION_KEY is not configured')
-  const buf = Buffer.from(key, 'hex')
-  if (buf.length !== 32) throw new Error('OAUTH_ENCRYPTION_KEY must be 64 hex characters (32 bytes)')
-  return buf
+  return getSecretsEncryptionKey()
 }
 
 export function encryptToken(data: unknown): string {
-  const key = getEncryptionKey()
-  const iv = randomBytes(12)
-  const cipher = createCipheriv('aes-256-gcm', key, iv)
-  const json = JSON.stringify(data)
-  const encrypted = Buffer.concat([cipher.update(json, 'utf8'), cipher.final()])
-  const authTag = cipher.getAuthTag()
-  return Buffer.concat([iv, authTag, encrypted]).toString('base64')
+  return encryptSecret(JSON.stringify(data))
 }
 
 export function decryptToken(encrypted: string): TokenRecord {
-  const key = getEncryptionKey()
-  const buf = Buffer.from(encrypted, 'base64')
-  const iv = buf.subarray(0, 12)
-  const authTag = buf.subarray(12, 28)
-  const ciphertext = buf.subarray(28)
-  const decipher = createDecipheriv('aes-256-gcm', key, iv)
-  decipher.setAuthTag(authTag)
-  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()])
-  return JSON.parse(decrypted.toString('utf8'))
+  return JSON.parse(decryptSecret(encrypted)) as TokenRecord
 }
 
 // ---------------------------------------------------------------------------
@@ -98,8 +83,8 @@ export const PROVIDERS: Record<string, OAuthProvider> = {
     tokenUrl: 'https://accounts.spotify.com/api/token',
     profileUrl: 'https://api.spotify.com/v1/me',
     scope: 'user-read-private user-read-email playlist-read-private',
-    clientId: () => process.env.SPOTIFY_CLIENT_ID,
-    clientSecret: () => process.env.SPOTIFY_CLIENT_SECRET,
+    clientId: () => getApiSecret('spotify_client_id'),
+    clientSecret: () => getApiSecret('spotify_client_secret'),
   },
   'google-drive': {
     name: 'Google Drive',
@@ -107,8 +92,8 @@ export const PROVIDERS: Record<string, OAuthProvider> = {
     tokenUrl: 'https://oauth2.googleapis.com/token',
     profileUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
     scope: 'https://www.googleapis.com/auth/drive.readonly email profile',
-    clientId: () => process.env.GOOGLE_CLIENT_ID,
-    clientSecret: () => process.env.GOOGLE_CLIENT_SECRET,
+    clientId: () => getApiSecret('google_client_id'),
+    clientSecret: () => getApiSecret('google_client_secret'),
   },
 }
 
@@ -129,12 +114,13 @@ export function getCallbackUrl(req: VercelRequest, provider: string): string {
 
 export async function exchangeCode(provider: string, code: string, redirectUri: string): Promise<Record<string, unknown>> {
   const cfg = PROVIDERS[provider]
+  const [clientId, clientSecret] = await Promise.all([cfg.clientId(), cfg.clientSecret()])
   const params = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
     redirect_uri: redirectUri,
-    client_id: cfg.clientId() || '',
-    client_secret: cfg.clientSecret() || '',
+    client_id: clientId || '',
+    client_secret: clientSecret || '',
   })
   const res = await fetch(cfg.tokenUrl, {
     method: 'POST',
@@ -222,9 +208,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
       return res.status(400).json({ error: 'Invalid provider' })
     }
     const cfg = PROVIDERS[provider]!
-    if (!cfg.clientId()) {
+    const clientId = await cfg.clientId()
+    if (!clientId) {
       return res.status(503).json({
-        error: `${cfg.name} OAuth is not configured. Set SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET or GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET.`,
+        error: `${cfg.name} OAuth is not configured. Set credentials in Admin → API Keys.`,
       })
     }
 
@@ -233,7 +220,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
     const redirectUri = getCallbackUrl(req, provider)
     const params = new URLSearchParams({
-      client_id: cfg.clientId() || '',
+      client_id: clientId,
       response_type: 'code',
       redirect_uri: redirectUri,
       scope: cfg.scope,

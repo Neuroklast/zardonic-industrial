@@ -1,9 +1,13 @@
+import { getApiSecret } from '@/lib/api-secrets'
+
 /**
  * Lightweight Spotify Client Credentials token fetch for server actions.
  */
 export async function getSpotifyAccessToken(): Promise<string | null> {
-  const clientId = process.env.SPOTIFY_CLIENT_ID
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
+  const [clientId, clientSecret] = await Promise.all([
+    getApiSecret('spotify_client_id'),
+    getApiSecret('spotify_client_secret'),
+  ])
   if (!clientId || !clientSecret) return null
 
   const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')

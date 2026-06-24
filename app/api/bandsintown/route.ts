@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { getApiSecret } from '@/lib/api-secrets'
 import { fetchBandsintownEventsFromApi } from '@/lib/bandsintown-sync'
 
 export const dynamic = 'force-dynamic'
@@ -23,12 +24,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 })
   }
 
-  const apiKey = process.env.BANDSINTOWN_API_KEY
+  const apiKey = await getApiSecret('bandsintown_api_key')
   if (!apiKey) {
     return NextResponse.json(
       {
-        error: 'BANDSINTOWN_API_KEY not configured',
-        message: 'Please set BANDSINTOWN_API_KEY environment variable',
+        error: 'Bandsintown API key not configured',
+        message: 'Configure the key in Admin → API Keys',
       },
       { status: 503 },
     )

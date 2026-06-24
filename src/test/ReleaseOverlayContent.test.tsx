@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { ReleaseOverlayContent } from '../components/overlays/ReleaseOverlayContent'
-import type { Release } from '../lib/app-types'
+import { ReleaseOverlayContent } from '@/components/overlays/ReleaseOverlayContent'
+import type { Release } from '@/lib/app-types'
 
 const mockRelease: Release = {
   id: 'test-id',

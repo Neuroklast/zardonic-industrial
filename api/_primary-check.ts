@@ -6,7 +6,7 @@
  * because tenants can set arbitrary env vars on their own deployments.
  * Detection must be based on the request Host header.
  *
- * NOTE: The PRIMARY_HOSTNAMES list is intentionally duplicated from src/lib/primary-check.ts.
+ * NOTE: The PRIMARY_HOSTNAMES list is intentionally duplicated from lib/primary-check.ts.
  * API routes (api/) run as Node.js serverless functions and cannot import from src/
  * (which uses Vite/ESM path aliases and browser APIs). Keep both lists in sync.
  */

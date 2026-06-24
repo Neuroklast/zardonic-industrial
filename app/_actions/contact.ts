@@ -1,5 +1,6 @@
 'use server'
 
+import { getApiSecret } from '@/lib/api-secrets'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -34,7 +35,7 @@ export async function submitContact(
   }
 
   const { name, email, subject, message } = parsed.data
-  const resendKey = process.env.RESEND_API_KEY
+  const resendKey = await getApiSecret('resend_api_key')
   const contactEmail = process.env.CONTACT_EMAIL ?? 'contact@zardonic.com'
 
   if (!resendKey) {

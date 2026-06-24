@@ -72,14 +72,6 @@
       "schedule": "0 6 * * *"
     },
     {
-      "path": "/api/releases-enrich",
-      "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/releases-enrich-worker",
-      "schedule": "*/2 * * * *"
-    },
-    {
       "path": "/api/releases-track-enrich",
       "schedule": "0 4 * * *"
     }

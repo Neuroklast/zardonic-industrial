@@ -98,6 +98,13 @@ CREATE TABLE IF NOT EXISTS public.site_config (
   updated_at timestamptz DEFAULT now()
 );
 
+-- ─── api_secrets (encrypted integration keys, admin-only) ───
+CREATE TABLE IF NOT EXISTS public.api_secrets (
+  key text PRIMARY KEY,
+  encrypted_value text NOT NULL,
+  updated_at timestamptz DEFAULT now()
+);
+
 -- ─── music_highlights ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.music_highlights (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -419,6 +426,7 @@ ALTER TABLE public.bio ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.partners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.api_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.music_highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchandise ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.soundpacks ENABLE ROW LEVEL SECURITY;
@@ -535,6 +543,29 @@ DO $$ BEGIN
   END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='site_config' AND policyname='Admin all config') THEN
     EXECUTE $p$CREATE POLICY "Admin all config" ON public.site_config USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+END; $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='api_secrets' AND policyname='Admin read api_secrets') THEN
+    EXECUTE $p$CREATE POLICY "Admin read api_secrets" ON public.api_secrets FOR SELECT USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='api_secrets' AND policyname='Admin insert api_secrets') THEN
+    EXECUTE $p$CREATE POLICY "Admin insert api_secrets" ON public.api_secrets FOR INSERT WITH CHECK (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='api_secrets' AND policyname='Admin update api_secrets') THEN
+    EXECUTE $p$CREATE POLICY "Admin update api_secrets" ON public.api_secrets FOR UPDATE USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='api_secrets' AND policyname='Admin delete api_secrets') THEN
+    EXECUTE $p$CREATE POLICY "Admin delete api_secrets" ON public.api_secrets FOR DELETE USING (
       EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
     )$p$;
   END IF;

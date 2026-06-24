@@ -12,8 +12,10 @@
  *   c) The caller has a valid admin session.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { getApiSecretsStatus } from './_api-secrets.js'
 import { isRedisConfigured, getRedisOrNull } from './_redis.js'
 import { validateSession } from './auth.js'
+import { isSecretsEncryptionConfigured } from '../lib/secrets-encryption.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   if (req.method !== 'GET') {
@@ -24,7 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   // Allow access if Redis is not configured — setup wizard needs this before
   // any authentication infrastructure exists.
   if (!isRedisConfigured()) {
-    res.status(200).json({ vars: buildVars() })
+    const secretsStatus = await getApiSecretsStatus()
+    res.status(200).json({ vars: buildVars(secretsStatus) })
     return
   }
 
@@ -34,7 +37,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     try {
       const passwordHash = (await redis.get('admin-password-hash')) as string | null
       if (!passwordHash) {
-        res.status(200).json({ vars: buildVars() })
+        const secretsStatus = await getApiSecretsStatus()
+        res.status(200).json({ vars: buildVars(secretsStatus) })
         return
       }
     } catch { /* Redis error — fall through to session check */ }
@@ -47,16 +51,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  res.status(200).json({ vars: buildVars() })
+  const secretsStatus = await getApiSecretsStatus()
+  res.status(200).json({ vars: buildVars(secretsStatus) })
 }
 
-function buildVars(): Record<string, boolean> {
-  // Updated for current Supabase + R2 backend (old Redis/UPSTASH paths are legacy)
+function buildVars(secretsStatus: Awaited<ReturnType<typeof getApiSecretsStatus>>): Record<string, boolean> {
   return {
     NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    SECRETS_ENCRYPTION_KEY: isSecretsEncryptionConfigured(),
     R2_PUBLIC_HOST: !!process.env.R2_PUBLIC_HOST,
-    RESEND_API_KEY: !!process.env.RESEND_API_KEY,
+    RESEND_API_KEY: secretsStatus.resend_api_key,
+    SPOTIFY_CLIENT_ID: secretsStatus.spotify_client_id,
+    SPOTIFY_CLIENT_SECRET: secretsStatus.spotify_client_secret,
+    DISCOGS_TOKEN: secretsStatus.discogs_token,
+    BANDSINTOWN_API_KEY: secretsStatus.bandsintown_api_key,
   }
 }

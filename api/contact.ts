@@ -5,6 +5,7 @@ import { applyRateLimit } from './_ratelimit.js'
 import { validateSession } from './auth.js'
 import { z } from 'zod'
 import { Resend } from 'resend'
+import { getApiSecret } from './_api-secrets.js'
 
 interface ContactMessage {
   id: string
@@ -81,7 +82,7 @@ async function resolveToEmail(): Promise<string | null> {
 
 /** Send email notification via Resend */
 async function sendEmailViaResend({ name, email, subject, message, toEmail }: { name: string; email: string; subject: string; message: string; toEmail: string }): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = await getApiSecret('resend_api_key')
   if (!apiKey) return false
 
   try {
@@ -108,7 +109,7 @@ async function sendEmailViaResend({ name, email, subject, message, toEmail }: { 
 
 /** Send email notification via Brevo transactional API */
 async function sendEmailViaBrevo({ name, email, subject, message, toEmail }: { name: string; email: string; subject: string; message: string; toEmail: string }): Promise<boolean> {
-  const apiKey = process.env.BREVO_API_KEY
+  const apiKey = await getApiSecret('brevo_api_key')
   if (!apiKey) return false
 
   try {
@@ -146,7 +147,7 @@ async function sendEmailNotification({ name, email, subject, message }: { name: 
   if (!toEmail) return
 
   // Try Resend first (preferred)
-  if (process.env.RESEND_API_KEY) {
+  if (await getApiSecret('resend_api_key')) {
     await sendEmailViaResend({ name, email, subject, message, toEmail })
     return
   }
