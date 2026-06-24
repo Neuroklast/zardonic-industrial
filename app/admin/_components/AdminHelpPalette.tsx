@@ -78,7 +78,7 @@ export function AdminHelpPalette() {
           value={query}
           onValueChange={setQuery}
           placeholder="Search functions, settings, how-to…"
-          className="text-zinc-100 placeholder:text-zinc-500"
+          className="h-11 min-h-11 text-base leading-normal text-zinc-100 placeholder:text-zinc-500"
         />
         <CommandList className="max-h-[min(60vh,420px)]">
           {grouped.length === 0 ? (

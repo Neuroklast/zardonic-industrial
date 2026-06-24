@@ -47,7 +47,7 @@ export function SectionHeading({
   return (
     <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
       <h2
-        className={`section-heading hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground ${className}`}
+        className={`section-heading hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt text-heading font-bold uppercase tracking-tighter text-foreground ${className}`}
         data-text={label}
         data-draft-target={target}
       >

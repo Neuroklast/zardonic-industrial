@@ -21,8 +21,8 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     items: [{ href: '/admin', label: 'Dashboard', exact: true }],
   },
   {
-    id: 'design',
-    label: 'Site Design',
+    id: 'site',
+    label: 'Site',
     items: [
       { href: '/admin/site-config', label: 'Look & Feel' },
       { href: '/admin/legal', label: 'Legal & Privacy' },
@@ -38,22 +38,9 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
       { href: '/admin/partners', label: 'Credits & Partners', countKey: 'partners' },
       { href: '/admin/music-highlights', label: 'Music Highlights', countKey: 'musicHighlights' },
       { href: '/admin/releases', label: 'Discography', countKey: 'releases' },
-      { href: '/admin/releases/sync', label: 'Catalogue Sync' },
       { href: '/admin/gigs', label: 'Events', countKey: 'gigs' },
-    ],
-  },
-  {
-    id: 'commerce',
-    label: 'Commerce',
-    items: [
       { href: '/admin/merchandise', label: 'Merchandise', countKey: 'merchandise' },
       { href: '/admin/soundpacks', label: 'Soundpacks', countKey: 'soundpacks' },
-    ],
-  },
-  {
-    id: 'engagement',
-    label: 'Engagement',
-    items: [
       { href: '/admin/social', label: 'Social Links', countKey: 'social' },
       { href: '/admin/newsletter', label: 'Newsletter' },
     ],
@@ -62,6 +49,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     id: 'system',
     label: 'System',
     items: [
+      { href: '/admin/releases/sync', label: 'Catalogue Sync' },
       { href: '/admin/analytics', label: 'Analytics' },
       { href: '/admin/api-keys', label: 'API Keys' },
       { href: '/admin/health', label: 'API Health' },

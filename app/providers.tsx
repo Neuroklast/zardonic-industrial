@@ -8,6 +8,7 @@ import { LenisProvider } from '@/contexts/LenisContext'
 import { LocaleProvider } from '@/contexts/LocaleContext'
 import { AnalyticsTracker } from '@/components/AnalyticsTracker'
 import type { AnalyticsConfig } from '@/lib/analytics-config'
+import type { SiteLanguage } from '@/lib/i18n'
 import type { CustomTranslations } from '@/lib/translations-config'
 import { useState } from 'react'
 
@@ -24,12 +25,14 @@ interface ProvidersProps {
   children: React.ReactNode
   customTranslations?: CustomTranslations
   analyticsConfig?: AnalyticsConfig
+  languages?: SiteLanguage[]
 }
 
 export function Providers({
   children,
   customTranslations,
   analyticsConfig,
+  languages,
 }: ProvidersProps) {
   const [queryClient] = useState(
     () =>
@@ -43,7 +46,7 @@ export function Providers({
   return (
     <LazyMotion features={domAnimation} strict={false}>
       <LenisProvider>
-        <LocaleProvider customTranslations={customTranslations}>
+        <LocaleProvider customTranslations={customTranslations} languages={languages}>
           <QueryClientProvider client={queryClient}>
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               {children}

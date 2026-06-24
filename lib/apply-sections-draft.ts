@@ -1,4 +1,5 @@
 import { formatSectionHeading } from '@/lib/section-display'
+import { NAV_EXCLUDED_SECTION_IDS, resolveNavLabel, SECTION_ANCHOR_BY_ID } from '@/lib/nav-links'
 
 export interface SectionsDraftEntry {
   id: string
@@ -58,6 +59,19 @@ export function applySectionsDraft(value: Record<string, unknown>): void {
       const intro = section.intro?.trim() ?? ''
       introEl.textContent = intro
       introEl.style.display = intro ? '' : 'none'
+    }
+
+    if (
+      section.visible &&
+      !NAV_EXCLUDED_SECTION_IDS.has(section.id) &&
+      SECTION_ANCHOR_BY_ID[section.id] != null
+    ) {
+      const navLabel = resolveNavLabel({ id: section.id, label: section.label ?? '' })
+      document
+        .querySelectorAll<HTMLElement>(`[data-draft-target="nav-link-${section.id}"]`)
+        .forEach((el) => {
+          el.textContent = navLabel
+        })
     }
   }
 }

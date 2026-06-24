@@ -1,11 +1,20 @@
 /**
  * Global i18n utility for the site.
- * Supports 8 locales: en, de, ru, it, es, pt, ja, ko.
+ * Built-in locales: en, de, ru, it, es, pt, ja, ko. Additional codes via site_config.languages.
  */
 
-export type Locale = 'en' | 'de' | 'ru' | 'it' | 'es' | 'pt' | 'ja' | 'ko'
+export type BuiltinLocale = 'en' | 'de' | 'ru' | 'it' | 'es' | 'pt' | 'ja' | 'ko'
 
-export const LOCALES: { code: Locale; label: string; flag: string }[] = [
+/** Any locale code (built-in or admin-configured). */
+export type Locale = string
+
+export interface SiteLanguage {
+  code: string
+  label: string
+  flag: string
+}
+
+export const BUILTIN_LOCALES: SiteLanguage[] = [
   { code: 'en', label: 'English',    flag: '' },
   { code: 'de', label: 'Deutsch',    flag: '' },
   { code: 'ru', label: 'Русский',    flag: '' },
@@ -16,7 +25,10 @@ export const LOCALES: { code: Locale; label: string; flag: string }[] = [
   { code: 'ko', label: '한국어',      flag: '' },
 ]
 
-const translations: Record<string, Record<Locale, string>> = {
+/** @deprecated Use BUILTIN_LOCALES or configured languages from LocaleProvider. */
+export const LOCALES = BUILTIN_LOCALES
+
+const translations: Record<string, Record<string, string>> = {
   // ── Footer ──────────────────────────────────────────────────────────
   'footer.section':            { en: 'FOOTER_SECTION', de: 'FOOTER_BEREICH', ru: 'СЕКЦИЯ_ПОДВАЛА', it: 'SEZIONE_PIÈ_DI_PAGINA', es: 'SECCIÓN_PIE_DE_PÁGINA', pt: 'SECÇÃO_RODAPÉ', ja: 'フッター_セクション', ko: '푸터_섹션' },
   'footer.protocol':           { en: 'PROTOCOL: HELLFIRE', de: 'PROTOKOLL: HELLFIRE', ru: 'ПРОТОКОЛ: HELLFIRE', it: 'PROTOCOLLO: HELLFIRE', es: 'PROTOCOLO: HELLFIRE', pt: 'PROTOCOLO: HELLFIRE', ja: 'プロトコル: HELLFIRE', ko: '프로토콜: HELLFIRE' },
@@ -261,7 +273,9 @@ const translations: Record<string, Record<Locale, string>> = {
 
 /** Get a translated string for a key and locale */
 export function t(key: string, locale: Locale): string {
-  return translations[key]?.[locale] ?? translations[key]?.en ?? key
+  const entry = translations[key]
+  if (!entry) return key
+  return entry[locale] ?? entry.en ?? key
 }
 
 /** Accessible name helper for ARIA labels on public UI. */

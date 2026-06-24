@@ -196,5 +196,28 @@ export function applyAppearanceConfig(
     link.href = config.faviconUrl
   }
 
+  applyGlobalEffectsVisibility(config)
+
   return applied
+}
+
+function setElementDisplay(selector: string, visible: boolean): void {
+  document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+    el.style.display = visible ? '' : 'none'
+  })
+}
+
+/** Toggle CRT / scanline / noise layers in the live-preview iframe. */
+export function applyGlobalEffectsVisibility(config: AppearanceConfigInput): void {
+  if (typeof document === 'undefined') return
+
+  if (typeof config.crtEnabled === 'boolean') {
+    setElementDisplay('.crt-overlay, .crt-vignette', config.crtEnabled)
+  }
+  if (typeof config.scanlineEnabled === 'boolean') {
+    setElementDisplay('.crt-scanline-bg', config.scanlineEnabled)
+  }
+  if (typeof config.noiseEnabled === 'boolean') {
+    setElementDisplay('.full-page-noise', config.noiseEnabled)
+  }
 }

@@ -124,6 +124,45 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--section-grid-opacity']).toBe('0.2')
   })
 
+  it('applies chromatic strength CSS variable', () => {
+    const applied = applyAppearanceConfig({ chromaticStrength: 0.25 }, root)
+    expect(applied['--chromatic-strength']).toBe('0.25')
+  })
+
+  it('toggles global effect layers for live preview', () => {
+    const crt = document.createElement('div')
+    crt.className = 'crt-overlay'
+    const scanline = document.createElement('div')
+    scanline.className = 'crt-scanline-bg'
+    const noise = document.createElement('div')
+    noise.className = 'full-page-noise'
+    document.body.append(crt, scanline, noise)
+
+    applyAppearanceConfig({
+      crtEnabled: false,
+      scanlineEnabled: false,
+      noiseEnabled: false,
+    })
+
+    expect(crt.style.display).toBe('none')
+    expect(scanline.style.display).toBe('none')
+    expect(noise.style.display).toBe('none')
+
+    applyAppearanceConfig({
+      crtEnabled: true,
+      scanlineEnabled: true,
+      noiseEnabled: true,
+    })
+
+    expect(crt.style.display).toBe('')
+    expect(scanline.style.display).toBe('')
+    expect(noise.style.display).toBe('')
+
+    crt.remove()
+    scanline.remove()
+    noise.remove()
+  })
+
   it('recomputes surface colors when card color changes', () => {
     const dark = applyAppearanceConfig(
       { theme: { cardColor: 'oklch(0.05 0 0)' }, sectionPanelOpacity: 0.5 },

@@ -1,8 +1,10 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useAdminDraftListener } from '@/hooks/use-admin-draft'
+import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 import {
   DEFAULT_BACKGROUND_VIDEO_OPACITY,
   parseMobileVideoMode,
@@ -43,7 +45,12 @@ function AnimatedLayer({
   const circuitGlow = perfMode ? 0.75 : 0.8
 
   return (
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 'var(--z-bg-animated)' }}>
+    <div
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 'var(--z-bg-animated)' }}
+      data-draft-target="bg-animation"
+      data-draft-bg-type={backgroundType}
+    >
       {backgroundType === 'circuit' ? (
         <CircuitBackground speed={circuitSpeed} glow={circuitGlow} />
       ) : (
@@ -51,6 +58,12 @@ function AnimatedLayer({
       )}
     </div>
   )
+}
+
+type DraftBackgroundType = 'matrix' | 'circuit' | 'minimal'
+
+function parseDraftBackgroundType(value: unknown): DraftBackgroundType | null {
+  return value === 'matrix' || value === 'circuit' || value === 'minimal' ? value : null
 }
 
 export function BackgroundStack({
@@ -64,6 +77,17 @@ export function BackgroundStack({
 }: BackgroundStackProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const isMobile = useIsMobile()
+  const [draftBackgroundType, setDraftBackgroundType] = useState<DraftBackgroundType | null>(null)
+
+  const onDraft = useCallback((key: AdminDraftKey, value: Record<string, unknown>) => {
+    if (key !== 'background') return
+    const next = parseDraftBackgroundType(value.backgroundType)
+    if (next) setDraftBackgroundType(next)
+  }, [])
+
+  useAdminDraftListener(onDraft)
+
+  const effectiveBackgroundType = draftBackgroundType ?? backgroundType
   const mode = parseMobileVideoMode(mobileVideoMode)
 
   const activeVideoUrl = useMemo(
@@ -186,7 +210,7 @@ export function BackgroundStack({
       ) : null}
 
       <AnimatedLayer
-        backgroundType={backgroundType}
+        backgroundType={effectiveBackgroundType}
         hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
         perfMode={Boolean(imageUrl)}
       />

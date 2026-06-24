@@ -137,4 +137,27 @@ describe('LocaleContext', () => {
     )
     expect(screen.getByTestId('custom').textContent).toBe('ADMIN')
   })
+
+  it('should restrict locale to configured languages', () => {
+    localStorage.setItem('zd-locale', 'fr')
+    render(
+      <LocaleProvider languages={[{ code: 'en', label: 'English', flag: '' }, { code: 'de', label: 'Deutsch', flag: '' }]}>
+        <TestConsumer />
+      </LocaleProvider>
+    )
+    expect(screen.getByTestId('locale').textContent).toBe('en')
+  })
+
+  it('should use custom translation for configured non-built-in locale', () => {
+    const customTranslations = { 'footer.admin': { fr: 'ADMIN_FR' } }
+    render(
+      <LocaleProvider
+        languages={[{ code: 'fr', label: 'Français', flag: '' }]}
+        customTranslations={customTranslations}
+      >
+        <CustomTranslationConsumer />
+      </LocaleProvider>
+    )
+    expect(screen.getByTestId('custom').textContent).toBe('ADMIN_FR')
+  })
 })

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { parseAnalyticsConfig, isAnalyticsTrackingAllowed } from '@/lib/analytics-config'
+import { parseLanguagesConfig } from '@/lib/languages-config'
 import { parseTranslationsConfig } from '@/lib/translations-config'
 
 describe('parseAnalyticsConfig', () => {

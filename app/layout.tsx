@@ -43,7 +43,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { customTranslations, analyticsConfig } = await getPublicSiteBootstrap()
+  const { customTranslations, analyticsConfig, languages } = await getPublicSiteBootstrap()
 
   return (
     <html lang="en">
@@ -56,7 +56,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig}>
+        <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig} languages={languages}>
           {children}
         </Providers>
       </body>

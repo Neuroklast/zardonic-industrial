@@ -63,24 +63,24 @@ body.no-select a {
 /* Section titles only — card/browse headings keep their own text-* utilities. */
 .section-heading {
   font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-size: var(--font-size-heading);
   text-shadow: var(--heading-text-shadow,
     0.5px 0 0 rgba(255, 255, 255, 0.15),
     -0.5px 0 0 rgba(200, 200, 200, 0.15));
   font-weight: var(--heading-font-weight);
-  line-height: var(--heading-line-height);
+  line-height: var(--heading-line-height, 1.2);
   letter-spacing: var(--heading-letter-spacing);
 }
 
-/* Body size override — only applies when admin sets --body-font-size.
-   Tailwind text-* utilities on children are unaffected (rem is root-relative). */
+/* Body size — admin slider sets --body-font-size; default comes from --font-size-body. */
 body {
-  font-size: var(--body-font-size);
-  line-height: var(--body-line-height);
+  font-size: var(--body-font-size, var(--font-size-body));
+  line-height: var(--body-line-height, 1.6);
 }
 
 code, kbd, samp, pre {
   font-family: var(--font-mono);
-  font-size: var(--mono-font-size);
+  font-size: var(--mono-font-size, 0.875rem);
 }
 
 /* ── Admin UI Shield ──────────────────────────────────────────────────────────

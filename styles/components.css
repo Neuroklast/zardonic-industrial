@@ -938,51 +938,12 @@
   }
 }
 
-/* Hero Logo — entrance-only glitch/jitter, then hover chromatic aberration */
+/* Hero wordmark — entrance jitter only (single image; hover uses hover-chromatic-image) */
 .hero-logo-glitch {
   position: relative;
   animation: hero-entrance-jitter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-.hero-logo-glitch .hero-logo-r,
-.hero-logo-glitch .hero-logo-b {
-  position: absolute;
-  inset: 0;
-  mix-blend-mode: screen;
-  pointer-events: none;
-  opacity: 0;
-}
-
-/* Entrance-only chromatic layers — animate once then hide */
-.hero-logo-glitch .hero-logo-r {
-  filter: brightness(1.1);
-  animation: hero-entrance-chromatic-r 0.6s steps(3) forwards;
-}
-
-.hero-logo-glitch .hero-logo-b {
-  filter: brightness(1.1) hue-rotate(180deg);
-  animation: hero-entrance-chromatic-b 0.6s steps(3) forwards;
-}
-
-@keyframes hero-entrance-chromatic-r {
-  0%   { opacity: 0.8; transform: translate(6px, -2px); }
-  20%  { opacity: 0.7; transform: translate(-4px, 3px); }
-  40%  { opacity: 0.6; transform: translate(3px, 1px); }
-  60%  { opacity: 0.4; transform: translate(-2px, -1px); }
-  80%  { opacity: 0.2; transform: translate(1px, 0px); }
-  100% { opacity: 0;   transform: translate(0, 0); }
-}
-
-@keyframes hero-entrance-chromatic-b {
-  0%   { opacity: 0.8; transform: translate(-6px, 2px); }
-  20%  { opacity: 0.7; transform: translate(4px, -3px); }
-  40%  { opacity: 0.6; transform: translate(-3px, -1px); }
-  60%  { opacity: 0.4; transform: translate(2px, 1px); }
-  80%  { opacity: 0.2; transform: translate(-1px, 0px); }
-  100% { opacity: 0;   transform: translate(0, 0); }
-}
-
-/* Entrance jitter — plays once then settles */
 @keyframes hero-entrance-jitter {
   0%   { transform: translate(-5px, 3px) skewX(-2deg); opacity: 0; }
   15%  { transform: translate(4px, -2px) skewX(1.5deg); opacity: 0.7; }
@@ -992,29 +953,7 @@
   100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
 }
 
-/* Hover chromatic aberration — only effect after entrance */
-.hero-logo-glitch:hover .hero-logo-r {
-  animation: none;
-  opacity: 0.5;
-  transform: translate(3px, 0);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.hero-logo-glitch:hover .hero-logo-b {
-  animation: none;
-  opacity: 0.5;
-  transform: translate(-3px, 0);
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-/* Hover chromatic aberration for all images — instant off, fast on */
-
 @media (prefers-reduced-motion: reduce) {
-  .hero-logo-glitch .hero-logo-r,
-  .hero-logo-glitch .hero-logo-b {
-    animation: none;
-    opacity: 0;
-  }
   .hero-logo-glitch {
     animation: none;
   }

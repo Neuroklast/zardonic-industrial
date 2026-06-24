@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createActionClient } from '@/lib/supabaseServer'
-import { AdminNav } from '@/app/admin/_components/AdminNav'
+import { AdminShell } from '@/app/admin/_components/AdminShell'
 import { AdminHelpPalette } from '@/app/admin/_components/AdminHelpPalette'
 
 export default async function ProtectedAdminLayout({
@@ -26,10 +26,7 @@ export default async function ProtectedAdminLayout({
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col" data-admin-ui="true">
       {/* Admin shell uses custom dark container (different from public PageLayout).
           Documented exception per AGENTS §6. All public pages use PageLayout. */}
-      <div className="flex flex-1">
-        <AdminNav />
-        <main className="flex-1 p-4 pt-16 md:pt-8 md:p-8 overflow-auto min-w-0">{children}</main>
-      </div>
+      <AdminShell>{children}</AdminShell>
       <AdminHelpPalette />
     </div>
   )

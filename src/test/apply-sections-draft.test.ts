@@ -57,6 +57,19 @@ describe('applySectionsDraft', () => {
     expect(intro.textContent).toBe('The story so far.')
   })
 
+  it('updates nav link labels from section headings', () => {
+    const navLink = document.createElement('a')
+    navLink.setAttribute('data-draft-target', 'nav-link-bio')
+    navLink.textContent = 'Bio'
+    container.appendChild(navLink)
+
+    applySectionsDraft({
+      sections: [{ id: 'bio', label: 'About Me', visible: true, order: 0 }],
+    })
+
+    expect(navLink.textContent).toBe('About Me')
+  })
+
   it('updates order and visibility on matching section shells', () => {
     applySectionsDraft({
       sections: [
