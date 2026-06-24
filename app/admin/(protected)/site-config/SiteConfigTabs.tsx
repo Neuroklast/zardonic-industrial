@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { HeroConfigEditor } from './HeroConfigEditor'
 import { BackgroundConfigEditor } from './BackgroundConfigEditor'
 import { AppearanceEditor } from './AppearanceEditor'
@@ -11,6 +12,12 @@ import { SectionsSortable } from '@/app/admin/(protected)/sections/SectionsSorta
 import { parseSections, type SectionConfig } from '@/lib/site-config-sections'
 
 type TabId = 'hero' | 'background' | 'theme' | 'sections' | 'text' | 'advanced'
+
+const VALID_TAB_IDS: TabId[] = ['hero', 'background', 'theme', 'sections', 'text', 'advanced']
+
+function isTabId(value: string | null): value is TabId {
+  return value !== null && (VALID_TAB_IDS as string[]).includes(value)
+}
 
 interface SiteConfigTabsProps {
   heroValue: Record<string, unknown>
@@ -47,13 +54,38 @@ export function SiteConfigTabs({
   footerValue,
   advancedConfigs,
 }: SiteConfigTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('theme')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [localTab, setLocalTab] = useState<TabId>('theme')
   const sections = useMemo(() => parseSections(sectionsValue), [sectionsValue])
 
   const tabs = useMemo(() => {
     if (advancedConfigs.length === 0) return BASE_TABS
     return [...BASE_TABS, { id: 'advanced' as const, label: 'Advanced' }]
   }, [advancedConfigs.length])
+
+  const activeTab = useMemo((): TabId => {
+    const tabParam = searchParams.get('tab')
+    if (!isTabId(tabParam)) return localTab
+    if (tabParam === 'advanced' && advancedConfigs.length === 0) return localTab
+    return tabParam
+  }, [searchParams, localTab, advancedConfigs.length])
+
+  const selectTab = useCallback(
+    (tabId: TabId) => {
+      setLocalTab(tabId)
+      const params = new URLSearchParams(searchParams.toString())
+      if (tabId === 'theme') {
+        params.delete('tab')
+      } else {
+        params.set('tab', tabId)
+      }
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [pathname, router, searchParams]
+  )
 
   return (
     <AdminPreviewPane>
@@ -63,7 +95,7 @@ export function SiteConfigTabs({
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               className={`px-3 py-1.5 text-xs rounded transition-colors ${
                 activeTab === tab.id
                   ? 'bg-red-900/40 text-white border border-red-700/50'
@@ -81,9 +113,9 @@ export function SiteConfigTabs({
         {activeTab === 'sections' && (
           <div className="border border-zinc-800 rounded p-4 space-y-3">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-200">Section Order &amp; Visibility</h2>
+              <h2 className="text-sm font-semibold text-zinc-200">Sections</h2>
               <p className="text-xs text-zinc-500 mt-0.5">
-                Choose which sections appear on the homepage and drag to reorder them.
+                Order, headings, subtitles and visibility for each homepage section.
               </p>
             </div>
             <SectionsSortable initialSections={sections as SectionConfig[]} />
@@ -93,10 +125,9 @@ export function SiteConfigTabs({
           <div className="space-y-6">
             <SimpleTextConfigEditor
               configKey="newsletter"
-              title="Newsletter Section"
-              description="Heading and body text for the mailing list section."
+              title="Newsletter"
+              description="Body text below the heading (heading is edited in the Sections tab)."
               fields={[
-                { key: 'heading', label: 'Heading', placeholder: 'Mailing List' },
                 { key: 'body', label: 'Body', type: 'textarea', placeholder: 'Subscribe for news and releases.' },
               ]}
               currentValue={newsletterValue}

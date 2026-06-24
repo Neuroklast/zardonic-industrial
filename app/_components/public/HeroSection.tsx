@@ -4,13 +4,17 @@ import { useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { useLenisContext } from '@/contexts/LenisContext'
 
-const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
+import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
+
+const LOGO_IMG_CLASS =
+  'hover-chromatic-image h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64'
 
 const HERO_CTA_CLASS =
   'cyber-border hover-glitch hover-noise relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 font-mono text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
 
 interface HeroSectionProps {
   headline: string
+  logoImageUrl?: string
   tagline?: string
   ctaLabel?: string
   ctaUrl?: string
@@ -26,6 +30,7 @@ interface HeroSectionProps {
 
 export function HeroSection({
   headline,
+  logoImageUrl = DEFAULT_HERO_LOGO_URL,
   tagline,
   ctaLabel,
   ctaUrl,
@@ -88,22 +93,25 @@ export function HeroSection({
         >
           <div className="hero-logo-glitch hover-glitch cyber2077-scan-build relative mx-auto w-fit">
             <img
-              src={logoImage}
+              src={logoImageUrl}
               alt={headline}
-              className="hover-chromatic-image h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
+              data-draft-target="hero-logo"
+              className={LOGO_IMG_CLASS}
               fetchPriority="high"
             />
             <img
-              src={logoImage}
+              src={logoImageUrl}
               alt=""
               aria-hidden="true"
-              className="hero-logo-r absolute inset-0 h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
+              data-draft-target="hero-logo"
+              className={`hero-logo-r absolute inset-0 ${LOGO_IMG_CLASS}`}
             />
             <img
-              src={logoImage}
+              src={logoImageUrl}
               alt=""
               aria-hidden="true"
-              className="hero-logo-b absolute inset-0 h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64"
+              data-draft-target="hero-logo"
+              className={`hero-logo-b absolute inset-0 ${LOGO_IMG_CLASS}`}
             />
           </div>
         </m.div>

@@ -20,7 +20,7 @@ export function SectionContentPanel({
 }) {
   return (
     <div
-      className={`cyber-grid surface-section-panel w-full border border-border/60 p-6 md:p-8 ${className}`}
+      className={`cyber-grid surface-section-panel w-full p-6 md:p-8 ${className}`}
     >
       {children}
     </div>
@@ -32,23 +32,49 @@ export function SectionHeading({
   children,
   dataText,
   className = '',
+  sectionId,
+  'data-draft-target': draftTarget,
 }: {
   children: React.ReactNode
   dataText?: string
   className?: string
+  sectionId?: string
+  'data-draft-target'?: string
 }) {
   const label = dataText ?? (typeof children === 'string' ? children : undefined)
+  const target = draftTarget ?? (sectionId ? `section-heading-${sectionId}` : undefined)
 
   return (
     <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
       <h2
-        className={`hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground ${className}`}
+        className={`section-heading hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground ${className}`}
         data-text={label}
+        data-draft-target={target}
       >
         {children}
         <span className="animate-pulse">_</span>
       </h2>
     </div>
+  )
+}
+
+/** Optional subtitle below a section heading. */
+export function SectionIntro({
+  sectionId,
+  children,
+}: {
+  sectionId: string
+  children: React.ReactNode
+}) {
+  if (!children || (typeof children === 'string' && !children.trim())) return null
+
+  return (
+    <p
+      className="-mt-8 mb-6 font-mono text-sm text-muted-foreground"
+      data-draft-target={`section-intro-${sectionId}`}
+    >
+      {children}
+    </p>
   )
 }
 
@@ -86,7 +112,7 @@ export function SectionDivider() {
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
       aria-hidden="true"
     >
-      <hr className="border-border/60" />
+      <hr className="surface-section-divider border-t" />
     </div>
   )
 }

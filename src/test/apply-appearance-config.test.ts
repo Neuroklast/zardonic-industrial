@@ -35,7 +35,7 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--font-heading']).toBe('system-ui, sans-serif')
   })
 
-  it('applies theme font sizes as CSS variables', () => {
+  it('applies theme font sizes to semantic typography tokens only', () => {
     const applied = applyAppearanceConfig(
       {
         theme: {
@@ -46,9 +46,39 @@ describe('applyAppearanceConfig', () => {
       },
       root,
     )
-    expect(applied['--heading-font-size']).toBe('3rem')
+    expect(applied['--font-size-heading']).toBe('3rem')
+    expect(applied['--font-size-body']).toBe('1.125rem')
     expect(applied['--body-font-size']).toBe('1.125rem')
     expect(applied['--mono-font-size']).toBe('0.875rem')
+  })
+
+  it('propagates foreground color to card and popover foreground aliases', () => {
+    const applied = applyAppearanceConfig(
+      {
+        theme: {
+          foregroundColor: '#e2e8f0',
+        },
+      },
+      root,
+    )
+    expect(applied['--foreground']).toMatch(/^oklch\(/)
+    expect(applied['--card-foreground']).toBe(applied['--foreground'])
+    expect(applied['--popover-foreground']).toBe(applied['--foreground'])
+  })
+
+  it('applies muted foreground independently from primary text', () => {
+    const applied = applyAppearanceConfig(
+      {
+        theme: {
+          foregroundColor: '#ffffff',
+          mutedForegroundColor: '#94a3b8',
+        },
+      },
+      root,
+    )
+    expect(applied['--foreground']).toMatch(/^oklch\(/)
+    expect(applied['--muted-foreground']).toMatch(/^oklch\(/)
+    expect(applied['--muted-foreground']).not.toBe(applied['--foreground'])
   })
 
   it('applies surface backgrounds with hex fallback and oklch alpha', () => {
@@ -65,6 +95,7 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--surface-card-bg-fallback']).toMatch(/^rgba\(/)
     expect(applied['--surface-card-bg']).toBe('oklch(0.05 0 0 / 0.85)')
     expect(applied['--surface-section-backdrop']).toBe('blur(4px)')
+    expect(applied['--surface-section-border-opacity']).toBe('0.6')
   })
 
   it('applies transparent surfaces when section opacity is zero', () => {
@@ -79,12 +110,18 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--surface-section-bg-fallback']).toBe('rgba(0, 0, 1, 0)')
     expect(applied['--surface-section-bg']).toBe('oklch(0.00 0.00 240 / 0)')
     expect(applied['--surface-section-backdrop']).toBe('none')
+    expect(applied['--surface-section-border-opacity']).toBe('0')
   })
 
   it('applies vignette to both CSS variable names', () => {
     const applied = applyAppearanceConfig({ vignetteOpacity: 0.45 }, root)
     expect(applied['--vignette-opacity']).toBe('0.45')
     expect(applied['--crt-vignette-opacity']).toBe('0.45')
+  })
+
+  it('applies section grid opacity CSS variable', () => {
+    const applied = applyAppearanceConfig({ sectionGridOpacity: 0.2 }, root)
+    expect(applied['--section-grid-opacity']).toBe('0.2')
   })
 
   it('recomputes surface colors when card color changes', () => {

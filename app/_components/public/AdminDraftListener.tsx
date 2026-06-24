@@ -3,6 +3,8 @@
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { applyAppearanceConfig } from '@/lib/apply-appearance-config'
+import { applySectionsDraft } from '@/lib/apply-sections-draft'
+import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 
@@ -21,6 +23,14 @@ function applyHeroDraft(value: Record<string, unknown>) {
       if (span) span.textContent = value.ctaLabel
     }
   }
+
+  const logoUrl =
+    typeof value.logoImageUrl === 'string' && value.logoImageUrl
+      ? value.logoImageUrl
+      : DEFAULT_HERO_LOGO_URL
+  document.querySelectorAll<HTMLImageElement>('[data-draft-target="hero-logo"]').forEach((img) => {
+    img.src = logoUrl
+  })
 
   const heroBgEl = document.querySelector<HTMLElement>('[data-draft-target="hero-bg-image"]')
   if (heroBgEl) {
@@ -72,6 +82,45 @@ function applyBackgroundDraft(value: Record<string, unknown>) {
   }
 }
 
+function applyNewsletterDraft(value: Record<string, unknown>) {
+  if (typeof value.heading === 'string') {
+    const headingEl = document.querySelector('[data-draft-target="newsletter-heading"]')
+    if (headingEl) {
+      const text = value.heading.trim() ? value.heading.toUpperCase() : 'STAY CONNECTED'
+      headingEl.textContent = text
+      if (headingEl instanceof HTMLElement) headingEl.dataset.text = text
+    }
+  }
+  if (typeof value.body === 'string') {
+    const bodyEl = document.querySelector('[data-draft-target="newsletter-body"]')
+    if (bodyEl) bodyEl.textContent = value.body
+  }
+}
+
+function applyMerchandiseDraft(value: Record<string, unknown>) {
+  if (typeof value.footerText !== 'string') return
+  const footerEl = document.querySelector('[data-draft-target="merchandise-footer"]')
+  if (!footerEl) return
+  footerEl.textContent = value.footerText
+  if (footerEl instanceof HTMLElement) {
+    footerEl.style.display = value.footerText ? '' : 'none'
+  }
+}
+
+function applyFooterDraft(value: Record<string, unknown>) {
+  if (typeof value.legalNoticeUrl === 'string') {
+    const legalEl = document.querySelector<HTMLAnchorElement>('[data-draft-target="footer-legal"]')
+    if (legalEl) legalEl.href = value.legalNoticeUrl
+  }
+  if (typeof value.privacyPolicyUrl === 'string') {
+    document
+      .querySelectorAll<HTMLAnchorElement>('[data-draft-target="footer-privacy"]')
+      .forEach((el) => {
+        el.href = value.privacyPolicyUrl as string
+      })
+  }
+}
+
 export function AdminDraftListener() {
   const router = useRouter()
 
@@ -85,6 +134,18 @@ export function AdminDraftListener() {
         break
       case 'background':
         applyBackgroundDraft(value)
+        break
+      case 'sections':
+        applySectionsDraft(value)
+        break
+      case 'newsletter':
+        applyNewsletterDraft(value)
+        break
+      case 'merchandise':
+        applyMerchandiseDraft(value)
+        break
+      case 'footer':
+        applyFooterDraft(value)
         break
       default:
         break

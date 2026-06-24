@@ -1,24 +1,29 @@
 'use client'
 
 import { useActionState } from 'react'
-import { SectionWrapper, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 import { subscribeNewsletter } from '@/app/_actions/newsletter'
 
 interface NewsletterSectionProps {
-  heading: string
+  heading?: string
+  intro?: string
   body: string
   privacyPolicyUrl?: string
 }
 
-export function NewsletterSection({ heading, body, privacyPolicyUrl = '/privacy-policy' }: NewsletterSectionProps) {
+export function NewsletterSection({ heading, intro, body, privacyPolicyUrl = '/privacy-policy' }: NewsletterSectionProps) {
   const [state, formAction, pending] = useActionState(subscribeNewsletter, null)
-  const sectionTitle = heading.trim() || 'STAY CONNECTED'
+  const title = formatSectionHeading(heading, 'newsletter')
 
   return (
     <SectionWrapper id="newsletter" data-theme-color="foreground card border input">
-      <SectionHeading dataText={sectionTitle.toUpperCase()}>{sectionTitle.toUpperCase()}</SectionHeading>
+      <SectionHeading sectionId="newsletter" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="newsletter">{intro}</SectionIntro>
 
-      <p className="mb-6 font-mono text-sm text-muted-foreground">{body}</p>
+      <p className="mb-6 font-mono text-sm text-muted-foreground" data-draft-target="newsletter-body">
+        {body}
+      </p>
 
       {state?.success ? (
         <p className="border border-border px-4 py-3 font-mono text-sm text-foreground">

@@ -105,6 +105,7 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
         >
           <a
             href={legalNoticeUrl}
+            data-draft-target="footer-legal"
             className="inline-flex min-h-[44px] items-center px-1 font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
           >
             Legal Notice
@@ -114,6 +115,7 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
           </span>
           <a
             href={privacyPolicyUrl}
+            data-draft-target="footer-privacy"
             className="inline-flex min-h-[44px] items-center px-1 font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
           >
             Privacy Policy

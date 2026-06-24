@@ -153,8 +153,8 @@ export const FONT_SIZE_RANGES: Record<
   'heading' | 'body' | 'mono',
   { min: number; max: number; step: number; default: number; themeKey: FontSizeThemeKey; label: string }
 > = {
-  heading: { min: 1, max: 6, step: 0.1, default: 2.5, themeKey: 'headingFontSize', label: 'Heading Size' },
-  body: { min: 0.75, max: 1.5, step: 0.05, default: 1, themeKey: 'bodyFontSize', label: 'Body Size' },
+  heading: { min: 1, max: 6, step: 0.1, default: 2.5, themeKey: 'headingFontSize', label: 'Section heading size' },
+  body: { min: 0.75, max: 1.5, step: 0.05, default: 1, themeKey: 'bodyFontSize', label: 'Base body size' },
   mono: { min: 0.7, max: 1.2, step: 0.05, default: 0.875, themeKey: 'monoFontSize', label: 'Mono Size' },
 }
 

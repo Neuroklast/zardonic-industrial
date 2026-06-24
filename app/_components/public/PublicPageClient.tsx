@@ -13,7 +13,8 @@ import {
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface PublicReleaseCardItem {
   id: string
@@ -29,6 +30,8 @@ interface PublicReleaseCardItem {
 interface PublicPageClientProps {
   releases: PublicReleaseCardItem[]
   artistName?: string
+  heading?: string
+  intro?: string
   releaseLayout?: 'grid' | 'swipe' | 'carousel-3d'
   releaseColumns?: string
   releaseCardVariant?: string
@@ -70,7 +73,17 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
   )
 }
 
-export function PublicPageClient({ releases, artistName = '', releaseLayout = 'grid', releaseColumns = '4', releaseCardVariant, releaseHoverEffect }: PublicPageClientProps) {
+export function PublicPageClient({
+  releases,
+  artistName = '',
+  heading,
+  intro,
+  releaseLayout = 'grid',
+  releaseColumns = '4',
+  releaseCardVariant,
+  releaseHoverEffect,
+}: PublicPageClientProps) {
+  const title = formatSectionHeading(heading, 'releases')
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
 
@@ -104,6 +117,8 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
       {!isFancy ? (
         <ReleasesSection
           releases={releases}
+          heading={heading}
+          intro={intro}
           columns={releaseColumns}
           cardVariant={releaseCardVariant}
           hoverEffect={releaseHoverEffect}
@@ -115,7 +130,8 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
         />
       ) : (
         <SectionWrapper id="releases" data-theme-color="foreground card border primary">
-          <SectionHeading dataText="RELEASES">RELEASES</SectionHeading>
+          <SectionHeading sectionId="releases" dataText={title}>{title}</SectionHeading>
+          <SectionIntro sectionId="releases">{intro}</SectionIntro>
             <div className="mb-6 flex flex-wrap gap-2">
               {RELEASE_TYPE_FILTERS.map((filter) => (
                 <button

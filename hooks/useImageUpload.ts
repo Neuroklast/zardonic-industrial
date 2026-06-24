@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { createSignedUploadUrl } from '@/app/admin/_actions/r2Upload'
+import { uploadOptimizedImage } from '@/app/admin/_actions/uploadOptimizedImage'
+import { DEFAULT_MAX_IMAGE_HEIGHT, DEFAULT_MAX_IMAGE_WIDTH } from '@/lib/optimize-image-constants'
 
 export type ImageUploadStatus = 'idle' | 'uploading' | 'success' | 'error'
 
@@ -38,19 +39,25 @@ export function useImageUpload(bucket: string, pathPrefix: string) {
     setState({ status: 'uploading', progress: 0, storagePath: null, publicUrl: null, error: null })
 
     try {
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${pathPrefix}/${Date.now()}.${ext}`
-      const { url, objectPath, publicUrl } = await createSignedUploadUrl(bucket, path)
+      const formData = new FormData()
+      formData.set('file', file)
+      formData.set('prefix', pathPrefix)
+      formData.set('maxWidth', String(DEFAULT_MAX_IMAGE_WIDTH))
+      formData.set('maxHeight', String(DEFAULT_MAX_IMAGE_HEIGHT))
 
-      const response = await fetch(url, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type },
+      const result = await uploadOptimizedImage(formData)
+      if (!result.ok || !result.storagePath) {
+        throw new Error(result.error ?? 'Upload failed')
+      }
+
+      void bucket
+      setState({
+        status: 'success',
+        progress: 1,
+        storagePath: result.storagePath,
+        publicUrl: result.publicUrl ?? null,
+        error: null,
       })
-
-      if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`)
-
-      setState({ status: 'success', progress: 1, storagePath: objectPath, publicUrl, error: null })
     } catch (e) {
       setState({
         status: 'error',

@@ -35,6 +35,7 @@ export interface AppearanceConfig {
   vignetteOpacity: number
   chromaticStrength: number
   sectionPanelOpacity: number
+  sectionGridOpacity: number
   cardSurfaceOpacity: number
   faviconUrl?: string
   faviconStoragePath?: string
@@ -45,7 +46,8 @@ export interface AppearanceConfig {
 const DEFAULT_THEME: AppearanceTheme = BUILTIN_APPEARANCE_PRESETS[0].theme
 
 const THEME_COLOR_FIELDS: Array<{ key: keyof AppearanceTheme; label: string; hint: string }> = [
-  { key: 'foregroundColor', label: 'Text', hint: 'Main text color' },
+  { key: 'foregroundColor', label: 'Headings & primary text', hint: 'Section titles, card titles, links' },
+  { key: 'mutedForegroundColor', label: 'Body & secondary text', hint: 'Paragraphs, dates, subtitles' },
   { key: 'backgroundColor', label: 'Page background', hint: 'Behind everything' },
   { key: 'cardColor', label: 'Panel color', hint: 'Base color for sections & cards' },
   { key: 'accentColor', label: 'Accent', hint: 'Highlights and glow' },
@@ -62,6 +64,7 @@ const DEFAULTS: AppearanceConfig = {
   vignetteOpacity: 0.3,
   chromaticStrength: 0.5,
   sectionPanelOpacity: DEFAULT_SECTION_PANEL_OPACITY,
+  sectionGridOpacity: 0,
   cardSurfaceOpacity: DEFAULT_CARD_SURFACE_OPACITY,
   faviconUrl: '',
   theme: DEFAULT_THEME,
@@ -99,6 +102,10 @@ function parseConfig(raw: Record<string, unknown>): AppearanceConfig {
       typeof raw.sectionPanelOpacity === 'number'
         ? raw.sectionPanelOpacity
         : DEFAULTS.sectionPanelOpacity,
+    sectionGridOpacity:
+      typeof raw.sectionGridOpacity === 'number'
+        ? raw.sectionGridOpacity
+        : DEFAULTS.sectionGridOpacity,
     cardSurfaceOpacity:
       typeof raw.cardSurfaceOpacity === 'number'
         ? raw.cardSurfaceOpacity
@@ -136,14 +143,16 @@ function OpacitySlider({
   value,
   onChange,
   description,
+  disabled = false,
 }: {
   label: string
   value: number
   onChange: (v: number) => void
   description: string
+  disabled?: boolean
 }) {
   return (
-    <div className="space-y-2">
+    <div className={`space-y-2 ${disabled ? 'opacity-50' : ''}`}>
       <label className="block text-xs text-zinc-400">
         {label}: <span className="font-mono text-zinc-300">{Math.round(value * 100)}%</span>
       </label>
@@ -153,6 +162,7 @@ function OpacitySlider({
         step={0.05}
         value={[value]}
         onValueChange={([v]) => onChange(v)}
+        disabled={disabled}
         className="relative flex items-center w-full h-5"
         aria-label={label}
       >
@@ -182,6 +192,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
   const [vignetteOpacity, setVignetteOpacity] = useState(init.vignetteOpacity)
   const [chromaticStrength, setChromaticStrength] = useState(init.chromaticStrength)
   const [sectionPanelOpacity, setSectionPanelOpacity] = useState(init.sectionPanelOpacity)
+  const [sectionGridOpacity, setSectionGridOpacity] = useState(init.sectionGridOpacity)
   const [cardSurfaceOpacity, setCardSurfaceOpacity] = useState(init.cardSurfaceOpacity)
   const [faviconStoragePath, setFaviconStoragePath] = useState(init.faviconStoragePath ?? '')
   const [faviconUrl, setFaviconUrl] = useState(
@@ -203,6 +214,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
       vignetteOpacity,
       chromaticStrength,
       sectionPanelOpacity,
+      sectionGridOpacity,
       cardSurfaceOpacity,
       faviconUrl: faviconUrl || undefined,
       faviconStoragePath: faviconStoragePath || undefined,
@@ -218,6 +230,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
       vignetteOpacity,
       chromaticStrength,
       sectionPanelOpacity,
+      sectionGridOpacity,
       cardSurfaceOpacity,
       faviconUrl,
       faviconStoragePath,
@@ -341,7 +354,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
             <div>
               <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Backgrounds</p>
               <p className="text-xs text-zinc-500 mt-1 max-w-md">
-                Page → section panel → cards. Lower section opacity shows more of the animated background.
+                One place for section surfaces: frosted panel plus optional grid lines. Page background is set in the Background tab.
               </p>
             </div>
             <button
@@ -355,8 +368,18 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
           <OpacitySlider
             label="Section background"
             value={sectionPanelOpacity}
-            onChange={setSectionPanelOpacity}
-            description="Large panel behind each section. At 0%, sections have no background."
+            onChange={(value) => {
+              setSectionPanelOpacity(value)
+              if (value === 0) setSectionGridOpacity(0)
+            }}
+            description="Frosted panel and border around each section. At 0%, panels and borders disappear."
+          />
+          <OpacitySlider
+            label="Grid lines on sections"
+            value={sectionGridOpacity}
+            onChange={setSectionGridOpacity}
+            description="Accent grid inside section panels. Set to 0% to hide."
+            disabled={sectionPanelOpacity === 0}
           />
           <OpacitySlider
             label="Card background"
@@ -419,6 +442,9 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         </div>
 
         <div className="space-y-4 pt-2 border-t border-zinc-800">
+          <p className="text-xs text-zinc-500">
+            Section heading size only affects large section titles — not release cards, browse pages, or other item labels.
+          </p>
           {(Object.keys(FONT_SIZE_RANGES) as Array<keyof typeof FONT_SIZE_RANGES>).map((key) => {
             const range = FONT_SIZE_RANGES[key]
             const current = parseFontSizeRem(theme[range.themeKey], range.default)
@@ -451,6 +477,8 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
           currentUrl={faviconUrl || null}
           storagePrefix="site/favicon"
           accept=".ico,.png,.svg,image/x-icon,image/png,image/svg+xml"
+          editorAspectRatio={1}
+          editorFitMode="contain"
           onResolved={(path, publicUrl) => {
             setFaviconStoragePath(path)
             if (publicUrl) setFaviconUrl(publicUrl)

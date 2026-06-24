@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { MagnifyingGlassPlus, CaretDown, CaretUp } from '@phosphor-icons/react'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import SwipeableGallery from '@/components/SwipeableGallery'
 import { resolveGalleryTileAspect } from '@/lib/gallery-aspect-ratio'
 
@@ -15,6 +16,8 @@ interface GalleryItem {
 
 interface GallerySectionProps {
   items: GalleryItem[]
+  heading?: string
+  intro?: string
   columns?: string
   maxVisible?: number
   aspectRatio?: string
@@ -24,12 +27,15 @@ interface GallerySectionProps {
 
 export function GallerySection({
   items,
+  heading,
+  intro,
   columns = '3',
   maxVisible,
   aspectRatio,
   gap,
   lightbox = true,
 }: GallerySectionProps) {
+  const title = formatSectionHeading(heading, 'gallery')
   const [showAll, setShowAll] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const prefersReducedMotion = useReducedMotion()
@@ -46,7 +52,8 @@ export function GallerySection({
 
   return (
     <SectionWrapper id="gallery" data-theme-color="card border primary">
-      <SectionHeading dataText="GALLERY">GALLERY</SectionHeading>
+      <SectionHeading sectionId="gallery" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="gallery">{intro}</SectionIntro>
 
       {visibleItems.length > 0 ? (
         <>

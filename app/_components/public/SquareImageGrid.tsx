@@ -87,7 +87,10 @@ export function SquareImageGrid({ items, footerText, className = '', children }:
         ))}
       </div>
       {footerText ? (
-        <p className="border-t border-border/60 pt-6 text-center font-mono text-xs text-muted-foreground">
+        <p
+          data-draft-target="merchandise-footer"
+          className="border-t border-border/60 pt-6 text-center font-mono text-xs text-muted-foreground"
+        >
           {footerText}
         </p>
       ) : null}

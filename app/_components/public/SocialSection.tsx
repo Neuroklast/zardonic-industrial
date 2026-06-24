@@ -92,7 +92,7 @@ export function SocialSection({ links, label = 'CONNECT' }: SocialSectionProps) 
         whileInView={{ opacity: 1, x: 0, filter: 'blur(0px)', clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
         viewport={{ once: true }}
         transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="cyber-grid surface-section-panel border border-border/60 p-6 md:p-8"
+        className="cyber-grid surface-section-panel p-6 md:p-8"
       >
         <div className="mb-12">
           <h2

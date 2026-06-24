@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   DndContext,
   closestCenter,
@@ -20,6 +21,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
 import type { SectionConfig } from '@/lib/site-config-sections'
 
 export type { SectionConfig }
@@ -27,9 +29,11 @@ export type { SectionConfig }
 interface SectionRowProps {
   section: SectionConfig
   onToggle: (id: string, visible: boolean) => void
+  onLabelChange: (id: string, label: string) => void
+  onIntroChange: (id: string, intro: string) => void
 }
 
-function SectionRow({ section, onToggle }: SectionRowProps) {
+function SectionRow({ section, onToggle, onLabelChange, onIntroChange }: SectionRowProps) {
   const {
     attributes,
     listeners,
@@ -45,39 +49,60 @@ function SectionRow({ section, onToggle }: SectionRowProps) {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const showIntro = section.id !== 'hero'
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded px-3 py-2.5 gap-3"
+      className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2.5 space-y-2"
     >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label={`Drag to reorder ${section.label}`}
-        className="text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing touch-none"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 256 256"
-          aria-hidden="true"
-          fill="currentColor"
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          aria-label={`Drag to reorder ${section.label}`}
+          className="text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing touch-none shrink-0"
         >
-          <path d="M108,60a16,16,0,1,1-16-16A16,16,0,0,1,108,60Zm56,16a16,16,0,1,0-16-16A16,16,0,0,0,164,76ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,176a16,16,0,1,0,16,16A16,16,0,0,0,92,176Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,176Z" />
-        </svg>
-      </button>
-      <span className="flex-1 text-sm text-zinc-200">{section.label}</span>
-      <SwitchPrimitive.Root
-        checked={section.visible}
-        onCheckedChange={(checked) => onToggle(section.id, checked)}
-        aria-label={`Toggle ${section.label} visibility`}
-        className="relative inline-flex h-5 w-9 items-center rounded-full border border-zinc-600 transition-colors data-[state=checked]:bg-red-600 data-[state=unchecked]:bg-zinc-700 focus:outline-none"
-      >
-        <SwitchPrimitive.Thumb className="pointer-events-none block size-3.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0.5" />
-      </SwitchPrimitive.Root>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 256 256"
+            aria-hidden="true"
+            fill="currentColor"
+          >
+            <path d="M108,60a16,16,0,1,1-16-16A16,16,0,0,1,108,60Zm56,16a16,16,0,1,0-16-16A16,16,0,0,0,164,76ZM92,112a16,16,0,1,0,16,16A16,16,0,0,0,92,112Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,112ZM92,176a16,16,0,1,0,16,16A16,16,0,0,0,92,176Zm72,0a16,16,0,1,0,16,16A16,16,0,0,0,164,176Z" />
+          </svg>
+        </button>
+        <input
+          type="text"
+          value={section.label}
+          onChange={(e) => onLabelChange(section.id, e.target.value)}
+          aria-label={`Heading for ${section.id} section`}
+          className="flex-1 min-w-0 font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-zinc-200 focus:outline-none focus:border-zinc-600"
+          placeholder="Section heading"
+        />
+        <SwitchPrimitive.Root
+          checked={section.visible}
+          onCheckedChange={(checked) => onToggle(section.id, checked)}
+          aria-label={`Toggle ${section.label} visibility`}
+          className="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full border border-zinc-600 transition-colors data-[state=checked]:bg-red-600 data-[state=unchecked]:bg-zinc-700 focus:outline-none"
+        >
+          <SwitchPrimitive.Thumb className="pointer-events-none block size-3.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0.5" />
+        </SwitchPrimitive.Root>
+      </div>
+      {showIntro ? (
+        <input
+          type="text"
+          value={section.intro ?? ''}
+          onChange={(e) => onIntroChange(section.id, e.target.value)}
+          aria-label={`Subtitle for ${section.id} section`}
+          className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-1.5 text-zinc-400 focus:outline-none focus:border-zinc-600"
+          placeholder="Subtitle (optional)"
+        />
+      ) : null}
     </div>
   )
 }
@@ -87,11 +112,17 @@ interface SectionsSortableProps {
 }
 
 export function SectionsSortable({ initialSections }: SectionsSortableProps) {
+  const router = useRouter()
   const [sections, setSections] = useState<SectionConfig[]>(
     [...initialSections].sort((a, b) => a.order - b.order),
   )
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    const payload = sections.map((s, i) => ({ ...s, order: i }))
+    broadcastAdminDraft('sections', { sections: payload })
+  }, [sections])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -114,6 +145,16 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
     setSections((prev) => prev.map((s) => (s.id === id ? { ...s, visible } : s)))
   }
 
+  function handleLabelChange(id: string, label: string) {
+    setSections((prev) => prev.map((s) => (s.id === id ? { ...s, label } : s)))
+  }
+
+  function handleIntroChange(id: string, intro: string) {
+    setSections((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, intro: intro || undefined } : s)),
+    )
+  }
+
   async function handleSave() {
     setStatus('saving')
     setErrorMsg(null)
@@ -127,6 +168,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
       setErrorMsg(result.error)
     } else {
       setStatus('saved')
+      router.refresh()
       setTimeout(() => setStatus('idle'), 2000)
     }
   }
@@ -134,14 +176,20 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
   return (
     <div className="space-y-4">
       <div className="text-xs text-zinc-500">
-        Drag rows to reorder sections. Toggle the switch to show/hide a section on the frontpage.
+        Drag to reorder, edit headings and optional subtitles, and toggle visibility. Changes preview live.
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-1.5">
             {sections.map((section) => (
-              <SectionRow key={section.id} section={section} onToggle={handleToggle} />
+              <SectionRow
+                key={section.id}
+                section={section}
+                onToggle={handleToggle}
+                onLabelChange={handleLabelChange}
+                onIntroChange={handleIntroChange}
+              />
             ))}
           </div>
         </SortableContext>
@@ -154,7 +202,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
           disabled={status === 'saving'}
           className="px-4 py-2 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors disabled:opacity-50"
         >
-          {status === 'saving' ? 'Saving…' : 'Save Order & Visibility'}
+          {status === 'saving' ? 'Saving…' : 'Save Sections'}
         </button>
         {status === 'saved' && <span className="text-xs text-green-400">Saved</span>}
         {status === 'error' && <span className="text-xs text-red-400">{errorMsg ?? 'Error'}</span>}

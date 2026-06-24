@@ -60,23 +60,19 @@ body.no-select a {
   }
 }
 
-/* Typography admin live-overrides — placed outside @layer so they win over
-   @layer utilities (Tailwind text-* classes) when the custom properties ARE set.
-   CSS guaranteed-invalid cascade behaviour: when a custom property is not defined
-   the var() expression evaluates to the guaranteed-invalid value and the
-   declaration is treated as absent, so the next matching cascade rule (e.g.
-   Tailwind text-4xl on the element) applies unchanged. */
-h1, h2, h3, h4, h5, h6 {
+/* Section titles only — card/browse headings keep their own text-* utilities. */
+.section-heading {
   font-family: var(--font-heading, 'Orbitron', sans-serif);
   text-shadow: var(--heading-text-shadow,
     0.5px 0 0 rgba(255, 255, 255, 0.15),
     -0.5px 0 0 rgba(200, 200, 200, 0.15));
-  font-size: var(--heading-font-size);
   font-weight: var(--heading-font-weight);
   line-height: var(--heading-line-height);
   letter-spacing: var(--heading-letter-spacing);
 }
 
+/* Body size override — only applies when admin sets --body-font-size.
+   Tailwind text-* utilities on children are unaffected (rem is root-relative). */
 body {
   font-size: var(--body-font-size);
   line-height: var(--body-line-height);
@@ -108,11 +104,12 @@ code, kbd, samp, pre {
      The trailing space after the colon is intentional CSS "guaranteed-invalid" syntax:
      it makes any var(--property) that references these variables silently fail/be ignored,
      which lets the element's own Tailwind size utilities take over unimpeded. */
-  --heading-font-size: ;   /* guaranteed-invalid → var() callers skip this declaration */
+  --font-size-heading: ;   /* guaranteed-invalid → text-heading utility unchanged */
   --heading-font-weight: ; /* guaranteed-invalid */
   --heading-line-height: ; /* guaranteed-invalid */
   --heading-letter-spacing: ; /* guaranteed-invalid */
   --heading-text-shadow: none;
+  --font-size-body: ;      /* guaranteed-invalid */
   --body-font-size: ;      /* guaranteed-invalid */
   --body-line-height: ;    /* guaranteed-invalid */
   --mono-font-size: ;      /* guaranteed-invalid */

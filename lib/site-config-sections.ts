@@ -1,6 +1,9 @@
 export interface SectionConfig {
   id: string
+  /** Public section heading (shown uppercase on the site). */
   label: string
+  /** Optional subtitle below the heading. */
+  intro?: string
   visible: boolean
   order: number
 }
@@ -19,6 +22,12 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'contact', label: 'Contact', visible: true, order: 10 },
 ]
 
+export const EXCLUDED_HOME_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
+
+export function withoutExcludedSections(items: SectionConfig[]): SectionConfig[] {
+  return items.filter((section) => !EXCLUDED_HOME_SECTION_IDS.has(section.id))
+}
+
 export function parseSections(raw: unknown): SectionConfig[] {
   if (!Array.isArray(raw)) return DEFAULT_SECTIONS
   const parsed = raw
@@ -29,6 +38,7 @@ export function parseSections(raw: unknown): SectionConfig[] {
     .map((item) => ({
       id: typeof item.id === 'string' ? item.id : '',
       label: typeof item.label === 'string' ? item.label : '',
+      intro: typeof item.intro === 'string' ? item.intro : undefined,
       visible: typeof item.visible === 'boolean' ? item.visible : true,
       order: typeof item.order === 'number' ? item.order : 0,
     }))

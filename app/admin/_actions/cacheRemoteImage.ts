@@ -4,9 +4,9 @@ import { createHash } from 'node:crypto'
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { optimizeImageBuffer } from '@/lib/optimize-image'
 import {
   assertRemoteImageSize,
-  extensionFromContentType,
   isAllowedImageContentType,
   resolveRemoteImageUrl,
 } from '@/lib/remote-image-url'
@@ -64,15 +64,17 @@ export async function cacheRemoteImageToR2(
       const buffer = Buffer.from(await response.arrayBuffer())
       assertRemoteImageSize(buffer.byteLength)
 
-      const ext = extensionFromContentType(contentType)
+      const mimeType = contentType?.split(';')[0].trim() ?? 'image/jpeg'
+      const optimized = await optimizeImageBuffer(buffer, mimeType)
+
       const prefix = options?.prefix ?? 'imports'
-      const objectPath = buildObjectPath(prefix, ext, resolved.url)
+      const objectPath = buildObjectPath(prefix, optimized.extension, resolved.url)
 
       const { publicUrl, objectPath: storedPath } = await uploadBufferToR2(
         MEDIA_BUCKET,
         objectPath,
-        buffer,
-        contentType?.split(';')[0].trim() ?? 'image/jpeg',
+        optimized.buffer,
+        optimized.contentType,
       )
 
       return {

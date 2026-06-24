@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { MEDIA_BUCKET } from '@/lib/constants'
+import { useEffect, useRef, useState } from 'react'
+import { ImageCropEditor } from '@/app/admin/_components/ImageCropEditor'
+import { submitOptimizedUpload } from '@/app/admin/_lib/submitOptimizedUpload'
+import { shouldOpenImageEditor, type CropFitMode } from '@/lib/image-crop-math'
 import { REMOTE_IMAGE_MAX_BYTES } from '@/lib/remote-image-url'
 
 const ALLOWED_UPLOAD_MIME = new Set([
@@ -20,6 +22,10 @@ interface ImageUploaderProps {
   onUpload: (storagePath: string, publicUrl?: string) => void
   onError?: (error: string) => void
   accept?: string
+  enableEditor?: boolean
+  editorAspectRatio?: number | null
+  editorFitMode?: CropFitMode
+  maxOutputDimension?: number
 }
 
 export function ImageUploader({
@@ -29,10 +35,52 @@ export function ImageUploader({
   onUpload,
   onError,
   accept = 'image/*',
+  enableEditor = true,
+  editorAspectRatio = null,
+  editorFitMode = 'cover',
+  maxOutputDimension = 2400,
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorSrc, setEditorSrc] = useState<string | null>(null)
+  const [pendingObjectUrl, setPendingObjectUrl] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    setPreview(currentUrl ?? null)
+  }, [currentUrl])
+
+  useEffect(() => {
+    return () => {
+      if (pendingObjectUrl) URL.revokeObjectURL(pendingObjectUrl)
+    }
+  }, [pendingObjectUrl])
+
+  async function uploadBlob(blob: Blob) {
+    setUploading(true)
+    try {
+      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix)
+      setPreview(publicUrl || URL.createObjectURL(blob))
+      onUpload(storagePath, publicUrl || undefined)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed'
+      onError?.(msg)
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  function closeEditor() {
+    setEditorOpen(false)
+    setEditorSrc(null)
+    if (pendingObjectUrl) {
+      URL.revokeObjectURL(pendingObjectUrl)
+      setPendingObjectUrl(null)
+    }
+    if (inputRef.current) inputRef.current.value = ''
+  }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -51,34 +99,15 @@ export function ImageUploader({
       return
     }
 
-    setUploading(true)
-    try {
-      const { createSignedUploadUrl } = await import('@/app/admin/_actions/r2Upload')
-      const bucket = MEDIA_BUCKET
-      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const safePrefix = storagePrefix.replace(/[^a-z0-9/_-]/gi, '').replace(/^\/+|\/+$/g, '') || 'uploads'
-      const path = `${safePrefix}/${Date.now()}.${ext}`
-      const { url, objectPath, publicUrl } = await createSignedUploadUrl(bucket, path)
-
-      const uploadRes = await fetch(url, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type },
-      })
-
-      if (!uploadRes.ok) {
-        throw new Error('Upload failed')
-      }
-
-      setPreview(URL.createObjectURL(file))
-      onUpload(objectPath, publicUrl)
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
-      onError?.(msg)
-    } finally {
-      setUploading(false)
-      if (inputRef.current) inputRef.current.value = ''
+    if (enableEditor && shouldOpenImageEditor(file.type)) {
+      const objectUrl = URL.createObjectURL(file)
+      setPendingObjectUrl(objectUrl)
+      setEditorSrc(objectUrl)
+      setEditorOpen(true)
+      return
     }
+
+    await uploadBlob(file)
   }
 
   return (
@@ -93,7 +122,7 @@ export function ImageUploader({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        disabled={uploading}
+        disabled={uploading || editorOpen}
         className="px-3 py-1.5 text-sm rounded bg-zinc-800 border border-zinc-700 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors disabled:opacity-50"
       >
         {uploading ? 'Uploading…' : label}
@@ -102,9 +131,25 @@ export function ImageUploader({
         ref={inputRef}
         type="file"
         accept={accept}
-        onChange={handleFileChange}
+        onChange={(e) => void handleFileChange(e)}
         className="hidden"
       />
+
+      {editorSrc && (
+        <ImageCropEditor
+          open={editorOpen}
+          imageSrc={editorSrc}
+          title="Adjust & crop image"
+          aspectRatio={editorAspectRatio}
+          fitMode={editorFitMode}
+          maxOutputDimension={maxOutputDimension}
+          onCancel={closeEditor}
+          onConfirm={(blob) => {
+            closeEditor()
+            void uploadBlob(blob)
+          }}
+        />
+      )}
     </div>
   )
 }

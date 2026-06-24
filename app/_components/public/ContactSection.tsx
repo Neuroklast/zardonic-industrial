@@ -1,18 +1,26 @@
 'use client'
 
 import { useActionState } from 'react'
-import { SectionWrapper, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 import { submitContact } from '@/app/_actions/contact'
 
 const fieldClass =
   'min-h-[44px] w-full border border-border bg-transparent px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-primary/40 focus:border-primary/60 focus:outline-none'
 
-export function ContactSection() {
+interface ContactSectionProps {
+  heading?: string
+  intro?: string
+}
+
+export function ContactSection({ heading, intro }: ContactSectionProps) {
   const [state, formAction, pending] = useActionState(submitContact, null)
+  const title = formatSectionHeading(heading, 'contact')
 
   return (
     <SectionWrapper id="contact" data-theme-color="foreground card border input">
-      <SectionHeading dataText="CONTACT">CONTACT</SectionHeading>
+      <SectionHeading sectionId="contact" dataText={title}>{title}</SectionHeading>
+      <SectionIntro sectionId="contact">{intro}</SectionIntro>
 
       {state?.success ? (
         <p className="border border-border px-4 py-3 font-mono text-sm text-foreground">

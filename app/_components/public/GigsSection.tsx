@@ -8,13 +8,16 @@ import { HOMEPAGE_GIG_LIMIT } from '@/lib/browse-pagination'
 import { mapGigRowToOverlayGig, type PublicGigRow } from '@/lib/gig-public-mapper'
 import type { CyberpunkOverlayState } from '@/lib/app-types'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
-import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { formatSectionHeading } from '@/lib/section-display'
+import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { ArrowRight, CalendarBlank, MapPin } from '@phosphor-icons/react'
 
 interface GigsSectionProps {
   upcoming: PublicGigRow[]
   past: PublicGigRow[]
   artistName?: string
+  heading?: string
+  intro?: string
 }
 
 function formatEventLabel(eventDate: string) {
@@ -120,9 +123,10 @@ function GigList({
   )
 }
 
-export function GigsSection({ upcoming, past, artistName = '' }: GigsSectionProps) {
+export function GigsSection({ upcoming, past, artistName = '', heading, intro }: GigsSectionProps) {
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const hasGigs = upcoming.length > 0 || past.length > 0
+  const title = formatSectionHeading(heading, 'gigs')
 
   const handleGigClick = (gig: PublicGigRow) => {
     setOverlay({ type: 'gig', data: mapGigRowToOverlayGig(gig) })
@@ -131,7 +135,8 @@ export function GigsSection({ upcoming, past, artistName = '' }: GigsSectionProp
   return (
     <>
       <SectionWrapper id="gigs" data-theme-color="foreground card border primary">
-        <SectionHeading dataText="TOUR DATES">TOUR DATES</SectionHeading>
+        <SectionHeading sectionId="gigs" dataText={title}>{title}</SectionHeading>
+        <SectionIntro sectionId="gigs">{intro}</SectionIntro>
 
         {hasGigs ? (
           <div className="space-y-10">

@@ -573,14 +573,9 @@
     linear-gradient(oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.05) 1px, transparent 1px),
     linear-gradient(90deg, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
-  opacity: 0;
+  opacity: var(--section-grid-opacity, 0);
   pointer-events: none;
-  transition: opacity 0.3s ease;
   z-index: var(--z-local-above-1);
-}
-
-.cyber-grid:hover::before {
-  opacity: 1;
 }
 
 :is(.data-label) {
@@ -596,6 +591,21 @@
   background-color: var(--surface-section-bg-fallback);
   background-color: var(--surface-section-bg);
   backdrop-filter: var(--surface-section-backdrop);
+  border-width: 1px;
+  border-style: solid;
+  border-color: color-mix(
+    in srgb,
+    var(--border) calc(var(--surface-section-border-opacity, 0.6) * 100%),
+    transparent
+  );
+}
+
+.surface-section-divider {
+  border-color: color-mix(
+    in srgb,
+    var(--border) calc(var(--surface-section-border-opacity, 0.6) * 100%),
+    transparent
+  );
 }
 
 .surface-card {
