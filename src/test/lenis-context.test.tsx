@@ -63,6 +63,8 @@ describe('LenisContext — capable device', () => {
     const { result } = renderHook(() => useLenisContext(), { wrapper })
     expect(result.current.velocityY).toBe(0)
   })
+
+
 })
 
 describe('LenisContext — lite mode device', () => {

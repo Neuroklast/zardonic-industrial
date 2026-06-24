@@ -6,6 +6,9 @@ import { useLenisContext } from '@/contexts/LenisContext'
 
 const logoImage = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
+const HERO_CTA_CLASS =
+  'cyber-border hover-glitch hover-noise relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 font-mono text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
+
 interface HeroSectionProps {
   headline: string
   tagline?: string
@@ -16,6 +19,7 @@ interface HeroSectionProps {
   minHeight?: string
   imageBlur?: number
   paddingTop?: string
+  showTourDatesCta?: boolean
 }
 
 
@@ -30,6 +34,7 @@ export function HeroSection({
   minHeight,
   imageBlur,
   paddingTop,
+  showTourDatesCta = true,
 }: HeroSectionProps) {
   const [contentLoaded] = useState(true)
   const prefersReducedMotion = useReducedMotion()
@@ -67,13 +72,13 @@ export function HeroSection({
         />
       )}
 
-      <div className="absolute inset-0 noise-effect" aria-hidden="true" />
+      <div className="absolute inset-0 noise-effect pointer-events-none" aria-hidden="true" />
 
       <m.div
         initial={{ opacity: 0 }}
         animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
         transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
-        className="relative px-4 text-center"
+        className="relative mx-auto w-full max-w-6xl px-card text-center"
         style={{ zIndex: 'var(--z-content)' }}
       >
         <m.div
@@ -127,7 +132,8 @@ export function HeroSection({
             duration: prefersReducedMotion ? 0 : 0.8,
             ease: [0.25, 0.46, 0.45, 0.94],
           }}
-          className="mt-12 flex flex-wrap justify-center gap-4"
+          className="relative mt-12 flex flex-wrap justify-center gap-4"
+          style={{ zIndex: 'var(--z-local-top)' }}
         >
           <a
             href={ctaUrl || '#releases'}
@@ -137,20 +143,22 @@ export function HeroSection({
               const id = (ctaUrl || '#releases').replace('#', '')
               scrollTo(id, { offset: -60 })
             }}
-            className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
+            className={HERO_CTA_CLASS}
           >
             <span className="hover-chromatic" data-draft-target="hero-cta">{ctaLabel || 'LISTEN NOW'}</span>
           </a>
-          <a
-            href="#gigs"
-            onClick={(event) => {
-              event.preventDefault()
-              scrollTo('gigs', { offset: -60 })
-            }}
-            className="cyber-border hover-glitch hover-noise relative inline-flex items-center justify-center px-6 py-3 font-mono text-sm uppercase tracking-[0.3em]"
-          >
-            <span className="hover-chromatic">TOUR DATES</span>
-          </a>
+          {showTourDatesCta ? (
+            <a
+              href="#gigs"
+              onClick={(event) => {
+                event.preventDefault()
+                scrollTo('gigs', { offset: -60 })
+              }}
+              className={HERO_CTA_CLASS}
+            >
+              <span className="hover-chromatic">TOUR DATES</span>
+            </a>
+          ) : null}
         </m.div>
       </m.div>
     </section>

@@ -241,19 +241,23 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                       {overlayPhase === 'revealed' && (
                         <motion.div
                           key={overlaySessionKey ?? overlay.type}
-                          className={overlay.type === 'release' ? undefined : progressiveMode.className}
+                          className={
+                            overlay.type === 'release' || overlay.type === 'gig'
+                              ? undefined
+                              : progressiveMode.className
+                          }
                           initial={
-                            overlay.type === 'release'
+                            overlay.type === 'release' || overlay.type === 'gig'
                               ? { opacity: 0, y: 8 }
                               : progressiveMode.containerVariants.loading
                           }
                           animate={
-                            overlay.type === 'release'
+                            overlay.type === 'release' || overlay.type === 'gig'
                               ? { opacity: 1, y: 0 }
                               : progressiveMode.containerVariants.loaded
                           }
                           transition={
-                            overlay.type === 'release'
+                            overlay.type === 'release' || overlay.type === 'gig'
                               ? { duration: 0.25, ease: 'easeOut' }
                               : progressiveMode.transition
                           }

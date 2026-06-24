@@ -18,6 +18,7 @@ const partnerInputSchema = z.object({
   category: partnerCategorySchema.optional().default('partner'),
   display_order: z.coerce.number().optional().default(0),
   active: z.coerce.boolean().optional(),
+  logo_hover_white: z.coerce.boolean().optional().default(false),
 })
 
 function parseFormData(formData: FormData) {
@@ -29,6 +30,7 @@ function parseFormData(formData: FormData) {
     category: formData.get('category') || 'partner',
     display_order: formData.get('display_order') || 0,
     active: formData.get('active'),
+    logo_hover_white: formData.get('logo_hover_white'),
   }
 }
 

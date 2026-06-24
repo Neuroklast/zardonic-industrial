@@ -1,6 +1,8 @@
+import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
 import { isAdminSession } from '@/lib/api-admin-auth'
-import { chainSyncJobTick, isCronOrAdminAuthorized } from '@/lib/sync-job-chain'
+import { isCronOrAdminAuthorized } from '@/lib/sync-job-chain'
+import { continueSyncJob } from '@/lib/sync-job-continuation'
 import { advanceSyncJob } from '@/lib/sync-job-runner'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +23,13 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     const result = await advanceSyncJob(id)
     if (!result.done && result.job.status === 'running') {
-      chainSyncJobTick(id)
+      continueSyncJob(id)
+    }
+
+    if (result.done && result.job.status === 'completed') {
+      revalidatePath('/admin/releases')
+      revalidatePath('/admin/gigs')
+      revalidatePath('/')
     }
 
     return NextResponse.json(

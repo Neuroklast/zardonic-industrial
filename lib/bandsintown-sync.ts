@@ -202,3 +202,92 @@ export async function syncBandsintownGigsToSupabase(
 
   return result
 }
+
+const GIG_IMPORT_BATCH_SIZE = 10
+
+export async function syncBandsintownGigsBatch(
+  supabase: SupabaseClient,
+  gigs: BandsintownGigRow[],
+  cursor: number,
+  limit = GIG_IMPORT_BATCH_SIZE,
+): Promise<BandsintownSyncResult & { nextCursor: number; done: boolean }> {
+  const result: BandsintownSyncResult & { nextCursor: number; done: boolean } = {
+    synced: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+    nextCursor: cursor,
+    done: true,
+  }
+
+  const slice = gigs.slice(cursor, cursor + limit)
+  if (slice.length === 0) {
+    result.done = cursor >= gigs.length
+    return result
+  }
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('gigs')
+    .select('id, bandsintown_id, title, event_date')
+    .not('bandsintown_id', 'is', null)
+
+  if (existingError) {
+    result.errors.push(`Failed to load existing gigs: ${existingError.message}`)
+    result.nextCursor = cursor + slice.length
+    result.done = result.nextCursor >= gigs.length
+    return result
+  }
+
+  const existingByBitId = new Map<string, { id: string; title: string; event_date: string }>()
+  for (const row of existingRows ?? []) {
+    if (!row.bandsintown_id || !row.id) continue
+    existingByBitId.set(row.bandsintown_id, {
+      id: row.id,
+      title: row.title,
+      event_date: row.event_date,
+    })
+  }
+
+  for (const gig of slice) {
+    const existing = existingByBitId.get(gig.bandsintown_id)
+    if (existing) {
+      const { error } = await supabase
+        .from('gigs')
+        .update({
+          title: gig.title,
+          venue: gig.venue,
+          city: gig.city,
+          country: gig.country,
+          event_date: gig.event_date,
+          ticket_url: gig.ticket_url,
+          festival_name: gig.festival_name,
+          description: gig.description,
+          active: true,
+        })
+        .eq('id', existing.id)
+
+      if (error) {
+        result.errors.push(`Failed to update "${gig.title}": ${error.message}`)
+      } else {
+        result.updated++
+      }
+      continue
+    }
+
+    const { error } = await supabase.from('gigs').insert(gig)
+    if (error) {
+      result.errors.push(`Failed to insert "${gig.title}": ${error.message}`)
+    } else {
+      result.synced++
+      existingByBitId.set(gig.bandsintown_id, {
+        id: gig.bandsintown_id,
+        title: gig.title,
+        event_date: gig.event_date,
+      })
+    }
+  }
+
+  result.nextCursor = cursor + slice.length
+  result.done = result.nextCursor >= gigs.length
+  return result
+}

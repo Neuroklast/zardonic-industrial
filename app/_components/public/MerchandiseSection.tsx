@@ -1,4 +1,4 @@
-import { SectionWrapper } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 import { SquareImageGrid } from './SquareImageGrid'
 
 interface GridItem {
@@ -14,10 +14,14 @@ interface MerchandiseSectionProps {
 }
 
 export function MerchandiseSection({ items, footerText }: MerchandiseSectionProps) {
-  if (items.length === 0) return null
   return (
-    <SectionWrapper id="merch" heading="Merchandise">
-      <SquareImageGrid items={items} footerText={footerText} />
+    <SectionWrapper id="merch" data-theme-color="foreground card border primary">
+      <SectionHeading dataText="MERCHANDISE">MERCHANDISE</SectionHeading>
+      {items.length > 0 ? (
+        <SquareImageGrid items={items} footerText={footerText} />
+      ) : (
+        <SectionEmpty label="Merchandise coming soon" />
+      )}
     </SectionWrapper>
   )
 }

@@ -20,9 +20,34 @@ export function SectionContentPanel({
 }) {
   return (
     <div
-      className={`cyber-grid border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8 ${className}`}
+      className={`cyber-grid w-full border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8 ${className}`}
     >
       {children}
+    </div>
+  )
+}
+
+/** Large cyber-style section title — matches Bio, Gallery, Gigs, Releases. */
+export function SectionHeading({
+  children,
+  dataText,
+  className = '',
+}: {
+  children: React.ReactNode
+  dataText?: string
+  className?: string
+}) {
+  const label = dataText ?? (typeof children === 'string' ? children : undefined)
+
+  return (
+    <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
+      <h2
+        className={`hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground ${className}`}
+        data-text={label}
+      >
+        {children}
+        <span className="animate-pulse">_</span>
+      </h2>
     </div>
   )
 }
@@ -38,13 +63,13 @@ export function SectionWrapper({
   return (
     <section
       id={id}
-      className={`relative max-w-6xl mx-auto px-card py-section scanline-effect ${className}`}
+      className={`relative w-full max-w-6xl mx-auto px-card py-section ${className}`}
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
       {...rest}
     >
       {heading ? (
-        <h2 className="font-mono text-xs tracking-widest text-zinc-500 uppercase mb-8">
-          <span className="text-zinc-600 mr-2">—</span>
+        <h2 className="mb-8 font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          <span className="mr-2 text-border">—</span>
           {heading}
         </h2>
       ) : null}
@@ -57,11 +82,11 @@ export function SectionWrapper({
 export function SectionDivider() {
   return (
     <div
-      className="max-w-6xl mx-auto px-4"
+      className="w-full max-w-6xl mx-auto px-card"
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
       aria-hidden="true"
     >
-      <hr className="border-zinc-800/60" />
+      <hr className="border-border/60" />
     </div>
   )
 }

@@ -14,6 +14,7 @@ interface EditPartnerFormProps {
     logo_storage_path: string | null
     display_order: number
     active: boolean
+    logo_hover_white: boolean | null
   }
   resolvedLogoUrl?: string | null
 }
@@ -92,6 +93,16 @@ export function EditPartnerForm({ partner, resolvedLogoUrl }: EditPartnerFormPro
         }}
         onError={(msg) => setError(msg)}
       />
+      <label className="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+        <input
+          type="checkbox"
+          name="logo_hover_white"
+          value="true"
+          defaultChecked={!!partner.logo_hover_white}
+          className="rounded border-zinc-600"
+        />
+        White logo (permanent, transparent background)
+      </label>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">
         <button

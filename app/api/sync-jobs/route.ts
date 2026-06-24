@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAdminUserId, isAdminSession } from '@/lib/api-admin-auth'
-import { chainSyncJobTick } from '@/lib/sync-job-chain'
-import { advanceSyncJob } from '@/lib/sync-job-runner'
+import { continueSyncJob } from '@/lib/sync-job-continuation'
 import {
   createSyncJob,
   updateSyncJob,
@@ -16,20 +15,27 @@ const createJobSchema = z.object({
   type: z.enum([
     'discogs_sync',
     'spotify_sync',
+    'itunes_sync',
+    'track_enrichment',
+    'bandsintown_sync',
     'purge_and_sync_releases',
     'purge_and_sync_gigs',
   ]),
   payload: z.record(z.string(), z.unknown()).optional(),
 })
 
-function initialPhase(type: SyncJobType): 'purge' | 'fetch' | 'sync' | null {
+function initialPhase(type: SyncJobType): 'purge' | 'fetch' | 'import' | 'enrich' | 'sync' | null {
   if (type === 'purge_and_sync_releases' || type === 'purge_and_sync_gigs') return 'purge'
+  if (type === 'track_enrichment') return 'enrich'
   return 'fetch'
 }
 
 function initialPayload(type: SyncJobType): Record<string, unknown> {
   if (type === 'discogs_sync') return { source: 'discogs', stagedItems: [], importCursor: 0 }
   if (type === 'spotify_sync') return { source: 'spotify', stagedItems: [], importCursor: 0 }
+  if (type === 'itunes_sync') return { source: 'itunes', stagedItems: [], importCursor: 0 }
+  if (type === 'track_enrichment') return { enrichCursor: 0 }
+  if (type === 'bandsintown_sync') return { gigImportCursor: 0 }
   return {}
 }
 
@@ -65,11 +71,7 @@ export async function POST(request: Request) {
       await updateSyncJob(job.id, { phase })
     }
 
-    void advanceSyncJob(job.id).then(({ done, job: updated }) => {
-      if (!done && updated.status === 'running') {
-        chainSyncJobTick(updated.id)
-      }
-    })
+    continueSyncJob(job.id)
 
     return NextResponse.json({ jobId: job.id, status: job.status }, { status: 201 })
   } catch (error) {

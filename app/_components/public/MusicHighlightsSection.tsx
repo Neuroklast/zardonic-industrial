@@ -8,7 +8,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 
 interface MusicHighlight {
   id: string
@@ -42,7 +42,7 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
         href={youtubeUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-mono text-xs text-zinc-400 hover:text-white underline"
+        className="inline-flex min-h-[44px] items-center font-mono text-xs text-muted-foreground underline transition-colors hover:text-foreground"
       >
         Watch on YouTube →
       </a>
@@ -52,25 +52,26 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
   if (!consented) {
     return (
       <button
+        type="button"
         onClick={() => setConsented(true)}
-        className="relative w-full aspect-video bg-zinc-900 border border-zinc-800 hover:border-zinc-600 transition-colors group overflow-hidden"
+        className="group relative aspect-video w-full overflow-hidden border border-border bg-muted transition-colors hover:border-primary/40"
         aria-label={`Play ${title} on YouTube`}
       >
         <Image
           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
           alt={title}
           fill
-          className="object-cover opacity-50 group-hover:opacity-60 transition-opacity"
+          className="object-cover opacity-50 transition-opacity group-hover:opacity-60"
           sizes="(max-width: 768px) 100vw, 50vw"
           unoptimized
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          <div className="w-12 h-12 rounded-full border border-white/60 flex items-center justify-center group-hover:border-white transition-colors">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-white ml-0.5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-foreground/60 transition-colors group-hover:border-foreground">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="ml-0.5 h-5 w-5 text-foreground">
               <path d="M8 5v14l11-7z" />
             </svg>
           </div>
-          <span className="font-mono text-xs text-zinc-400 group-hover:text-zinc-200 transition-colors">
+          <span className="font-mono text-xs text-muted-foreground transition-colors group-hover:text-foreground">
             Click to load YouTube
           </span>
         </div>
@@ -79,13 +80,13 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
   }
 
   return (
-    <div className="relative w-full aspect-video">
+    <div className="relative aspect-video w-full">
       <iframe
         src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
         title={title}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
-        className="absolute inset-0 w-full h-full border-0"
+        className="absolute inset-0 h-full w-full border-0"
         loading="lazy"
       />
     </div>
@@ -98,16 +99,17 @@ interface MusicHighlightsSectionProps {
 
 export function MusicHighlightsSection({ highlights }: MusicHighlightsSectionProps) {
   return (
-    <SectionWrapper id="music" heading="Music Highlights">
+    <SectionWrapper id="music" data-theme-color="foreground card border primary">
+      <SectionHeading dataText="MUSIC HIGHLIGHTS">MUSIC HIGHLIGHTS</SectionHeading>
       {highlights.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {highlights.map((h) => (
             <div key={h.id} className="flex flex-col gap-3">
               <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
-              <p className="font-mono text-sm text-zinc-200">{h.title}</p>
-              {h.description && (
-                <p className="font-mono text-xs text-zinc-500">{h.description}</p>
-              )}
+              <p className="font-mono text-sm text-foreground">{h.title}</p>
+              {h.description ? (
+                <p className="font-mono text-xs text-muted-foreground">{h.description}</p>
+              ) : null}
             </div>
           ))}
         </div>

@@ -1,9 +1,13 @@
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import type { CatalogueImportItem } from '@/lib/catalogue-import'
+import type { BandsintownGigRow } from '@/lib/bandsintown-sync'
 
 export type SyncJobType =
   | 'discogs_sync'
   | 'spotify_sync'
+  | 'itunes_sync'
+  | 'track_enrichment'
+  | 'bandsintown_sync'
   | 'purge_and_sync_releases'
   | 'purge_and_sync_gigs'
 
@@ -21,7 +25,7 @@ export interface SyncJobProgress {
 }
 
 export interface SyncJobPayload {
-  source?: 'spotify' | 'discogs'
+  source?: 'spotify' | 'discogs' | 'itunes'
   artistName?: string
   artistId?: string | number
   fetchPage?: number
@@ -33,6 +37,10 @@ export interface SyncJobPayload {
   displayOrderStart?: number
   enrichCursor?: number
   purgeDeleted?: number
+  stagedGigs?: BandsintownGigRow[]
+  gigImportCursor?: number
+  processing?: boolean
+  processingSince?: number
 }
 
 export interface SyncJobRow {
@@ -108,6 +116,24 @@ export async function cancelSyncJob(id: string): Promise<SyncJobRow> {
     status: 'cancelled',
     completed_at: new Date().toISOString(),
   })
+}
+
+export async function listActiveSyncJobs(types?: SyncJobType[]): Promise<SyncJobRow[]> {
+  const supabase = createAdminClient()
+  let query = supabase
+    .from('sync_jobs')
+    .select('*')
+    .in('status', ['pending', 'running'])
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  if (types && types.length > 0) {
+    query = query.in('type', types)
+  }
+
+  const { data, error } = await query
+  if (error) throw new Error(error.message)
+  return (data ?? []) as SyncJobRow[]
 }
 
 export async function listStaleRunningJobs(olderThanMs: number): Promise<SyncJobRow[]> {

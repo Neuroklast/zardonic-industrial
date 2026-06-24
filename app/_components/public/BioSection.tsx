@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { m } from 'framer-motion'
+import { m, useReducedMotion } from 'framer-motion'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
-import { SectionWrapper } from './SectionWrapper'
+import { SectionWrapper, SectionHeading } from './SectionWrapper'
 
 interface BioSectionProps {
   content: string
@@ -13,6 +13,7 @@ interface BioSectionProps {
 
 export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
   const [expanded, setExpanded] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
   const hasContent = content.trim().length > 0
   const displayContent = hasContent ? content : 'Biography coming soon.'
 
@@ -21,15 +22,7 @@ export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSect
 
   return (
     <SectionWrapper id="bio" data-theme-color="foreground muted-foreground card border">
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-        <h2
-          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-4xl font-bold uppercase tracking-tighter text-foreground md:text-6xl"
-          data-text="BIOGRAPHY"
-        >
-          BIOGRAPHY
-          <span className="animate-pulse">_</span>
-        </h2>
-      </div>
+      <SectionHeading dataText="BIOGRAPHY">BIOGRAPHY</SectionHeading>
 
       <div
         className={`overflow-hidden whitespace-pre-wrap font-light ${bioTextClass} text-muted-foreground leading-relaxed`}
@@ -41,10 +34,14 @@ export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSect
         }}
       >
         <m.div
-          initial={{ opacity: 0, x: -30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+          initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
+          viewport={prefersReducedMotion ? undefined : { once: true }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0 }
+              : { duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }
+          }
         >
           {displayContent}
         </m.div>
@@ -52,16 +49,16 @@ export function BioSection({ content, bodyFontSize, readMoreMaxHeight }: BioSect
 
       {hasContent ? (
         <m.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
+          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
+          viewport={prefersReducedMotion ? undefined : { once: true }}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.4 }}
           className="mt-6"
         >
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
-            className="cyber-border hover-glitch inline-flex items-center gap-2 px-4 py-2 font-mono"
+            className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono"
           >
             {expanded ? (
               <>

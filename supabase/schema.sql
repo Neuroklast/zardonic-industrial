@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS public.partners (
   category text DEFAULT 'partner',
   display_order integer DEFAULT 0,
   active boolean DEFAULT true,
+  logo_hover_white boolean DEFAULT false,
   created_at timestamptz DEFAULT now()
 );
 
@@ -217,6 +218,7 @@ $$;
 
 ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS logo_storage_path text;
 ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS logo_hover_white boolean DEFAULT false;
 
 -- social_links
 ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;

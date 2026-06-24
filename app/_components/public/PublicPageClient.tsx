@@ -7,7 +7,13 @@ import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
 import { Releases3DCarouselLayout } from '@/components/releases/Releases3DCarouselLayout'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
+import {
+  normalizeReleaseFilterType,
+  RELEASE_TYPE_FILTERS,
+  sortReleasesByDate,
+  type ReleaseTypeFilter,
+} from '@/lib/release-browse'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 
 interface PublicReleaseCardItem {
   id: string
@@ -27,25 +33,6 @@ interface PublicPageClientProps {
   releaseColumns?: string
   releaseCardVariant?: string
   releaseHoverEffect?: string
-}
-
-type ReleaseFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
-
-const FILTERS: Array<{ value: ReleaseFilter; label: string }> = [
-  { value: '', label: 'All' },
-  { value: 'album', label: 'Album' },
-  { value: 'ep', label: 'EP' },
-  { value: 'single', label: 'Single' },
-  { value: 'remix', label: 'Remix' },
-  { value: 'compilation', label: 'Compilation' },
-]
-
-function normalizeType(value: string | null | undefined): ReleaseFilter {
-  const normalized = value?.trim().toLowerCase() ?? ''
-  if (['album', 'ep', 'single', 'remix', 'compilation'].includes(normalized)) {
-    return normalized as ReleaseFilter
-  }
-  return ''
 }
 
 function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
@@ -85,7 +72,7 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
 
 export function PublicPageClient({ releases, artistName = '', releaseLayout = 'grid', releaseColumns = '4', releaseCardVariant, releaseHoverEffect }: PublicPageClientProps) {
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
-  const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
+  const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
 
   const handleReleaseClick = (item: PublicReleaseCardItem) => {
     setOverlay({ type: 'release', data: item.overlayRelease })
@@ -95,13 +82,9 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
 
   // For fancy layouts (and potential future), compute filtered list
   const filteredReleases = useMemo(() => {
-    const sorted = [...releases].sort((left, right) => {
-      const leftTime = left.release_date ? new Date(left.release_date).getTime() : 0
-      const rightTime = right.release_date ? new Date(right.release_date).getTime() : 0
-      return rightTime - leftTime
-    })
+    const sorted = sortReleasesByDate(releases)
     if (!activeFilter) return sorted
-    return sorted.filter((release) => normalizeType(release.type) === activeFilter)
+    return sorted.filter((release) => normalizeReleaseFilterType(release.type) === activeFilter)
   }, [activeFilter, releases])
 
   const layoutReleases = filteredReleases.map(mapToLayoutRelease)
@@ -112,7 +95,7 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
     return <PublicReleaseCard item={item} onClick={() => handleReleaseClick(item)} />
   }
 
-  const handleFilter = (f: ReleaseFilter) => {
+  const handleFilter = (f: ReleaseTypeFilter) => {
     setActiveFilter(f)
   }
 
@@ -132,22 +115,14 @@ export function PublicPageClient({ releases, artistName = '', releaseLayout = 'g
         />
       ) : (
         <SectionWrapper id="releases" data-theme-color="foreground card border primary">
-          <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-            <h2
-              className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-              data-text="RELEASES"
-            >
-              RELEASES
-              <span className="animate-pulse">_</span>
-            </h2>
-          </div>
+          <SectionHeading dataText="RELEASES">RELEASES</SectionHeading>
             <div className="mb-6 flex flex-wrap gap-2">
-              {FILTERS.map((filter) => (
+              {RELEASE_TYPE_FILTERS.map((filter) => (
                 <button
                   key={filter.value || 'all'}
                   type="button"
                   onClick={() => handleFilter(filter.value)}
-                  className={`border px-3 py-1 font-mono text-xs uppercase tracking-wider transition-colors ${
+                  className={`min-h-[44px] border px-3 py-2 font-mono text-xs uppercase tracking-wider transition-colors ${
                     activeFilter === filter.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border text-muted-foreground hover:border-primary/40'

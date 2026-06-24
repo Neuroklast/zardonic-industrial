@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { readBearerToken, verifyCronSecret } from '@/lib/cron-auth'
-import { chainSyncJobTick } from '@/lib/sync-job-chain'
+import { continueSyncJob } from '@/lib/sync-job-continuation'
 import { listStaleRunningJobs } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   try {
     const stale = await listStaleRunningJobs(30_000)
     for (const job of stale) {
-      chainSyncJobTick(job.id)
+      continueSyncJob(job.id)
     }
 
     return NextResponse.json({ reaped: stale.length, jobIds: stale.map((j) => j.id) })
