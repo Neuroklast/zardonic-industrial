@@ -3,7 +3,12 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ArrowsClockwise, CalendarBlank, MusicNotes, Trash, Warning } from '@phosphor-icons/react'
-import { purgeGigs, purgeReleases, resetReleaseTracklists } from '@/app/admin/_actions/dataMaintenance'
+import {
+  consolidateReleases,
+  purgeGigs,
+  purgeReleases,
+  resetReleaseTracklists,
+} from '@/app/admin/_actions/dataMaintenance'
 import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
 import { CatalogueSyncSettings } from '@/app/admin/_components/CatalogueSyncSettings'
 import {
@@ -25,6 +30,7 @@ import type { SyncJobRow } from '@/lib/sync-jobs'
 type SyncSource = 'itunes' | 'spotify' | 'discogs'
 
 type MaintenanceAction =
+  | 'consolidateReleases'
   | 'purgeReleases'
   | 'purgeGigs'
   | 'purgeAndSyncReleases'
@@ -47,6 +53,12 @@ const ACTION_COPY: Record<
   MaintenanceAction,
   { title: string; description: string; confirmLabel: string; destructive?: boolean }
 > = {
+  consolidateReleases: {
+    title: 'Consolidate duplicate releases?',
+    description:
+      'Merges duplicate catalogue entries by title, release date, and external IDs. Keeps the richest row and fills in missing Spotify/iTunes/Discogs IDs and tracklists.',
+    confirmLabel: 'Consolidate duplicates',
+  },
   purgeReleases: {
     title: 'Purge auto-synced releases?',
     description:
@@ -169,6 +181,16 @@ export function CatalogueSyncClient({
     startTransition(async () => {
       try {
         switch (action) {
+          case 'consolidateReleases': {
+            const result = await consolidateReleases()
+            if ('error' in result) throw new Error(result.error)
+            setMessage(
+              result.deleted > 0
+                ? `Consolidated ${result.deleted} duplicate release(s).`
+                : 'No duplicate releases found.',
+            )
+            break
+          }
           case 'purgeReleases': {
             const result = await purgeReleases()
             if ('error' in result) throw new Error(result.error)
@@ -367,6 +389,11 @@ export function CatalogueSyncClient({
           variant="primary"
         />
         <ActionButton action="resetTracklists" label="Reset tracklists" icon={Trash} variant="danger" />
+        <ActionButton
+          action="consolidateReleases"
+          label="Consolidate duplicates"
+          icon={ArrowsClockwise}
+        />
       </SectionCard>
 
       <SectionCard

@@ -16,6 +16,12 @@ import {
   importCatalogueBatch,
   type CatalogueImportItem,
 } from '@/lib/catalogue-import'
+import {
+  buildReleaseMatchIndex,
+  consolidateDuplicateReleases,
+  dedupeCatalogueImportItems,
+  type ReleaseConsolidationRow,
+} from '@/lib/release-consolidation'
 import { fetchDiscogsArtistReleasesPage, searchDiscogsArtistId } from '@/lib/discogs-sync'
 import {
   buildReleaseEnrichmentUpdate,
@@ -140,7 +146,7 @@ async function tickItunesFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResu
     ...job.payload,
     source: 'itunes',
     artistName,
-    stagedItems: items,
+    stagedItems: dedupeCatalogueImportItems(items),
     importCursor: 0,
   }
 
@@ -189,13 +195,14 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     }
 
     if (fetchDone) {
+      nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems)
       const updated = await updateSyncJob(job.id, {
         status: 'running',
         phase: 'import',
         payload: nextPayload,
         progress: mergeProgress(job.progress, {
-          total: stagedItems.length,
-          processed: stagedItems.length,
+          total: nextPayload.stagedItems.length,
+          processed: nextPayload.stagedItems.length,
         }),
       })
       return { job: updated, done: false }
@@ -234,13 +241,14 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   }
 
   if (fetchDone) {
+    nextPayload.stagedItems = dedupeCatalogueImportItems(stagedItems)
     const updated = await updateSyncJob(job.id, {
       status: 'running',
       phase: 'import',
       payload: nextPayload,
       progress: mergeProgress(job.progress, {
-        total: stagedItems.length,
-        processed: stagedItems.length,
+        total: nextPayload.stagedItems.length,
+        processed: nextPayload.stagedItems.length,
       }),
     })
     return { job: updated, done: false }
@@ -257,6 +265,30 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   return { job: updated, done: false }
 }
 
+async function loadReleaseMatchIndex(supabase: ReturnType<typeof createAdminClient>) {
+  const { data, error } = await supabase
+    .from('releases')
+    .select(
+      'id, title, type, release_date, spotify_id, itunes_id, discogs_id, manually_edited',
+    )
+
+  if (error) throw new Error(`Failed to load releases for duplicate matching: ${error.message}`)
+  return buildReleaseMatchIndex((data ?? []) as ReleaseConsolidationRow[])
+}
+
+async function runPostImportConsolidation(
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<{ updated: number; errors: string[] }> {
+  const result = await consolidateDuplicateReleases(supabase)
+  const errors = [...result.errors]
+  if (result.deleted > 0) {
+    errors.unshift(
+      `Consolidated ${result.deleted} duplicate release(s) into ${result.merged} updated row(s)`,
+    )
+  }
+  return { updated: result.deleted, errors }
+}
+
 async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const payload = job.payload
   const source =
@@ -271,6 +303,7 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const existingIds = payload.existingIds
     ? new Set(payload.existingIds)
     : undefined
+  const releaseMatchIndex = await loadReleaseMatchIndex(supabase)
 
   const batch = await importCatalogueBatch(supabase, {
     source,
@@ -280,6 +313,7 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     limit: IMPORT_BATCH_SIZE,
     lightImport: true,
     existingIds,
+    releaseMatchIndex,
     displayOrderStart: payload.displayOrderStart,
   })
 
@@ -315,21 +349,29 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   }
 
   if (job.type === 'purge_and_sync_releases') {
+    const consolidation = await runPostImportConsolidation(supabase)
     nextPayload.enrichCursor = 0
     const updated = await updateSyncJob(job.id, {
       status: 'running',
       phase: 'enrich',
       payload: nextPayload,
-      progress: nextProgress,
+      progress: mergeProgress(nextProgress, {
+        updated: consolidation.updated,
+        errors: consolidation.errors,
+      }),
     })
     return { job: updated, done: false }
   }
 
+  const consolidation = await runPostImportConsolidation(supabase)
   const updated = await updateSyncJob(job.id, {
     status: 'completed',
     phase: 'import',
     payload: nextPayload,
-    progress: nextProgress,
+    progress: mergeProgress(nextProgress, {
+      updated: nextProgress.updated + consolidation.updated,
+      errors: consolidation.errors,
+    }),
     completed_at: new Date().toISOString(),
   })
   return { job: updated, done: true }

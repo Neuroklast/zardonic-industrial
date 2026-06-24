@@ -641,6 +641,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  consolidate_releases: register({
+    id: 'consolidate_releases',
+    label: 'Consolidate Duplicate Releases',
+    schema: z.object({}),
+    minDisclosure: 'advanced',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   purge_releases: register({
     id: 'purge_releases',
     label: 'Purge Auto-Synced Releases',

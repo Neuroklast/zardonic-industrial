@@ -6,6 +6,7 @@ import { syncGigsFromBandsintown } from '@/app/admin/_actions/gigsSync'
 import { syncReleasesFromSpotify } from '@/app/admin/_actions/releaseExternalSync'
 import { enrichAllReleasesTracks } from '@/app/admin/_actions/releaseTrackEnrichment'
 import { createAdminClient } from '@/lib/supabaseAdmin'
+import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 
@@ -16,6 +17,13 @@ export interface PurgeResult {
 export interface MaintenanceSyncResult {
   purge: PurgeResult
   sync: unknown
+}
+
+export interface ConsolidateReleasesResult {
+  merged: number
+  deleted: number
+  skipped: number
+  errors: string[]
 }
 
 async function purgeAutoSyncedReleases(): Promise<PurgeResult> {
@@ -35,6 +43,23 @@ async function purgeAllGigs(): Promise<PurgeResult> {
 
   if (error) throw new Error(error.message)
   return { deleted: count ?? 0 }
+}
+
+export async function consolidateReleases(): Promise<ConsolidateReleasesResult | { error: string }> {
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'consolidate_releases',
+    {},
+    createSupabaseActionContext(createAdminClient()),
+  )
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const result = await consolidateDuplicateReleases(supabase)
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+    return result
+  }, 'Unable to consolidate duplicate releases.')
 }
 
 export async function purgeReleases(): Promise<PurgeResult | { error: string }> {

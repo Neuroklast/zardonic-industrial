@@ -1,5 +1,12 @@
 import type { createAdminClient } from '@/lib/supabaseAdmin'
 import {
+  addReleaseToMatchIndex,
+  buildReleaseMatchIndex,
+  findExistingReleaseForImport,
+  type ReleaseConsolidationRow,
+  type ReleaseMatchIndex,
+} from '@/lib/release-consolidation'
+import {
   buildTrackEnrichmentUpdate,
   releaseTracksAreEmpty,
   type TracksSource,
@@ -38,8 +45,12 @@ export interface ImportCatalogueBatchOptions {
   /** Skip per-item API enrichment, Odesli, and R2 — faster chunks for async jobs. */
   lightImport?: boolean
   existingIds?: Set<string>
+  releaseMatchIndex?: ReleaseMatchIndex
   displayOrderStart?: number
 }
+
+const RELEASE_MATCH_SELECT =
+  'id, title, type, release_date, description, artists, streaming_links, tracks, tracks_source, last_enriched_at, cover_storage_path, cover_url, display_order, active, manually_edited, itunes_id, spotify_id, discogs_id'
 
 interface ExistingReleaseBackfillRow {
   id: string
@@ -171,10 +182,36 @@ async function enrichMetadataForBulkImport(
   return baseMetadata
 }
 
+export type ReleaseMatchEntry = Pick<
+  ReleaseConsolidationRow,
+  | 'id'
+  | 'title'
+  | 'type'
+  | 'release_date'
+  | 'spotify_id'
+  | 'itunes_id'
+  | 'discogs_id'
+  | 'manually_edited'
+>
+
 export interface ImportCatalogueBatchResult extends BulkExternalSyncResult {
   nextCursor: number
   nextDisplayOrder: number
   done: boolean
+  addedMatchEntries: ReleaseMatchEntry[]
+}
+
+export function toReleaseMatchEntry(row: ReleaseConsolidationRow): ReleaseMatchEntry {
+  return {
+    id: row.id,
+    title: row.title,
+    type: row.type,
+    release_date: row.release_date,
+    spotify_id: row.spotify_id,
+    itunes_id: row.itunes_id,
+    discogs_id: row.discogs_id,
+    manually_edited: row.manually_edited,
+  }
 }
 
 /**
@@ -202,6 +239,7 @@ export async function importCatalogueBatch(
     nextCursor: cursor,
     nextDisplayOrder: options.displayOrderStart ?? 0,
     done: true,
+    addedMatchEntries: [],
   }
 
   const slice = items.slice(cursor, cursor + limit)
@@ -222,6 +260,20 @@ export async function importCatalogueBatch(
         .map((row: Record<string, string | null>) => row[idField])
         .filter((id: string | null | undefined): id is string => Boolean(id)),
     )
+  }
+
+  let releaseMatchIndex = options.releaseMatchIndex
+  if (!releaseMatchIndex) {
+    const { data: matchRows, error: matchError } = await supabase
+      .from('releases')
+      .select(RELEASE_MATCH_SELECT)
+
+    if (matchError) {
+      result.errors.push(`Failed to load releases for duplicate matching: ${matchError.message}`)
+      return result
+    }
+
+    releaseMatchIndex = buildReleaseMatchIndex((matchRows ?? []) as ReleaseConsolidationRow[])
   }
 
   let displayOrder = options.displayOrderStart
@@ -279,22 +331,25 @@ export async function importCatalogueBatch(
       continue
     }
 
-    const { data: titleMatches, error: titleError } = await supabase
-      .from('releases')
-      .select(existingSelect)
-      .ilike('title', metadata.title)
-      .limit(2)
+    const matchedRelease = findExistingReleaseForImport(metadata, releaseMatchIndex)
+    if (matchedRelease) {
+      const { data: existingRow, error: existingError } = await supabase
+        .from('releases')
+        .select(existingSelect)
+        .eq('id', matchedRelease.id)
+        .maybeSingle()
 
-    if (titleError) {
-      result.errors.push(`Failed to match "${metadata.title}": ${titleError.message}`)
-      result.skipped++
-      continue
-    }
+      if (existingError || !existingRow) {
+        result.errors.push(
+          `Failed to load matched "${metadata.title}": ${existingError?.message ?? 'not found'}`,
+        )
+        result.skipped++
+        continue
+      }
 
-    if ((titleMatches ?? []).length === 1) {
       await applyBulkBackfillToExistingRelease(
         supabase,
-        titleMatches![0] as ExistingReleaseBackfillRow,
+        existingRow as ExistingReleaseBackfillRow,
         metadata,
         source,
         idField,
@@ -302,12 +357,6 @@ export async function importCatalogueBatch(
         result,
       )
       existingIds.add(externalId)
-      continue
-    }
-
-    if ((titleMatches ?? []).length > 1) {
-      result.errors.push(`Ambiguous title match for "${metadata.title}" — skipped`)
-      result.skipped++
       continue
     }
 
@@ -337,13 +386,23 @@ export async function importCatalogueBatch(
     if (metadata.spotify_id) row.spotify_id = metadata.spotify_id
     if (metadata.discogs_id) row.discogs_id = metadata.discogs_id
 
-    const { error: insertError } = await supabase.from('releases').insert(row)
+    const { data: insertedRow, error: insertError } = await supabase
+      .from('releases')
+      .insert(row)
+      .select(RELEASE_MATCH_SELECT)
+      .maybeSingle()
+
     if (insertError) {
       result.errors.push(`Failed to insert "${metadata.title}": ${insertError.message}`)
     } else {
       result.synced++
       displayOrder++
       existingIds.add(externalId)
+      if (insertedRow) {
+        const consolidationRow = insertedRow as ReleaseConsolidationRow
+        addReleaseToMatchIndex(releaseMatchIndex, consolidationRow)
+        result.addedMatchEntries.push(toReleaseMatchEntry(consolidationRow))
+      }
     }
   }
 
