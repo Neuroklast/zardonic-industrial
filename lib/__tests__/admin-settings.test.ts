@@ -152,8 +152,8 @@ describe('getAdminValue', () => {
   })
 
   it('retrieves numeric value', () => {
-    const settings: AdminSettings = { sound: { backgroundMusicVolume: 0.7 } }
-    expect(getAdminValue(settings, 'sound.backgroundMusicVolume')).toBe(0.7)
+    const settings: AdminSettings = { design: { effects: { vignetteOpacity: 0.7 } } }
+    expect(getAdminValue(settings, 'design.effects.vignetteOpacity')).toBe(0.7)
   })
 })
 
@@ -185,8 +185,8 @@ describe('setAdminValue', () => {
   })
 
   it('creates intermediate objects as needed', () => {
-    const result = setAdminValue(undefined, 'sound.backgroundMusicVolume', 0.5)
-    expect(result.sound?.backgroundMusicVolume).toBe(0.5)
+    const result = setAdminValue(undefined, 'analytics.trackPageViews', true)
+    expect(result.analytics?.trackPageViews).toBe(true)
   })
 
   it('sets analytics enabled flag', () => {

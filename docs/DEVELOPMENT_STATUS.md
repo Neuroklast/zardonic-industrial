@@ -1,7 +1,7 @@
 # Development Status
 
 > **Last updated:** 2026-06-24  
-> **Phase:** App Router migration — public site on Supabase; legacy `api/` + KV retained for security/sync
+> **Phase:** Pre-launch — App Router + Supabase; legacy CMS/KV retired
 
 ## Quick status
 
@@ -12,20 +12,21 @@
 | Admin (`/admin/*`) | Functional — Supabase Auth |
 | Content DB | Supabase (`supabase/schema.sql`) |
 | Media | Cloudflare R2 |
-| Legacy `api/` + Redis | Partial — security, enrichment crons |
-| Tests | Vitest — 1558 tests (`npm run test`) |
-| Tech debt | [TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md) |
+| Legacy `api/` | Slim — image proxies, Odesli/Spotify/iTunes/Bandsintown helpers, rate limiting |
+| OG / sitemap | App Router (`app/api/og`, `app/api/sitemap`) |
+| Tests | Vitest — 700+ tests (`npm run test`) |
+| Tech debt | [TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md) — 5 post-launch items open |
 
 ## Public features
 
 - [x] Hero, bio, releases, gigs, gallery, merch, soundpacks, partners
-- [x] Music highlights, contact (Resend), newsletter (Supabase)
+- [x] Music highlights, contact (Resend server action), newsletter (Supabase)
 - [x] Cookie consent + privacy policy link
 - [x] Legal Notice & Privacy Policy (English, `site_config.legal`)
 - [x] Spotify/YouTube two-click embeds
 - [x] PageLayout, skip-to-content link
-- [ ] `prefers-reduced-motion` for all animations
-- [ ] Per-section error boundaries on public site
+- [x] `prefers-reduced-motion` for all animations (CSS global + Framer Motion in public sections)
+- [x] Per-section error boundaries on public site
 
 ## Admin features
 
@@ -35,15 +36,17 @@
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
 - [x] Data import/export + **data maintenance** (purge/sync, track enrichment)
 - [x] Odesli cross-platform links on releases (sync + enrichment + public modal)
-- [ ] Full retirement of legacy KV `AdminPanel` / CMS shell
+- [x] Full retirement of legacy KV `AdminPanel` / CMS shell (`cms/`, `src/cms/`, `components/admin/` removed)
 
-## Open work
+## Open work (post-launch)
 
-See **[TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md)** for the authoritative debt list. High-level gaps:
+See **[TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md)**. Non-blocking:
 
-- Consolidate or document remaining legacy `api/` vs App Router routes
-- Accessibility: reduced-motion, responsive test coverage
-- Dependency and CSP hardening (see tech debt)
+- Icon library consolidation (TD-020)
+- Lazy-load Three.js backgrounds (TD-021)
+- Redis client singleton (TD-022)
+- `index.css` split (TD-031)
+- Upstream moderate CVEs in Next/@vercel/node (TD-007)
 
 ## Documentation
 

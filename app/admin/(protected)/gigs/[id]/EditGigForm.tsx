@@ -28,7 +28,7 @@ export default function EditGigForm({ gig }: Props) {
         <label className="block text-sm text-zinc-300 mb-1">Title *</label>
         <input name="title" required defaultValue={gig.title as string} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-zinc-300 mb-1">Venue</label>
           <input name="venue" defaultValue={gig.venue as string ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
@@ -38,7 +38,7 @@ export default function EditGigForm({ gig }: Props) {
           <input name="festival_name" defaultValue={gig.festival_name as string ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-zinc-300 mb-1">City</label>
           <input name="city" defaultValue={gig.city as string ?? ''} className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />

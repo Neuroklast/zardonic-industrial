@@ -106,15 +106,17 @@ export function getVercelGeoData(req: VercelLikeRequest): {
 
 // ─── Rate limiter ─────────────────────────────────────────────────────────────
 
-/**
- * Return true when the Vercel KV environment variables are present.
- * The rate limiter is a no-op in environments without KV (e.g. local dev).
- */
+export const PER_IP_LIMIT = 30
+export const PER_IP_WINDOW = '60 s' as const
+export const PER_IP_RETRY_AFTER_SEC = '10'
+
+export const ODESLI_GLOBAL_LIMIT = 5
+export const ODESLI_GLOBAL_WINDOW = '60 s' as const
+export const ODESLI_GLOBAL_RETRY_AFTER_SEC = '60'
 
 /**
  * Lazily-initialised rate limiter instance.
- * Sliding window: 5 requests per 10 seconds per hashed IP.
- * Created on first use; null when KV is not configured.
+ * Sliding window per hashed IP.
  */
 let ratelimit: Ratelimit | null = null
 
@@ -123,7 +125,7 @@ function getRatelimit(): Ratelimit | null {
   if (!isRedisConfigured()) return null
   ratelimit = new Ratelimit({
     redis: kv,
-    limiter: Ratelimit.slidingWindow(30, '60 s'),
+    limiter: Ratelimit.slidingWindow(PER_IP_LIMIT, PER_IP_WINDOW),
     prefix: 'nk-rl',
   })
   return ratelimit
@@ -143,7 +145,7 @@ function getOdesliGlobalRatelimit(): Ratelimit | null {
   if (!isRedisConfigured()) return null
   odesliGlobalRatelimit = new Ratelimit({
     redis: kv,
-    limiter: Ratelimit.slidingWindow(5, '60 s'),
+    limiter: Ratelimit.slidingWindow(ODESLI_GLOBAL_LIMIT, ODESLI_GLOBAL_WINDOW),
     prefix: 'nk-odesli-global',
   })
   return odesliGlobalRatelimit
@@ -172,7 +174,7 @@ export async function applyOdesliGlobalRateLimit(
   try {
     const { success } = await rl.limit('global')
     if (!success) {
-      res.setHeader('Retry-After', '60')
+      res.setHeader('Retry-After', ODESLI_GLOBAL_RETRY_AFTER_SEC)
       res.status(429).json({
         error: 'Too Many Requests',
         message: 'Odesli API rate limit reached. Please try again in a minute.',
@@ -212,7 +214,7 @@ export async function applyRateLimit(
   try {
     const { success } = await rl.limit(identifier)
     if (!success) {
-      res.setHeader('Retry-After', '10')
+      res.setHeader('Retry-After', PER_IP_RETRY_AFTER_SEC)
       res.status(429).json({
         error: 'Too Many Requests',
         message: 'Rate limit exceeded. Please try again in a few seconds.',

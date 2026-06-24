@@ -40,12 +40,9 @@ We release patches for security vulnerabilities for the latest version of the pr
 - **Session Cookies**: Managed by `@supabase/ssr`; HttpOnly cookies, no client-side session token storage
 - **Role checks**: Server Components and middleware verify admin role before rendering protected pages
 
-### Legacy KV admin auth (`api/auth.ts`)
-Still present for legacy endpoints; being phased out:
-- scrypt password hashing, optional TOTP, `zd-session` HttpOnly cookies (4 h TTL)
-- Initial setup previously used `ADMIN_SETUP_TOKEN` — **not used** for Supabase admin login
-- **CSRF Protection**: No state-changing operations via GET requests
-- **Sensitive Key Protection**: `admin-password-hash`, keys containing `token`, `secret`, `password`, `private`, or `credential` are blocked from API reads without authentication
+### Admin auth (current)
+- **Supabase Auth only** — `app/admin/login/submit/route.ts`, HttpOnly session cookies via `@supabase/ssr`
+- Legacy `api/auth.ts`, KV session tokens, and `x-session-token` header support **removed** (2026-06-24)
 
 ### Input Validation (Zod)
 All API inputs are validated through strict [Zod](https://zod.dev/) schemas (`api/_schemas.ts`):
@@ -64,12 +61,15 @@ All API endpoints are protected by rate limiting (`api/_ratelimit.ts`):
 - **Graceful Degradation**: If Redis is unavailable, requests are allowed through
 
 ### SSRF Protection (Image Proxy)
+Implemented in `lib/ssrf-guard.ts` (used by `api/image-proxy.ts` and `api/image-proxy-protected.ts`):
 - Blocklist for private/internal networks: `127.x`, `10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, IPv6 loopback/mapped/link-local/unique-local, metadata endpoints
 - Hex, octal, and decimal integer IP notation blocked
 - Protocol allowlist: only `http:` and `https:`
-- DNS rebinding protection: resolved IPs checked against blocklist
-- Redirect target re-validated after fetch
+- DNS rebinding protection: hostname resolved and pinned before fetch; redirect targets re-validated
 - Content-type restricted to raster `image/*` (SVG blocked to prevent XSS)
+
+### CSP note
+`style-src 'unsafe-inline'` is required for Tailwind and dynamic theme variables. Accepted for launch (TD-004); `script-src` remains restricted and embeds use two-click consent.
 
 ### Security HTTP Headers (vercel.json)
 All responses include defensive HTTP headers:

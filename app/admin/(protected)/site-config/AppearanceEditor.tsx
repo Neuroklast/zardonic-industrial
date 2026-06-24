@@ -9,8 +9,11 @@ import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
 import {
   BUILTIN_APPEARANCE_PRESETS,
   BODY_FONT_OPTIONS,
+  FONT_SIZE_RANGES,
+  formatFontSizeRem,
   HEADING_FONT_OPTIONS,
   MONO_FONT_OPTIONS,
+  parseFontSizeRem,
   type AppearanceTheme,
   type SavedAppearancePreset,
 } from '@/lib/appearance-presets'
@@ -194,7 +197,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
 
       <div className="space-y-3">
         <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Built-in Presets</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           {BUILTIN_APPEARANCE_PRESETS.map((preset) => (
             <button
               key={preset.name}
@@ -245,7 +248,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
 
       <div className="space-y-3">
         <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Theme Colors</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {THEME_COLOR_FIELDS.map(({ key, label }) => {
             const value = theme[key] ?? ''
             const hex = value ? oklchToHex(value) : '#000000'
@@ -291,6 +294,35 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         ))}
       </div>
 
+      <div className="space-y-4">
+        <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Font Sizes</p>
+        {(Object.keys(FONT_SIZE_RANGES) as Array<keyof typeof FONT_SIZE_RANGES>).map((key) => {
+          const range = FONT_SIZE_RANGES[key]
+          const current = parseFontSizeRem(theme[range.themeKey], range.default)
+          return (
+            <div key={key} className="space-y-2">
+              <label className="block text-xs text-zinc-400">
+                {range.label}: <span className="font-mono text-zinc-300">{formatFontSizeRem(current)}</span>
+              </label>
+              <SliderPrimitive.Root
+                min={range.min}
+                max={range.max}
+                step={range.step}
+                value={[current]}
+                onValueChange={([v]) => updateThemeField(range.themeKey, formatFontSizeRem(v))}
+                className="relative flex items-center w-full h-5"
+                aria-label={range.label}
+              >
+                <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
+                  <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
+                </SliderPrimitive.Track>
+                <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900" />
+              </SliderPrimitive.Root>
+            </div>
+          )
+        })}
+      </div>
+
       <MediaSourcePicker
         label="Favicon"
         currentUrl={faviconUrl || null}
@@ -324,7 +356,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">
           <label className="text-xs text-zinc-400">Legacy Accent (hex)</label>
           <input

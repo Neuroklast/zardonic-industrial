@@ -2,25 +2,21 @@
  * Tests for the comprehensive fix PR:
  *  1. Background "Animated Background" label in animItems
  *  2. Logo reorder logic – moveLogo up/down
- *  3. useSound mounted in App (type-level: AdminSettings.sound field wiring)
- *  4. SoundTab admin page (type-level)
- *  5. Progressive overlay mode selection (getRandomProgressiveMode wiring)
+ *  3. Progressive overlay mode selection (getRandomProgressiveMode wiring)
  *  6. Custom social links – CustomSocialLink type + rendering path
  *  7. Chromatic aberration – CSS class .logo-white approach (type-level smoke)
  */
 
 import { describe, it, expect } from 'vitest'
-import type { AdminSettings, CustomSocialLink, SoundSettings } from '@/lib/types'
+import type { AdminSettings, CustomSocialLink } from '@/lib/types'
 import { getRandomProgressiveMode, getAllProgressiveModes } from '@/lib/progressive-overlay-modes'
 
 // ── 1. animItems label ────────────────────────────────────────────────────────
-describe('AppearanceTab animItems', () => {
-  it('exports "Animated Background (all types)" label for circuitBackgroundEnabled', async () => {
-    // We don't import the full component (it's JSX-heavy), but we verify the
-    // string is present in the source at the file level.
-    const src = await import('@/components/admin/AppearanceTab?raw').catch(() => null)
-    // If raw import is not supported just check the module exports something
-    expect(src ?? 'ok').toBeTruthy()
+describe('appearance config', () => {
+  it('exports font size ranges for Site Config appearance editor', async () => {
+    const { FONT_SIZE_RANGES } = await import('@/lib/appearance-presets')
+    expect(FONT_SIZE_RANGES.heading).toBeDefined()
+    expect(FONT_SIZE_RANGES.body).toBeDefined()
   })
 })
 
@@ -66,36 +62,7 @@ describe('logo reorder logic', () => {
   })
 })
 
-// ── 3. AdminSettings.sound field ─────────────────────────────────────────────
-
-describe('AdminSettings.sound', () => {
-  it('accepts SoundSettings nested under AdminSettings.sound', () => {
-    const sound: SoundSettings = {
-      defaultMuted: true,
-      backgroundMusicVolume: 0.5,
-      backgroundMusic: 'https://example.com/music.mp3',
-    }
-    const settings: AdminSettings = { sound }
-    expect(settings.sound?.defaultMuted).toBe(true)
-    expect(settings.sound?.backgroundMusicVolume).toBe(0.5)
-  })
-
-  it('sound is optional in AdminSettings', () => {
-    const settings: AdminSettings = {}
-    expect(settings.sound).toBeUndefined()
-  })
-})
-
-// ── 4. SoundTab receives AdminSettings ───────────────────────────────────────
-
-describe('SoundTab wiring', () => {
-  it('SoundTab module can be imported', async () => {
-    const mod = await import('@/components/admin/SoundTab')
-    expect(mod.default).toBeTypeOf('function')
-  }, 15_000)
-})
-
-// ── 5. Progressive overlay mode selection ────────────────────────────────────
+// ── 3. Progressive overlay mode selection ────────────────────────────────────
 
 describe('getRandomProgressiveMode', () => {
   it('returns a mode when no settings provided', () => {
@@ -152,7 +119,7 @@ describe('getRandomProgressiveMode', () => {
   })
 })
 
-// ── 6. CustomSocialLink type ──────────────────────────────────────────────────
+// ── 4. CustomSocialLink type ──────────────────────────────────────────────────
 
 describe('CustomSocialLink', () => {
   it('accepts required id, label, url fields', () => {
@@ -188,16 +155,11 @@ describe('CustomSocialLink', () => {
   })
 })
 
-// ── 7. .logo-white CSS class smoke test (logic layer) ────────────────────────
+// ── 5. Live overlay smoke test ────────────────────────────────────────────────
 
-describe('logo-white CSS approach', () => {
-  it('CreditHighlightsSection module can be imported without filter in motion variants', async () => {
-    const mod = await import('@/components/CreditHighlightsSection')
+describe('CyberpunkOverlay module', () => {
+  it('can be imported for release overlay', async () => {
+    const mod = await import('@/components/CyberpunkOverlay')
     expect(mod.default).toBeTruthy()
-  })
-
-  it('SponsoringSection module can be imported without filter in motion variants', async () => {
-    const mod = await import('@/components/SponsoringSection')
-    expect(mod.default).toBeTruthy()
-  })
+  }, 15_000)
 })

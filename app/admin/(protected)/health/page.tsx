@@ -138,8 +138,8 @@ export default async function HealthPage() {
       {/* Service checks */}
       <div className="space-y-3 mb-8">
         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">External Services</h2>
-        <div className="border border-zinc-800 rounded overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border border-zinc-800 rounded overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[32rem] text-sm">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900/60">
                 <th className="text-left px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-widest">Service</th>
@@ -167,8 +167,8 @@ export default async function HealthPage() {
       {/* Integration API keys */}
       <div className="space-y-3 mb-8">
         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Integration API Keys</h2>
-        <div className="border border-zinc-800 rounded overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border border-zinc-800 rounded overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[24rem] text-sm">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900/60">
                 <th className="text-left px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-widest">Service</th>
@@ -192,8 +192,8 @@ export default async function HealthPage() {
       {/* Environment variables */}
       <div className="space-y-3">
         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Infrastructure Environment Variables</h2>
-        <div className="border border-zinc-800 rounded overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="border border-zinc-800 rounded overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[24rem] text-sm">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900/60">
                 <th className="text-left px-4 py-2 text-xs text-zinc-500 font-semibold uppercase tracking-widest">Variable</th>

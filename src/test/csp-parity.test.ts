@@ -77,4 +77,24 @@ describe('CSP connect-src parity', () => {
 
     expect(nextConfig).toContain("img-src 'self' data: blob: https: http:")
   })
+
+  it('style-src parity between vercel.json and next.config.mjs', () => {
+    const root = resolve(__dirname, '../..')
+    const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as {
+      headers: Array<{ headers: Array<{ key: string; value: string }> }>
+    }
+    const nextConfig = readFileSync(resolve(root, 'next.config.mjs'), 'utf8')
+
+    const vercelCsp = vercel.headers
+      .flatMap((group) => group.headers)
+      .find((h) => h.key === 'Content-Security-Policy')?.value
+    expect(vercelCsp).toBeTruthy()
+
+    const vercelStyle = extractDirectiveHosts(vercelCsp!, 'style-src')
+    expect(vercelStyle).toContain("'self'")
+    expect(vercelStyle).toContain("'unsafe-inline'")
+    expect(vercelStyle).toContain('https://fonts.googleapis.com')
+
+    expect(nextConfig).toContain("style-src 'self' 'unsafe-inline' https://fonts.googleapis.com")
+  })
 })

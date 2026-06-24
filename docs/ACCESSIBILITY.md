@@ -17,20 +17,20 @@
 3. **Keyboard navigation** — Interactive elements are focusable and operable via keyboard
 4. **Focus indicators** — Visible focus rings on interactive elements
 5. **Alt text** — Images use descriptive `alt` where meaningful
-6. **ARIA labels** — Buttons and icon-only controls have accessible names
-7. **Touch targets** — Minimum ~44×44 px on mobile controls
+6. **ARIA labels** — Buttons and icon-only controls have accessible names; nav uses `ariaLabel()` from `lib/i18n.ts`
+7. **Touch targets** — Minimum ~44×44 px on mobile controls (e.g. `SiteNav` hamburger)
 8. **Color contrast** — Crimson-on-black theme meets AA for primary text
 9. **Motion controls** — Glitch, scanline, CRT, noise, and circuit effects toggleable in admin
 10. **Cookie consent** — Keyboard-accessible; links to Privacy Policy
+11. **`prefers-reduced-motion`** — Global CSS disables decorative motion; Framer Motion sections use `useReducedMotion`
+12. **Modal focus trap** — `CyberpunkOverlay` traps Tab, closes on Escape, restores focus to trigger
 
 ## Open improvements
 
 | Item | Notes |
 |------|-------|
-| `prefers-reduced-motion` | Respect OS setting globally, not only per-admin toggle (see TD-009) |
-| Modal focus trap | Release overlay and admin dialogs — verify focus return on close |
 | Screen reader labels | Complex glitch/HUD elements may need more descriptive labels |
-| i18n for ARIA | English-first; translated labels for non-English locales (TD-032) |
+| i18n coverage | ARIA helpers exist; not every overlay control is localized yet |
 
 ## Admin configuration
 

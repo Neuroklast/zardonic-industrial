@@ -41,3 +41,15 @@ Never browser `signInWithPassword` + `router.push` (cookie race / redirect loops
 ## Environment
 
 Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`, Supabase keys, etc.).
+
+## CSP (`unsafe-inline` styles)
+
+Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; script-src remains restricted.
+
+## SSRF (image proxies)
+
+`api/image-proxy.ts` and `api/image-proxy-protected.ts` use `lib/ssrf-guard.ts`: block private/metadata hosts, resolve DNS before fetch, re-check redirect targets. `lib/remote-image-url.ts` shares host blocklist for client-side URL validation.
+
+## Legacy auth
+
+`api/auth.ts` and `x-session-token` header flow **removed**. Admin auth is Supabase SSR only (`app/admin/login/submit/route.ts`).

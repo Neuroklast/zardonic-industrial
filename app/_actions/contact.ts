@@ -1,14 +1,7 @@
 'use server'
 
 import { getApiSecret } from '@/lib/api-secrets'
-import { z } from 'zod'
-
-const schema = z.object({
-  name: z.string().min(1).max(100),
-  email: z.string().email().max(200),
-  subject: z.string().min(1).max(200),
-  message: z.string().min(10).max(5000),
-})
+import { contactFormSchema } from '@/lib/contact-form'
 
 function escapeHtml(str: string): string {
   return str
@@ -23,13 +16,19 @@ export async function submitContact(
   _prev: { error?: string; success?: boolean } | null,
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
+  const hp = (formData.get('_hp') as string | null) ?? ''
+  if (hp) {
+    return { success: true }
+  }
+
   const raw = {
     name: formData.get('name'),
     email: formData.get('email'),
     subject: formData.get('subject'),
     message: formData.get('message'),
+    _hp: '',
   }
-  const parsed = schema.safeParse(raw)
+  const parsed = contactFormSchema.safeParse(raw)
   if (!parsed.success) {
     return { error: 'Please fill in all required fields correctly.' }
   }

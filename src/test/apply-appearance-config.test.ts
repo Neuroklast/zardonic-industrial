@@ -34,4 +34,20 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--primary']).toBe('oklch(0.50 0.22 25)')
     expect(applied['--font-heading']).toBe('system-ui, sans-serif')
   })
+
+  it('applies theme font sizes as CSS variables', () => {
+    const applied = applyAppearanceConfig(
+      {
+        theme: {
+          headingFontSize: '3rem',
+          bodyFontSize: '1.125rem',
+          monoFontSize: '0.875rem',
+        },
+      },
+      root,
+    )
+    expect(applied['--heading-font-size']).toBe('3rem')
+    expect(applied['--body-font-size']).toBe('1.125rem')
+    expect(applied['--mono-font-size']).toBe('0.875rem')
+  })
 })

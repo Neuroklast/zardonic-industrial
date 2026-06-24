@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { m } from 'framer-motion'
+import { m, useReducedMotion } from 'framer-motion'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { SectionWrapper, SectionEmpty } from './SectionWrapper'
 import {
@@ -85,6 +85,7 @@ function getPlatformIcon(platform: string) {
 export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant, hoverEffect }: ReleasesSectionProps) {
   const [showAll, setShowAll] = useState(false)
   const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
+  const prefersReducedMotion = useReducedMotion()
 
   const filteredReleases = useMemo(() => {
     const sorted = [...releases].sort((left, right) => {
@@ -151,10 +152,14 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                 {visibleReleases.map((release, index) => (
                   <m.article
                     key={release.id}
-                    initial={{ opacity: 0, y: 24, clipPath: 'inset(0 0 100% 0)' }}
-                    whileInView={{ opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 24, clipPath: 'inset(0 0 100% 0)' }}
+                    whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0, clipPath: 'inset(0 0 0% 0)' }}
+                    viewport={prefersReducedMotion ? undefined : { once: true }}
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : { duration: 0.6, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }
+                    }
                     className={`cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic ${cardExtra} ${
                       onReleaseClick ? 'cursor-pointer' : ''
                     }`}
@@ -234,9 +239,9 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
               {filteredReleases.length > 8 ? (
                 <m.div
                   className="mt-8 flex justify-center"
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
+                  initial={prefersReducedMotion ? false : { opacity: 0 }}
+                  whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
+                  viewport={prefersReducedMotion ? undefined : { once: true }}
                 >
                   <button
                     type="button"

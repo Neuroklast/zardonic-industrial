@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label'
 import { PaperPlaneTilt } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { AdminSettings, DecorativeTexts } from '@/lib/types'
-import { submitContactForm, contactFormSchema } from '@/lib/contact'
+import { submitContact } from '@/app/_actions/contact'
+import { contactFormSchema } from '@/lib/contact-form'
 
 interface ContactOverlayContentProps {
   adminSettings: AdminSettings | undefined
@@ -115,7 +116,13 @@ export function ContactOverlayContent({ adminSettings, decorativeTexts }: Contac
               if (submitBtn) submitBtn.disabled = true
               toast.loading('Sending message...', { id: 'contact-submit' })
 
-              const result = await submitContactForm(data)
+              const fd = new FormData()
+              fd.set('name', data.name)
+              fd.set('email', data.email)
+              fd.set('subject', data.subject)
+              fd.set('message', data.message)
+              fd.set('_hp', data._hp ?? '')
+              const result = await submitContact(null, fd)
 
               if (result.success) {
                 toast.success('Message sent successfully!', { id: 'contact-submit' })

@@ -41,7 +41,7 @@ export function EditPartnerForm({ partner, resolvedLogoUrl }: EditPartnerFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-w-xl">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-zinc-400 mb-1">Name *</label>
           <input

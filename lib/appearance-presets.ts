@@ -146,3 +146,24 @@ export const MONO_FONT_OPTIONS: { label: string; value: string }[] = [
   { label: 'Source Code Pro', value: "'Source Code Pro', monospace" },
   { label: 'VT323', value: "'VT323', monospace" },
 ]
+
+export type FontSizeThemeKey = 'headingFontSize' | 'bodyFontSize' | 'monoFontSize'
+
+export const FONT_SIZE_RANGES: Record<
+  'heading' | 'body' | 'mono',
+  { min: number; max: number; step: number; default: number; themeKey: FontSizeThemeKey; label: string }
+> = {
+  heading: { min: 1, max: 6, step: 0.1, default: 2.5, themeKey: 'headingFontSize', label: 'Heading Size' },
+  body: { min: 0.75, max: 1.5, step: 0.05, default: 1, themeKey: 'bodyFontSize', label: 'Body Size' },
+  mono: { min: 0.7, max: 1.2, step: 0.05, default: 0.875, themeKey: 'monoFontSize', label: 'Mono Size' },
+}
+
+export function parseFontSizeRem(value: string | undefined, defaultRem: number): number {
+  if (!value) return defaultRem
+  const match = /^([\d.]+)rem$/.exec(value.trim())
+  return match ? parseFloat(match[1]) : defaultRem
+}
+
+export function formatFontSizeRem(rem: number): string {
+  return `${rem}rem`
+}

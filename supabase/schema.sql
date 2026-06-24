@@ -613,7 +613,6 @@ INSERT INTO public.site_config (key, value) VALUES
   ('appearance',  '{"crtEnabled":true,"scanlineEnabled":true,"noiseEnabled":true,"accentColor":"#dc2626","accentColorSecondary":"#7c3aed","vignetteOpacity":0.3,"chromaticStrength":0.5}'::jsonb),
   ('sections',    '[{"id":"hero","label":"Hero","visible":true,"order":0},{"id":"bio","label":"Biography","visible":true,"order":1},{"id":"credits","label":"Credits & Partners","visible":true,"order":2},{"id":"gallery","label":"Gallery","visible":true,"order":3},{"id":"music-highlights","label":"Music Highlights","visible":true,"order":4},{"id":"releases","label":"Discography","visible":true,"order":5},{"id":"social","label":"Connect","visible":true,"order":6},{"id":"spotify","label":"Music Stream","visible":true,"order":7},{"id":"merchandise","label":"Merchandise","visible":true,"order":8},{"id":"soundpacks","label":"Soundpacks","visible":true,"order":9},{"id":"gigs","label":"Events","visible":true,"order":10},{"id":"newsletter","label":"Newsletter","visible":true,"order":11},{"id":"contact","label":"Contact","visible":true,"order":12}]'::jsonb),
   ('social',      '{"spotify":"","instagram":"","facebook":"","youtube":"","soundcloud":"","tiktok":""}'::jsonb),
-  ('sound',       '{"enabled":false,"volume":0.3,"hoverEnabled":false}'::jsonb),
   ('analytics',   '{"enabled":false,"trackPageViews":false,"trackEvents":false}'::jsonb),
   ('translations', '{}'::jsonb),
   ('catalogue_sync', '{"artistName":"Zardonic","itunesArtistId":"","spotifyArtistId":"","discogsArtistId":""}'::jsonb)

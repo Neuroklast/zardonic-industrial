@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * SectionErrorBoundary – A lightweight ErrorBoundary for individual page sections.
  *
