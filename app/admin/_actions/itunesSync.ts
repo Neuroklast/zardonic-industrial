@@ -16,6 +16,11 @@ import {
   type CatalogueSyncConfig,
 } from '@/lib/catalogue-sync-config'
 import { normalizeItunesArtistId } from '@/lib/release-external-ids'
+import { mergeStreamingLinks, type StreamingLink } from '@/lib/release-metadata'
+import {
+  fetchOdesliStreamingLinks,
+  mergeOdesliIntoReleaseLinks,
+} from '@/lib/release-streaming-enrichment'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
@@ -121,19 +126,96 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
       const parsed = parseItunesItem(item)
       if (!parsed) continue
 
+      const streamingLinks: StreamingLink[] = [
+        { platform: 'appleMusic', url: `https://music.apple.com/album/id${parsed.itunes_id}` },
+      ]
+      const odesliLinks = await fetchOdesliStreamingLinks({
+        itunes_id: parsed.itunes_id,
+        streaming_links: streamingLinks,
+      })
+      const mergedLinks =
+        odesliLinks.length > 0
+          ? mergeOdesliIntoReleaseLinks(streamingLinks, odesliLinks)
+          : streamingLinks
+
       if (existingIds.has(parsed.itunes_id)) {
+        const { data: existingRow } = await supabase
+          .from('releases')
+          .select('id, itunes_id, spotify_id, streaming_links')
+          .eq('itunes_id', parsed.itunes_id)
+          .maybeSingle()
+
+        if (existingRow) {
+          const existingLinkList = Array.isArray(existingRow.streaming_links)
+            ? (existingRow.streaming_links as StreamingLink[])
+            : []
+          const update: Record<string, unknown> = {}
+          if (!existingRow.spotify_id && odesliLinks.length > 0) {
+            const spotifyLink = mergedLinks.find((link) => link.platform === 'spotify')
+            const spotifyId = spotifyLink?.url.match(/album\/([a-zA-Z0-9]+)/)?.[1]
+            if (spotifyId) update.spotify_id = spotifyId
+          }
+          const links = mergeStreamingLinks(existingLinkList, mergedLinks)
+          if (links.length > existingLinkList.length) update.streaming_links = links
+          if (Object.keys(update).length > 0) {
+            const { error: updateError } = await supabase
+              .from('releases')
+              .update(update)
+              .eq('id', existingRow.id)
+            if (updateError) {
+              result.errors.push(`Failed to update "${parsed.title}": ${updateError.message}`)
+            }
+          }
+        }
         result.skipped++
         continue
       }
 
-      // Strong protection: never overwrite releases the user has manually edited or that already exist by title
-      // This addresses the "kept reverting" issue from tester feedback
-      const { count: titleCount } = await supabase
+      const { data: titleMatches, error: titleError } = await supabase
         .from('releases')
-        .select('*', { count: 'exact', head: true })
+        .select('id, itunes_id, spotify_id, streaming_links')
         .ilike('title', parsed.title)
+        .limit(2)
 
-      if ((titleCount ?? 0) > 0) {
+      if (titleError) {
+        result.errors.push(`Failed to match "${parsed.title}": ${titleError.message}`)
+        result.skipped++
+        continue
+      }
+
+      if ((titleMatches ?? []).length === 1) {
+        const existingRow = titleMatches![0]
+        const existingLinkList = Array.isArray(existingRow.streaming_links)
+          ? (existingRow.streaming_links as StreamingLink[])
+          : []
+        const update: Record<string, unknown> = {
+          itunes_id: parsed.itunes_id,
+          streaming_links: mergeStreamingLinks(existingLinkList, mergedLinks),
+        }
+        if (!existingRow.spotify_id && odesliLinks.length > 0) {
+          const spotifyLink = mergedLinks.find((link) => link.platform === 'spotify')
+          if (spotifyLink) {
+            const id = spotifyLink.url.match(/album\/([a-zA-Z0-9]+)/)?.[1]
+            if (id) update.spotify_id = id
+          }
+        }
+        const { error: updateError } = await supabase
+          .from('releases')
+          .update(update)
+          .eq('id', existingRow.id)
+
+        if (updateError) {
+          result.errors.push(`Failed to backfill "${parsed.title}": ${updateError.message}`)
+          result.skipped++
+        } else {
+          result.synced++
+          existingIds.add(parsed.itunes_id)
+        }
+        continue
+      }
+
+      if ((titleMatches ?? []).length > 1) {
+        result.errors.push(`Ambiguous title match for "${parsed.title}" — skipped`)
         result.skipped++
         continue
       }

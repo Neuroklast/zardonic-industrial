@@ -22,6 +22,43 @@ export const STREAMING_PLATFORM_ORDER = [
   'spinrilla',
 ] as const
 
+/** Map display names and aliases to canonical platform keys used in streaming_links. */
+const PLATFORM_CANONICAL_KEYS: Record<string, string> = {
+  spotify: 'spotify',
+  applemusic: 'appleMusic',
+  apple: 'appleMusic',
+  itunes: 'appleMusic',
+  youtube: 'youtube',
+  youtubemusic: 'youtubeMusic',
+  soundcloud: 'soundcloud',
+  bandcamp: 'bandcamp',
+  deezer: 'deezer',
+  tidal: 'tidal',
+  amazonmusic: 'amazonMusic',
+  amazon: 'amazonMusic',
+  beatport: 'beatport',
+  pandora: 'pandora',
+  napster: 'napster',
+  audiomack: 'audiomack',
+  anghami: 'anghami',
+  boomplay: 'boomplay',
+  audius: 'audius',
+  yandex: 'yandex',
+  spinrilla: 'spinrilla',
+  discogs: 'discogs',
+}
+
+/** Normalise free-text platform labels (e.g. "Spotify", "Apple Music") to canonical keys. */
+export function normalizeStreamingPlatform(platform: string): string {
+  const trimmed = platform.trim()
+  if (!trimmed) return trimmed
+  if (STREAMING_PLATFORM_ORDER.includes(trimmed as (typeof STREAMING_PLATFORM_ORDER)[number])) {
+    return trimmed
+  }
+  const aliasKey = trimmed.toLowerCase().replace(/[\s_-]+/g, '')
+  return PLATFORM_CANONICAL_KEYS[aliasKey] ?? trimmed
+}
+
 const PLATFORM_LABELS: Record<string, string> = {
   spotify: 'Spotify',
   appleMusic: 'Apple Music',

@@ -28,7 +28,7 @@ export function ReloadTracklistButton({ releaseId, disabled }: ReloadTracklistBu
       }
 
       if (!result.enriched) {
-        setMessage('No changes — release is manually edited or has no external IDs.')
+        setMessage('No changes — no external IDs or streaming links to look up, or APIs returned no data.')
         return
       }
 

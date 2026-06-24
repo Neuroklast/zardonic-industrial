@@ -60,7 +60,6 @@ export function buildReleaseUpdateFromMetadata(
     release_date: metadata.release_date,
     artists: metadata.artists,
     streaming_links: mergeStreamingLinks(existingLinks, metadata.streaming_links),
-    manually_edited: true,
   }
 
   if (metadata.tracks && metadata.tracks.length > 0) {

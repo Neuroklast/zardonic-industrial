@@ -131,12 +131,17 @@ export async function buildReleaseEnrichmentUpdate(
   artistName: string,
   options?: { force?: boolean },
 ): Promise<Record<string, unknown> | null> {
-  if (row.manually_edited) return null
+  if (row.manually_edited && !options?.force) return null
 
   const update: Record<string, unknown> = {}
   let changed = false
 
-  if (releaseNeedsTrackEnrichment(row, options)) {
+  const wantsTracks =
+    options?.force && releaseHasExternalId(row)
+      ? true
+      : releaseNeedsTrackEnrichment(row, options)
+
+  if (wantsTracks) {
     const fetched = await fetchTracksForRelease(row, artistName)
     if (fetched) {
       Object.assign(update, buildTrackEnrichmentUpdate(fetched.tracks, fetched.source))
@@ -144,7 +149,12 @@ export async function buildReleaseEnrichmentUpdate(
     }
   }
 
-  if (releaseNeedsStreamingEnrichment(row, options)) {
+  const wantsStreaming =
+    options?.force && buildOdesliLookupUrl(row) !== null
+      ? true
+      : releaseNeedsStreamingEnrichment(row, options)
+
+  if (wantsStreaming) {
     const odesliLinks = await fetchOdesliStreamingLinks(row)
     if (odesliLinks.length > 0) {
       update.streaming_links = mergeOdesliIntoReleaseLinks(

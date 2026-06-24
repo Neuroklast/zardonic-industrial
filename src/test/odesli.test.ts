@@ -40,6 +40,19 @@ describe('odesli helpers', () => {
       }),
     ).toBe('https://open.spotify.com/album/6TElDMiCO7UEj3G0S2B8X0')
   })
+
+  it('builds lookup URLs from display-name platform labels in streaming_links', () => {
+    expect(
+      buildOdesliLookupUrl({
+        streaming_links: [{ platform: 'Spotify', url: 'https://open.spotify.com/album/abc123' }],
+      }),
+    ).toBe('https://open.spotify.com/album/abc123')
+    expect(
+      buildOdesliLookupUrl({
+        streaming_links: [{ platform: 'Apple Music', url: 'https://music.apple.com/album/id999' }],
+      }),
+    ).toBe('https://music.apple.com/album/id999')
+  })
 })
 
 describe('streaming platform labels', () => {
