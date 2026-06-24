@@ -206,6 +206,18 @@ export interface SpotifyArtistAlbumsPageResult {
   items: SpotifyArtistAlbumItem[]
   nextUrl: string | null
   ok: boolean
+  error?: string
+}
+
+async function spotifyApiErrorDetail(res: Response): Promise<string> {
+  let detail = `HTTP ${res.status}`
+  try {
+    const body = (await res.json()) as { error?: { message?: string } }
+    if (body.error?.message) detail += `: ${body.error.message}`
+  } catch {
+    // ignore non-JSON bodies
+  }
+  return detail
 }
 
 /** Fetch one page of Spotify artist albums (for chunked sync jobs). */
@@ -214,7 +226,14 @@ export async function fetchSpotifyArtistAlbumsPage(
   nextUrl?: string | null,
 ): Promise<SpotifyArtistAlbumsPageResult> {
   const token = await getSpotifyAccessToken()
-  if (!token) return { items: [], nextUrl: null, ok: false }
+  if (!token) {
+    return {
+      items: [],
+      nextUrl: null,
+      ok: false,
+      error: 'Spotify access token unavailable — check Admin → API Keys (Client ID + Secret)',
+    }
+  }
 
   const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
   const url =
@@ -222,7 +241,18 @@ export async function fetchSpotifyArtistAlbumsPage(
     `https://api.spotify.com/v1/artists/${encodeURIComponent(artistId)}/albums?include_groups=album,single,compilation&limit=50`
 
   const res = await fetch(url, { headers, cache: 'no-store' })
-  if (!res.ok) return { items: [], nextUrl: null, ok: false }
+  if (!res.ok) {
+    const detail = await spotifyApiErrorDetail(res)
+    return {
+      items: [],
+      nextUrl: null,
+      ok: false,
+      error:
+        res.status === 404
+          ? `Spotify artist not found (${artistId}) — use an artist ID/URL in Catalogue Sync, not an album or track`
+          : `Spotify albums API ${detail}`,
+    }
+  }
 
   const data = (await res.json()) as {
     items?: SpotifyAlbumPayload[]

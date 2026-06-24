@@ -103,18 +103,21 @@ async function initCataloguePayload(
   source: 'spotify' | 'discogs' | 'itunes',
   payload: SyncJobPayload,
 ): Promise<SyncJobPayload> {
-  if (payload.artistId != null) return { ...payload, source }
-
   const config = await loadCatalogueSyncConfig()
   const artistName = (payload.artistName?.trim() || config.artistName).trim()
 
   if (source === 'spotify') {
-    const artistId = await resolveSpotifyArtistId(config, artistName)
+    const artistId =
+      payload.artistId != null
+        ? String(payload.artistId)
+        : await resolveSpotifyArtistId(config, artistName)
     if (!artistId) throw new Error('Spotify artist ID or name not configured')
     const token = await getSpotifyAccessToken()
     if (!token) throw new Error('Spotify API credentials missing')
     return { ...payload, source, artistName, artistId }
   }
+
+  if (payload.artistId != null) return { ...payload, source }
 
   const artistId = await resolveDiscogsArtistId(config, artistName)
   if (!artistId) throw new Error('Discogs artist ID or name not configured')
@@ -213,7 +216,7 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const artistId = String(payload.artistId)
   const pageResult = await fetchSpotifyArtistAlbumsPage(artistId, payload.fetchNextUrl ?? null)
   if (!pageResult.ok) {
-    throw new Error('Spotify album fetch failed')
+    throw new Error(pageResult.error ?? 'Spotify album fetch failed')
   }
 
   for (const item of pageResult.items) {
