@@ -324,7 +324,7 @@ export default async function HomePage() {
     url: p.url,
     logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
     category: p.category,
-    logoHoverWhite: !!p.logo_hover_white,
+    logoHoverWhite: p.logo_hover_white !== false,
   })
 
   const credits = partners.filter((p) => p.category === 'credit').map(mapPartnerItem)

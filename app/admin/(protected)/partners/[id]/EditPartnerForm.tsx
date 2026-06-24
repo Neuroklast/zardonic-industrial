@@ -98,7 +98,7 @@ export function EditPartnerForm({ partner, resolvedLogoUrl }: EditPartnerFormPro
           type="checkbox"
           name="logo_hover_white"
           value="true"
-          defaultChecked={!!partner.logo_hover_white}
+          defaultChecked={partner.logo_hover_white !== false}
           className="rounded border-zinc-600"
         />
         White logo (permanent, transparent background)

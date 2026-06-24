@@ -73,6 +73,7 @@ export default function PartnerForm() {
           type="checkbox"
           name="logo_hover_white"
           value="true"
+          defaultChecked
           className="rounded border-zinc-600"
         />
         White logo (permanent, transparent background)
