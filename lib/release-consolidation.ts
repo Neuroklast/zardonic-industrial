@@ -6,6 +6,8 @@ import {
   type ReleaseMetadata,
   type StreamingLink,
 } from '@/lib/release-metadata'
+import { externalIdsFromStreamingLinks } from '@/lib/release-streaming-enrichment'
+import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
 export interface ReleaseConsolidationRow {
   id: string
@@ -348,6 +350,20 @@ export function buildConsolidatedReleaseUpdate(
   const mergedLinks = mergeStreamingLinks(existingLinks, duplicateLinks)
   if (mergedLinks.length > existingLinks.length) {
     update.streaming_links = mergedLinks
+    changed = true
+  }
+
+  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), canonical)
+  if (!canonical.spotify_id && linkedIds.spotify_id) {
+    update.spotify_id = linkedIds.spotify_id
+    changed = true
+  }
+  if (!canonical.itunes_id && linkedIds.itunes_id) {
+    update.itunes_id = linkedIds.itunes_id
+    changed = true
+  }
+  if (!canonical.discogs_id && linkedIds.discogs_id) {
+    update.discogs_id = linkedIds.discogs_id
     changed = true
   }
 

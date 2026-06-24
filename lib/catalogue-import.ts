@@ -21,11 +21,11 @@ import {
   type StreamingLink,
 } from '@/lib/release-metadata'
 import {
-  extractItunesAlbumIdFromLinks,
-  extractSpotifyAlbumIdFromLinks,
+  externalIdsFromStreamingLinks,
   fetchOdesliStreamingLinks,
   mergeOdesliIntoReleaseLinks,
 } from '@/lib/release-streaming-enrichment'
+import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
 export interface BulkExternalSyncResult {
   synced: number
@@ -121,16 +121,17 @@ function buildBulkBackfillUpdate(
     changed = true
   }
 
-  const linkedSpotifyId =
-    metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(mergedLinks)
-  const linkedItunesId = metadata.itunes_id ?? extractItunesAlbumIdFromLinks(mergedLinks)
-
-  if (!existingRow.spotify_id && linkedSpotifyId) {
-    update.spotify_id = linkedSpotifyId
+  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), existingRow)
+  if (!existingRow.spotify_id && linkedIds.spotify_id) {
+    update.spotify_id = linkedIds.spotify_id
     changed = true
   }
-  if (!existingRow.itunes_id && linkedItunesId) {
-    update.itunes_id = linkedItunesId
+  if (!existingRow.itunes_id && linkedIds.itunes_id) {
+    update.itunes_id = linkedIds.itunes_id
+    changed = true
+  }
+  if (!existingRow.discogs_id && linkedIds.discogs_id) {
+    update.discogs_id = linkedIds.discogs_id
     changed = true
   }
 
@@ -215,28 +216,41 @@ async function linkCrossSourceMetadata(
 
   const existingSpotifyId = existingRow?.spotify_id ?? null
   const existingItunesId = existingRow?.itunes_id ?? null
-  const needsSpotify =
-    (source === 'itunes' || existingItunesId) && !metadata.spotify_id && !existingSpotifyId
-  const needsItunes =
-    (source === 'spotify' || existingSpotifyId) && !metadata.itunes_id && !existingItunesId
+  const existingDiscogsId = existingRow?.discogs_id ?? null
+  const needsSpotify = !metadata.spotify_id && !existingSpotifyId
+  const needsItunes = !metadata.itunes_id && !existingItunesId
+  const hasOdesliAnchor = Boolean(
+    metadata.itunes_id ||
+      metadata.spotify_id ||
+      existingItunesId ||
+      existingSpotifyId,
+  )
 
-  if (!needsSpotify && !needsItunes) return metadata
+  if (!hasOdesliAnchor || (!needsSpotify && !needsItunes)) return metadata
 
   if (!options.lightImport) return metadata
 
   const odesliLinks = await fetchOdesliStreamingLinks({
     itunes_id: metadata.itunes_id ?? existingItunesId,
     spotify_id: metadata.spotify_id ?? existingSpotifyId,
+    discogs_id: metadata.discogs_id ?? existingDiscogsId,
     streaming_links: metadata.streaming_links,
   })
   if (odesliLinks.length === 0) return metadata
 
   const mergedLinks = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
+  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), {
+    spotify_id: metadata.spotify_id ?? existingSpotifyId,
+    itunes_id: metadata.itunes_id ?? existingItunesId,
+    discogs_id: metadata.discogs_id ?? existingDiscogsId,
+  })
+
   return {
     ...metadata,
     streaming_links: mergedLinks,
-    spotify_id: metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(mergedLinks),
-    itunes_id: metadata.itunes_id ?? extractItunesAlbumIdFromLinks(mergedLinks),
+    spotify_id: metadata.spotify_id ?? linkedIds.spotify_id ?? null,
+    itunes_id: metadata.itunes_id ?? linkedIds.itunes_id ?? null,
+    discogs_id: metadata.discogs_id ?? linkedIds.discogs_id ?? null,
   }
 }
 
@@ -373,8 +387,10 @@ export async function importCatalogueBatch(
       })
       if (odesliLinks.length > 0) {
         metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
-        metadata.spotify_id = metadata.spotify_id ?? extractSpotifyAlbumIdFromLinks(metadata.streaming_links)
-        metadata.itunes_id = metadata.itunes_id ?? extractItunesAlbumIdFromLinks(metadata.streaming_links)
+        const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(metadata.streaming_links), metadata)
+        metadata.spotify_id = metadata.spotify_id ?? linkedIds.spotify_id ?? null
+        metadata.itunes_id = metadata.itunes_id ?? linkedIds.itunes_id ?? null
+        metadata.discogs_id = metadata.discogs_id ?? linkedIds.discogs_id ?? null
       }
     }
 

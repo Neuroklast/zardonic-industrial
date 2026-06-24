@@ -1,12 +1,13 @@
 import { fetchOdesliLinksFromApi, cleanAppleMusicUrl } from '@/lib/odesli'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 import { mergeStreamingLinks, type StreamingLink } from '@/lib/release-metadata'
-import { normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
+import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
 import { normalizeStreamingPlatform } from '@/lib/streaming-platforms'
 
 export interface ReleaseStreamingRow {
   itunes_id?: string | null
   spotify_id?: string | null
+  discogs_id?: string | null
   streaming_links?: unknown
 }
 
@@ -85,4 +86,44 @@ export function extractItunesAlbumIdFromLinks(links: StreamingLink[]): string | 
     if (id) return id
   }
   return null
+}
+
+/** Extract a Discogs release id from stored streaming links. */
+export function extractDiscogsIdFromLinks(links: StreamingLink[]): string | null {
+  for (const link of links) {
+    if (!link.url) continue
+    const isDiscogs =
+      normalizeStreamingPlatform(link.platform) === 'discogs' || /discogs\.com/i.test(link.url)
+    if (!isDiscogs) continue
+    const id = normalizeDiscogsId(link.url)
+    if (id) return id
+  }
+  return null
+}
+
+export interface ExternalIdsFromLinks {
+  spotify_id?: string
+  itunes_id?: string
+  discogs_id?: string
+}
+
+/** Fill missing catalogue external ids from merged streaming links. */
+export function externalIdsFromStreamingLinks(
+  links: StreamingLink[],
+  existing?: { spotify_id?: string | null; itunes_id?: string | null; discogs_id?: string | null },
+): ExternalIdsFromLinks {
+  const result: ExternalIdsFromLinks = {}
+  if (!existing?.spotify_id) {
+    const spotifyId = extractSpotifyAlbumIdFromLinks(links)
+    if (spotifyId) result.spotify_id = spotifyId
+  }
+  if (!existing?.itunes_id) {
+    const itunesId = extractItunesAlbumIdFromLinks(links)
+    if (itunesId) result.itunes_id = itunesId
+  }
+  if (!existing?.discogs_id) {
+    const discogsId = extractDiscogsIdFromLinks(links)
+    if (discogsId) result.discogs_id = discogsId
+  }
+  return result
 }

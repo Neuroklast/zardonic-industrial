@@ -24,6 +24,7 @@ import {
   type ExternalReleaseSource,
 } from '@/lib/release-external-ids'
 import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
+import { runFullCatalogueEnrichment } from '@/lib/release-enrichment'
 import { mergeStreamingLinks, type ReleaseMetadata, type StreamingLink } from '@/lib/release-metadata'
 import {
   fetchDiscogsArtistReleases,
@@ -208,7 +209,13 @@ async function bulkImportMetadata(
     })
 
     const consolidation = await consolidateDuplicateReleases(supabase)
-    const errors = [...importResult.errors, ...consolidation.errors]
+    const config = await loadCatalogueSyncConfig()
+    const enrichment = await runFullCatalogueEnrichment(
+      supabase,
+      config.artistName || 'Zardonic',
+    )
+
+    const errors = [...importResult.errors, ...consolidation.errors, ...enrichment.errors]
     if (consolidation.deleted > 0) {
       errors.unshift(
         `Consolidated ${consolidation.deleted} duplicate release(s) across iTunes/Spotify/Discogs`,
@@ -219,8 +226,8 @@ async function bulkImportMetadata(
     revalidatePath('/')
     return {
       synced: importResult.synced,
-      updated: importResult.updated + consolidation.merged,
-      skipped: importResult.skipped + consolidation.skipped,
+      updated: importResult.updated + consolidation.merged + enrichment.enriched,
+      skipped: importResult.skipped + consolidation.skipped + enrichment.skipped,
       errors,
     }
   }, `Unable to sync releases from ${source}.`)

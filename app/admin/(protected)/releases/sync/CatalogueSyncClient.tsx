@@ -296,10 +296,11 @@ export function CatalogueSyncClient({
 
   const descriptions: Record<SyncSource, string> = {
     itunes:
-      'Bulk-import releases via iTunes lookup or artist name search. Matches and merges with existing Spotify rows.',
+      'Bulk-import via iTunes, merge with Spotify/Discogs rows, then Odesli enriches Deezer/Tidal/YouTube links.',
     spotify:
-      'Bulk-import albums and singles from the configured Spotify artist. Matches and merges with existing iTunes rows.',
-    discogs: 'Bulk-import releases from the configured Discogs artist.',
+      'Bulk-import from Spotify, merge with iTunes/Discogs rows, then Odesli enriches extra streaming platforms.',
+    discogs:
+      'Bulk-import from Discogs, merge with iTunes/Spotify rows, add tracklists, then Odesli enriches links.',
   }
 
   const configuredId: Record<SyncSource, string> = {

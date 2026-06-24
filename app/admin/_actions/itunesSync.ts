@@ -18,6 +18,7 @@ import {
 import { normalizeItunesArtistId } from '@/lib/release-external-ids'
 import { importCatalogueItems } from '@/lib/catalogue-import'
 import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
+import { runFullCatalogueEnrichment } from '@/lib/release-enrichment'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
@@ -107,10 +108,12 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
     })
 
     const consolidation = await consolidateDuplicateReleases(supabase)
-    const errors = [...fetchErrors, ...importResult.errors, ...consolidation.errors]
+    const enrichment = await runFullCatalogueEnrichment(supabase, artistName || 'Zardonic')
+
+    const errors = [...fetchErrors, ...importResult.errors, ...consolidation.errors, ...enrichment.errors]
     if (consolidation.deleted > 0) {
       errors.unshift(
-        `Consolidated ${consolidation.deleted} duplicate release(s) across iTunes/Spotify`,
+        `Consolidated ${consolidation.deleted} duplicate release(s) across iTunes/Spotify/Discogs`,
       )
     }
 
@@ -118,8 +121,8 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
     revalidatePath('/')
 
     return {
-      synced: importResult.synced + importResult.updated + consolidation.merged,
-      skipped: importResult.skipped + consolidation.skipped,
+      synced: importResult.synced + importResult.updated + consolidation.merged + enrichment.enriched,
+      skipped: importResult.skipped + consolidation.skipped + enrichment.skipped,
       errors,
     }
   }, 'Unable to sync releases from iTunes.')

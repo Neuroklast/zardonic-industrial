@@ -23,11 +23,7 @@ import {
   type ReleaseConsolidationRow,
 } from '@/lib/release-consolidation'
 import { fetchDiscogsArtistReleasesPage, searchDiscogsArtistId } from '@/lib/discogs-sync'
-import {
-  buildReleaseEnrichmentUpdate,
-  releaseNeedsEnrichment,
-  type ReleaseEnrichmentRow,
-} from '@/lib/release-enrichment'
+import { runCatalogueEnrichmentBatch } from '@/lib/release-enrichment'
 import {
   normalizeDiscogsArtistId,
   normalizeSpotifyArtistId,
@@ -44,14 +40,23 @@ import {
   type SyncJobPayload,
   type SyncJobProgress,
   type SyncJobRow,
+  type SyncJobType,
 } from '@/lib/sync-jobs'
 
 const IMPORT_BATCH_SIZE = 8
 const ENRICH_BATCH_SIZE = 5
-const PROCESSING_STALE_MS = 120_000
 
-const ENRICHMENT_SELECT =
-  'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links'
+const CATALOGUE_IMPORT_JOB_TYPES = new Set<SyncJobType>([
+  'itunes_sync',
+  'spotify_sync',
+  'discogs_sync',
+  'purge_and_sync_releases',
+])
+
+function shouldEnrichAfterCatalogueImport(type: SyncJobType): boolean {
+  return CATALOGUE_IMPORT_JOB_TYPES.has(type)
+}
+const PROCESSING_STALE_MS = 120_000
 
 export interface AdvanceSyncJobResult {
   job: SyncJobRow
@@ -349,30 +354,28 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     return { job: updated, done: false }
   }
 
-  if (job.type === 'purge_and_sync_releases') {
-    const consolidation = await runPostImportConsolidation(supabase)
+  const consolidation = await runPostImportConsolidation(supabase)
+  const progressAfterConsolidation = mergeProgress(nextProgress, {
+    updated: nextProgress.updated + consolidation.updated,
+    errors: consolidation.errors,
+  })
+
+  if (shouldEnrichAfterCatalogueImport(job.type)) {
     nextPayload.enrichCursor = 0
     const updated = await updateSyncJob(job.id, {
       status: 'running',
       phase: 'enrich',
       payload: nextPayload,
-      progress: mergeProgress(nextProgress, {
-        updated: consolidation.updated,
-        errors: consolidation.errors,
-      }),
+      progress: progressAfterConsolidation,
     })
     return { job: updated, done: false }
   }
 
-  const consolidation = await runPostImportConsolidation(supabase)
   const updated = await updateSyncJob(job.id, {
     status: 'completed',
     phase: 'import',
     payload: nextPayload,
-    progress: mergeProgress(nextProgress, {
-      updated: nextProgress.updated + consolidation.updated,
-      errors: consolidation.errors,
-    }),
+    progress: progressAfterConsolidation,
     completed_at: new Date().toISOString(),
   })
   return { job: updated, done: true }
@@ -384,57 +387,26 @@ async function tickEnrichPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const artistName = config.artistName || 'Zardonic'
   const cursor = job.payload.enrichCursor ?? 0
 
-  const { data: rows, error: listError } = await supabase
-    .from('releases')
-    .select(ENRICHMENT_SELECT)
-    .eq('manually_edited', false)
-    .order('display_order', { ascending: true })
+  const batchResult = await runCatalogueEnrichmentBatch(supabase, {
+    artistName,
+    cursor,
+    limit: ENRICH_BATCH_SIZE,
+  })
 
-  if (listError) throw new Error(listError.message)
-
-  const candidates = (rows ?? []).filter((row: ReleaseEnrichmentRow) =>
-    releaseNeedsEnrichment(row),
-  )
-  const batch = candidates.slice(cursor, cursor + ENRICH_BATCH_SIZE)
-
-  let enriched = 0
-  let skipped = 0
-  const errors: string[] = []
-
-  for (const row of batch) {
-    const release = row as ReleaseEnrichmentRow
-    const update = await buildReleaseEnrichmentUpdate(release, artistName)
-    if (!update) {
-      skipped++
-      errors.push(`"${release.title}": no data from external APIs`)
-      continue
-    }
-
-    const { error: updateError } = await supabase.from('releases').update(update).eq('id', release.id)
-    if (updateError) {
-      skipped++
-      errors.push(`"${release.title}": ${updateError.message}`)
-      continue
-    }
-    enriched++
-  }
-
-  const nextCursor = cursor + batch.length
-  const done = nextCursor >= candidates.length
   const nextProgress = mergeProgress(job.progress, {
-    processed: nextCursor,
-    total: candidates.length,
-    synced: enriched,
-    skipped,
-    errors,
+    processed: batchResult.nextCursor,
+    total: batchResult.total,
+    synced: batchResult.enriched,
+    skipped: batchResult.skipped,
+    errors: batchResult.errors,
   })
 
   const nextPayload: SyncJobPayload = {
     ...job.payload,
-    enrichCursor: nextCursor,
+    enrichCursor: batchResult.nextCursor,
   }
 
-  if (!done) {
+  if (!batchResult.done) {
     const updated = await updateSyncJob(job.id, {
       status: 'running',
       phase: 'enrich',
