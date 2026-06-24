@@ -1,3 +1,7 @@
+import {
+  SPOTIFY_ALBUM_TRACKS_PAGE_LIMIT,
+  SPOTIFY_ARTIST_ALBUMS_PAGE_LIMIT,
+} from '@/lib/spotify-api-limits'
 import { getSpotifyAccessToken } from '@/lib/spotify-client'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
 import {
@@ -104,7 +108,7 @@ async function fetchAllSpotifyAlbumTracks(
 
   if (collected.length === 0 && !initialPage) {
     const res = await fetch(
-      `https://api.spotify.com/v1/albums/${encodeURIComponent(albumId)}/tracks?limit=50`,
+      `https://api.spotify.com/v1/albums/${encodeURIComponent(albumId)}/tracks?limit=${SPOTIFY_ALBUM_TRACKS_PAGE_LIMIT}`,
       { headers, cache: 'no-store' },
     )
     if (res.ok) {
@@ -238,7 +242,7 @@ export async function fetchSpotifyArtistAlbumsPage(
   const headers = { Authorization: `Bearer ${token}`, Accept: 'application/json' }
   const url =
     nextUrl ??
-    `https://api.spotify.com/v1/artists/${encodeURIComponent(artistId)}/albums?include_groups=album,single,compilation&limit=50`
+    `https://api.spotify.com/v1/artists/${encodeURIComponent(artistId)}/albums?include_groups=album,single,compilation&limit=${SPOTIFY_ARTIST_ALBUMS_PAGE_LIMIT}`
 
   const res = await fetch(url, { headers, cache: 'no-store' })
   if (!res.ok) {

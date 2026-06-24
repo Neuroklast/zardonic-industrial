@@ -3,6 +3,10 @@ import { isApiSecretConfigured, getApiSecret } from './_api-secrets.js'
 import { getRedisOrNull } from './_redis.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { fetchWithRetry } from './_fetch-retry.js'
+import {
+  SPOTIFY_ARTIST_ALBUMS_PAGE_LIMIT,
+  SPOTIFY_SEARCH_PAGE_LIMIT,
+} from '../lib/spotify-api-limits.js'
 import { validate, spotifyQuerySchema } from './_schemas.js'
 
 const SPOTIFY_TOKEN_KEY = 'spotify:access-token'
@@ -107,13 +111,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
       case 'albums': {
         if (!id) return res.status(400).json({ error: 'id parameter is required for action=albums' })
-        apiUrl = `https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums`
+        apiUrl = `https://api.spotify.com/v1/artists/${encodeURIComponent(id)}/albums?include_groups=album,single,compilation&limit=${SPOTIFY_ARTIST_ALBUMS_PAGE_LIMIT}`
         break
       }
       case 'search': {
         if (!query) return res.status(400).json({ error: 'query parameter is required for action=search' })
         const searchType = (req.query.type as string) ?? 'album'
-        const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(searchType)}&limit=50&market=${market ?? 'US'}`
+        const searchUrl = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${encodeURIComponent(searchType)}&limit=${SPOTIFY_SEARCH_PAGE_LIMIT}&market=${market ?? 'US'}`
 
         const searchRedis = getRedisOrNull()
         const searchCacheKey = `spotify:search:${query.toLowerCase().replace(/\s+/g, '-')}:${searchType}`
