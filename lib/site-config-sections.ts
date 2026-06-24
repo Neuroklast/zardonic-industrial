@@ -22,6 +22,12 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'contact', label: 'Contact', visible: true, order: 10 },
 ]
 
+export const EXCLUDED_HOME_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
+
+export function withoutExcludedSections(items: SectionConfig[]): SectionConfig[] {
+  return items.filter((section) => !EXCLUDED_HOME_SECTION_IDS.has(section.id))
+}
+
 export function parseSections(raw: unknown): SectionConfig[] {
   if (!Array.isArray(raw)) return DEFAULT_SECTIONS
   const parsed = raw

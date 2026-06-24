@@ -30,6 +30,12 @@ import {
   type ReleaseDbRow,
 } from '@/lib/release-public-mapper'
 import { resolveHeroLogoUrl } from '@/lib/hero-defaults'
+import { buildNavLinks } from '@/lib/nav-links'
+import {
+  parseSections,
+  withoutExcludedSections,
+  type SectionConfig,
+} from '@/lib/site-config-sections'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -60,13 +66,6 @@ interface GalleryItemRow {
   storage_path: string | null; image_url: string | null
 }
 interface SocialRow { id: string; platform: string; url: string; label: string | null }
-interface SectionConfig {
-  id: string
-  label: string
-  intro?: string
-  visible: boolean
-  order: number
-}
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
@@ -184,42 +183,9 @@ function getConfig(rows: SiteConfigRow[], key: string): Record<string, unknown> 
   return rows.find((r) => r.key === key)?.value ?? {}
 }
 
-const DEFAULT_SECTIONS: SectionConfig[] = [
-  { id: 'hero',             label: 'Hero',               visible: true, order: 0  },
-  { id: 'bio',              label: 'Biography',          visible: true, order: 1  },
-  { id: 'credits',          label: 'Credits & Partners', visible: true, order: 2  },
-  { id: 'gallery',          label: 'Gallery',            visible: true, order: 3  },
-  { id: 'music-highlights', label: 'Music Highlights',   visible: true, order: 4  },
-  { id: 'releases',         label: 'Discography',        visible: true, order: 5  },
-  { id: 'social',           label: 'Connect',            visible: true, order: 6  },
-  { id: 'spotify',          label: 'Music Stream',       visible: true, order: 7  },
-  { id: 'merchandise',      label: 'Merchandise',        visible: true, order: 8  },
-  { id: 'soundpacks',       label: 'Soundpacks',         visible: true, order: 9  },
-  { id: 'gigs',             label: 'Events',             visible: true, order: 10 },
-  { id: 'newsletter',       label: 'Newsletter',         visible: true, order: 11 },
-  { id: 'contact',          label: 'Contact',            visible: true, order: 12 },
-]
 
-function parseSections(raw: unknown): SectionConfig[] {
-  if (!Array.isArray(raw)) return DEFAULT_SECTIONS
-  const parsed = raw
-    .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
-    .map((item) => ({
-      id: typeof item.id === 'string' ? item.id : '',
-      label: typeof item.label === 'string' ? item.label : '',
-      intro: typeof item.intro === 'string' ? item.intro : undefined,
-      visible: typeof item.visible === 'boolean' ? item.visible : true,
-      order: typeof item.order === 'number' ? item.order : 0,
-    }))
-    .filter((s) => s.id !== '')
-  return parsed.length > 0 ? parsed : DEFAULT_SECTIONS
-}
 
-const EXCLUDED_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
 
-function withoutExcludedSections(items: SectionConfig[]): SectionConfig[] {
-  return items.filter((s) => !EXCLUDED_SECTION_IDS.has(s.id))
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default async function HomePage({
@@ -436,7 +402,8 @@ export default async function HomePage({
     <GlobalEffects crtEnabled={crtEnabled} scanlineEnabled={scanlineEnabled} noiseEnabled={noiseEnabled} />
   )
 
-  const navSlot = <SiteNav />
+  const navLinks = buildNavLinks(allSections.filter((section) => section.visible))
+  const navSlot = <SiteNav links={navLinks} />
 
   const legalNoticeUrl = String(
     footerConfig.legalNoticeUrl ?? footerConfig.impressumUrl ?? '/legal-notice',

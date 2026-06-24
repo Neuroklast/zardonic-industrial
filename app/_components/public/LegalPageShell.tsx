@@ -4,6 +4,7 @@ import { PageLayout } from '@/layouts/PageLayout'
 import { CookieConsent } from '@/components/CookieConsent'
 import { GlobalEffects } from './GlobalEffects'
 import { SiteNav } from './SiteNav'
+import { buildNavLinksFromConfig } from '@/lib/nav-links'
 import { SiteFooter } from './SiteFooter'
 import { BackgroundStack } from './BackgroundStack'
 
@@ -19,9 +20,19 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
     social: [] as Array<{ id: string; platform: string; url: string; label: string | null }>,
   }
 
+  let navLinks = buildNavLinksFromConfig(null)
+
   try {
     const supabase = await createClient()
     pageData = await loadLegalPageData(supabase)
+    const { data: sectionsRow } = await supabase
+      .from('site_config')
+      .select('value')
+      .eq('key', 'sections')
+      .single()
+    if (sectionsRow?.value) {
+      navLinks = buildNavLinksFromConfig(sectionsRow.value)
+    }
   } catch {
     // Safe defaults when Supabase is unavailable
   }
@@ -38,7 +49,7 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
       backgroundLayers={
         <BackgroundStack backgroundType="minimal" imageOpacity={0.25} />
       }
-      nav={<SiteNav />}
+      nav={<SiteNav links={navLinks} />}
       footer={
         <SiteFooter
           socialLinks={pageData.social}
