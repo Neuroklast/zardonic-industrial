@@ -20,6 +20,10 @@ vi.mock('@/app/admin/_components/AdminNav', () => ({
   AdminNav: () => null,
 }))
 
+vi.mock('@/app/admin/_components/AdminHelpPalette', () => ({
+  AdminHelpPalette: () => null,
+}))
+
 import ProtectedAdminLayout from '@/app/admin/(protected)/layout'
 
 describe('ProtectedAdminLayout', () => {

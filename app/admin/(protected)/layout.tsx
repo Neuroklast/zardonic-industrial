@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createActionClient } from '@/lib/supabaseServer'
 import { AdminNav } from '@/app/admin/_components/AdminNav'
+import { AdminHelpPalette } from '@/app/admin/_components/AdminHelpPalette'
 
 export default async function ProtectedAdminLayout({
   children,
@@ -29,6 +30,7 @@ export default async function ProtectedAdminLayout({
         <AdminNav />
         <main className="flex-1 p-4 pt-16 md:pt-8 md:p-8 overflow-auto min-w-0">{children}</main>
       </div>
+      <AdminHelpPalette />
     </div>
   )
 }

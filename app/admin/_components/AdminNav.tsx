@@ -3,7 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { SignOut, List, X } from '@phosphor-icons/react'
+import { SignOut, List, X, MagnifyingGlass } from '@phosphor-icons/react'
+import { openAdminHelp } from '@/app/admin/_components/AdminHelpPalette'
+import { getAdminHelpShortcutLabel } from '@/lib/admin-help-shortcut'
 import {
   House,
   Gear,
@@ -74,6 +76,28 @@ function NavLink({ item, onClick }: { item: AdminNavItemData; onClick?: () => vo
   )
 }
 
+function HelpSearchButton({ onClick }: { onClick?: () => void }) {
+  const shortcutLabel = getAdminHelpShortcutLabel()
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        openAdminHelp()
+        onClick?.()
+      }}
+      className="w-full flex items-center gap-3 rounded px-3 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-800 hover:border-zinc-700 transition-colors text-left mb-3"
+      aria-label="Open admin help and quick search"
+    >
+      <MagnifyingGlass className="h-4 w-4 shrink-0" aria-hidden="true" />
+      <span className="truncate flex-1">Help &amp; Search</span>
+      <kbd className="hidden sm:inline text-[10px] font-mono text-zinc-600 border border-zinc-700 rounded px-1.5 py-0.5">
+        {shortcutLabel}
+      </kbd>
+    </button>
+  )
+}
+
 function NavLinks({ onNavClick }: { onNavClick?: () => void }) {
   return (
     <nav className="flex flex-col gap-4 flex-1" aria-label="Admin navigation">
@@ -114,6 +138,7 @@ export function AdminNav() {
           <span className="ml-2 text-[10px] text-zinc-500 font-mono uppercase tracking-widest">Admin</span>
         </div>
         <div className="flex flex-col flex-1 p-3 overflow-y-auto">
+          <HelpSearchButton />
           <NavLinks />
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <form method="POST" action="/admin/logout" className="contents">
@@ -133,15 +158,25 @@ export function AdminNav() {
         <span className="font-mono font-bold tracking-[0.2em] text-sm text-white uppercase">
           Zardonic <span className="text-zinc-500 text-[10px] font-mono">Admin</span>
         </span>
-        <button
-          type="button"
-          aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={mobileOpen}
-          onClick={() => setMobileOpen((v) => !v)}
-          className="inline-flex items-center justify-center text-zinc-400 hover:text-white p-2 min-h-[44px] min-w-[44px] rounded transition-colors"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <List className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="Open admin help and quick search"
+            onClick={() => openAdminHelp()}
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white p-2 min-h-[44px] min-w-[44px] rounded transition-colors"
+          >
+            <MagnifyingGlass className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen((v) => !v)}
+            className="inline-flex items-center justify-center text-zinc-400 hover:text-white p-2 min-h-[44px] min-w-[44px] rounded transition-colors"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <List className="h-5 w-5" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -172,6 +207,7 @@ export function AdminNav() {
           </button>
         </div>
         <div className="flex flex-col flex-1 p-3 overflow-y-auto h-[calc(100vh-56px)]">
+          <HelpSearchButton onClick={() => setMobileOpen(false)} />
           <NavLinks onNavClick={() => setMobileOpen(false)} />
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <form method="POST" action="/admin/logout" className="contents">
