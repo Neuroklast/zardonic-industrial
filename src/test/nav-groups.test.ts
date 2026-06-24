@@ -4,8 +4,8 @@ import { isNavItemActive, resolveActiveNavItem } from '@/app/admin/_config/nav-g
 describe('nav-groups active matching', () => {
   it('prefers longest href match', () => {
     const active = resolveActiveNavItem('/admin/releases/sync')
-    expect(active?.href).toBe('/admin/releases')
-    expect(active?.label).toBe('Discography')
+    expect(active?.href).toBe('/admin/releases/sync')
+    expect(active?.label).toBe('Catalogue Sync')
   })
 
   it('matches dashboard exactly only', () => {
