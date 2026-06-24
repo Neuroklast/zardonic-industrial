@@ -61,7 +61,7 @@ function GigList({
             }}
           >
             <div
-              className="cyber-card hover-scan hover-noise group relative w-full cursor-pointer border border-border bg-card p-6 transition-colors hover:border-primary/50"
+              className="cyber-card hover-scan hover-noise group relative w-full cursor-pointer border border-border p-6 transition-colors hover:border-primary/50"
               onClick={() => onGigClick(gig)}
               onKeyDown={(event) => {
                 if (event.key !== 'Enter' && event.key !== ' ') return

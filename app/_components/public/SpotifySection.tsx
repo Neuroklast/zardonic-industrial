@@ -128,7 +128,7 @@ export function SpotifySection({ uri, label = 'MUSIC STREAM' }: SpotifySectionPr
           {consented ? (
             <SpotifyEmbed uri={uri} />
           ) : (
-            <div className="border border-primary/30 bg-card/40 p-8 text-center space-y-4">
+            <div className="surface-card border border-primary/30 p-8 text-center space-y-4">
               <p className="font-mono text-sm text-muted-foreground uppercase tracking-wider">
                 // SPOTIFY.EMBED — Requires external connection to open.spotify.com
               </p>

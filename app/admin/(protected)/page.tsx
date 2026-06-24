@@ -69,7 +69,7 @@ export default async function AdminDashboard() {
               href="/admin/site-config"
               className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-300 hover:text-white transition-colors"
             >
-              Site Config
+              Look &amp; Feel
             </Link>
             <Link
               href="/admin/data"

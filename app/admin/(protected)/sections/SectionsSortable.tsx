@@ -20,13 +20,9 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import type { SectionConfig } from '@/lib/site-config-sections'
 
-export interface SectionConfig {
-  id: string
-  label: string
-  visible: boolean
-  order: number
-}
+export type { SectionConfig }
 
 interface SectionRowProps {
   section: SectionConfig

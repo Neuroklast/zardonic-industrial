@@ -1,20 +1,22 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useMemo, useState } from 'react'
 import { HeroConfigEditor } from './HeroConfigEditor'
 import { BackgroundConfigEditor } from './BackgroundConfigEditor'
 import { AppearanceEditor } from './AppearanceEditor'
 import { SimpleTextConfigEditor } from './SimpleTextConfigEditor'
 import SiteConfigEditor from './SiteConfigEditor'
 import { AdminPreviewPane } from '@/app/admin/_components/AdminPreviewPane'
+import { SectionsSortable } from '@/app/admin/(protected)/sections/SectionsSortable'
+import { parseSections, type SectionConfig } from '@/lib/site-config-sections'
 
-type TabId = 'hero' | 'background' | 'appearance' | 'sections' | 'text' | 'advanced'
+type TabId = 'hero' | 'background' | 'theme' | 'sections' | 'text' | 'advanced'
 
 interface SiteConfigTabsProps {
   heroValue: Record<string, unknown>
   bgValue: Record<string, unknown>
   appearanceValue: Record<string, unknown>
+  sectionsValue: unknown
   newsletterValue: Record<string, unknown>
   merchandiseValue: Record<string, unknown>
   footerValue: Record<string, unknown>
@@ -27,31 +29,37 @@ interface SiteConfigTabsProps {
   }>
 }
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'hero', label: 'Hero' },
+const BASE_TABS: { id: TabId; label: string }[] = [
+  { id: 'theme', label: 'Theme' },
   { id: 'background', label: 'Background' },
-  { id: 'appearance', label: 'Appearance' },
+  { id: 'hero', label: 'Hero' },
   { id: 'sections', label: 'Sections' },
-  { id: 'text', label: 'Footer & Legal' },
-  { id: 'advanced', label: 'Advanced JSON' },
+  { id: 'text', label: 'Site Text' },
 ]
 
 export function SiteConfigTabs({
   heroValue,
   bgValue,
   appearanceValue,
+  sectionsValue,
   newsletterValue,
   merchandiseValue,
   footerValue,
   advancedConfigs,
 }: SiteConfigTabsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('appearance')
+  const [activeTab, setActiveTab] = useState<TabId>('theme')
+  const sections = useMemo(() => parseSections(sectionsValue), [sectionsValue])
+
+  const tabs = useMemo(() => {
+    if (advancedConfigs.length === 0) return BASE_TABS
+    return [...BASE_TABS, { id: 'advanced' as const, label: 'Advanced' }]
+  }, [advancedConfigs.length])
 
   return (
     <AdminPreviewPane>
       <div className="space-y-4" data-admin-ui="true">
         <nav className="flex flex-wrap gap-2 border-b border-zinc-800 pb-3 overflow-x-auto">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
@@ -69,19 +77,16 @@ export function SiteConfigTabs({
 
         {activeTab === 'hero' && <HeroConfigEditor currentValue={heroValue} />}
         {activeTab === 'background' && <BackgroundConfigEditor currentValue={bgValue} />}
-        {activeTab === 'appearance' && <AppearanceEditor currentValue={appearanceValue} />}
+        {activeTab === 'theme' && <AppearanceEditor currentValue={appearanceValue} />}
         {activeTab === 'sections' && (
           <div className="border border-zinc-800 rounded p-4 space-y-3">
-            <h2 className="text-sm font-semibold text-zinc-200">Page Sections</h2>
-            <p className="text-xs text-zinc-500">
-              Control which sections appear on the public site and their order.
-            </p>
-            <Link
-              href="/admin/sections"
-              className="inline-flex px-3 py-1.5 text-sm rounded bg-zinc-700 hover:bg-zinc-600 text-white transition-colors"
-            >
-              Open Section Manager →
-            </Link>
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-200">Section Order &amp; Visibility</h2>
+              <p className="text-xs text-zinc-500 mt-0.5">
+                Choose which sections appear on the homepage and drag to reorder them.
+              </p>
+            </div>
+            <SectionsSortable initialSections={sections as SectionConfig[]} />
           </div>
         )}
         {activeTab === 'text' && (

@@ -1,13 +1,23 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
+import { useIsMobile } from '@/hooks/use-mobile'
+import {
+  DEFAULT_BACKGROUND_VIDEO_OPACITY,
+  parseMobileVideoMode,
+  resolveActiveBackgroundVideoUrl,
+  type MobileVideoMode,
+} from '@/lib/background-config'
 
 interface BackgroundStackProps {
   imageUrl?: string
   videoUrl?: string
+  mobileVideoUrl?: string
+  mobileVideoMode?: MobileVideoMode
   backgroundType?: 'matrix' | 'circuit' | 'minimal'
   imageOpacity?: number
+  videoOpacity?: number
 }
 
 const MatrixRain = dynamic(() => import('@/components/MatrixRain'), { ssr: false })
@@ -27,8 +37,6 @@ function AnimatedLayer({
 }) {
   if (backgroundType === 'minimal') return null
 
-  // High performance tuning while keeping the beloved current look
-  // We reduce only modestly so the rich effects (matrix rain, circuit) still feel like before
   const matrixDensity = perfMode ? 0.55 : 0.7
   const matrixSpeed = perfMode ? 0.85 : 1.0
   const circuitSpeed = perfMode ? 0.8 : 1.0
@@ -48,10 +56,20 @@ function AnimatedLayer({
 export function BackgroundStack({
   imageUrl,
   videoUrl,
+  mobileVideoUrl,
+  mobileVideoMode = 'same',
   backgroundType = 'matrix',
-  imageOpacity = 0.55, // tuned for Digicide album art visibility while keeping rich effects on top
+  imageOpacity = 0.55,
+  videoOpacity = DEFAULT_BACKGROUND_VIDEO_OPACITY,
 }: BackgroundStackProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const isMobile = useIsMobile()
+  const mode = parseMobileVideoMode(mobileVideoMode)
+
+  const activeVideoUrl = useMemo(
+    () => resolveActiveBackgroundVideoUrl(videoUrl, mobileVideoUrl, mode, isMobile),
+    [videoUrl, mobileVideoUrl, mode, isMobile],
+  )
 
   useEffect(() => {
     const video = videoRef.current
@@ -60,7 +78,7 @@ export function BackgroundStack({
     let frameId: number | null = null
     let lastScrollY = 0
     let scrollTimeout: number | null = null
-    const THROTTLE_MS = 180 // high performance: strongly relaxed to minimize conflict with Lenis and main thread (cinematic scroll video is kept but deprioritized for smoothness)
+    const THROTTLE_MS = 180
 
     const syncToScroll = () => {
       frameId = null
@@ -75,7 +93,6 @@ export function BackgroundStack({
       const duration = Number.isFinite(video.duration) ? video.duration : 0
 
       if (duration > 0) {
-        // Only set if significantly different to reduce paint cost
         const targetTime = progress * duration
         if (Math.abs(video.currentTime - targetTime) > 0.1) {
           video.currentTime = targetTime
@@ -88,7 +105,6 @@ export function BackgroundStack({
       frameId = window.requestAnimationFrame(syncToScroll)
     }
 
-    // High perf: throttle + auto-pause sync when scrolling stops
     scheduleSync()
     let lastCall = 0
     const throttledScroll = () => {
@@ -98,7 +114,6 @@ export function BackgroundStack({
         scheduleSync()
       }
 
-      // Pause the expensive sync after user stops scrolling
       if (scrollTimeout) clearTimeout(scrollTimeout)
       scrollTimeout = window.setTimeout(() => {
         if (frameId) {
@@ -111,7 +126,6 @@ export function BackgroundStack({
     window.addEventListener('scroll', throttledScroll, { passive: true })
     video.addEventListener('loadedmetadata', scheduleSync)
 
-    // Pause when tab hidden for perf
     const onVisibility = () => {
       if (document.hidden && frameId) {
         cancelAnimationFrame(frameId)
@@ -127,7 +141,7 @@ export function BackgroundStack({
       video.removeEventListener('loadedmetadata', scheduleSync)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [videoUrl])
+  }, [activeVideoUrl])
 
   return (
     <>
@@ -148,15 +162,14 @@ export function BackgroundStack({
         </div>
       ) : null}
 
-      {videoUrl ? (
+      {activeVideoUrl ? (
         <div
           className="fixed inset-0 pointer-events-none overflow-hidden bg-black"
-          style={{ zIndex: 'var(--z-bg-video)', opacity: 0.5 }}
+          style={{ zIndex: 'var(--z-bg-video)', opacity: videoOpacity }}
           data-draft-target="bg-video-wrap"
         >
-          {/* Video layer is always rendered on solid black at 50% opacity (per spec) */}
-          {/* Extra veil ensures footage is never too bright even for bright source videos */}
           <video
+            key={activeVideoUrl}
             ref={videoRef}
             className="h-full w-full object-cover"
             data-draft-target="bg-video"
@@ -166,16 +179,15 @@ export function BackgroundStack({
             poster={imageUrl}
             aria-hidden="true"
           >
-            <source src={videoUrl} />
+            <source src={activeVideoUrl} />
           </video>
           <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
         </div>
       ) : null}
 
-      <AnimatedLayer 
-        backgroundType={backgroundType} 
-        hasImage={Boolean(imageUrl) || Boolean(videoUrl)} 
-        // High performance: when we have a strong static album image (Digicide), run lighter animations
+      <AnimatedLayer
+        backgroundType={backgroundType}
+        hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
         perfMode={Boolean(imageUrl)}
       />
     </>

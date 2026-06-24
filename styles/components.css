@@ -592,9 +592,21 @@
   opacity: 0.7;
 }
 
+.surface-section-panel {
+  background-color: var(--surface-section-bg-fallback);
+  background-color: var(--surface-section-bg);
+  backdrop-filter: var(--surface-section-backdrop);
+}
+
+.surface-card {
+  background-color: var(--surface-card-bg-fallback);
+  background-color: var(--surface-card-bg);
+}
+
 :is(.cyber-card) {
   position: relative;
-  background: var(--card);
+  background-color: var(--surface-card-bg-fallback);
+  background-color: var(--surface-card-bg);
   border: 1px solid var(--border);
   transition: all 0.3s ease;
 }

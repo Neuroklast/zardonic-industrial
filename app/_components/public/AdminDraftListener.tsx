@@ -53,6 +53,11 @@ function applyBackgroundDraft(value: Record<string, unknown>) {
     }
   }
 
+  const videoWrap = document.querySelector<HTMLElement>('[data-draft-target="bg-video-wrap"]')
+  if (videoWrap && typeof value.backgroundVideoOpacity === 'number') {
+    videoWrap.style.opacity = String(value.backgroundVideoOpacity)
+  }
+
   const videoEl = document.querySelector<HTMLVideoElement>('[data-draft-target="bg-video"]')
   if (videoEl && typeof value.video_url === 'string') {
     if (value.video_url) {
@@ -60,9 +65,9 @@ function applyBackgroundDraft(value: Record<string, unknown>) {
       if (source) source.src = value.video_url
       else videoEl.src = value.video_url
       videoEl.load()
-      videoEl.closest('[data-draft-target="bg-video-wrap"]')?.removeAttribute('hidden')
+      videoWrap?.removeAttribute('hidden')
     } else {
-      videoEl.closest('[data-draft-target="bg-video-wrap"]')?.setAttribute('hidden', '')
+      videoWrap?.setAttribute('hidden', '')
     }
   }
 }

@@ -42,7 +42,7 @@ function mapToLayoutRelease(item: PublicReleaseCardItem): Release {
 function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onClick: () => void }) {
   return (
     <div
-      className="cyber-card group overflow-hidden border border-border bg-card/50 transition-all hover:border-primary/50 hover-chromatic cursor-pointer"
+      className="cyber-card group overflow-hidden border border-border transition-all hover:border-primary/50 hover-chromatic cursor-pointer"
       onClick={onClick}
       role="button"
       tabIndex={0}

@@ -20,7 +20,7 @@ export function SectionContentPanel({
 }) {
   return (
     <div
-      className={`cyber-grid w-full border border-border/60 bg-card/55 backdrop-blur-sm p-6 md:p-8 ${className}`}
+      className={`cyber-grid surface-section-panel w-full border border-border/60 p-6 md:p-8 ${className}`}
     >
       {children}
     </div>
@@ -94,7 +94,7 @@ export function SectionDivider() {
 /** Shared empty state for uniform coming-soon states (DRY) */
 export function SectionEmpty({ label = 'Coming soon' }: { label?: string }) {
   return (
-    <div className="border border-border bg-card/50 p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
+    <div className="surface-card border border-border p-12 text-center font-mono text-xl uppercase tracking-wide text-muted-foreground">
       {label}
     </div>
   )

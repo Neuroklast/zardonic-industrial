@@ -125,7 +125,7 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                         ? { duration: 0 }
                         : { duration: 0.6, delay: index * 0.06, ease: [0.25, 0.46, 0.45, 0.94] }
                     }
-                    className={`cyber-card group overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic ${cardExtra} ${
+                    className={`cyber-card group overflow-hidden border border-border transition-all hover:border-primary/50 hover-chromatic ${cardExtra} ${
                       onReleaseClick ? 'cursor-pointer' : ''
                     }`}
                     onClick={(event) => {

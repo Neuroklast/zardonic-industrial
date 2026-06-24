@@ -69,7 +69,7 @@ function ReleaseBrowseCard({
 
   return (
     <article
-      className="cyber-card group cursor-pointer overflow-hidden border border-border bg-card transition-all hover:border-primary/50 hover-chromatic"
+      className="cyber-card group cursor-pointer overflow-hidden border border-border transition-all hover:border-primary/50 hover-chromatic"
       onClick={(event) => {
         const target = event.target
         if (target instanceof Element && target.closest('a')) return
@@ -144,7 +144,7 @@ function ReleaseBrowseCard({
 function SwipeReleaseCard({ release, onClick }: { release: PublicReleaseCardItem; onClick: () => void }) {
   return (
     <div
-      className="cyber-card group cursor-pointer overflow-hidden border border-border bg-card/50 transition-all hover:border-primary/50 hover-chromatic"
+      className="cyber-card group cursor-pointer overflow-hidden border border-border transition-all hover:border-primary/50 hover-chromatic"
       onClick={onClick}
       role="button"
       tabIndex={0}
