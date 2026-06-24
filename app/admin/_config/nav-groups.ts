@@ -62,7 +62,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     id: 'system',
     label: 'System',
     items: [
-      { href: '/admin/sound', label: 'Sound' },
       { href: '/admin/analytics', label: 'Analytics' },
       { href: '/admin/api-keys', label: 'API Keys' },
       { href: '/admin/health', label: 'API Health' },

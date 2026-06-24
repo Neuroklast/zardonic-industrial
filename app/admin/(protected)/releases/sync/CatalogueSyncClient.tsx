@@ -115,7 +115,7 @@ export function CatalogueSyncClient({ initialConfig }: CatalogueSyncClientProps)
         <div className="rounded border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
           <h2 className="text-sm font-semibold text-zinc-200">Sync Result</h2>
 
-          <div className={`grid gap-3 ${'updated' in result ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <div className={`grid gap-3 ${'updated' in result ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
             <div className="rounded bg-zinc-950 border border-zinc-800 p-3 text-center">
               <div className="text-2xl font-bold text-green-400">{result.synced}</div>
               <div className="text-xs text-zinc-500 mt-1">Imported</div>

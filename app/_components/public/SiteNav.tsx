@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useLenisContext } from '@/contexts/LenisContext'
+import { useLocale } from '@/contexts/LocaleContext'
+import { ariaLabel } from '@/lib/i18n'
 
 const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -19,6 +21,7 @@ const NAV_LINKS = [
 export function SiteNav() {
   const [open, setOpen] = useState(false)
   const { scrollTo } = useLenisContext()
+  const { locale } = useLocale()
 
   return (
     <header
@@ -38,7 +41,7 @@ export function SiteNav() {
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center gap-6" aria-label={ariaLabel('aria.mainNav', locale)}>
           {NAV_LINKS.map((l) => (
             <a
               key={l.href}
@@ -58,9 +61,9 @@ export function SiteNav() {
 
         {/* Mobile menu toggle */}
         <button
-          className="md:hidden text-zinc-400 hover:text-white transition-colors"
+          className="md:hidden flex min-h-[44px] min-w-[44px] items-center justify-center text-zinc-400 hover:text-white transition-colors"
           onClick={() => setOpen((v) => !v)}
-          aria-label={open ? 'Close menu' : 'Open menu'}
+          aria-label={open ? ariaLabel('aria.closeMenu', locale) : ariaLabel('aria.openMenu', locale)}
           aria-expanded={open}
         >
           <span className="font-mono text-xs tracking-widest">{open ? '[×]' : '[≡]'}</span>
@@ -71,7 +74,7 @@ export function SiteNav() {
       {open && (
         <nav
           className="md:hidden border-t border-zinc-800/60 bg-black/90 px-4 py-4 flex flex-col gap-4"
-          aria-label="Mobile navigation"
+          aria-label={ariaLabel('aria.mobileNav', locale)}
         >
           {NAV_LINKS.map((l) => (
             <a

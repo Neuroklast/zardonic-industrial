@@ -50,6 +50,8 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
   }, [adminSettings?.progressiveOverlayModes])
 
   const overlaySessionKey = getOverlaySessionKey(overlay)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const lastFocusedRef = useRef<HTMLElement | null>(null)
 
   // Pick a new random animation each time a new overlay session opens.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- session key is the intentional open trigger, not a closed-over value
@@ -96,6 +98,57 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
     }
   }, [overlaySessionKey])
 
+  useEffect(() => {
+    if (!overlaySessionKey) return
+
+    lastFocusedRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+
+    const focusClose = () => {
+      const closeBtn = panelRef.current?.querySelector<HTMLElement>('button[aria-label="Close dialog"]')
+      closeBtn?.focus()
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        onClose()
+        return
+      }
+
+      if (event.key !== 'Tab' || !panelRef.current) return
+
+      const focusable = Array.from(
+        panelRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => !el.hasAttribute('disabled') && el.tabIndex !== -1)
+
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    const focusTimer = window.setTimeout(focusClose, OVERLAY_REVEAL_PHASE_DELAY_MS + 50)
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      window.clearTimeout(focusTimer)
+      lastFocusedRef.current?.focus?.()
+    }
+  }, [overlaySessionKey, onClose])
+
   return (
     <AnimatePresence>
       {overlay && (
@@ -121,6 +174,10 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
             style={{ zIndex: 'var(--z-overlay)', perspective: '1000px' } as React.CSSProperties}
           >
             <motion.div
+              ref={panelRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="cyberpunk-overlay-title"
               initial={{ boxShadow: '0 0 0px rgba(0, 0, 0, 0)' }}
               animate={{
                 boxShadow: [
@@ -143,7 +200,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
 
               {/* Top label */}
               <motion.div className="absolute top-2 left-1/2 -translate-x-1/2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.3 }}>
-                <div className="data-label">{systemLabel}</div>
+                <div id="cyberpunk-overlay-title" className="data-label">{systemLabel}</div>
               </motion.div>
 
               {/* Scan lines */}
@@ -175,6 +232,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                       size="icon"
                       className="absolute top-3 right-3 md:top-4 md:right-4 min-h-[44px] min-w-[44px] text-foreground hover:text-primary hover:bg-primary/10 z-10"
                       onClick={onClose}
+                      aria-label="Close dialog"
                     >
                       <X className="w-6 h-6" />
                     </Button>

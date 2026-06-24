@@ -9,6 +9,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Appearance font size sliders**: Site Config → Appearance now exposes heading, body, and mono font size controls with live preview (`appearance.theme.*FontSize` → CSS variables).
+- **Gallery lightbox**: Public gallery opens `SwipeableGallery` on tap/click; optional `lightbox` style override; “Show All” when `maxVisible` is set.
+- **Per-section error boundaries**: Public page sections wrapped in `SectionErrorBoundary` so one failing section does not crash the whole page.
+- **SSRF guard**: `lib/ssrf-guard.ts` pins DNS before fetch for image proxies; tests in `src/test/ssrf-guard.test.ts`.
+- **OG + sitemap (App Router)**: `app/api/og/route.ts`, `app/api/sitemap/route.ts`; `vercel.json` rewrite `/sitemap.xml` → `/api/sitemap`.
+- **Localized ARIA**: `lib/i18n.ts` `aria.*` keys + `ariaLabel()`; `SiteNav` uses locale-aware labels.
+- **Contact form schema**: Shared `lib/contact-form.ts`; overlay + server action share validation.
+- **CI security**: `npm audit --audit-level=high` in GitHub Actions.
+- **Component map**: `components/README.md` documents live vs admin layout.
+
+### Removed
+- **Legacy UI sound system**: Admin menu entry `/admin/sound`, `site_config.sound` seed, `SoundTab`, `use-sound`, `SoundSettingsDialog`, `MusicPlayer`, and related types/tests. Soundpacks commerce unchanged.
+- **Legacy CMS / KV admin**: `cms/`, `src/cms/`, `components/admin/`, orphaned `App*.tsx` sections, legacy hooks (`use-kv`, `usePublishedContent`, …), and unused API routes (`api/auth.ts`, `api/contact.ts`, `api/cms/*`, `api/oauth.ts`, …).
+- **Legacy session auth**: `x-session-token` header flow and KV-backed admin APIs (`api/admin/keys`, `api/env-check`, `releases-enrich-stream`, …).
+
+### Changed
+- **CyberpunkOverlay a11y**: Focus trap, `role="dialog"`, Escape to close, focus restore.
+- **ESLint**: `api/` no longer ignored.
+- **Rate limits**: Named constants in `api/_ratelimit.ts` (TD-034).
+- **Dependencies**: `undici` override bumped to `^7.28.0`.
+- **Contact overlay**: Uses `submitContact` server action instead of deleted `/api/contact`.
+
+### Added
 - **Release track enrichment**: Spotify → Discogs → iTunes tracklist fetch with `tracks_source` and `last_enriched_at` columns; respects `manually_edited`.
 - **Odesli streaming links**: Server + client APIs in `lib/odesli.ts`; merge into `streaming_links` on sync and enrichment; public release modal renders dynamic platform buttons from stored links.
 - **Admin data maintenance** (`/admin/data`): Enrich all tracklists, reset tracklists, purge + sync releases/gigs with AlertDialog confirmations.
@@ -21,6 +44,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Footer legal links**: `SiteFooter` shows Legal Notice, Privacy Policy, and Cookie Preferences; legacy `/impressum`, `/privacy`, `/datenschutz` redirect to new routes.
 
 ### Changed
+- **Mobile polish**: Public nav hamburger 44×44px touch target; gallery zoom overlay visible on touch; admin forms and health tables responsive on narrow viewports.
+- **Framer Motion reduced motion**: `GallerySection` and `ReleasesSection` respect `prefers-reduced-motion` for scroll animations.
 - **Release overlay**: Streaming buttons derived from `streaming_links` (not a fixed platform list).
 - **Catalogue sync**: Bulk import sets enrichment metadata; Odesli merge on external sync.
 - **Mobile admin & releases**: Admin nav scroll lock, overlay fullscreen on small screens, larger touch targets, responsive release grid/carousel.
@@ -30,7 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - **Vitest on Node 22+**: Full `localStorage`/`sessionStorage` mock in `src/test/setup.ts` (TD-036).
-- **Test timeouts**: Static imports in `layer-contract`, `bio-section-font`, and extended timeout for `SoundTab` import.
+- **Test timeouts**: Static imports in `layer-contract`, `bio-section-font`, and extended timeout for heavy component imports.
 - **Odesli API split**: Restored client `fetchOdesliLinks` alongside server `fetchOdesliLinksFromApi` so release editor keeps working.
 
 ### Added

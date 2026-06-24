@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import sharp from 'sharp'
-import { resolve4, resolve6 } from 'node:dns/promises'
 import { applyRateLimit } from './_ratelimit.js'
+import { assertSafeRemoteUrl, fetchUrlWithResolvedCheck, isBlockedHost } from '../lib/ssrf-guard.js'
 import { imageProxyQuerySchema, validate } from './_schemas.js'
 /**
  * Server-side image proxy with adversarial noise injection.
@@ -17,40 +17,7 @@ const NOISE_SHARPEN_SIGMA = 0.4
 const NOISE_SHARPEN_M1 = 0
 const NOISE_SHARPEN_M2 = 3
 
-const BLOCKED_HOST_PATTERNS = [
-  /^localhost$/i, /^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./,
-  /^0\./, /^169\.254\./, /^\[::1\]/, /^\[::ffff:/i, /^\[fe80:/i, /^\[fc/i, /^\[fd/i,
-  /^metadata\.google\.internal$/i, /^0x[0-9a-f]+$/i, /^0[0-7]+\./,
-]
-
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:'])
-
-function isBlockedHost(hostname: string): boolean {
-  if (BLOCKED_HOST_PATTERNS.some(p => p.test(hostname))) return true
-  if (/^\d+$/.test(hostname)) return true
-  if (!hostname.includes('.') && !hostname.startsWith('[')) return true
-  return false
-}
-
-const BLOCKED_IP_PATTERNS = [
-  /^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^0\./, /^169\.254\./,
-  /^::1$/, /^::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i,
-  /^fe80:/i, /^fc/i, /^fd/i,
-]
-
-async function hasBlockedResolvedIP(hostname: string): Promise<boolean> {
-  if (/^\d+\.\d+\.\d+\.\d+$/.test(hostname) || hostname.startsWith('[')) return false
-  try {
-    const [ipv4, ipv6] = await Promise.all([
-      resolve4(hostname).catch(() => [] as string[]),
-      resolve6(hostname).catch(() => [] as string[]),
-    ])
-    const allIPs = [...ipv4, ...ipv6]
-    return allIPs.some(ip => BLOCKED_IP_PATTERNS.some(p => p.test(ip)))
-  } catch {
-    return false
-  }
-}
 
 async function applyAdversarialNoise(imageBuffer: Buffer): Promise<Buffer> {
   return sharp(imageBuffer)
@@ -91,30 +58,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  if (await hasBlockedResolvedIP(parsed.hostname)) {
+  try {
+    await assertSafeRemoteUrl(parsed.toString())
+  } catch {
     res.status(400).json({ error: 'Blocked host' })
     return
   }
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchUrlWithResolvedCheck(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SiteImageProxy/1.0)' },
       redirect: 'follow',
     })
 
     if (response.url) {
       try {
-        const finalUrl = new URL(response.url)
-        if (!ALLOWED_PROTOCOLS.has(finalUrl.protocol) || isBlockedHost(finalUrl.hostname)) {
-          res.status(400).json({ error: 'Blocked redirect target' })
-          return
-        }
-        if (await hasBlockedResolvedIP(finalUrl.hostname)) {
-          res.status(400).json({ error: 'Blocked redirect target' })
-          return
-        }
+        await assertSafeRemoteUrl(response.url)
       } catch {
-        res.status(400).json({ error: 'Invalid redirect URL' })
+        res.status(400).json({ error: 'Blocked redirect target' })
         return
       }
     }

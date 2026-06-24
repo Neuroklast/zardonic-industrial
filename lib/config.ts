@@ -254,9 +254,6 @@ export const TERMINAL_RESERVED_COMMANDS: readonly string[] = [
   'help', 'clear', 'status', 'exit', 'whoami', 'ls', 'cat',
 ]
 
-// Sound constants
-export const DEFAULT_SOUND_VOLUME = 0.5
-
 // Extended feature-flag config with default values.
 // These are not part of the admin-configurable DEFAULTS but may be
 // overridden via the same applyConfigOverrides mechanism.

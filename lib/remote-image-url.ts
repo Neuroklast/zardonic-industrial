@@ -1,20 +1,6 @@
 const MAX_REMOTE_IMAGE_BYTES = 10 * 1024 * 1024
 
-const BLOCKED_HOSTS = new Set([
-  'localhost',
-  '127.0.0.1',
-  '0.0.0.0',
-  '[::1]',
-])
-
-const PRIVATE_IPV4_RANGES = [
-  /^10\./,
-  /^127\./,
-  /^169\.254\./,
-  /^172\.(1[6-9]|2\d|3[0-1])\./,
-  /^192\.168\./,
-  /^0\./,
-]
+import { isBlockedHost } from '@/lib/ssrf-guard'
 
 export function extractGoogleDriveFileId(url: string): string | null {
   const trimmed = url.trim()
@@ -56,10 +42,8 @@ export function resolveRemoteImageUrl(input: string): { url: string; source: 'di
 
 export function isAllowedRemoteHost(hostname: string): boolean {
   const host = hostname.toLowerCase()
-  if (BLOCKED_HOSTS.has(host)) return false
   if (host.endsWith('.local')) return false
-  if (PRIVATE_IPV4_RANGES.some((pattern) => pattern.test(host))) return false
-  return true
+  return !isBlockedHost(host)
 }
 
 export function isAllowedImageContentType(contentType: string | null): boolean {

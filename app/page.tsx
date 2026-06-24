@@ -21,6 +21,7 @@ import { NewsletterSection } from './_components/public/NewsletterSection'
 import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
+import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { SocialSection } from './_components/public/SocialSection'
 import {
   mapReleaseRowToOverlayRelease,
@@ -425,7 +426,7 @@ export default async function HomePage() {
         switch (section.id) {
           case 'hero':
             return (
-              <div key="hero">
+              <SectionErrorBoundary key="hero" sectionName="Hero">
                 <HeroSection
                   headline={String(heroConfig.headline ?? 'ZARDONIC')}
                   tagline={String(heroConfig.tagline ?? '')}
@@ -442,22 +443,22 @@ export default async function HomePage() {
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'bio':
             return (
-              <div key="bio">
+              <SectionErrorBoundary key="bio" sectionName="Bio">
                 {divider}
                 <BioSection
                   content={bio}
                   bodyFontSize={typeof bioOverrides.bodyFontSize === 'string' ? bioOverrides.bodyFontSize : undefined}
                   readMoreMaxHeight={typeof bioOverrides.readMoreMaxHeight === 'string' ? bioOverrides.readMoreMaxHeight : undefined}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'credits':
             return (
-              <div key="credits">
+              <SectionErrorBoundary key="credits" sectionName="Credits">
                 {divider}
                 <CreditsSection
                   credits={credits}
@@ -465,11 +466,11 @@ export default async function HomePage() {
                   partners={partnerFriends}
                   logoBrightness={typeof creditOverrides.logoBrightness === 'number' ? creditOverrides.logoBrightness : undefined}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'gallery':
             return (
-              <div key="gallery">
+              <SectionErrorBoundary key="gallery" sectionName="Gallery">
                 {divider}
                 <GallerySection
                   items={gallery.map(galleryItemMap)}
@@ -477,19 +478,20 @@ export default async function HomePage() {
                   maxVisible={typeof galleryOverrides.maxVisible === 'number' ? galleryOverrides.maxVisible : undefined}
                   aspectRatio={typeof galleryOverrides.aspectRatio === 'string' ? galleryOverrides.aspectRatio : undefined}
                   gap={typeof galleryOverrides.gap === 'string' ? galleryOverrides.gap : undefined}
+                  lightbox={galleryOverrides.lightbox !== false}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'music-highlights':
             return (
-              <div key="music-highlights">
+              <SectionErrorBoundary key="music-highlights" sectionName="Music Highlights">
                 {divider}
                 <MusicHighlightsSection highlights={musicHighlights} />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'releases':
             return (
-              <div key="releases">
+              <SectionErrorBoundary key="releases" sectionName="Releases">
                 {divider}
                 <PublicPageClient
                   releases={releaseItems}
@@ -499,55 +501,55 @@ export default async function HomePage() {
                   releaseCardVariant={typeof releaseOverrides.releaseCardVariant === 'string' ? releaseOverrides.releaseCardVariant : undefined}
                   releaseHoverEffect={typeof releaseOverrides.releaseHoverEffect === 'string' ? releaseOverrides.releaseHoverEffect : undefined}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'social':
             return social.length > 0 ? (
-              <div key="social">
+              <SectionErrorBoundary key="social" sectionName="Social">
                 {divider}
                 <SocialSection links={social} label={section.label} />
-              </div>
+              </SectionErrorBoundary>
             ) : null
           case 'merchandise':
             return merch.length > 0 ? (
-              <div key="merchandise">
+              <SectionErrorBoundary key="merchandise" sectionName="Merchandise">
                 {divider}
                 <MerchandiseSection
                   items={merch.map(commerceItemMap)}
                   footerText={String(merchandiseConfig.footerText ?? '')}
                 />
-              </div>
+              </SectionErrorBoundary>
             ) : null
           case 'soundpacks':
             return soundpacks.length > 0 ? (
-              <div key="soundpacks">
+              <SectionErrorBoundary key="soundpacks" sectionName="Soundpacks">
                 {divider}
                 <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
-              </div>
+              </SectionErrorBoundary>
             ) : null
           case 'gigs':
             return (
-              <div key="gigs">
+              <SectionErrorBoundary key="gigs" sectionName="Events">
                 {divider}
                 <GigsSection upcoming={upcoming} past={past} />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'newsletter':
             return (
-              <div key="newsletter">
+              <SectionErrorBoundary key="newsletter" sectionName="Newsletter">
                 {divider}
                 <NewsletterSection
                   heading={String(newsletterConfig.heading ?? 'Mailing List')}
                   body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
                 />
-              </div>
+              </SectionErrorBoundary>
             )
           case 'contact':
             return (
-              <div key="contact">
+              <SectionErrorBoundary key="contact" sectionName="Contact">
                 {divider}
                 <ContactSection />
-              </div>
+              </SectionErrorBoundary>
             )
           default:
             return null
@@ -556,10 +558,10 @@ export default async function HomePage() {
 
       {/* Fallback: if sections config is empty or contact not included */}
       {!isSectionVisible('contact') && (
-        <>
+        <SectionErrorBoundary sectionName="Contact">
           <SectionDivider />
           <ContactSection />
-        </>
+        </SectionErrorBoundary>
       )}
     </PageLayout>
   )

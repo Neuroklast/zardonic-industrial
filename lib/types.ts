@@ -470,9 +470,6 @@ export interface AdminSettings {
   // Custom social links (not covered by SiteData.social)
   customSocialLinks?: CustomSocialLink[]
 
-  // Sound / audio settings
-  sound?: SoundSettings
-
   // Analytics settings
   analytics?: {
     enabled?: boolean
@@ -799,12 +796,4 @@ export interface Friend {
   }
 }
 
-export interface SoundSettings {
-  defaultMuted?: boolean
-  terminalSound?: string
-  typingSound?: string
-  buttonSound?: string
-  loadingFinishedSound?: string
-  backgroundMusic?: string
-  backgroundMusicVolume?: number
-}
+

@@ -44,6 +44,14 @@ const translations: Record<string, Record<Locale, string>> = {
   'nav.closePlayer':           { en: 'Close music player', de: 'Musik-Player schließen', ru: 'Закрыть плеер', it: 'Chiudi il lettore musicale', es: 'Cerrar el reproductor de música', pt: 'Fechar o leitor de música', ja: '音楽プレイヤーを閉じる', ko: '음악 플레이어 닫기' },
   'nav.openPlayer':            { en: 'Open music player', de: 'Musik-Player öffnen', ru: 'Открыть плеер', it: 'Apri il lettore musicale', es: 'Abrir el reproductor de música', pt: 'Abrir o leitor de música', ja: '音楽プレイヤーを開く', ko: '음악 플레이어 열기' },
 
+  // ── ARIA (public) ───────────────────────────────────────────────────
+  'aria.mainNav':              { en: 'Main navigation', de: 'Hauptnavigation', ru: 'Основная навигация', it: 'Navigazione principale', es: 'Navegación principal', pt: 'Navegação principal', ja: 'メインナビゲーション', ko: '기본 탐색' },
+  'aria.mobileNav':            { en: 'Mobile navigation', de: 'Mobile Navigation', ru: 'Мобильная навигация', it: 'Navigazione mobile', es: 'Navegación móvil', pt: 'Navegação móvel', ja: 'モバイルナビゲーション', ko: '모바일 탐색' },
+  'aria.openMenu':             { en: 'Open menu', de: 'Menü öffnen', ru: 'Открыть меню', it: 'Apri menu', es: 'Abrir menú', pt: 'Abrir menu', ja: 'メニューを開く', ko: '메뉴 열기' },
+  'aria.closeMenu':            { en: 'Close menu', de: 'Menü schließen', ru: 'Закрыть меню', it: 'Chiudi menu', es: 'Cerrar menú', pt: 'Fechar menu', ja: 'メニューを閉じる', ko: '메뉴 닫기' },
+  'aria.closeOverlay':         { en: 'Close dialog', de: 'Dialog schließen', ru: 'Закрыть диалог', it: 'Chiudi finestra', es: 'Cerrar diálogo', pt: 'Fechar diálogo', ja: 'ダイアログを閉じる', ko: '대화 상자 닫기' },
+  'aria.openGallery':          { en: 'Open image in lightbox', de: 'Bild in Lightbox öffnen', ru: 'Открыть изображение', it: 'Apri immagine in lightbox', es: 'Abrir imagen en lightbox', pt: 'Abrir imagem em lightbox', ja: 'ライトボックスで画像を開く', ko: '라이트박스에서 이미지 열기' },
+
   // ── CookieBanner ────────────────────────────────────────────────────
   'cookie.notice':             { en: 'SYSTEM_NOTICE', de: 'SYSTEM_HINWEIS', ru: 'СИСТЕМНОЕ_УВЕДОМЛЕНИЕ', it: 'AVVISO_DI_SISTEMA', es: 'AVISO_DEL_SISTEMA', pt: 'AVISO_DO_SISTEMA', ja: 'システム通知', ko: '시스템_알림' },
   'cookie.text':               { en: 'This website uses technically necessary local storage (Local Storage, IndexedDB) for settings and image caching. No tracking cookies are set. For more information, see our privacy policy.', de: 'Diese Website verwendet technisch notwendige lokale Speicherung (Local Storage, IndexedDB) für Einstellungen und Bildcaching. Es werden keine Tracking-Cookies gesetzt. Weitere Informationen finden Sie in unserer Datenschutzerklärung.', ru: 'Этот сайт использует технически необходимое локальное хранилище (Local Storage, IndexedDB) для настроек и кэширования изображений. Файлы отслеживания не устанавливаются. Подробнее в нашей политике конфиденциальности.', it: 'Questo sito web utilizza la memorizzazione locale tecnicamente necessaria (Local Storage, IndexedDB) per impostazioni e cache delle immagini. Non vengono impostati cookie di tracciamento. Per ulteriori informazioni, consultare la nostra informativa sulla privacy.', es: 'Este sitio web utiliza almacenamiento local técnicamente necesario (Local Storage, IndexedDB) para configuraciones y caché de imágenes. No se establecen cookies de seguimiento. Para más información, consulte nuestra política de privacidad.', pt: 'Este website utiliza armazenamento local tecnicamente necessário (Local Storage, IndexedDB) para definições e cache de imagens. Não são definidos cookies de rastreamento. Para mais informações, consulte a nossa política de privacidade.', ja: 'このウェブサイトは、設定および画像のキャッシュのために技術的に必要なローカルストレージ（Local Storage、IndexedDB）を使用しています。トラッキングクッキーは設定されていません。詳細については、プライバシーポリシーをご覧ください。', ko: '이 웹사이트는 설정 및 이미지 캐싱을 위해 기술적으로 필요한 로컬 스토리지(Local Storage, IndexedDB)를 사용합니다. 추적 쿠키는 설정되지 않습니다. 자세한 내용은 개인정보 처리방침을 참조하십시오.' },
@@ -254,6 +262,11 @@ const translations: Record<string, Record<Locale, string>> = {
 /** Get a translated string for a key and locale */
 export function t(key: string, locale: Locale): string {
   return translations[key]?.[locale] ?? translations[key]?.en ?? key
+}
+
+/** Accessible name helper for ARIA labels on public UI. */
+export function ariaLabel(key: string, locale: Locale = 'en'): string {
+  return t(key, locale)
 }
 
 /** Return a deep copy of all translations for JSON export */

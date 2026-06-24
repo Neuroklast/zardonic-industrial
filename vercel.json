@@ -59,7 +59,7 @@
     },
     {
       "source": "/sitemap.xml",
-      "destination": "/api/sitemap-gen"
+      "destination": "/api/sitemap"
     },
     {
       "source": "/share/:type/:id",
