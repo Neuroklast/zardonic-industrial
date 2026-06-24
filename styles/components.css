@@ -946,6 +946,8 @@
 
 .hero-logo-glitch .hero-logo-r,
 .hero-logo-glitch .hero-logo-b {
+  position: absolute;
+  inset: 0;
   mix-blend-mode: screen;
   pointer-events: none;
   opacity: 0;

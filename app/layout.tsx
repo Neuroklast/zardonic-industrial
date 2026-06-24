@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabaseServer'
+import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 import { Providers } from './providers'
 import './globals.css'
+
+export const revalidate = 60
 
 const DEFAULT_ICON = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
 
@@ -35,11 +38,13 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { customTranslations, analyticsConfig } = await getPublicSiteBootstrap()
+
   return (
     <html lang="en">
       <head>
@@ -51,7 +56,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>
+        <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig}>
           {children}
         </Providers>
       </body>

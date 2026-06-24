@@ -99,20 +99,6 @@ export function HeroSection({
               className={LOGO_IMG_CLASS}
               fetchPriority="high"
             />
-            <img
-              src={logoImageUrl}
-              alt=""
-              aria-hidden="true"
-              data-draft-target="hero-logo"
-              className={`hero-logo-r absolute inset-0 ${LOGO_IMG_CLASS}`}
-            />
-            <img
-              src={logoImageUrl}
-              alt=""
-              aria-hidden="true"
-              data-draft-target="hero-logo"
-              className={`hero-logo-b absolute inset-0 ${LOGO_IMG_CLASS}`}
-            />
           </div>
         </m.div>
 

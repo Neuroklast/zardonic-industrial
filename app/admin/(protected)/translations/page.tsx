@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabaseServer'
-import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
+import { parseTranslationsConfig } from '@/lib/translations-config'
 import TranslationsEditor from './TranslationsEditor'
 
 const DEFAULT_STRINGS: Record<string, { de: string; en: string }> = {
@@ -22,7 +22,7 @@ async function fetchTranslations(): Promise<Record<string, Record<string, string
   try {
     const supabase = await createClient()
     const { data } = await supabase.from('site_config').select('value').eq('key', 'translations').single()
-    return (data?.value as Record<string, Record<string, string>>) ?? {}
+    return parseTranslationsConfig(data?.value)
   } catch {
     return {}
   }
@@ -31,31 +31,12 @@ async function fetchTranslations(): Promise<Record<string, Record<string, string
 export default async function TranslationsPage() {
   const saved = await fetchTranslations()
 
-  // Merge defaults with saved overrides
   const merged: Record<string, { de: string; en: string }> = {}
   for (const [k, def] of Object.entries(DEFAULT_STRINGS)) {
     merged[k] = {
-      en: (saved[k]?.en as string | undefined) ?? def.en,
-      de: (saved[k]?.de as string | undefined) ?? def.de,
+      en: saved[k]?.en ?? def.en,
+      de: saved[k]?.de ?? def.de,
     }
-  }
-
-  async function saveTranslations(formData: FormData) {
-    'use server'
-    const overrides: Record<string, Record<string, string>> = {}
-    for (const key of Object.keys(DEFAULT_STRINGS)) {
-      const en = formData.get(`${key}.en`) as string | null
-      const de = formData.get(`${key}.de`) as string | null
-      if (en !== null || de !== null) {
-        overrides[key] = {}
-        if (en !== null) overrides[key].en = en
-        if (de !== null) overrides[key].de = de
-      }
-    }
-    const fd = new FormData()
-    fd.set('key', 'translations')
-    fd.set('value', JSON.stringify(overrides))
-    await updateSiteConfig(fd)
   }
 
   return (
@@ -66,7 +47,7 @@ export default async function TranslationsPage() {
           Override UI strings for DE / EN. Empty fields fall back to default values.
         </p>
       </div>
-      <TranslationsEditor strings={merged} defaultStrings={DEFAULT_STRINGS} onSave={saveTranslations} />
+      <TranslationsEditor strings={merged} defaultStrings={DEFAULT_STRINGS} />
     </div>
   )
 }

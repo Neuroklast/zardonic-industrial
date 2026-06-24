@@ -155,6 +155,22 @@ CREATE TABLE IF NOT EXISTS public.sync_jobs (
   completed_at timestamptz
 );
 
+-- ─── analytics_events (consent-gated client telemetry) ───────
+CREATE TABLE IF NOT EXISTS public.analytics_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  type text NOT NULL,
+  target text,
+  meta jsonb,
+  heatmap jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS analytics_events_created_at_idx
+  ON public.analytics_events (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS analytics_events_type_idx
+  ON public.analytics_events (type);
+
 -- ─── newsletter_subscribers ──────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -464,6 +480,7 @@ ALTER TABLE public.music_highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchandise ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.soundpacks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_jobs ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN

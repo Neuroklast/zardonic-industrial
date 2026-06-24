@@ -6,6 +6,9 @@ import { ErrorBoundary } from 'react-error-boundary'
 import type { FallbackProps } from 'react-error-boundary'
 import { LenisProvider } from '@/contexts/LenisContext'
 import { LocaleProvider } from '@/contexts/LocaleContext'
+import { AnalyticsTracker } from '@/components/AnalyticsTracker'
+import type { AnalyticsConfig } from '@/lib/analytics-config'
+import type { CustomTranslations } from '@/lib/translations-config'
 import { useState } from 'react'
 
 function ErrorFallback({ error }: FallbackProps) {
@@ -17,7 +20,17 @@ function ErrorFallback({ error }: FallbackProps) {
   )
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+interface ProvidersProps {
+  children: React.ReactNode
+  customTranslations?: CustomTranslations
+  analyticsConfig?: AnalyticsConfig
+}
+
+export function Providers({
+  children,
+  customTranslations,
+  analyticsConfig,
+}: ProvidersProps) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -30,12 +43,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <LazyMotion features={domAnimation} strict={false}>
       <LenisProvider>
-        <LocaleProvider>
+        <LocaleProvider customTranslations={customTranslations}>
           <QueryClientProvider client={queryClient}>
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               {children}
             </ErrorBoundary>
           </QueryClientProvider>
+          {analyticsConfig ? <AnalyticsTracker config={analyticsConfig} /> : null}
         </LocaleProvider>
       </LenisProvider>
     </LazyMotion>

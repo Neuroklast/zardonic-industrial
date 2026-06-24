@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabaseServer'
-import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { AnalyticsSettings } from './AnalyticsSettings'
 import {
   ChartBar,
   Envelope,
@@ -65,10 +65,6 @@ export default async function AnalyticsPage() {
     { icon: ChartBar, label: 'Social Links', value: counts.socialLinks, href: '/admin/social' },
   ]
 
-  const analyticsEnabled = analyticsConfig.enabled !== false
-  const trackPageViews = analyticsConfig.trackPageViews !== false
-  const trackEvents = analyticsConfig.trackEvents !== false
-
   return (
     <div>
       <AdminPageHeader
@@ -76,7 +72,6 @@ export default async function AnalyticsPage() {
         description="Content statistics and analytics tracking settings."
       />
 
-      {/* Content stats */}
       <section className="mb-8">
         <h2 className="text-sm font-semibold text-zinc-300 mb-3">Content Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -99,91 +94,7 @@ export default async function AnalyticsPage() {
         </div>
       </section>
 
-      {/* Analytics tracking settings */}
-      <section>
-        <h2 className="text-sm font-semibold text-zinc-300 mb-3">Tracking Settings</h2>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-lg divide-y divide-zinc-800">
-          <form action={async () => {
-            'use server'
-            const fd = new FormData()
-            fd.set('key', 'analytics')
-            fd.set('value', JSON.stringify({
-              enabled: !analyticsEnabled,
-              trackPageViews,
-              trackEvents,
-            }))
-            await updateSiteConfig(fd)
-          }}>
-            <div className="flex items-center justify-between p-4">
-              <div>
-                <p className="text-sm font-medium text-white">Enable Analytics</p>
-                <p className="text-xs text-zinc-400 mt-0.5">Disable to stop all client-side tracking.</p>
-              </div>
-              <button
-                type="submit"
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${analyticsEnabled ? 'bg-red-600' : 'bg-zinc-700'}`}
-                role="switch"
-                aria-checked={analyticsEnabled}
-                aria-label="Toggle analytics"
-              >
-                <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${analyticsEnabled ? 'translate-x-4' : 'translate-x-0'}`} />
-              </button>
-            </div>
-          </form>
-
-          {analyticsEnabled && (
-            <>
-              <form action={async () => {
-                'use server'
-                const fd = new FormData()
-                fd.set('key', 'analytics')
-                fd.set('value', JSON.stringify({ enabled: true, trackPageViews: !trackPageViews, trackEvents }))
-                await updateSiteConfig(fd)
-              }}>
-                <div className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-medium text-white">Track Page Views</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">Record each page navigation event.</p>
-                  </div>
-                  <button
-                    type="submit"
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${trackPageViews ? 'bg-red-600' : 'bg-zinc-700'}`}
-                    role="switch"
-                    aria-checked={trackPageViews}
-                    aria-label="Toggle page view tracking"
-                  >
-                    <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${trackPageViews ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-              </form>
-
-              <form action={async () => {
-                'use server'
-                const fd = new FormData()
-                fd.set('key', 'analytics')
-                fd.set('value', JSON.stringify({ enabled: true, trackPageViews, trackEvents: !trackEvents }))
-                await updateSiteConfig(fd)
-              }}>
-                <div className="flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-medium text-white">Track Events</p>
-                    <p className="text-xs text-zinc-400 mt-0.5">Record button clicks and interactions.</p>
-                  </div>
-                  <button
-                    type="submit"
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${trackEvents ? 'bg-red-600' : 'bg-zinc-700'}`}
-                    role="switch"
-                    aria-checked={trackEvents}
-                    aria-label="Toggle event tracking"
-                  >
-                    <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${trackEvents ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-              </form>
-            </>
-          )}
-        </div>
-      </section>
+      <AnalyticsSettings initialConfig={analyticsConfig} />
     </div>
   )
 }

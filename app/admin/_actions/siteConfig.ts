@@ -43,12 +43,15 @@ export async function updateSiteConfig(formData: FormData) {
 
     if (error) return { error: error.message }
 
+    revalidatePath('/', 'layout')
     revalidatePath('/')
     revalidatePath('/legal-notice')
     revalidatePath('/privacy-policy')
     revalidatePath('/admin')
     revalidatePath('/admin/site-config')
     revalidatePath('/admin/legal')
+    revalidatePath('/admin/translations')
+    revalidatePath('/admin/analytics')
     return { success: true }
   }, 'Unable to save site configuration.')
 }
