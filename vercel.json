@@ -74,6 +74,10 @@
     {
       "path": "/api/releases-track-enrich",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/sync-jobs/reap",
+      "schedule": "*/2 * * * *"
     }
   ]
 }

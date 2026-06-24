@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -29,7 +29,7 @@ export async function createMusicHighlight(formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('create_music_highlight', parsed.data, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('create_music_highlight', parsed.data, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -48,7 +48,7 @@ export async function updateMusicHighlight(id: string, formData: FormData) {
 
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_music_highlight', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_music_highlight', { ...parsed.data, id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -65,7 +65,7 @@ export async function updateMusicHighlight(id: string, formData: FormData) {
 export async function deleteMusicHighlight(id: string) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('delete_music_highlight', { id }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('delete_music_highlight', { id }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
@@ -81,7 +81,7 @@ export async function deleteMusicHighlight(id: string) {
 export async function toggleMusicHighlightVisibility(id: string, active: boolean) {
   const supabaseAdmin = createAdminClient()
 
-  const dispatchResult = dispatchAdminAction('update_music_highlight', { id, active }, createSupabaseActionContext(supabaseAdmin))
+  const dispatchResult = dispatchAdminActionAsAdmin('update_music_highlight', { id, active }, createSupabaseActionContext(supabaseAdmin))
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {

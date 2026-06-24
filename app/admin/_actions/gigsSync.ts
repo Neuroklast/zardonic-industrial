@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { getApiSecret } from '@/lib/api-secrets'
 import {
   resolveBandsintownArtistName,
@@ -23,7 +23,7 @@ export async function syncGigsFromBandsintown(): Promise<GigsSyncResult | { erro
   }
 
   const supabaseAdmin = createAdminClient()
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'bandsintown_gigs_sync',
     {},
     createSupabaseActionContext(supabaseAdmin),

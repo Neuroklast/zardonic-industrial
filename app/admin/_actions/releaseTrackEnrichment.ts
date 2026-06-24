@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { parseCatalogueSyncConfig } from '@/lib/catalogue-sync-config'
 import {
   buildReleaseEnrichmentUpdate,
@@ -45,7 +45,7 @@ export async function enrichReleaseTracks(
   releaseId: string,
   options?: { force?: boolean },
 ): Promise<EnrichReleaseTracksResult> {
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'enrich_release_tracks',
     { releaseId, force: options?.force ?? false },
     createSupabaseActionContext(createAdminClient()),
@@ -103,7 +103,7 @@ export async function enrichAllReleasesTracks(
 ): Promise<EnrichAllReleasesTracksResult | { error: string }> {
   const limit = options?.limit ?? 25
 
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'enrich_all_release_tracks',
     { force: options?.force ?? false, limit },
     createSupabaseActionContext(createAdminClient()),

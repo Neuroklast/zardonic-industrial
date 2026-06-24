@@ -3,7 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { uploadBufferToR2 } from './r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
 import {
@@ -100,7 +100,7 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
     if (items.length === 0 && result.errors.length > 0) return result
 
     // Gate via registry for AGENTS §12 compliance on mutations
-    const dispatchResult = dispatchAdminAction(
+    const dispatchResult = dispatchAdminActionAsAdmin(
       'itunes_sync',
       { artist: artistName, itunesArtistId: itunesArtistId ?? undefined },
       createSupabaseActionContext(supabase),

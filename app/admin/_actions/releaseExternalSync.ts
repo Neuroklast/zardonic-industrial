@@ -1,10 +1,9 @@
 'use server'
 
 import { runAdminAction } from '@/app/admin/_actions/auth'
-import { createSupabaseActionContext } from '@/app/admin/_actions/context'
+import { createSupabaseActionContext, dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { dispatchAdminAction } from '@/lib/admin-action-registry'
 import { MEDIA_BUCKET } from '@/lib/constants'
 import {
   buildReleaseUpdateFromMetadata,
@@ -59,12 +58,8 @@ export interface ReleaseExternalSyncResult {
   error?: string
 }
 
-export interface BulkExternalSyncResult {
-  synced: number
-  updated: number
-  skipped: number
-  errors: string[]
-}
+export type { BulkExternalSyncResult } from '@/lib/catalogue-import'
+import type { BulkExternalSyncResult } from '@/lib/catalogue-import'
 
 async function cacheCoverToR2(
   coverUrl: string,
@@ -112,7 +107,7 @@ export async function syncReleaseFromExternalId(
   const normalized = normalizeExternalId(source, rawId)
   if (!normalized) return { ok: false, error: 'Invalid external id or URL' }
 
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     'release_external_sync',
     { releaseId, source, externalId: normalized },
     createSupabaseActionContext(createAdminClient()),
@@ -320,7 +315,7 @@ async function bulkImportMetadata(
 ): Promise<BulkExternalSyncResult> {
   const result: BulkExternalSyncResult = { synced: 0, updated: 0, skipped: 0, errors: [] }
 
-  const dispatchResult = dispatchAdminAction(
+  const dispatchResult = dispatchAdminActionAsAdmin(
     registryAction,
     registryPayload,
     createSupabaseActionContext(createAdminClient()),
