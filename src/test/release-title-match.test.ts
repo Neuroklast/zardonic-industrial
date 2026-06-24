@@ -75,6 +75,20 @@ describe('hasComplementaryExternalIds', () => {
     const b = row({ id: '2', title: 'B', spotify_id: '222' })
     expect(hasComplementaryExternalIds(a, b)).toBe(true)
   })
+
+  it('detects complementary platforms from streaming_links without column ids', () => {
+    const a = row({
+      id: '1',
+      title: 'A',
+      streaming_links: [{ platform: 'spotify', url: 'https://open.spotify.com/album/7BqEidErPMNiUXCRE0dV2n' }],
+    })
+    const b = row({
+      id: '2',
+      title: 'B',
+      streaming_links: [{ platform: 'appleMusic', url: 'https://music.apple.com/us/album/x/1440000000' }],
+    })
+    expect(hasComplementaryExternalIds(a, b)).toBe(true)
+  })
 })
 
 describe('cover art fingerprints', () => {

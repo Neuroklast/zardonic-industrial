@@ -39,6 +39,7 @@ import {
   fetchOdesliStreamingLinks,
   mergeOdesliIntoReleaseLinks,
 } from '@/lib/release-streaming-enrichment'
+import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
 import { revalidatePath } from 'next/cache'
 
 const R2_BUCKET = MEDIA_BUCKET
@@ -143,7 +144,7 @@ export async function syncReleaseFromExternalId(
       )
     }
 
-    if (metadata.coverUrl) {
+    if (shouldImportCoverFromSource(source) && metadata.coverUrl) {
       const ext = metadata.coverUrl.includes('.png') ? 'png' : 'jpg'
       const objectPath = `releases/${source}-${normalized}.${ext}`
       const cached = await cacheCoverToR2(metadata.coverUrl, objectPath)
@@ -200,6 +201,7 @@ async function bulkImportMetadata(
       linkCrossSource: true,
       matchOptions: { artistNames: [config.artistName] },
       cacheCover: async (coverUrl, coverSource, externalId) => {
+        if (!shouldImportCoverFromSource(coverSource)) return null
         const objectPath = `releases/${coverSource}-${externalId}.jpg`
         const cached = await cacheCoverToR2(coverUrl, objectPath)
         if (!cached) return null

@@ -26,6 +26,7 @@ import {
   fetchOdesliStreamingLinks,
   mergeOdesliIntoReleaseLinks,
 } from '@/lib/release-streaming-enrichment'
+import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
 export interface BulkExternalSyncResult {
@@ -475,12 +476,18 @@ export async function importCatalogueBatch(
     }
 
     let coverStoragePath: string | null = null
-    let coverUrl: string | null = metadata.coverUrl
-    if (metadata.coverUrl && options.cacheCover) {
-      const cached = await options.cacheCover(metadata.coverUrl, source, externalId)
-      if (cached) {
-        coverStoragePath = cached.cover_storage_path
-        coverUrl = cached.cover_url
+    let coverUrl: string | null = null
+    if (shouldImportCoverFromSource(source) && metadata.coverUrl) {
+      if (options.cacheCover) {
+        const cached = await options.cacheCover(metadata.coverUrl, source, externalId)
+        if (cached) {
+          coverStoragePath = cached.cover_storage_path
+          coverUrl = cached.cover_url
+        } else {
+          coverUrl = metadata.coverUrl
+        }
+      } else {
+        coverUrl = metadata.coverUrl
       }
     }
 

@@ -17,6 +17,7 @@ export function normalizeItunesId(input: string): string | null {
     /[?&]i=(\d+)/i,
     /\/album\/[^/]+\/id(\d+)/i,
     /\/album\/id(\d+)/i,
+    /\/album\/[^/]+\/(\d+)/i,
   ]
 
   for (const pattern of patterns) {

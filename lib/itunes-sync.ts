@@ -1,3 +1,4 @@
+import { dedupeCatalogueImportItems } from '@/lib/release-consolidation'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
 import { normalizeReleaseType } from '@/lib/release-public-mapper'
 
@@ -152,5 +153,6 @@ export async function buildItunesCatalogueImportItems(options: {
     })
   }
 
-  return { items, errors }
+  const matchOptions = artistName ? { artistNames: [artistName] } : undefined
+  return { items: dedupeCatalogueImportItems(items, matchOptions), errors }
 }

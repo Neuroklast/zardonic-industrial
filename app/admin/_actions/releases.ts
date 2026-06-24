@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
 import { parseReleaseTracks } from '@/lib/release-public-mapper'
+import { mergeManualReleaseSelection } from '@/lib/release-consolidation'
 import { z } from 'zod'
 
 const releaseInputSchema = z.object({
@@ -156,6 +157,54 @@ export async function deleteRelease(id: string) {
     revalidatePath('/')
     return { success: true }
   }, 'Unable to delete release.')
+}
+
+export interface MergeSelectedReleasesResult {
+  merged: number
+  deleted: number
+  canonicalId?: string
+  canonicalTitle?: string
+  errors: string[]
+}
+
+export async function mergeSelectedReleases(
+  releaseIds: string[],
+): Promise<MergeSelectedReleasesResult | { error: string }> {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'merge_releases',
+    { releaseIds },
+    createSupabaseActionContext(supabaseAdmin),
+  )
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
+  return runAdminAction(async () => {
+    const result = await mergeManualReleaseSelection(supabaseAdmin, releaseIds)
+    if (result.rejected) return { error: result.rejected }
+
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+
+    const canonicalTitle =
+      result.canonicalId != null
+        ? (
+            await supabaseAdmin
+              .from('releases')
+              .select('title')
+              .eq('id', result.canonicalId)
+              .maybeSingle()
+          ).data?.title
+        : undefined
+
+    return {
+      merged: result.merged,
+      deleted: result.deleted,
+      canonicalId: result.canonicalId,
+      canonicalTitle: typeof canonicalTitle === 'string' ? canonicalTitle : undefined,
+      errors: result.errors,
+    }
+  }, 'Unable to merge selected releases.')
 }
 
 export async function toggleReleaseVisibility(id: string, active: boolean) {

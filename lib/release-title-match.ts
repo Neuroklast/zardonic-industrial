@@ -57,6 +57,8 @@ export function normalizeReleaseTitleKey(
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
+    .replace(/\([^)]*\bfeat\.?[^)]*\)/gi, '')
+    .replace(/\([^)]*\bfeaturing\b[^)]*\)/gi, '')
     .replace(/\s+feat\.?\s+[^()[\]-]+/gi, '')
     .replace(/\s+ft\.?\s+[^()[\]-]+/gi, '')
     .replace(/\s+featuring\s+[^()[\]-]+/gi, '')
@@ -147,37 +149,42 @@ export function sharedStreamingFingerprint(
   return null
 }
 
+function hasPlatformFingerprint(fingerprints: Set<string>, platform: 'spotify' | 'itunes' | 'discogs'): boolean {
+  for (const fingerprint of fingerprints) {
+    if (fingerprint.startsWith(`${platform}:`)) return true
+  }
+  return false
+}
+
+/** True when two rows anchor different platforms (column or streaming link) with no shared id. */
 export function hasComplementaryExternalIds(
   a: ReleaseMatchableRow,
   b: ReleaseMatchableRow,
 ): boolean {
-  const aIds = {
-    spotify: Boolean(a.spotify_id),
-    itunes: Boolean(a.itunes_id),
-    discogs: Boolean(a.discogs_id),
-  }
-  const bIds = {
-    spotify: Boolean(b.spotify_id),
-    itunes: Boolean(b.itunes_id),
-    discogs: Boolean(b.discogs_id),
+  const fa = releaseStreamingFingerprints(a)
+  const fb = releaseStreamingFingerprints(b)
+  for (const fingerprint of fa) {
+    if (fb.has(fingerprint)) return false
   }
 
-  const aCount = Number(aIds.spotify) + Number(aIds.itunes) + Number(aIds.discogs)
-  const bCount = Number(bIds.spotify) + Number(bIds.itunes) + Number(bIds.discogs)
+  const aSpotify = hasPlatformFingerprint(fa, 'spotify')
+  const aItunes = hasPlatformFingerprint(fa, 'itunes')
+  const aDiscogs = hasPlatformFingerprint(fa, 'discogs')
+  const bSpotify = hasPlatformFingerprint(fb, 'spotify')
+  const bItunes = hasPlatformFingerprint(fb, 'itunes')
+  const bDiscogs = hasPlatformFingerprint(fb, 'discogs')
+
+  const aCount = Number(aSpotify) + Number(aItunes) + Number(aDiscogs)
+  const bCount = Number(bSpotify) + Number(bItunes) + Number(bDiscogs)
   if (aCount === 0 || bCount === 0) return false
 
-  const sharedSpotify = a.spotify_id && a.spotify_id === b.spotify_id
-  const sharedItunes = a.itunes_id && a.itunes_id === b.itunes_id
-  const sharedDiscogs = a.discogs_id && a.discogs_id === b.discogs_id
-  if (sharedSpotify || sharedItunes || sharedDiscogs) return false
-
   return (
-    (aIds.spotify && !bIds.spotify && (bIds.itunes || bIds.discogs)) ||
-    (bIds.spotify && !aIds.spotify && (aIds.itunes || aIds.discogs)) ||
-    (aIds.itunes && !bIds.itunes && (bIds.spotify || bIds.discogs)) ||
-    (bIds.itunes && !aIds.itunes && (aIds.spotify || aIds.discogs)) ||
-    (aIds.discogs && !bIds.discogs && (bIds.spotify || bIds.itunes)) ||
-    (bIds.discogs && !aIds.discogs && (aIds.spotify || aIds.itunes))
+    (aSpotify && !bSpotify && (bItunes || bDiscogs)) ||
+    (bSpotify && !aSpotify && (aItunes || aDiscogs)) ||
+    (aItunes && !bItunes && (bSpotify || bDiscogs)) ||
+    (bItunes && !aItunes && (aSpotify || bDiscogs)) ||
+    (aDiscogs && !bDiscogs && (bSpotify || bItunes)) ||
+    (bDiscogs && !aDiscogs && (aSpotify || aItunes))
   )
 }
 

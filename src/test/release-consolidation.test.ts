@@ -3,6 +3,7 @@ import {
   buildConsolidatedReleaseUpdate,
   dedupeCatalogueImportItems,
   findExistingReleaseForImport,
+  findManualMergeRejectionReason,
   groupDuplicateReleases,
   normalizeReleaseTitleKey,
   releasesAreDuplicates,
@@ -63,6 +64,106 @@ describe('releasesAreDuplicates', () => {
     const a = row({ id: '1', title: 'Revolution', release_date: '2015-03-20' })
     const b = row({ id: '2', title: 'Revolution', release_date: '2020-03-20' })
     expect(releasesAreDuplicates(a, b)).toBe(false)
+  })
+
+  it('merges Mars / Going Under / Kernel Breaker cross-source singles', () => {
+    const opts = { artistNames: ['Zardonic'] }
+
+    const marsSpotify = row({
+      id: 'mars-sp',
+      title: 'Mars (Zardonic Remix)',
+      type: 'single',
+      release_date: '2026-06-19',
+      spotify_id: 'mars-spotify',
+      streaming_links: [{ platform: 'spotify', url: 'https://open.spotify.com/album/mars1' }],
+    })
+    const marsItunes = row({
+      id: 'mars-it',
+      title: 'Mars (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-06-19',
+      itunes_id: 'mars-itunes',
+      streaming_links: [
+        { platform: 'appleMusic', url: 'https://music.apple.com/album/mars1' },
+        { platform: 'pandora', url: 'https://www.pandora.com/mars1' },
+      ],
+    })
+    expect(releasesAreDuplicates(marsSpotify, marsItunes, opts)).toBe(true)
+
+    const kernelSpotify = row({
+      id: 'kb-sp',
+      title: 'Kernel Breaker (Remix)',
+      type: 'single',
+      release_date: '2026-03-27',
+      spotify_id: 'kb-spotify',
+    })
+    const kernelItunes = row({
+      id: 'kb-it',
+      title: 'Kernel Breaker (feat. Noisesmith, Roel Peijs & Kylee Brielle) [Remix] - Single',
+      type: 'single',
+      release_date: '2026-03-27',
+      itunes_id: 'kb-itunes',
+      streaming_links: [{ platform: 'appleMusic', url: 'https://music.apple.com/album/kb1' }],
+    })
+    expect(releasesAreDuplicates(kernelSpotify, kernelItunes, opts)).toBe(true)
+
+    const goingSpotify = row({
+      id: 'gu-sp',
+      title: 'Going Under (Zardonic Remix)',
+      type: 'single',
+      release_date: '2026-03-01',
+      spotify_id: 'gu-spotify',
+      streaming_links: [{ platform: 'spotify', url: 'https://open.spotify.com/album/gu1' }],
+    })
+    const goingItunes = row({
+      id: 'gu-it',
+      title: 'Going Under (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-03-01',
+      itunes_id: 'gu-itunes',
+      tracks: [{ title: 'Going Under (Zardonic Remix)' }, { title: 'Going Under' }],
+      streaming_links: [
+        { platform: 'appleMusic', url: 'https://music.apple.com/album/gu1' },
+        { platform: 'boomplay', url: 'https://www.boomplay.com/gu1' },
+      ],
+    })
+    expect(releasesAreDuplicates(goingSpotify, goingItunes, opts)).toBe(true)
+  })
+
+  it('merges fuzzy titles with complementary links even when release dates differ', () => {
+    const a = row({
+      id: '1',
+      title: 'Going Under (Zardonic Remix)',
+      type: 'single',
+      release_date: '2025-12-01',
+      streaming_links: [{ platform: 'spotify', url: 'https://open.spotify.com/album/7BqEidErPMNiUXCRE0dV2n' }],
+    })
+    const b = row({
+      id: '2',
+      title: 'Going Under (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-03-01',
+      streaming_links: [{ platform: 'appleMusic', url: 'https://music.apple.com/us/album/x/1440000000' }],
+    })
+    expect(releasesAreDuplicates(a, b, { artistNames: ['Zardonic'] })).toBe(true)
+  })
+
+  it('merges rows that only have platform ids inside streaming_links', () => {
+    const a = row({
+      id: '1',
+      title: 'Going Under (Zardonic Remix)',
+      type: 'single',
+      release_date: '2026-03-01',
+      streaming_links: [{ platform: 'spotify', url: 'https://open.spotify.com/album/7BqEidErPMNiUXCRE0dV2n' }],
+    })
+    const b = row({
+      id: '2',
+      title: 'Going Under (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-03-01',
+      streaming_links: [{ platform: 'appleMusic', url: 'https://music.apple.com/us/album/x/1440000000' }],
+    })
+    expect(releasesAreDuplicates(a, b, { artistNames: ['Zardonic'] })).toBe(true)
   })
 
   it('merges iTunes single with Spotify album listing for the same title', () => {
@@ -207,6 +308,74 @@ describe('groupDuplicateReleases', () => {
   })
 })
 
+describe('findManualMergeRejectionReason', () => {
+  it('allows cross-source duplicates to be merged manually', () => {
+    const a = row({
+      id: '1',
+      title: 'Going Under (Zardonic Remix)',
+      type: 'single',
+      release_date: '2026-03-01',
+      spotify_id: 'sp1',
+    })
+    const b = row({
+      id: '2',
+      title: 'Going Under (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-03-01',
+      itunes_id: 'it1',
+    })
+    expect(findManualMergeRejectionReason([a, b], { artistNames: ['Zardonic'] })).toBeNull()
+  })
+
+  it('rejects unrelated releases with the same base title but different years', () => {
+    const a = row({ id: '1', title: 'Revolution', release_date: '2015-03-20' })
+    const b = row({ id: '2', title: 'Revolution', release_date: '2020-03-20' })
+    expect(findManualMergeRejectionReason([a, b])).toMatch(/do not appear/i)
+  })
+
+  it('rejects conflicting spotify album ids', () => {
+    const a = row({
+      id: '1',
+      title: 'Same Name',
+      release_date: '2020-01-01',
+      spotify_id: 'aaa',
+    })
+    const b = row({
+      id: '2',
+      title: 'Same Name (Remix)',
+      release_date: '2020-01-01',
+      spotify_id: 'bbb',
+    })
+    expect(findManualMergeRejectionReason([a, b])).toMatch(/Conflicting Spotify/i)
+  })
+
+  it('rejects selections where only some releases are related', () => {
+    const mars = row({
+      id: '1',
+      title: 'Mars (Zardonic Remix)',
+      type: 'single',
+      release_date: '2026-06-19',
+      spotify_id: 'sp1',
+    })
+    const marsItunes = row({
+      id: '2',
+      title: 'Mars (Zardonic Remix) - Single',
+      type: 'single',
+      release_date: '2026-06-19',
+      itunes_id: 'it1',
+    })
+    const unrelated = row({
+      id: '3',
+      title: 'Totally Different Album',
+      type: 'album',
+      release_date: '2010-01-01',
+    })
+    expect(
+      findManualMergeRejectionReason([mars, marsItunes, unrelated], { artistNames: ['Zardonic'] }),
+    ).toMatch(/not all related/i)
+  })
+})
+
 describe('buildConsolidatedReleaseUpdate', () => {
   it('fills missing external ids and tracks from duplicate', () => {
     const canonical = row({ id: '1', title: 'Album', itunes_id: '123', tracks: [] })
@@ -218,11 +387,36 @@ describe('buildConsolidatedReleaseUpdate', () => {
       tracks_source: 'spotify',
     })
 
-    const update = buildConsolidatedReleaseUpdate(canonical, duplicate)
+    const { update } = buildConsolidatedReleaseUpdate(canonical, duplicate)
     expect(update).toMatchObject({
       spotify_id: 'spotify-1',
       tracks: [{ title: 'Intro' }],
       tracks_source: 'spotify',
     })
+  })
+
+  it('replaces Spotify canonical cover with iTunes duplicate cover', () => {
+    const canonical = row({
+      id: '1',
+      title: 'Mars (Zardonic Remix)',
+      cover_storage_path: 'releases/spotify-mars',
+      cover_url: 'https://i.scdn.co/image/mars',
+    })
+    const duplicate = row({
+      id: '2',
+      title: 'Mars (Zardonic Remix) - Single',
+      cover_storage_path: 'releases/itunes-mars',
+      cover_url: 'https://is1-ssl.mzstatic.com/mars.jpg',
+      itunes_id: '999',
+    })
+
+    const { update, coverPathsToDiscard } = buildConsolidatedReleaseUpdate(canonical, duplicate)
+    expect(update).toMatchObject({
+      cover_storage_path: 'releases/itunes-mars',
+      cover_url: 'https://is1-ssl.mzstatic.com/mars.jpg',
+      itunes_id: '999',
+    })
+    expect(coverPathsToDiscard).toContain('releases/spotify-mars')
+    expect(coverPathsToDiscard).not.toContain('releases/itunes-mars')
   })
 })

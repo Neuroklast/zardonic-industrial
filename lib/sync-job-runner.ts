@@ -285,7 +285,7 @@ async function loadReleaseMatchIndex(
   const { data, error } = await supabase
     .from('releases')
     .select(
-      'id, title, type, release_date, spotify_id, itunes_id, discogs_id, manually_edited',
+      'id, title, type, release_date, description, artists, streaming_links, tracks, tracks_source, last_enriched_at, cover_storage_path, cover_url, display_order, active, manually_edited, itunes_id, spotify_id, discogs_id',
     )
 
   if (error) throw new Error(`Failed to load releases for duplicate matching: ${error.message}`)

@@ -16,6 +16,8 @@ import {
   type ReleaseMetadata,
   type StreamingLink,
 } from '@/lib/release-metadata'
+import { coverSourceScore, resolveMergedCoverUpdate } from '@/lib/release-cover-art'
+import { deleteReleaseCoversFromR2 } from '@/lib/release-cover-r2'
 import { externalIdsFromStreamingLinks } from '@/lib/release-streaming-enrichment'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
@@ -97,9 +99,8 @@ export function releasesAreDuplicates(
 
   if (keysMatch && complementaryIds) return true
   if (!keysMatch) return false
-  if (!datesAlign) return false
 
-  return typesCompatible(a.type, b.type)
+  return datesAlign && typesCompatible(a.type, b.type)
 }
 
 function metadataAsConsolidationRow(metadata: ReleaseMetadata): ReleaseConsolidationRow {
@@ -137,8 +138,9 @@ export function scoreReleaseForCanonical(row: ReleaseConsolidationRow): number {
   if (row.spotify_id) score += 10
   if (row.itunes_id) score += 10
   if (row.discogs_id) score += 10
-  if (row.cover_storage_path) score += 50
-  if (row.cover_url) score += 15
+  score += Math.max(0, coverSourceScore(row))
+  if (row.cover_storage_path) score += 20
+  if (row.cover_url) score += 5
   score += streamingLinkCount(row.streaming_links) * 3
   if (row.description?.trim()) score += 5
   if (typeof row.display_order === 'number') score -= row.display_order * 0.01
@@ -343,12 +345,18 @@ export function groupDuplicateReleases(
   return [...groups.values()].filter((group) => group.length > 1)
 }
 
+export interface ConsolidatedReleaseUpdateResult {
+  update: Record<string, unknown> | null
+  coverPathsToDiscard: string[]
+}
+
 export function buildConsolidatedReleaseUpdate(
   canonical: ReleaseConsolidationRow,
   duplicate: ReleaseConsolidationRow,
-): Record<string, unknown> | null {
+): ConsolidatedReleaseUpdateResult {
   const update: Record<string, unknown> = {}
   let changed = false
+  const coverMerge = resolveMergedCoverUpdate(canonical, duplicate)
 
   const fillId = (
     field: 'spotify_id' | 'itunes_id' | 'discogs_id',
@@ -398,13 +406,15 @@ export function buildConsolidatedReleaseUpdate(
     changed = true
   }
 
-  if (!canonical.cover_storage_path && duplicate.cover_storage_path) {
-    update.cover_storage_path = duplicate.cover_storage_path
-    changed = true
-  }
-  if (!canonical.cover_url && duplicate.cover_url) {
-    update.cover_url = duplicate.cover_url
-    changed = true
+  if (coverMerge.update) {
+    if (coverMerge.update.cover_storage_path !== undefined) {
+      update.cover_storage_path = coverMerge.update.cover_storage_path
+      changed = true
+    }
+    if (coverMerge.update.cover_url !== undefined) {
+      update.cover_url = coverMerge.update.cover_url
+      changed = true
+    }
   }
 
   if (!canonical.description?.trim() && duplicate.description?.trim()) {
@@ -427,13 +437,155 @@ export function buildConsolidatedReleaseUpdate(
     changed = true
   }
 
-  return changed ? update : null
+  return {
+    update: changed ? update : null,
+    coverPathsToDiscard: coverMerge.discardPaths,
+  }
 }
 
 const CONSOLIDATION_SELECT =
   'id, title, type, release_date, description, artists, streaming_links, tracks, tracks_source, last_enriched_at, cover_storage_path, cover_url, display_order, active, manually_edited, itunes_id, spotify_id, discogs_id'
 
 const MAX_CONSOLIDATION_PASSES = 20
+const MAX_MANUAL_MERGE_SELECTION = 20
+
+const PLATFORM_ID_FIELDS: Array<{
+  field: 'spotify_id' | 'itunes_id' | 'discogs_id'
+  label: string
+}> = [
+  { field: 'spotify_id', label: 'Spotify' },
+  { field: 'itunes_id', label: 'iTunes' },
+  { field: 'discogs_id', label: 'Discogs' },
+]
+
+function findConflictingPlatformIds(rows: ReleaseConsolidationRow[]): string | null {
+  for (const { field, label } of PLATFORM_ID_FIELDS) {
+    const ids = [
+      ...new Set(
+        rows
+          .map((row) => row[field])
+          .filter((id): id is string => typeof id === 'string' && id.length > 0),
+      ),
+    ]
+    if (ids.length > 1) {
+      return `Conflicting ${label} album IDs — these are different releases on ${label}, not duplicates.`
+    }
+  }
+  return null
+}
+
+/**
+ * Returns a human-readable rejection reason when a manual merge selection is not
+ * semantically safe. Null means the group may be merged.
+ */
+export function findManualMergeRejectionReason(
+  rows: ReleaseConsolidationRow[],
+  options?: ReleaseTitleMatchOptions,
+): string | null {
+  if (rows.length < 2) {
+    return 'Select at least two releases to merge.'
+  }
+
+  const platformConflict = findConflictingPlatformIds(rows)
+  if (platformConflict) return platformConflict
+
+  const parent = rows.map((_, index) => index)
+  const find = (index: number): number => {
+    if (parent[index] !== index) parent[index] = find(parent[index])
+    return parent[index]
+  }
+  const union = (left: number, right: number) => {
+    const rootLeft = find(left)
+    const rootRight = find(right)
+    if (rootLeft !== rootRight) parent[rootRight] = rootLeft
+  }
+
+  let hasDuplicateEdge = false
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = i + 1; j < rows.length; j++) {
+      if (releasesAreDuplicates(rows[i], rows[j], options)) {
+        union(i, j)
+        hasDuplicateEdge = true
+      }
+    }
+  }
+
+  if (!hasDuplicateEdge) {
+    return `“${rows[0].title}” and “${rows[1].title}” do not appear to be the same catalogue entry.`
+  }
+
+  const roots = new Set(rows.map((_, index) => find(index)))
+  if (roots.size !== 1) {
+    return 'Selected releases are not all related — some pairs have unrelated titles, dates, or platform data.'
+  }
+
+  return null
+}
+
+export function pickCanonicalReleaseRow(rows: ReleaseConsolidationRow[]): ReleaseConsolidationRow {
+  return [...rows].sort((a, b) => scoreReleaseForCanonical(b) - scoreReleaseForCanonical(a))[0]
+}
+
+export interface ManualMergeResult extends ConsolidateReleasesResult {
+  canonicalId?: string
+  rejected?: string
+}
+
+/** Merge an admin-selected group after semantic validation. */
+export async function mergeManualReleaseSelection(
+  supabase: ReturnType<typeof createAdminClient>,
+  releaseIds: string[],
+  options?: ReleaseTitleMatchOptions,
+): Promise<ManualMergeResult> {
+  const empty: ManualMergeResult = { merged: 0, deleted: 0, skipped: 0, errors: [] }
+
+  if (releaseIds.length < 2) {
+    return { ...empty, rejected: 'Select at least two releases to merge.' }
+  }
+  if (releaseIds.length > MAX_MANUAL_MERGE_SELECTION) {
+    return {
+      ...empty,
+      rejected: `Select at most ${MAX_MANUAL_MERGE_SELECTION} releases per merge.`,
+    }
+  }
+
+  const uniqueIds = [...new Set(releaseIds)]
+  if (uniqueIds.length !== releaseIds.length) {
+    return { ...empty, rejected: 'Duplicate selections are not allowed.' }
+  }
+
+  const matchOptions = options ?? (await loadTitleMatchOptions(supabase))
+
+  const { data, error } = await supabase
+    .from('releases')
+    .select(CONSOLIDATION_SELECT)
+    .in('id', uniqueIds)
+
+  if (error) {
+    return { ...empty, errors: [error.message], rejected: error.message }
+  }
+
+  const rows = (data ?? []) as ReleaseConsolidationRow[]
+  if (rows.length !== uniqueIds.length) {
+    return { ...empty, rejected: 'One or more selected releases were not found.' }
+  }
+
+  const rejection = findManualMergeRejectionReason(rows, matchOptions)
+  if (rejection) {
+    return { ...empty, rejected: rejection }
+  }
+
+  const canonical = pickCanonicalReleaseRow(rows)
+  const result: ManualMergeResult = { merged: 0, deleted: 0, skipped: 0, errors: [] }
+  await mergeDuplicateGroups(supabase, [rows], result)
+  result.canonicalId = canonical.id
+
+  if (result.deleted === 0 && result.skipped > 0) {
+    result.rejected = result.errors[0] ?? 'Merge failed.'
+  }
+
+  return result
+}
 
 async function loadTitleMatchOptions(
   supabase: ReturnType<typeof createAdminClient>,
@@ -461,7 +613,7 @@ async function mergeDuplicateGroups(
     const duplicates = sorted.slice(1)
 
     for (const duplicate of duplicates) {
-      const update = buildConsolidatedReleaseUpdate(canonical, duplicate)
+      const { update, coverPathsToDiscard } = buildConsolidatedReleaseUpdate(canonical, duplicate)
       if (update) {
         const { error: updateError } = await supabase
           .from('releases')
@@ -488,6 +640,11 @@ async function mergeDuplicateGroups(
       }
 
       result.deleted++
+
+      const r2Cleanup = await deleteReleaseCoversFromR2(coverPathsToDiscard)
+      for (const path of r2Cleanup.errors) {
+        result.errors.push(`Failed to delete orphaned cover "${path}" from R2`)
+      }
     }
   }
 }
@@ -522,8 +679,9 @@ export async function consolidateDuplicateReleases(
     if (groups.length === 0) break
 
     const deletedBefore = result.deleted
+    const skippedBefore = result.skipped
     await mergeDuplicateGroups(supabase, groups, result)
-    if (result.deleted === deletedBefore) break
+    if (result.deleted === deletedBefore && result.skipped === skippedBefore) break
   }
 
   return result

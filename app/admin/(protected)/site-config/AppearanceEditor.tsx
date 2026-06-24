@@ -118,20 +118,27 @@ function parseConfig(raw: Record<string, unknown>): AppearanceConfig {
   }
 }
 
+/** Swatch colors for preset preview — oklch applied directly (hex conversion fails during SSR). */
+const PRESET_SWATCH_KEYS: Array<keyof AppearanceTheme> = [
+  'primaryColor',
+  'accentColor',
+  'backgroundColor',
+  'foregroundColor',
+  'cardColor',
+]
+
 function PresetSwatch({ theme }: { theme: AppearanceTheme }) {
-  const colors = [
-    theme.backgroundColor,
-    theme.cardColor,
-    theme.accentColor,
-  ].map((c) => (c ? oklchToHex(c) : '#000000'))
+  const colors = PRESET_SWATCH_KEYS.map((key) => theme[key]).filter(
+    (c): c is string => typeof c === 'string' && c.length > 0,
+  )
 
   return (
     <span className="flex gap-1 mt-1.5" aria-hidden="true">
-      {colors.map((hex) => (
+      {colors.map((color, index) => (
         <span
-          key={hex}
+          key={`${color}-${index}`}
           className="size-3 rounded-sm border border-zinc-700"
-          style={{ backgroundColor: hex }}
+          style={{ backgroundColor: color }}
         />
       ))}
     </span>

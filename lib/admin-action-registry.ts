@@ -652,6 +652,19 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  merge_releases: register({
+    id: 'merge_releases',
+    label: 'Merge Selected Releases',
+    schema: z.object({
+      releaseIds: z.array(z.string().min(1)).min(2).max(20),
+    }),
+    minDisclosure: 'advanced',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   purge_releases: register({
     id: 'purge_releases',
     label: 'Purge Auto-Synced Releases',

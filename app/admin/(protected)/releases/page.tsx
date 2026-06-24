@@ -1,8 +1,7 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
-import { DeleteReleaseButton } from './DeleteReleaseButton'
-import { ReleaseVisibilityToggle } from './ReleaseVisibilityToggle'
+import { ReleasesListClient } from './ReleasesListClient'
 
 export default async function ReleasesPage() {
   let releases: Array<{
@@ -11,15 +10,32 @@ export default async function ReleasesPage() {
     type: string
     release_date: string | null
     active: boolean
+    display_order: number
   }> = []
 
   try {
     const supabase = await createClient()
     const { data } = await supabase
       .from('releases')
-      .select('id, title, type, release_date, active')
+      .select('id, title, type, release_date, active, display_order')
       .order('display_order', { ascending: true })
-    releases = data ?? []
+    releases = (data ?? []).map(
+      (row: {
+        id: string
+        title: string
+        type: string
+        release_date: string | null
+        active: boolean
+        display_order: number | null
+      }) => ({
+        id: row.id,
+        title: row.title,
+        type: row.type,
+        release_date: row.release_date,
+        active: row.active,
+        display_order: typeof row.display_order === 'number' ? row.display_order : 0,
+      }),
+    )
   } catch {
     // ignore
   }
@@ -47,44 +63,7 @@ export default async function ReleasesPage() {
         }
       />
 
-      {releases.length === 0 ? (
-        <p className="text-zinc-400 text-sm">No releases yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-400">
-              <th className="text-left py-2 pr-4">Title</th>
-              <th className="text-left py-2 pr-4">Type</th>
-              <th className="text-left py-2 pr-4">Date</th>
-              <th className="text-left py-2 pr-4">Status</th>
-              <th className="text-right py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {releases.map((release) => (
-              <tr key={release.id} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
-                <td className="py-2 pr-4 text-zinc-200">{release.title}</td>
-                <td className="py-2 pr-4 text-zinc-400">{release.type}</td>
-                <td className="py-2 pr-4 text-zinc-400">{release.release_date ?? '—'}</td>
-                <td className="py-2 pr-4">
-                  <ReleaseVisibilityToggle releaseId={release.id} active={release.active ?? true} />
-                </td>
-                <td className="py-2 text-right space-x-2">
-                  <Link
-                    href={`/admin/releases/${release.id}`}
-                    className="text-zinc-400 hover:text-white transition-colors"
-                  >
-                    Edit
-                  </Link>
-                  <DeleteReleaseButton releaseId={release.id} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
-      )}
+      <ReleasesListClient releases={releases} />
     </div>
   )
 }
