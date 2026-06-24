@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { kv } from './_redis.js'
 import { createHash } from 'node:crypto'
+import { getApiSecret } from './_api-secrets.js'
 import { validateSession } from './auth.js'
 interface Subscriber {
   email: string
@@ -60,29 +61,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
 
       // Also unsubscribe from Mailchimp/Brevo if configured
       try {
+        const [mailchimpKey, mailchimpListId, brevoKey, brevoListId] = await Promise.all([
+          getApiSecret('mailchimp_api_key'),
+          getApiSecret('mailchimp_list_id'),
+          getApiSecret('brevo_api_key'),
+          getApiSecret('brevo_list_id'),
+        ])
+
         // Mailchimp
-        if (process.env.MAILCHIMP_API_KEY && process.env.MAILCHIMP_LIST_ID) {
-          const dc = process.env.MAILCHIMP_API_KEY.split('-').pop()
+        if (mailchimpKey && mailchimpListId) {
+          const dc = mailchimpKey.split('-').pop()
           const hash = createHash('md5').update(sanitizedEmail).digest('hex')
-          const url = `https://${dc}.api.mailchimp.com/3.0/lists/${process.env.MAILCHIMP_LIST_ID}/members/${hash}`
+          const url = `https://${dc}.api.mailchimp.com/3.0/lists/${mailchimpListId}/members/${hash}`
           await fetch(url, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `apikey ${process.env.MAILCHIMP_API_KEY}`,
+              'Authorization': `apikey ${mailchimpKey}`,
             },
             body: JSON.stringify({ status: 'unsubscribed' }),
           })
         }
 
         // Brevo
-        if (process.env.BREVO_API_KEY && process.env.BREVO_LIST_ID) {
-          const url = `https://api.brevo.com/v3/contacts/lists/${process.env.BREVO_LIST_ID}/contacts/remove`
+        if (brevoKey && brevoListId) {
+          const url = `https://api.brevo.com/v3/contacts/lists/${brevoListId}/contacts/remove`
           await fetch(url, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'api-key': process.env.BREVO_API_KEY,
+              'api-key': brevoKey,
             },
             body: JSON.stringify({ emails: [sanitizedEmail] }),
           })

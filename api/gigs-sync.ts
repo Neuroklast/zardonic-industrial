@@ -14,6 +14,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { getRedisOrNull, isRedisConfigured } from './_redis.js'
 import { fetchWithRetry } from './_fetch-retry.js'
+import { getApiSecret } from './_api-secrets.js'
+import { respondIfLegacyApiRetired } from './_legacy-deprecation.js'
 import { validateSession } from './auth.js'
 import { timingSafeEqual } from 'node:crypto'
 
@@ -155,6 +157,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
+  if (respondIfLegacyApiRetired(res, 'Use POST /api/gigs-sync (App Router, Supabase gigs table)')) return
+
   // Cron calls: validate Authorization: Bearer <CRON_SECRET> header.
   const authHeader = req.headers.authorization ?? ''
   const isCron = authHeader.startsWith('Bearer ') && verifyCronSecret(authHeader.slice(7))
@@ -173,9 +177,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     return
   }
 
-  const apiKey = process.env.BANDSINTOWN_API_KEY
+  const apiKey = await getApiSecret('bandsintown_api_key')
   if (!apiKey) {
-    res.status(503).json({ error: 'BANDSINTOWN_API_KEY not configured' })
+    res.status(503).json({ error: 'Bandsintown API key not configured' })
     return
   }
 

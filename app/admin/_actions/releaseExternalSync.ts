@@ -93,9 +93,9 @@ export async function previewReleaseFromExternalId(
   if (!metadata) {
     const hint =
       source === 'spotify'
-        ? 'Check SPOTIFY_CLIENT_ID/SECRET'
+        ? 'Check Spotify credentials in Admin → API Keys'
         : source === 'discogs'
-          ? 'Check DISCOGS_TOKEN'
+          ? 'Check Discogs token in Admin → API Keys'
           : 'ID not found on iTunes'
     return { ok: false, error: `Could not fetch metadata from ${source}. ${hint}.` }
   }
@@ -406,7 +406,7 @@ export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExte
       synced: 0,
       updated: 0,
       skipped: 0,
-      errors: ['Spotify API credentials missing. Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET on the server.'],
+      errors: ['Spotify API credentials missing. Configure them in Admin → API Keys.'],
     }
   }
 

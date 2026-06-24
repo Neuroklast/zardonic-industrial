@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fetchBandsintownEvents } from '../lib/bandsintown'
+import { fetchBandsintownEvents } from '@/lib/bandsintown'
 
 /**
  * Test gig display using the exact Bandsintown API structure

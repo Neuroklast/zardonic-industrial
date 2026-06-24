@@ -6,6 +6,7 @@ import { hashPassword, invalidateAllSessions } from './auth.js'
 import { applyRateLimit } from './_ratelimit.js'
 import { resetPasswordSchema, confirmResetPasswordSchema, validate } from './_schemas.js'
 import { Resend } from 'resend'
+import { getApiSecret } from './_api-secrets.js'
 // Check if KV is properly configured
 
 const RESET_TOKEN_TTL = 600 // 10 minutes
@@ -92,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     await kv.set(RESET_TOKEN_KEY, token, { ex: RESET_TOKEN_TTL })
 
     // Send password reset email if Resend is configured
-    const resendApiKey = process.env.RESEND_API_KEY
+    const resendApiKey = await getApiSecret('resend_api_key')
     const siteUrl = process.env.SITE_URL || ''
     
     if (resendApiKey) {

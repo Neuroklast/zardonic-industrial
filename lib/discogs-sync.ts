@@ -1,3 +1,4 @@
+import { getApiSecret } from '@/lib/api-secrets'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
 import {
   inferReleaseTypeFromTitle,
@@ -117,7 +118,7 @@ function parseDiscogsMaster(data: DiscogsMasterPayload, discogsId: string): Rele
 }
 
 export async function fetchReleaseMetadataFromDiscogs(discogsId: string): Promise<ReleaseMetadata | null> {
-  const token = process.env.DISCOGS_TOKEN
+  const token = await getApiSecret('discogs_token')
   if (!token) return null
 
   const releaseRes = await fetch(`${DISCOGS_BASE}/releases/${encodeURIComponent(discogsId)}`, {
@@ -147,7 +148,7 @@ export interface DiscogsArtistReleaseItem {
 }
 
 export async function searchDiscogsArtistId(artistName: string): Promise<number | null> {
-  const token = process.env.DISCOGS_TOKEN
+  const token = await getApiSecret('discogs_token')
   if (!token) return null
 
   const url = `${DISCOGS_BASE}/database/search?q=${encodeURIComponent(artistName)}&type=artist&per_page=10`
@@ -166,7 +167,7 @@ export async function searchDiscogsArtistId(artistName: string): Promise<number 
 }
 
 export async function fetchDiscogsArtistReleases(artistId: number): Promise<DiscogsArtistReleaseItem[]> {
-  const token = process.env.DISCOGS_TOKEN
+  const token = await getApiSecret('discogs_token')
   if (!token) return []
 
   const items: DiscogsArtistReleaseItem[] = []

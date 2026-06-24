@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseTrackTitle } from '../lib/track-parser'
+import { parseTrackTitle } from '@/lib/track-parser'
 
 describe('parseTrackTitle', () => {
   it('extracts "feat." correctly', () => {

@@ -106,7 +106,7 @@ describe('contact.ts — Brevo XSS fix', () => {
 describe('useAnalytics — cleanup calls disconnect not unobserve', () => {
   it('calls observer.disconnect() on unmount (not just unobserve)', async () => {
     const { renderHook, cleanup } = await import('@testing-library/react')
-    const { useAnalytics } = await import('../hooks/use-analytics.ts')
+    const { useAnalytics } = await import('@/hooks/use-analytics')
 
     const disconnectSpy = vi.fn()
     const unobserveSpy = vi.fn()
@@ -138,7 +138,7 @@ describe('useAnalytics — cleanup calls disconnect not unobserve', () => {
 describe('useLazyImage — no setState after unmount', () => {
   it('ignores image onload callback fired after component unmount', async () => {
     const { renderHook, cleanup, act } = await import('@testing-library/react')
-    const { useLazyImage } = await import('../hooks/use-lazy-image.ts')
+    const { useLazyImage } = await import('@/hooks/use-lazy-image')
 
     let capturedOnload: (() => void) | null = null
     class MockImage {

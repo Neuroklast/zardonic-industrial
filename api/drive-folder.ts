@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyRateLimit } from './_ratelimit.js'
+import { getApiSecret } from './_api-secrets.js'
 import { driveFolderQuerySchema, validate } from './_schemas.js'
 /**
  * API route that lists image files from a public Google Drive folder.
@@ -29,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   const { folderId } = parsed.data
 
   try {
-    const apiKey = process.env.GOOGLE_DRIVE_API_KEY
+    const apiKey = await getApiSecret('google_drive_api_key')
     if (!apiKey) {
       res.status(500).json({ error: 'Drive API key is not configured' })
       return

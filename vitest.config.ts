@@ -13,7 +13,7 @@ export default defineConfig({
         'node_modules/**',
         'src/test/**',
         '**/*.d.ts',
-        'src/components/ui/**',
+        'components/ui/**',
         'api/**',
       ],
       thresholds: {

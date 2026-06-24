@@ -4,6 +4,7 @@ import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminAction } from '@/lib/admin-action-registry'
+import { getApiSecret } from '@/lib/api-secrets'
 import {
   resolveBandsintownArtistName,
   syncBandsintownGigsToSupabase,
@@ -14,10 +15,10 @@ import { revalidatePath } from 'next/cache'
 export type GigsSyncResult = BandsintownSyncResult
 
 export async function syncGigsFromBandsintown(): Promise<GigsSyncResult | { error: string }> {
-  const apiKey = process.env.BANDSINTOWN_API_KEY
+  const apiKey = await getApiSecret('bandsintown_api_key')
   if (!apiKey) {
     return {
-      error: 'BANDSINTOWN_API_KEY is not configured on the server.',
+      error: 'Bandsintown API key is not configured. Set it in Admin → API Keys.',
     }
   }
 

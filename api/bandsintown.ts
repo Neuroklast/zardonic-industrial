@@ -17,6 +17,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { applyRateLimit } from './_ratelimit.js'
 import { bandsintownQuerySchema, validate } from './_schemas.js'
 import { fetchWithRetry } from './_fetch-retry.js'
+import { getApiSecret } from './_api-secrets.js'
 import { getRedisOrNull } from './_redis.js'
 /** Venue as returned by the Bandsintown REST API. */
 export interface BandsintownVenue {
@@ -72,11 +73,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
   }
   const { artist, include_past } = parsed.data
 
-  const apiKey = process.env.BANDSINTOWN_API_KEY
+  const apiKey = await getApiSecret('bandsintown_api_key')
   if (!apiKey) {
     res.status(503).json({
-      error: 'BANDSINTOWN_API_KEY not configured',
-      message: 'Please set BANDSINTOWN_API_KEY environment variable',
+      error: 'Bandsintown API key not configured',
+      message: 'Configure the key in Admin → API Keys',
     })
     return
   }

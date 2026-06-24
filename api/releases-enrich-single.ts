@@ -43,6 +43,7 @@ import {
   odesliCacheKey,
   type StreamingLink,
 } from './_odesli.js'
+import { isApiSecretConfigured } from './_api-secrets.js'
 import { getSpotifyAccessToken } from './_spotify-client.js'
 import { fetchWithRetry } from './_fetch-retry.js'
 
@@ -164,7 +165,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse): 
     // ── Step 2: Spotify fallback — search API when Odesli has no Spotify link ──
     const hasSpotify = updated.streamingLinks?.some(l => l.platform === 'spotify')
     if (!hasSpotify) {
-      if (!process.env.SPOTIFY_CLIENT_ID || !process.env.SPOTIFY_CLIENT_SECRET) {
+      const [spotifyId, spotifySecret] = await Promise.all([
+        isApiSecretConfigured('spotify_client_id'),
+        isApiSecretConfigured('spotify_client_secret'),
+      ])
+      if (!spotifyId || !spotifySecret) {
         steps.push('Spotify: übersprungen (keine Credentials)')
       } else {
         try {
