@@ -1,8 +1,13 @@
 import { getApiSecret } from '@/lib/api-secrets'
 import {
+  fetchBandsintownEventsFromApi,
+  mapBandsintownEventToGigRow,
   resolveBandsintownArtistName,
-  syncBandsintownGigsToSupabase,
+  syncBandsintownGigsBatch,
+  type BandsintownGigRow,
 } from '@/lib/bandsintown-sync'
+import { buildItunesCatalogueImportItems } from '@/lib/itunes-sync'
+import { normalizeItunesArtistId } from '@/lib/release-external-ids'
 import {
   parseCatalogueSyncConfig,
   type CatalogueSyncConfig,
@@ -35,8 +40,9 @@ import {
   type SyncJobRow,
 } from '@/lib/sync-jobs'
 
-const IMPORT_BATCH_SIZE = 10
-const ENRICH_BATCH_SIZE = 15
+const IMPORT_BATCH_SIZE = 8
+const ENRICH_BATCH_SIZE = 5
+const PROCESSING_STALE_MS = 120_000
 
 const ENRICHMENT_SELECT =
   'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links'
@@ -94,7 +100,7 @@ async function resolveDiscogsArtistId(
 }
 
 async function initCataloguePayload(
-  source: 'spotify' | 'discogs',
+  source: 'spotify' | 'discogs' | 'itunes',
   payload: SyncJobPayload,
 ): Promise<SyncJobPayload> {
   if (payload.artistId != null) return { ...payload, source }
@@ -117,7 +123,42 @@ async function initCataloguePayload(
   return { ...payload, source, artistName, artistId }
 }
 
+async function tickItunesFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
+  const config = await loadCatalogueSyncConfig()
+  const artistName = (job.payload.artistName?.trim() || config.artistName).trim()
+  const itunesArtistId = normalizeItunesArtistId(config.itunesArtistId)
+
+  if (!artistName && !itunesArtistId) {
+    throw new Error('Configure an artist name or iTunes artist ID in Catalogue Sync settings')
+  }
+
+  const { items, errors } = await buildItunesCatalogueImportItems({ artistName, itunesArtistId })
+  const nextPayload: SyncJobPayload = {
+    ...job.payload,
+    source: 'itunes',
+    artistName,
+    stagedItems: items,
+    importCursor: 0,
+  }
+
+  const updated = await updateSyncJob(job.id, {
+    status: 'running',
+    phase: 'import',
+    payload: nextPayload,
+    progress: mergeProgress(job.progress, {
+      total: items.length,
+      processed: 0,
+      errors,
+    }),
+  })
+  return { job: updated, done: false }
+}
+
 async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
+  if (job.type === 'itunes_sync') {
+    return tickItunesFetchPhase(job)
+  }
+
   const payload = await initCataloguePayload(job.payload.source ?? 'spotify', job.payload)
   const stagedItems: CatalogueImportItem[] = [...(payload.stagedItems ?? [])]
 
@@ -215,8 +256,11 @@ async function tickFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
 
 async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const payload = job.payload
-  const source = payload.source ?? (job.type === 'discogs_sync' ? 'discogs' : 'spotify')
-  const idField = source === 'discogs' ? 'discogs_id' : 'spotify_id'
+  const source =
+    payload.source ??
+    (job.type === 'discogs_sync' ? 'discogs' : job.type === 'itunes_sync' ? 'itunes' : 'spotify')
+  const idField =
+    source === 'discogs' ? 'discogs_id' : source === 'itunes' ? 'itunes_id' : 'spotify_id'
   const items = payload.stagedItems ?? []
   const cursor = payload.importCursor ?? 0
 
@@ -394,6 +438,74 @@ async function tickPurgeAndSyncReleases(job: SyncJobRow): Promise<AdvanceSyncJob
   return { job: updated, done: false }
 }
 
+async function tickBandsintownFetchPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
+  const supabase = createAdminClient()
+  const apiKey = await getApiSecret('bandsintown_api_key')
+  if (!apiKey) throw new Error('Bandsintown API key is not configured')
+
+  const artistName = await resolveBandsintownArtistName(supabase)
+  const rawEvents = await fetchBandsintownEventsFromApi(artistName, apiKey, true)
+  const stagedGigs = rawEvents
+    .map(mapBandsintownEventToGigRow)
+    .filter((row): row is BandsintownGigRow => row !== null)
+
+  const updated = await updateSyncJob(job.id, {
+    status: 'running',
+    phase: 'import',
+    payload: {
+      ...job.payload,
+      artistName,
+      stagedGigs,
+      gigImportCursor: 0,
+    },
+    progress: mergeProgress(job.progress, {
+      total: stagedGigs.length,
+      processed: 0,
+    }),
+  })
+  return { job: updated, done: false }
+}
+
+async function tickBandsintownImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
+  const supabase = createAdminClient()
+  const stagedGigs = job.payload.stagedGigs ?? []
+  const cursor = job.payload.gigImportCursor ?? 0
+  const batch = await syncBandsintownGigsBatch(supabase, stagedGigs, cursor)
+
+  const nextProgress = mergeProgress(job.progress, {
+    processed: batch.nextCursor,
+    total: stagedGigs.length,
+    synced: batch.synced,
+    updated: batch.updated,
+    skipped: batch.skipped,
+    errors: batch.errors,
+  })
+
+  const nextPayload: SyncJobPayload = {
+    ...job.payload,
+    gigImportCursor: batch.nextCursor,
+  }
+
+  if (!batch.done) {
+    const updated = await updateSyncJob(job.id, {
+      status: 'running',
+      phase: 'import',
+      payload: nextPayload,
+      progress: nextProgress,
+    })
+    return { job: updated, done: false }
+  }
+
+  const updated = await updateSyncJob(job.id, {
+    status: 'completed',
+    phase: 'import',
+    payload: nextPayload,
+    progress: nextProgress,
+    completed_at: new Date().toISOString(),
+  })
+  return { job: updated, done: true }
+}
+
 async function tickPurgeAndSyncGigs(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const phase = job.phase ?? 'purge'
   const supabase = createAdminClient()
@@ -408,7 +520,7 @@ async function tickPurgeAndSyncGigs(job: SyncJobRow): Promise<AdvanceSyncJobResu
 
     const updated = await updateSyncJob(job.id, {
       status: 'running',
-      phase: 'sync',
+      phase: 'fetch',
       payload: { ...job.payload, purgeDeleted: count ?? 0 },
       progress: mergeProgress(job.progress, {
         errors: [`Purged ${count ?? 0} gig(s)`],
@@ -417,26 +529,77 @@ async function tickPurgeAndSyncGigs(job: SyncJobRow): Promise<AdvanceSyncJobResu
     return { job: updated, done: false }
   }
 
-  const apiKey = await getApiSecret('bandsintown_api_key')
-  if (!apiKey) throw new Error('Bandsintown API key is not configured')
+  if (phase === 'fetch') {
+    return tickBandsintownFetchPhase(job)
+  }
 
-  const artistName = await resolveBandsintownArtistName(supabase)
-  const syncResult = await syncBandsintownGigsToSupabase(supabase, artistName, apiKey)
+  return tickBandsintownImportPhase(job)
+}
 
-  const updated = await updateSyncJob(job.id, {
-    status: 'completed',
-    phase: 'sync',
-    payload: job.payload,
-    progress: mergeProgress(job.progress, {
-      synced: syncResult.synced,
-      updated: syncResult.updated,
-      skipped: syncResult.skipped,
-      errors: syncResult.errors,
-      processed: syncResult.synced + syncResult.updated + syncResult.skipped,
-    }),
-    completed_at: new Date().toISOString(),
+function isProcessingStale(payload: SyncJobPayload): boolean {
+  if (!payload.processing) return true
+  const since = payload.processingSince ?? 0
+  return Date.now() - since > PROCESSING_STALE_MS
+}
+
+async function acquireProcessingLock(job: SyncJobRow): Promise<SyncJobRow | null> {
+  if (!isProcessingStale(job.payload)) {
+    return null
+  }
+
+  return updateSyncJob(job.id, {
+    payload: {
+      ...job.payload,
+      processing: true,
+      processingSince: Date.now(),
+    },
   })
-  return { job: updated, done: true }
+}
+
+async function releaseProcessingLock(job: SyncJobRow): Promise<void> {
+  await updateSyncJob(job.id, {
+    payload: {
+      ...job.payload,
+      processing: false,
+      processingSince: undefined,
+    },
+  })
+}
+
+async function runSyncJobTick(current: SyncJobRow): Promise<AdvanceSyncJobResult> {
+  if (current.type === 'track_enrichment') {
+    return tickEnrichPhase(current)
+  }
+
+  if (current.type === 'bandsintown_sync') {
+    const phase = current.phase ?? 'fetch'
+    if (phase === 'fetch') return tickBandsintownFetchPhase(current)
+    return tickBandsintownImportPhase(current)
+  }
+
+  if (current.type === 'purge_and_sync_gigs') {
+    return tickPurgeAndSyncGigs(current)
+  }
+
+  if (current.type === 'purge_and_sync_releases' && (current.phase === 'purge' || !current.phase)) {
+    return tickPurgeAndSyncReleases(current)
+  }
+
+  const phase = current.phase ?? 'fetch'
+
+  if (phase === 'fetch') {
+    return tickFetchPhase(current)
+  }
+
+  if (phase === 'import') {
+    return tickImportPhase(current)
+  }
+
+  if (phase === 'enrich') {
+    return tickEnrichPhase(current)
+  }
+
+  throw new Error(`Unknown sync job phase: ${phase}`)
 }
 
 /** Process one chunk of a sync job. */
@@ -447,40 +610,29 @@ export async function advanceSyncJob(jobId: string): Promise<AdvanceSyncJobResul
     return { job, done: true }
   }
 
+  const locked = await acquireProcessingLock(job)
+  if (!locked) {
+    return { job, done: false }
+  }
+
   try {
-    if (job.status === 'pending') {
+    if (locked.status === 'pending') {
       await updateSyncJob(jobId, { status: 'running' })
     }
 
     const current = (await getSyncJob(jobId))!
-
-    if (current.type === 'purge_and_sync_gigs') {
-      return tickPurgeAndSyncGigs(current)
-    }
-
-    if (current.type === 'purge_and_sync_releases' && (current.phase === 'purge' || !current.phase)) {
-      return tickPurgeAndSyncReleases(current)
-    }
-
-    const phase = current.phase ?? 'fetch'
-
-    if (phase === 'fetch') {
-      return tickFetchPhase(current)
-    }
-
-    if (phase === 'import') {
-      return tickImportPhase(current)
-    }
-
-    if (phase === 'enrich') {
-      return tickEnrichPhase(current)
-    }
-
-    throw new Error(`Unknown sync job phase: ${phase}`)
+    const result = await runSyncJobTick(current)
+    await releaseProcessingLock(result.job)
+    return result
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Sync job failed'
     const failed = await updateSyncJob(jobId, {
       status: 'failed',
+      payload: {
+        ...job.payload,
+        processing: false,
+        processingSince: undefined,
+      },
       progress: mergeProgress(job.progress, { errors: [message] }),
       completed_at: new Date().toISOString(),
     })

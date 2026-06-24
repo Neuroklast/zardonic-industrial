@@ -4,8 +4,10 @@ import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GallerySection } from '@/app/_components/public/GallerySection'
 import { GigsSection } from '@/app/_components/public/GigsSection'
+import { MerchandiseSection } from '@/app/_components/public/MerchandiseSection'
 import { MusicHighlightsSection } from '@/app/_components/public/MusicHighlightsSection'
 import { ReleasesSection } from '@/app/_components/public/ReleasesSection'
+import { SoundpacksSection } from '@/app/_components/public/SoundpacksSection'
 
 beforeAll(() => {
   class MockIntersectionObserver implements IntersectionObserver {
@@ -49,6 +51,8 @@ describe('public section empty states', () => {
         <MusicHighlightsSection highlights={[]} />
         <ReleasesSection releases={[]} />
         <GigsSection upcoming={[]} past={[]} />
+        <MerchandiseSection items={[]} footerText="" />
+        <SoundpacksSection items={[]} />
       </>,
     )
 
@@ -57,5 +61,7 @@ describe('public section empty states', () => {
     expect(screen.getByText(/music highlights coming soon/i)).toBeInTheDocument()
     expect(screen.getByText(/releases coming soon/i)).toBeInTheDocument()
     expect(screen.getByText(/tour dates coming soon/i)).toBeInTheDocument()
+    expect(screen.getByText(/merchandise coming soon/i)).toBeInTheDocument()
+    expect(screen.getByText(/soundpacks coming soon/i)).toBeInTheDocument()
   })
 })

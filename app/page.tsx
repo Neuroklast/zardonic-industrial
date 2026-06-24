@@ -37,12 +37,13 @@ interface BioRow { content: string | null }
 interface GigRow {
   id: string; title: string; venue: string | null; city: string | null
   country: string | null; event_date: string; ticket_url: string | null
-  festival_name: string | null
+  festival_name: string | null; description: string | null
 }
 type ReleaseRow = ReleaseDbRow
 interface PartnerRow {
   id: string; name: string; url: string | null
   logo_storage_path: string | null; logo_url: string | null; category: string
+  logo_white?: boolean | null
 }
 interface MusicHighlightRow {
   id: string; title: string; youtube_url: string; description: string | null
@@ -116,8 +117,8 @@ async function fetchAll() {
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
-      supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name').eq('active', true).order('event_date', { ascending: true }),
-      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name, description').eq('active', true).order('event_date', { ascending: true }),
+      supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category, logo_white').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
@@ -317,33 +318,20 @@ export default async function HomePage() {
   })
 
   // Partners split by category
-  const credits = partners
-    .filter((p) => p.category === 'credit')
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      url: p.url,
-      logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
-      category: p.category,
-    }))
-  const endorsements = partners
-    .filter((p) => p.category === 'endorsement')
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      url: p.url,
-      logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
-      category: p.category,
-    }))
+  const mapPartnerItem = (p: PartnerRow) => ({
+    id: p.id,
+    name: p.name,
+    url: p.url,
+    logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
+    category: p.category,
+    logoWhite: p.logo_white !== false,
+  })
+
+  const credits = partners.filter((p) => p.category === 'credit').map(mapPartnerItem)
+  const endorsements = partners.filter((p) => p.category === 'endorsement').map(mapPartnerItem)
   const partnerFriends = partners
     .filter((p) => p.category === 'partner' || p.category === 'label' || p.category === 'sponsor')
-    .map((p) => ({
-      id: p.id,
-      name: p.name,
-      url: p.url,
-      logoUrl: resolveImageUrl(p.logo_storage_path, p.logo_url),
-      category: p.category,
-    }))
+    .map(mapPartnerItem)
 
   const commerceItemMap = (row: CommerceItemRow) => ({
     id: row.id,
@@ -442,6 +430,7 @@ export default async function HomePage() {
                   minHeight={typeof heroStyleOverrides.minHeight === 'string' ? heroStyleOverrides.minHeight : undefined}
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
+                  showTourDatesCta={isSectionVisible('gigs')}
                 />
               </SectionErrorBoundary>
             )
@@ -511,7 +500,7 @@ export default async function HomePage() {
               </SectionErrorBoundary>
             ) : null
           case 'merchandise':
-            return merch.length > 0 ? (
+            return (
               <SectionErrorBoundary key="merchandise" sectionName="Merchandise">
                 {divider}
                 <MerchandiseSection
@@ -519,19 +508,23 @@ export default async function HomePage() {
                   footerText={String(merchandiseConfig.footerText ?? '')}
                 />
               </SectionErrorBoundary>
-            ) : null
+            )
           case 'soundpacks':
-            return soundpacks.length > 0 ? (
+            return (
               <SectionErrorBoundary key="soundpacks" sectionName="Soundpacks">
                 {divider}
                 <SoundpacksSection items={soundpacks.map(commerceItemMap)} />
               </SectionErrorBoundary>
-            ) : null
+            )
           case 'gigs':
             return (
               <SectionErrorBoundary key="gigs" sectionName="Events">
                 {divider}
-                <GigsSection upcoming={upcoming} past={past} />
+                <GigsSection
+                  upcoming={upcoming}
+                  past={past}
+                  artistName={String(heroConfig.headline ?? 'ZARDONIC')}
+                />
               </SectionErrorBoundary>
             )
           case 'newsletter':
@@ -541,6 +534,7 @@ export default async function HomePage() {
                 <NewsletterSection
                   heading={String(newsletterConfig.heading ?? 'Mailing List')}
                   body={String(newsletterConfig.body ?? 'Subscribe to get the latest news and releases.')}
+                  privacyPolicyUrl={privacyPolicyUrl}
                 />
               </SectionErrorBoundary>
             )

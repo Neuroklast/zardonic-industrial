@@ -1,4 +1,5 @@
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
+import { normalizeReleaseType } from '@/lib/release-public-mapper'
 
 export interface ItunesSearchResult {
   collectionId?: number
@@ -79,4 +80,77 @@ export async function fetchItunesArtistCatalogue(artistId: string): Promise<Itun
     if (result.status === 'fulfilled') items.push(...result.value)
   }
   return items
+}
+
+const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
+
+/** Build deduplicated catalogue import items for async iTunes sync jobs. */
+export async function buildItunesCatalogueImportItems(options: {
+  artistName: string
+  itunesArtistId: string | null
+}): Promise<{ items: import('@/lib/catalogue-import').CatalogueImportItem[]; errors: string[] }> {
+  const errors: string[] = []
+  const artistName = options.artistName.trim()
+
+  let rawItems: ItunesSearchResult[] = []
+  if (options.itunesArtistId) {
+    rawItems = await fetchItunesArtistCatalogue(options.itunesArtistId)
+    if (rawItems.length === 0) errors.push('No releases found for configured iTunes artist ID')
+  } else if (artistName) {
+    const [albumsRes, songsRes, singlesRes] = await Promise.allSettled([
+      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=album&limit=200`, {
+        cache: 'no-store',
+      }),
+      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=song&limit=200`, {
+        cache: 'no-store',
+      }),
+      fetch(`${ITUNES_SEARCH_URL}?term=${encodeURIComponent(artistName)}&entity=musicVideo&limit=200`, {
+        cache: 'no-store',
+      }),
+    ])
+
+    if (albumsRes.status === 'fulfilled' && albumsRes.value.ok) {
+      const data = (await albumsRes.value.json()) as { results?: ItunesSearchResult[] }
+      rawItems.push(...(data.results ?? []))
+    } else {
+      errors.push('Failed to fetch albums from iTunes')
+    }
+
+    if (songsRes.status === 'fulfilled' && songsRes.value.ok) {
+      const data = (await songsRes.value.json()) as { results?: ItunesSearchResult[] }
+      rawItems.push(...(data.results ?? []))
+    }
+
+    if (singlesRes.status === 'fulfilled' && singlesRes.value.ok) {
+      const data = (await singlesRes.value.json()) as { results?: ItunesSearchResult[] }
+      rawItems.push(...(data.results ?? []))
+    }
+  }
+
+  const seen = new Set<string>()
+  const items: import('@/lib/catalogue-import').CatalogueImportItem[] = []
+
+  for (const raw of rawItems) {
+    const parsed = parseItunesItem(raw)
+    if (!parsed || seen.has(parsed.itunes_id)) continue
+    seen.add(parsed.itunes_id)
+
+    items.push({
+      externalId: parsed.itunes_id,
+      metadata: {
+        title: parsed.title,
+        type: normalizeReleaseType(parsed.type) || 'album',
+        release_date: parsed.release_date,
+        description: null,
+        itunes_id: parsed.itunes_id,
+        coverUrl: parsed.artworkUrl,
+        artists: artistName ? [artistName] : [],
+        streaming_links: [
+          { platform: 'appleMusic', url: `https://music.apple.com/album/id${parsed.itunes_id}` },
+        ],
+      },
+    })
+  }
+
+  return { items, errors }
 }

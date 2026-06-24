@@ -1,5 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
+
+vi.mock('@/components/CyberpunkOverlay', () => ({
+  default: ({ overlay }: { overlay: { type?: string } | null }) => (
+    <div data-testid="gig-overlay-state">{overlay?.type ?? 'none'}</div>
+  ),
+}))
+
 import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GigsSection } from '@/app/_components/public/GigsSection'
@@ -56,6 +63,8 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.hero-logo-b')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveAttribute('href', '#releases')
     expect(screen.getByRole('link', { name: /tour dates/i })).toHaveAttribute('href', '#gigs')
+    expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('bg-card/60')
+    expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('text-foreground')
   })
 
   it('restores the bio expand/collapse mask behaviour', () => {
@@ -67,7 +76,7 @@ describe('restored public homepage components', () => {
     expect(screen.getByRole('button', { name: /show less/i })).toBeInTheDocument()
   })
 
-  it('restores release filters and show-all behaviour', () => {
+  it('restores release filters and browse-page link', () => {
     const releases = Array.from({ length: 9 }, (_, index) => ({
       id: `release-${index}`,
       title: `Release ${index}`,
@@ -80,8 +89,7 @@ describe('restored public homepage components', () => {
     const { container } = render(<ReleasesSection releases={releases} />)
 
     expect(container.querySelectorAll('.cyber-card')).toHaveLength(8)
-    fireEvent.click(screen.getByRole('button', { name: /show all/i }))
-    expect(container.querySelectorAll('.cyber-card')).toHaveLength(9)
+    expect(screen.getByRole('link', { name: /view all/i })).toHaveAttribute('href', '/releases')
     fireEvent.click(screen.getByRole('button', { name: /^ep$/i }))
     expect(screen.getAllByRole('link', { name: /on spotify/i })).toHaveLength(4)
   })
@@ -133,15 +141,19 @@ describe('restored public homepage components', () => {
           ]}
         />
         <CreditsSection
-          credits={[{ id: 'credit-1', name: 'Label', url: null, logoUrl: 'https://example.com/logo-a.png', category: 'credit' }]}
-          endorsements={[{ id: 'endorsement-1', name: 'Brand', url: 'https://example.com', logoUrl: 'https://example.com/logo-b.png', category: 'endorsement' }]}
+          credits={[{ id: 'credit-1', name: 'Label', url: null, logoUrl: 'https://example.com/logo-a.png', category: 'credit', logoWhite: true }]}
+          endorsements={[{ id: 'endorsement-1', name: 'Brand', url: 'https://example.com', logoUrl: 'https://example.com/logo-b.png', category: 'endorsement', logoWhite: false }]}
         />
       </>,
     )
 
     expect(screen.getByText(/event\.01082026/i)).toBeInTheDocument()
+    expect(screen.getByTestId('gig-overlay-state')).toHaveTextContent('none')
+    fireEvent.click(screen.getByRole('button', { name: /open event details for headline show/i }))
+    expect(screen.getByTestId('gig-overlay-state')).toHaveTextContent('gig')
     expect(container.querySelector('.scan-line')).toBeInTheDocument()
-    expect(container.querySelectorAll('.chromatic-hover')).toHaveLength(2)
+    expect(container.querySelectorAll('.chromatic-hover')).toHaveLength(1)
+    expect(container.querySelectorAll('.logo-white')).toHaveLength(1)
     expect(screen.getByText(/credits/i)).toBeInTheDocument()
     expect(screen.getByText(/endorsements/i)).toBeInTheDocument()
   })

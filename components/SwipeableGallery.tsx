@@ -1,4 +1,6 @@
-import { useState, useCallback, memo } from 'react'
+'use client'
+
+import { useState, useCallback, memo, useEffect } from 'react'
 import type React from 'react'
 import { motion, AnimatePresence, PanInfo } from 'framer-motion'
 import { CaretLeft, CaretRight, X } from '@phosphor-icons/react'
@@ -13,6 +15,21 @@ interface SwipeableGalleryProps {
 export const SwipeableGallery = memo(function SwipeableGallery({ images, initialIndex, onClose }: SwipeableGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [[page, direction], setPage] = useState([initialIndex, 0])
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [onClose])
 
   const paginate = useCallback((newDirection: number) => {
     const newIndex = (currentIndex + newDirection + images.length) % images.length
@@ -47,46 +64,52 @@ export const SwipeableGallery = memo(function SwipeableGallery({ images, initial
         onClick={onClose}
       />
 
-      {/* Content container: motion.div ensures exit animation plays when gallery closes */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 flex items-center justify-center p-4"
         style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Gallery lightbox"
       >
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 text-foreground hover:text-accent z-10"
+          className="absolute right-4 top-4 z-10 min-h-[44px] min-w-[44px] text-foreground hover:text-accent"
           onClick={onClose}
+          aria-label="Close gallery"
         >
-          <X className="w-8 h-8" />
+          <X className="h-8 w-8" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-4 text-foreground hover:text-accent z-10"
+          className="absolute left-4 top-1/2 z-10 min-h-[44px] min-w-[44px] -translate-y-1/2 text-foreground hover:text-accent"
           onClick={() => paginate(-1)}
+          aria-label="Previous image"
         >
-          <CaretLeft className="w-12 h-12" />
+          <CaretLeft className="h-12 w-12" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-4 text-foreground hover:text-accent z-10"
+          className="absolute right-4 top-1/2 z-10 min-h-[44px] min-w-[44px] -translate-y-1/2 text-foreground hover:text-accent"
           onClick={() => paginate(1)}
+          aria-label="Next image"
         >
-          <CaretRight className="w-12 h-12" />
+          <CaretRight className="h-12 w-12" />
         </Button>
 
-        <div className="relative w-full max-w-5xl h-[80vh] overflow-hidden">
+        <div className="relative h-[80vh] w-full max-w-5xl overflow-hidden">
           <AnimatePresence initial={false} custom={direction}>
             <motion.img
               key={page}
               src={images[currentIndex]}
+              alt=""
               custom={direction}
               variants={variants}
               initial="enter"
@@ -100,18 +123,26 @@ export const SwipeableGallery = memo(function SwipeableGallery({ images, initial
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={1}
               onDragEnd={handleDragEnd}
-              className="absolute w-full h-full object-contain cursor-grab active:cursor-grabbing"
+              className="absolute h-full w-full cursor-grab object-contain active:cursor-grabbing"
             />
           </AnimatePresence>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+        <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 gap-1">
           {images.map((_, index) => (
-            <div
+            <button
               key={index}
-              className={`swipe-dot ${index === currentIndex ? 'active' : ''}`}
+              type="button"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center"
               onClick={() => handleDotClick(index)}
-            />
+              aria-label={`Go to image ${index + 1}`}
+              aria-current={index === currentIndex ? 'true' : undefined}
+            >
+              <span
+                className={`swipe-dot ${index === currentIndex ? 'active' : ''}`}
+                aria-hidden="true"
+              />
+            </button>
           ))}
         </div>
       </motion.div>

@@ -11,7 +11,10 @@ function resolveOrigin(): string {
 /** Fire-and-forget next tick for a running sync job (cron secret auth). */
 export function chainSyncJobTick(jobId: string): void {
   const secret = process.env.CRON_SECRET
-  if (!secret) return
+  if (!secret) {
+    console.warn(`[sync-job-chain] CRON_SECRET missing — cannot HTTP-chain job ${jobId}`)
+    return
+  }
 
   const url = `${resolveOrigin()}/api/sync-jobs/${jobId}/tick`
   void fetch(url, {

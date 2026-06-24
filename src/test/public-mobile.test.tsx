@@ -26,4 +26,15 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/role="dialog"/)
     expect(src).toMatch(/aria-modal="true"/)
   })
+
+  it('SiteNav mobile links have 44px touch targets', () => {
+    const src = readSource('app/_components/public/SiteNav.tsx')
+    expect(src).toMatch(/min-h-\[44px\]/)
+  })
+
+  it('SwipeableGallery lightbox dots are keyboard buttons', () => {
+    const src = readSource('components/SwipeableGallery.tsx')
+    expect(src).toMatch(/aria-label=\{`Go to image/)
+    expect(src).toMatch(/type="button"/)
+  })
 })

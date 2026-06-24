@@ -1,28 +1,21 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { m } from 'framer-motion'
 import { formatIsoDateCompact, formatIsoDateLong } from '@/lib/format-display-date'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
-import { CalendarBlank, CaretDown, CaretUp, MapPin } from '@phosphor-icons/react'
-
-interface GigRow {
-  id: string
-  title: string
-  venue: string | null
-  city: string | null
-  country: string | null
-  event_date: string
-  ticket_url: string | null
-  festival_name: string | null
-}
+import { HOMEPAGE_GIG_LIMIT } from '@/lib/browse-pagination'
+import { mapGigRowToOverlayGig, type PublicGigRow } from '@/lib/gig-public-mapper'
+import type { CyberpunkOverlayState } from '@/lib/app-types'
+import CyberpunkOverlay from '@/components/CyberpunkOverlay'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
+import { ArrowRight, CalendarBlank, MapPin } from '@phosphor-icons/react'
 
 interface GigsSectionProps {
-  upcoming: GigRow[]
-  past: GigRow[]
+  upcoming: PublicGigRow[]
+  past: PublicGigRow[]
+  artistName?: string
 }
-
-const INITIAL_VISIBLE = 3
 
 function formatEventLabel(eventDate: string) {
   return formatIsoDateCompact(eventDate)
@@ -35,12 +28,13 @@ function formatDisplayDate(eventDate: string) {
 function GigList({
   gigs,
   heading,
+  onGigClick,
 }: {
-  gigs: GigRow[]
+  gigs: PublicGigRow[]
   heading: string
+  onGigClick: (gig: PublicGigRow) => void
 }) {
-  const [showAll, setShowAll] = useState(false)
-  const visibleGigs = showAll ? gigs : gigs.slice(0, INITIAL_VISIBLE)
+  const visibleGigs = gigs.slice(0, HOMEPAGE_GIG_LIMIT)
 
   if (gigs.length === 0) return null
 
@@ -52,6 +46,8 @@ function GigList({
 
       {visibleGigs.map((gig, index) => {
         const location = [gig.city, gig.country].filter(Boolean).join(', ')
+        const headline = gig.festival_name || gig.title
+
         return (
           <m.article
             key={gig.id}
@@ -64,16 +60,27 @@ function GigList({
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
           >
-            <div className="cyber-card hover-scan hover-noise relative border border-border bg-card p-6 transition-colors hover:border-primary/50">
+            <div
+              className="cyber-card hover-scan hover-noise group relative w-full cursor-pointer border border-border bg-card p-6 transition-colors hover:border-primary/50"
+              onClick={() => onGigClick(gig)}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                onGigClick(gig)
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Open event details for ${headline}`}
+            >
               <div className="scan-line" aria-hidden="true" />
               <div className="data-label mb-2" data-theme-color="data-label">
                 // EVENT.{formatEventLabel(gig.event_date)}
               </div>
 
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <h3 className="font-mono text-xl font-bold uppercase hover-chromatic">
-                    {gig.festival_name || gig.title}
+                    {headline}
                   </h3>
                   {gig.venue ? (
                     <p className="font-mono text-sm text-muted-foreground">{gig.venue}</p>
@@ -81,12 +88,12 @@ function GigList({
                   <div className="flex flex-wrap gap-4 font-mono text-sm text-muted-foreground">
                     {location ? (
                       <span className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
+                        <MapPin className="h-4 w-4 shrink-0" />
                         {location}
                       </span>
                     ) : null}
                     <span className="flex items-center gap-2">
-                      <CalendarBlank className="h-4 w-4" />
+                      <CalendarBlank className="h-4 w-4 shrink-0" />
                       {formatDisplayDate(gig.event_date)}
                     </span>
                   </div>
@@ -97,7 +104,8 @@ function GigList({
                     href={gig.ticket_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="cyber-border hover-glitch inline-flex items-center justify-center px-4 py-2 font-mono text-xs uppercase tracking-[0.25em]"
+                    onClick={(event) => event.stopPropagation()}
+                    className="cyber-border hover-glitch inline-flex min-h-[44px] shrink-0 items-center justify-center px-4 py-2 font-mono text-xs uppercase tracking-[0.25em]"
                   >
                     Tickets
                   </a>
@@ -108,54 +116,55 @@ function GigList({
         )
       })}
 
-      {gigs.length > INITIAL_VISIBLE ? (
-        <m.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="flex justify-center pt-4">
-          <button
-            type="button"
-            onClick={() => setShowAll((value) => !value)}
-            className="cyber-border hover-glitch inline-flex items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
-          >
-            {showAll ? (
-              <>
-                <CaretUp className="h-4 w-4" />
-                Show Less
-              </>
-            ) : (
-              <>
-                <CaretDown className="h-4 w-4" />
-                Show More ({gigs.length - INITIAL_VISIBLE})
-              </>
-            )}
-          </button>
-        </m.div>
-      ) : null}
     </div>
   )
 }
 
-export function GigsSection({ upcoming, past }: GigsSectionProps) {
+export function GigsSection({ upcoming, past, artistName = '' }: GigsSectionProps) {
+  const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const hasGigs = upcoming.length > 0 || past.length > 0
 
-  return (
-    <SectionWrapper id="gigs" data-theme-color="foreground card border primary">
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-        <h2
-          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-          data-text="UPCOMING GIGS"
-        >
-          UPCOMING GIGS
-          <span className="animate-pulse">_</span>
-        </h2>
-      </div>
+  const handleGigClick = (gig: PublicGigRow) => {
+    setOverlay({ type: 'gig', data: mapGigRowToOverlayGig(gig) })
+  }
 
-      {hasGigs ? (
-        <div className="space-y-10">
-          <GigList gigs={upcoming} heading="UPCOMING" />
-          <GigList gigs={past} heading="PAST" />
-        </div>
-      ) : (
-        <SectionEmpty label="Tour dates coming soon" />
-      )}
-    </SectionWrapper>
+  return (
+    <>
+      <SectionWrapper id="gigs" data-theme-color="foreground card border primary">
+        <SectionHeading dataText="TOUR DATES">TOUR DATES</SectionHeading>
+
+        {hasGigs ? (
+          <div className="space-y-10">
+            <GigList gigs={upcoming} heading="UPCOMING" onGigClick={handleGigClick} />
+            <GigList gigs={past} heading="PAST" onGigClick={handleGigClick} />
+            {upcoming.length > HOMEPAGE_GIG_LIMIT || past.length > HOMEPAGE_GIG_LIMIT ? (
+              <m.div
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                className="flex justify-center pt-2"
+              >
+                <Link
+                  href="/gigs"
+                  className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
+                >
+                  View All Events ({upcoming.length + past.length})
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </m.div>
+            ) : null}
+          </div>
+        ) : (
+          <SectionEmpty label="Tour dates coming soon" />
+        )}
+      </SectionWrapper>
+
+      <CyberpunkOverlay
+        overlay={overlay}
+        onClose={() => setOverlay(null)}
+        adminSettings={undefined}
+        artistName={artistName}
+      />
+    </>
   )
 }

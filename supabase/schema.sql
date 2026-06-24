@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS public.partners (
   category text DEFAULT 'partner',
   display_order integer DEFAULT 0,
   active boolean DEFAULT true,
+  logo_white boolean DEFAULT true,
   created_at timestamptz DEFAULT now()
 );
 
@@ -217,6 +218,24 @@ $$;
 
 ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS logo_storage_path text;
 ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+-- partners: logo_hover_white → logo_white (rename misnamed column)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'partners' AND column_name = 'logo_hover_white'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'partners' AND column_name = 'logo_white'
+  ) THEN
+    ALTER TABLE public.partners RENAME COLUMN logo_hover_white TO logo_white;
+  END IF;
+END;
+$$;
+
+ALTER TABLE public.partners ADD COLUMN IF NOT EXISTS logo_white boolean DEFAULT true;
+ALTER TABLE public.partners ALTER COLUMN logo_white SET DEFAULT true;
+UPDATE public.partners SET logo_white = true WHERE logo_white IS NULL;
 
 -- social_links
 ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT true;

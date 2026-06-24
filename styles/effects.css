@@ -478,6 +478,7 @@
   height: 8px;
   border: 1px solid var(--hover-color, var(--accent));
   opacity: 0;
+  pointer-events: none;
   transition: all 0.3s ease;
 }
 

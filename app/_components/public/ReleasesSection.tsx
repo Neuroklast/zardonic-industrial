@@ -1,13 +1,20 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Link from 'next/link'
 import { m, useReducedMotion } from 'framer-motion'
 import { formatReleaseDate } from '@/lib/format-release-date'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
+import { HOMEPAGE_RELEASE_LIMIT } from '@/lib/browse-pagination'
+import {
+  normalizeReleaseFilterType,
+  RELEASE_TYPE_FILTERS,
+  sortReleasesByDate,
+  type ReleaseTypeFilter,
+} from '@/lib/release-browse'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 import {
   ApplePodcastsLogo,
-  CaretDown,
-  CaretUp,
+  ArrowRight,
   Link as LinkIcon,
   MusicNote,
   SoundcloudLogo,
@@ -31,31 +38,6 @@ interface ReleasesSectionProps {
   columns?: string
   cardVariant?: string
   hoverEffect?: string
-}
-
-type ReleaseFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
-
-const FILTERS: Array<{ value: ReleaseFilter; label: string }> = [
-  { value: '', label: 'All' },
-  { value: 'album', label: 'Album' },
-  { value: 'ep', label: 'EP' },
-  { value: 'single', label: 'Single' },
-  { value: 'remix', label: 'Remix' },
-  { value: 'compilation', label: 'Compilation' },
-]
-
-function normalizeType(value: string | null | undefined): ReleaseFilter {
-  const normalized = value?.trim().toLowerCase() ?? ''
-  if (
-    normalized === 'album' ||
-    normalized === 'ep' ||
-    normalized === 'single' ||
-    normalized === 'remix' ||
-    normalized === 'compilation'
-  ) {
-    return normalized
-  }
-  return normalized === '' ? 'album' : ''
 }
 
 function formatCardReleaseDate(value: string | null) {
@@ -83,22 +65,16 @@ function getPlatformIcon(platform: string) {
 }
 
 export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant, hoverEffect }: ReleasesSectionProps) {
-  const [showAll, setShowAll] = useState(false)
-  const [activeFilter, setActiveFilter] = useState<ReleaseFilter>('')
+  const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
   const prefersReducedMotion = useReducedMotion()
 
   const filteredReleases = useMemo(() => {
-    const sorted = [...releases].sort((left, right) => {
-      const leftTime = left.release_date ? new Date(left.release_date).getTime() : 0
-      const rightTime = right.release_date ? new Date(right.release_date).getTime() : 0
-      return rightTime - leftTime
-    })
-
+    const sorted = sortReleasesByDate(releases)
     if (!activeFilter) return sorted
-    return sorted.filter((release) => normalizeType(release.type) === activeFilter)
+    return sorted.filter((release) => normalizeReleaseFilterType(release.type) === activeFilter)
   }, [activeFilter, releases])
 
-  const visibleReleases = showAll ? filteredReleases : filteredReleases.slice(0, 8)
+  const visibleReleases = filteredReleases.slice(0, HOMEPAGE_RELEASE_LIMIT)
 
   const colsClass = (() => {
     const c = columns ?? '4'
@@ -114,25 +90,14 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
 
   return (
     <SectionWrapper id="releases" data-theme-color="foreground card border primary">
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-        <h2
-          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-crt-interference font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-          data-text="RELEASES"
-        >
-          RELEASES
-          <span className="animate-pulse">_</span>
-        </h2>
-      </div>
+      <SectionHeading dataText="RELEASES">RELEASES</SectionHeading>
 
           <div className="mb-6 flex flex-wrap gap-2">
-            {FILTERS.map((filter) => (
+            {RELEASE_TYPE_FILTERS.map((filter) => (
               <button
                 key={filter.value || 'all'}
                 type="button"
-                onClick={() => {
-                  setActiveFilter(filter.value)
-                  setShowAll(false)
-                }}
+                onClick={() => setActiveFilter(filter.value)}
                 className={`border px-3 py-2 min-h-[44px] font-mono text-xs uppercase tracking-wider transition-colors ${
                   activeFilter === filter.value
                     ? 'border-primary bg-primary/10 text-primary'
@@ -206,7 +171,9 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                         <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
                           <span>{formatCardReleaseDate(release.release_date)}</span>
                           <span className="border border-primary/30 px-2 py-0.5 text-primary">
-                            {normalizeType(release.type) === 'album' ? 'Album' : normalizeType(release.type) || 'Release'}
+                            {normalizeReleaseFilterType(release.type) === 'album'
+                              ? 'Album'
+                              : normalizeReleaseFilterType(release.type) || 'Release'}
                           </span>
                         </div>
                       </div>
@@ -236,30 +203,20 @@ export function ReleasesSection({ releases, onReleaseClick, columns, cardVariant
                 ))}
               </div>
 
-              {filteredReleases.length > 8 ? (
+              {filteredReleases.length > HOMEPAGE_RELEASE_LIMIT ? (
                 <m.div
                   className="mt-8 flex justify-center"
                   initial={prefersReducedMotion ? false : { opacity: 0 }}
                   whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
                   viewport={prefersReducedMotion ? undefined : { once: true }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setShowAll((value) => !value)}
-                    className="cyber-border hover-glitch inline-flex items-center gap-2 px-4 py-2 font-mono uppercase"
+                  <Link
+                    href="/releases"
+                    className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono uppercase"
                   >
-                    {showAll ? (
-                      <>
-                        <CaretUp className="h-4 w-4" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <CaretDown className="h-4 w-4" />
-                        Show All ({filteredReleases.length})
-                      </>
-                    )}
-                  </button>
+                    View All ({filteredReleases.length})
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
                 </m.div>
               ) : null}
             </>

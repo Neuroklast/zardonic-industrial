@@ -1,7 +1,7 @@
 'use client'
 
 import { m } from 'framer-motion'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 
 interface PartnerItem {
   id: string
@@ -9,6 +9,23 @@ interface PartnerItem {
   url: string | null
   logoUrl: string | null
   category: string
+  logoWhite?: boolean
+}
+
+function logoImageClassName(item: PartnerItem): string {
+  const base = 'h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14'
+  const useWhiteFill = item.logoWhite !== false
+  return useWhiteFill ? `logo-white ${base}` : `chromatic-hover ${base}`
+}
+
+function logoImageStyle(item: PartnerItem, logoBrightness?: number): React.CSSProperties {
+  if (item.logoWhite !== false) {
+    if (logoBrightness !== undefined) {
+      return { ['--logo-brightness' as string]: String(logoBrightness) }
+    }
+    return {}
+  }
+  return logoBrightness !== undefined ? { filter: `brightness(${logoBrightness})` } : { opacity: 0.7 }
 }
 
 interface CreditsAndEndorsementsProps {
@@ -32,8 +49,8 @@ function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; he
             <m.img
               src={item.logoUrl}
               alt={item.name}
-              className="chromatic-hover h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14"
-              style={logoBrightness !== undefined ? { filter: `brightness(${logoBrightness})` } : { opacity: 0.7 }}
+              className={logoImageClassName(item)}
+              style={logoImageStyle(item, logoBrightness)}
               initial={{ opacity: 0, y: 10 }}
               whileInView={{ opacity: logoBrightness !== undefined ? Math.min(logoBrightness + 0.3, 1) : 0.7, y: 0 }}
               whileHover={{ opacity: 1 }}
@@ -96,15 +113,7 @@ export function CreditsSection({ credits, endorsements, partners = [], logoBrigh
 
   return (
     <SectionWrapper id="credits" data-theme-color="primary accent card border">
-      <div className="mb-12 flex flex-wrap items-center justify-between gap-4">
-        <h2
-          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-heading font-bold uppercase tracking-tighter text-foreground"
-          data-text="CREDIT HIGHLIGHTS"
-        >
-          CREDIT HIGHLIGHTS
-          <span className="animate-pulse">_</span>
-        </h2>
-      </div>
+      <SectionHeading dataText="CREDIT HIGHLIGHTS">CREDIT HIGHLIGHTS</SectionHeading>
 
       {hasItems ? (
         <div className="space-y-12">

@@ -13,7 +13,7 @@ export default async function EditPartnerPage({ params }: PageProps) {
   const supabase = await createClient()
   const { data: partner } = await supabase
     .from('partners')
-    .select('id, name, url, category, logo_storage_path, logo_url, display_order, active')
+    .select('id, name, url, category, logo_storage_path, logo_url, display_order, active, logo_white')
     .eq('id', id)
     .single()
 

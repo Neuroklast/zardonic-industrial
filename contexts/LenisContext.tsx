@@ -30,6 +30,7 @@ import {
 import type { ReactNode } from 'react'
 import Lenis from 'lenis'
 import { usePrefersReducedMotion, isSlowConnection, isLowEndHardware } from '@/lib/device-capability'
+import { resolveScrollTarget } from '@/lib/scroll-target'
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -164,9 +165,10 @@ export function LenisProvider({
       target: HTMLElement | string | number,
       options?: LenisScrollToOptions,
     ) => {
+      const resolved = resolveScrollTarget(target)
       const l = lenisRef.current
       if (l) {
-        l.scrollTo(target, {
+        l.scrollTo(resolved, {
           offset: options?.offset ?? 0,
           immediate: options?.immediate ?? false,
           duration: options?.duration ?? duration,
@@ -176,17 +178,19 @@ export function LenisProvider({
 
       // Native fallback (lite mode or Lenis not yet ready)
       const offset = options?.offset ?? 0
-      if (typeof target === 'number') {
-        window.scrollTo({ top: target + offset, behavior: 'smooth' })
-      } else if (typeof target === 'string') {
-        const el = document.getElementById(target.replace(/^#/, ''))
-        if (el) {
+      if (typeof resolved === 'number') {
+        window.scrollTo({ top: resolved + offset, behavior: 'smooth' })
+      } else if (resolved instanceof HTMLElement) {
+        const y = resolved.getBoundingClientRect().top + window.scrollY + offset
+        window.scrollTo({ top: y, behavior: 'smooth' })
+      } else if (typeof resolved === 'string') {
+        const el = resolved.startsWith('#')
+          ? document.querySelector(resolved)
+          : document.getElementById(resolved)
+        if (el instanceof HTMLElement) {
           const y = el.getBoundingClientRect().top + window.scrollY + offset
           window.scrollTo({ top: y, behavior: 'smooth' })
         }
-      } else if (target instanceof HTMLElement) {
-        const y = target.getBoundingClientRect().top + window.scrollY + offset
-        window.scrollTo({ top: y, behavior: 'smooth' })
       }
     },
     [duration],

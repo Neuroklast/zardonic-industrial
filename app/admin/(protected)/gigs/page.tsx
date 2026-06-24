@@ -6,7 +6,6 @@ import { GigsSyncButton } from './GigsSyncButton'
 
 export default async function GigsPage() {
   let gigs: Array<{ id: string; title: string; city: string | null; event_date: string }> = []
-
   try {
     const supabase = await createClient()
     const { data } = await supabase

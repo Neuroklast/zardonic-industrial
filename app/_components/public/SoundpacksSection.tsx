@@ -1,4 +1,4 @@
-import { SectionWrapper } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 import { SquareImageGrid } from './SquareImageGrid'
 
 interface SoundpackItem {
@@ -13,10 +13,14 @@ interface SoundpacksSectionProps {
 }
 
 export function SoundpacksSection({ items }: SoundpacksSectionProps) {
-  if (items.length === 0) return null
   return (
-    <SectionWrapper id="soundpacks" heading="Soundpacks &amp; Presets">
-      <SquareImageGrid items={items} />
+    <SectionWrapper id="soundpacks" data-theme-color="foreground card border primary">
+      <SectionHeading dataText="SOUNDPACKS & PRESETS">SOUNDPACKS & PRESETS</SectionHeading>
+      {items.length > 0 ? (
+        <SquareImageGrid items={items} />
+      ) : (
+        <SectionEmpty label="Soundpacks coming soon" />
+      )}
     </SectionWrapper>
   )
 }

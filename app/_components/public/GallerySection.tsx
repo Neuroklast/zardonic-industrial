@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { MagnifyingGlassPlus, CaretDown, CaretUp } from '@phosphor-icons/react'
-import { SectionWrapper, SectionEmpty } from './SectionWrapper'
+import { SectionWrapper, SectionEmpty, SectionHeading } from './SectionWrapper'
 import SwipeableGallery from '@/components/SwipeableGallery'
+import { resolveGalleryTileAspect } from '@/lib/gallery-aspect-ratio'
 
 interface GalleryItem {
   id: string
@@ -36,6 +37,7 @@ export function GallerySection({
   const visibleItems = items.filter((item) => item.imageUrl)
   const capped = maxVisible && !showAll ? visibleItems.slice(0, maxVisible) : visibleItems
   const imageUrls = visibleItems.map((item) => item.imageUrl ?? '')
+  const tileAspect = resolveGalleryTileAspect(aspectRatio)
 
   function openLightbox(index: number) {
     if (!lightbox) return
@@ -44,24 +46,13 @@ export function GallerySection({
 
   return (
     <SectionWrapper id="gallery" data-theme-color="card border primary">
-      <div className="mb-12 flex items-center justify-between gap-4">
-        <h2
-          className="hover-chromatic hover-glitch cyber2077-scan-build cyber2077-data-corrupt font-mono text-4xl font-bold uppercase tracking-tighter text-foreground md:text-6xl"
-          data-text="GALLERY"
-        >
-          GALLERY
-          <span className="animate-pulse">_</span>
-        </h2>
-      </div>
+      <SectionHeading dataText="GALLERY">GALLERY</SectionHeading>
 
       {visibleItems.length > 0 ? (
         <>
           <div
             className={`grid ${columns === '2' ? 'grid-cols-2' : columns === '4' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'} ${gap ? '' : 'gap-4'}`}
-            style={{
-              gap: gap || undefined,
-              aspectRatio: aspectRatio || undefined,
-            }}
+            style={{ gap: gap || undefined }}
           >
             {capped.map((item, index) => (
               <m.div
@@ -74,7 +65,7 @@ export function GallerySection({
                     ? { duration: 0 }
                     : { duration: 0.6, delay: index * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }
                 }
-                className={`glitch-image group relative aspect-square overflow-hidden bg-muted ${lightbox ? 'cursor-pointer' : ''}`}
+                className={`glitch-image group relative overflow-hidden bg-muted ${tileAspect.className} ${lightbox ? 'cursor-pointer' : ''}`}
                 onClick={() => openLightbox(index)}
                 onKeyDown={(e) => {
                   if (lightbox && (e.key === 'Enter' || e.key === ' ')) {
