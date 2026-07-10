@@ -7,6 +7,32 @@
 
 import { cssColorToRgb } from './contrast'
 
+/** Whether the current runtime can parse and render oklch() color values. */
+export function supportsOklch(): boolean {
+  if (typeof CSS === 'undefined' || typeof CSS.supports !== 'function') {
+    // SSR, tests, and theme-restore before CSS is ready: keep oklch; stylesheet fallbacks cover legacy browsers.
+    return true
+  }
+  return CSS.supports('color', 'oklch(0 0 0)')
+}
+
+/**
+ * Pick oklch for modern browsers, hex for legacy browsers without oklch support.
+ */
+export function resolveCssColorValue(color: string): string {
+  if (supportsOklch() || !color.includes('oklch(')) {
+    return color
+  }
+  return oklchToHex(color)
+}
+
+/** Split a CSS color into comma-separated RGB components for rgba(var(--accent-r), …) fallbacks. */
+export function cssColorToRgbComponents(color: string): { r: string; g: string; b: string } | null {
+  const rgb = cssColorToRgb(color)
+  if (!rgb) return null
+  return { r: String(rgb.r), g: String(rgb.g), b: String(rgb.b) }
+}
+
 /**
  * Convert any CSS color value (oklch, hsl, rgb, named, …) to a hex string.
  * Falls back to `#ff3333` when the color cannot be resolved.

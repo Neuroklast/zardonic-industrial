@@ -35,7 +35,7 @@ export default function ProtectedText({ text, className, fontSize = 14 }: Protec
 
     ctx.clearRect(0, 0, width, height)
     ctx.font = font
-    ctx.fillStyle = 'oklch(0.85 0 0)'
+    ctx.fillStyle = '#d9d9d9'
     ctx.textBaseline = 'middle'
     ctx.fillText(text, 0, height / 2)
   }, [text, fontSize])

@@ -2,7 +2,12 @@ import { createElement, useCallback, useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { hexToOklch as baseHexToOklch, oklchToHex as baseOklchToHex } from '@/lib/color-utils'
+import {
+  cssColorToRgbComponents,
+  hexToOklch as baseHexToOklch,
+  oklchToHex as baseOklchToHex,
+  resolveCssColorValue,
+} from '@/lib/color-utils'
 import { loadGoogleFont } from '@/lib/font-loader'
 import type { OverlayEffect, ThemeSettings } from '@/lib/types'
 
@@ -177,18 +182,30 @@ export function loadAllGoogleFonts() {
   FONT_OPTIONS.filter(font => font.google).forEach(font => loadGoogleFont(font.label))
 }
 
+function setThemeColorVar(root: HTMLElement, prop: string, color: string) {
+  root.style.setProperty(prop, resolveCssColorValue(color))
+}
+
 export function applyThemeToDOM(theme: ThemeSettings | undefined) {
   const root = document.documentElement
   if (!theme) return
 
-  if (theme.primary) root.style.setProperty('--primary', theme.primary)
-  if (theme.accent) root.style.setProperty('--accent', theme.accent)
-  if (theme.background) root.style.setProperty('--background', theme.background)
-  if (theme.card) root.style.setProperty('--card', theme.card)
-  if (theme.foreground) root.style.setProperty('--foreground', theme.foreground)
-  if (theme.mutedForeground) root.style.setProperty('--muted-foreground', theme.mutedForeground)
-  if (theme.border) root.style.setProperty('--border', theme.border)
-  if (theme.secondary) root.style.setProperty('--secondary', theme.secondary)
+  if (theme.primary) setThemeColorVar(root, '--primary', theme.primary)
+  if (theme.accent) {
+    setThemeColorVar(root, '--accent', theme.accent)
+    const rgb = cssColorToRgbComponents(theme.accent)
+    if (rgb) {
+      root.style.setProperty('--accent-r', rgb.r)
+      root.style.setProperty('--accent-g', rgb.g)
+      root.style.setProperty('--accent-b', rgb.b)
+    }
+  }
+  if (theme.background) setThemeColorVar(root, '--background', theme.background)
+  if (theme.card) setThemeColorVar(root, '--card', theme.card)
+  if (theme.foreground) setThemeColorVar(root, '--foreground', theme.foreground)
+  if (theme.mutedForeground) setThemeColorVar(root, '--muted-foreground', theme.mutedForeground)
+  if (theme.border) setThemeColorVar(root, '--border', theme.border)
+  if (theme.secondary) setThemeColorVar(root, '--secondary', theme.secondary)
   if (theme.fontBody) root.style.setProperty('--font-body', theme.fontBody)
   if (theme.fontMono) root.style.setProperty('--font-mono', theme.fontMono)
   if (theme.fontHeading) root.style.setProperty('--font-heading', theme.fontHeading)
@@ -202,22 +219,22 @@ export function applyThemeToDOM(theme: ThemeSettings | undefined) {
   applyOverlayEffectsToDOM(theme)
 
   if (theme.primary) {
-    root.style.setProperty('--ring', theme.primary)
-    root.style.setProperty('--destructive', theme.primary)
+    setThemeColorVar(root, '--ring', theme.primary)
+    setThemeColorVar(root, '--destructive', theme.primary)
   }
   if (theme.foreground) {
-    root.style.setProperty('--primary-foreground', theme.foreground)
-    root.style.setProperty('--secondary-foreground', theme.foreground)
-    root.style.setProperty('--accent-foreground', theme.foreground)
-    root.style.setProperty('--card-foreground', theme.foreground)
-    root.style.setProperty('--popover-foreground', theme.foreground)
-    root.style.setProperty('--destructive-foreground', theme.foreground)
+    setThemeColorVar(root, '--primary-foreground', theme.foreground)
+    setThemeColorVar(root, '--secondary-foreground', theme.foreground)
+    setThemeColorVar(root, '--accent-foreground', theme.foreground)
+    setThemeColorVar(root, '--card-foreground', theme.foreground)
+    setThemeColorVar(root, '--popover-foreground', theme.foreground)
+    setThemeColorVar(root, '--destructive-foreground', theme.foreground)
   }
   if (theme.background) {
-    root.style.setProperty('--popover', theme.background)
+    setThemeColorVar(root, '--popover', theme.background)
   }
   if (theme.mutedForeground) {
-    root.style.setProperty('--muted', theme.mutedForeground)
+    setThemeColorVar(root, '--muted', theme.mutedForeground)
   }
 
   for (const key of ['fontHeading', 'fontBody', 'fontMono'] as const) {

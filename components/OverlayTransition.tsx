@@ -1,4 +1,5 @@
 import type React from 'react'
+import { ACCENT_MAGENTA_FALLBACK, PRIMARY_CRIMSON_FALLBACK } from '@/lib/css-color-fallbacks'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useCallback } from 'react'
 
@@ -17,7 +18,7 @@ const patterns = [
         right: 0,
         height: `${h + 2}%`,
         top: `${i * h}%`,
-        background: 'var(--primary, oklch(0.50 0.22 25))',
+        background: `var(--primary, ${PRIMARY_CRIMSON_FALLBACK})`,
         mixBlendMode: 'screen' as const,
       }
     },
@@ -46,7 +47,7 @@ const patterns = [
         top: `${((i * 13 + 5) % total) / total * 80}%`,
         width: `${20 + seed * 40}%`,
         height: `${3 + (i % 3) * 4}%`,
-        background: 'var(--primary, oklch(0.50 0.22 25))',
+        background: `var(--primary, ${PRIMARY_CRIMSON_FALLBACK})`,
         mixBlendMode: 'screen' as const,
       }
     },
@@ -69,8 +70,8 @@ const patterns = [
         position: 'absolute' as const,
         inset: 0,
         background: isRed
-          ? 'var(--primary, oklch(0.50 0.22 25))'
-          : 'oklch(0.50 0.22 250)',
+          ? `var(--primary, ${PRIMARY_CRIMSON_FALLBACK})`
+          : ACCENT_MAGENTA_FALLBACK,
         mixBlendMode: 'screen' as const,
       }
     },

@@ -42,7 +42,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
 
   // Read the primary colour once at mount so glow/indicator animations match
   // the current CI preset even before admin settings arrive from the KV store.
-  const primaryColorRef = useRef(getCssVar('--primary') || 'oklch(0.55 0.25 25)')
+  const primaryColorRef = useRef(getCssVar('--primary') || '#c22e2e')
   const primaryColor = primaryColorRef.current
 
   // Simulated progress so the bar always moves
@@ -269,7 +269,7 @@ export const LoadingScreen = memo(function LoadingScreen({ onLoadComplete, preca
                   >
                     <m.span
                       animate={{
-                        color: loadingProgress > threshold ? primaryColor : 'oklch(0.6 0 0)',
+                        color: loadingProgress > threshold ? primaryColor : '#999999',
                       }}
                     >
                       ▸

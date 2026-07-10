@@ -7,39 +7,49 @@
 // cold-start visitors see the correct colours from frame 0.
 (function() {
   var _root = document.documentElement;
+  var _supportsOklch = typeof CSS !== 'undefined' && CSS.supports('color', 'oklch(0 0 0)');
 
   // Static fallback: the DIGICE preset (matches AppearanceTab.tsx DIGICIDE preset).
-  // These values are applied first so every visitor — including first-timers
-  // and private-browsing users — never sees a flash of light/blue defaults.
+  // hex values support legacy browsers; oklch values are used when supported.
   var _defaults = {
-    '--primary':                 'oklch(0.78 0.03 220)',
-    '--primary-foreground':      'oklch(0.82 0.03 210)',
-    '--accent':                  'oklch(0.65 0.06 215)',
-    '--accent-foreground':       'oklch(0.82 0.03 210)',
-    '--background':              'oklch(0.015 0.005 240)',
-    '--foreground':              'oklch(0.82 0.03 210)',
-    '--card':                    'oklch(0.045 0.008 230)',
-    '--card-foreground':         'oklch(0.82 0.03 210)',
-    '--popover':                 'oklch(0.045 0.008 230)',
-    '--popover-foreground':      'oklch(0.82 0.03 210)',
-    '--secondary':               'oklch(0.07 0.01 230)',
-    '--secondary-foreground':    'oklch(0.82 0.03 210)',
-    '--muted':                   'oklch(0.07 0.01 230)',
-    '--muted-foreground':        'oklch(0.40 0.02 220)',
-    '--border':                  'oklch(0.10 0.01 225)',
-    '--input':                   'oklch(0.10 0.01 225)',
-    '--ring':                    'oklch(0.78 0.03 220)',
-    '--destructive':             'oklch(0.45 0.18 20)',
-    '--destructive-foreground':  'oklch(0.82 0.03 210)',
-    // Spotify embed accent (primary hue 220° → 220 - 141 = 79deg)
+    '--primary':                 { hex: '#a3bcc5', oklch: 'oklch(0.78 0.03 220)' },
+    '--primary-foreground':      { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--accent':                  { hex: '#6399a6', oklch: 'oklch(0.65 0.06 215)' },
+    '--accent-foreground':       { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--background':              { hex: '#000000', oklch: 'oklch(0.015 0.005 240)' },
+    '--foreground':              { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--card':                    { hex: '#000001', oklch: 'oklch(0.045 0.008 230)' },
+    '--card-foreground':         { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--popover':                 { hex: '#000001', oklch: 'oklch(0.045 0.008 230)' },
+    '--popover-foreground':      { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--secondary':               { hex: '#000102', oklch: 'oklch(0.07 0.01 230)' },
+    '--secondary-foreground':    { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--muted':                   { hex: '#000102', oklch: 'oklch(0.07 0.01 230)' },
+    '--muted-foreground':        { hex: '#3c4a4f', oklch: 'oklch(0.40 0.02 220)' },
+    '--border':                  { hex: '#010405', oklch: 'oklch(0.10 0.01 225)' },
+    '--input':                   { hex: '#010405', oklch: 'oklch(0.10 0.01 225)' },
+    '--ring':                    { hex: '#a3bcc5', oklch: 'oklch(0.78 0.03 220)' },
+    '--destructive':             { hex: '#a10128', oklch: 'oklch(0.45 0.18 20)' },
+    '--destructive-foreground':  { hex: '#afcacf', oklch: 'oklch(0.82 0.03 210)' },
+    '--accent-r':                '99',
+    '--accent-g':                '153',
+    '--accent-b':                '166',
     '--spotify-hue-rotate':      '79deg',
     '--font-heading':            "'Orbitron', sans-serif",
     '--font-body':               "'Share Tech Mono', monospace",
     '--font-mono':               "'Share Tech Mono', monospace",
   };
+
+  function _resolveColor(value) {
+    if (value && typeof value === 'object' && ('hex' in value || 'oklch' in value)) {
+      return _supportsOklch ? value.oklch : value.hex;
+    }
+    return value;
+  }
+
   var _dk = Object.keys(_defaults);
   for (var _di = 0; _di < _dk.length; _di++) {
-    _root.style.setProperty(_dk[_di], _defaults[_dk[_di]]);
+    _root.style.setProperty(_dk[_di], _resolveColor(_defaults[_dk[_di]]));
   }
 
   // Override with persisted values from a previous visit (return visitors
@@ -51,7 +61,13 @@
       if (_vars && typeof _vars === 'object') {
         var _keys = Object.keys(_vars);
         for (var _i = 0; _i < _keys.length; _i++) {
-          _root.style.setProperty(_keys[_i], _vars[_keys[_i]]);
+          var _key = _keys[_i];
+          var _val = _vars[_key];
+          // Skip oklch cached colors on legacy browsers — keep stylesheet / default hex values.
+          if (!_supportsOklch && typeof _val === 'string' && _val.indexOf('oklch') === 0) {
+            continue;
+          }
+          _root.style.setProperty(_key, _val);
         }
 
         // Preload custom Google Fonts as early as possible so fonts are

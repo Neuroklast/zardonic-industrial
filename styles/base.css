@@ -10,7 +10,7 @@ html {
    Uses the CSS :focus-visible selector so the ring only appears for keyboard
    navigation, not on mouse clicks. */
 :focus-visible {
-  outline: 2px solid var(--primary, oklch(0.55 0.22 25));
+  outline: 2px solid var(--primary, #c22e2e);
   outline-offset: 2px;
   border-radius: 2px;
 }

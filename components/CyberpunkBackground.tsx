@@ -51,7 +51,7 @@ export default function CyberpunkBackground({ hudTexts }: CyberpunkBackgroundPro
         <div className="mb-1">{hudTexts?.topLeft1 ?? 'SYSTEM: ONLINE'}</div>
         <div>{hudTexts?.topLeft2 !== undefined ? hudTexts.topLeft2 : `TIME: ${formatTime(time)}`}</div>
         <div className="mt-1 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" style={{ boxShadow: '0 0 6px var(--primary, oklch(0.50 0.22 25))' }}></div>
+          <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" style={{ boxShadow: '0 0 6px var(--primary, #b52b2b)' }}></div>
           <span>{hudTexts?.topLeftStatus ?? 'ACTIVE'}</span>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function CyberpunkBackground({ hudTexts }: CyberpunkBackgroundPro
       ))}
 
       {/* Ambient radial glow */}
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 50%, var(--primary, oklch(0.50 0.22 25)) 0%, transparent 50%)', opacity: 0.02 }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% 50%, var(--primary, #b52b2b) 0%, transparent 50%)', opacity: 0.02 }} />
       
       {/* Dot pattern */}
       <svg className="absolute inset-0 w-full h-full opacity-5 text-primary" preserveAspectRatio="none">

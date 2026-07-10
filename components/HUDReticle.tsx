@@ -55,17 +55,17 @@ export const CyberpunkCursor = () => {
         className="relative flex items-center justify-center"
       >
         <svg width="60" height="60" viewBox="0 0 60 60">
-          <circle cx="30" cy="30" r="20" fill="none" stroke="oklch(0.60 0.24 20)" strokeWidth="1" opacity="0.8" />
-          <circle cx="30" cy="30" r="2" fill="oklch(0.60 0.24 20)" />
+          <circle cx="30" cy="30" r="20" fill="none" stroke="var(--accent, #e65c33)" strokeWidth="1" opacity="0.8" />
+          <circle cx="30" cy="30" r="2" fill="var(--accent, #e65c33)" />
 
           {/* Dekorative Linien aus deinem Fragment */}
-          <line x1="30" y1="5" x2="30" y2="15" stroke="oklch(0.60 0.24 20)" />
-          <line x1="30" y1="55" x2="30" y2="45" stroke="oklch(0.60 0.24 20)" />
-          <line x1="5" y1="30" x2="15" y2="30" stroke="oklch(0.60 0.24 20)" />
-          <line x1="55" y1="30" x2="45" y2="30" stroke="oklch(0.60 0.24 20)" />
+          <line x1="30" y1="5" x2="30" y2="15" stroke="var(--accent, #e65c33)" />
+          <line x1="30" y1="55" x2="30" y2="45" stroke="var(--accent, #e65c33)" />
+          <line x1="5" y1="30" x2="15" y2="30" stroke="var(--accent, #e65c33)" />
+          <line x1="55" y1="30" x2="45" y2="30" stroke="var(--accent, #e65c33)" />
           
           {/* Diagonale Linie (aus deinem Code-Schnipsel) */}
-          <line x1="48" y1="12" x2="42" y2="18" stroke="oklch(0.60 0.24 20)" strokeWidth="2" />
+          <line x1="48" y1="12" x2="42" y2="18" stroke="var(--accent, #e65c33)" strokeWidth="2" />
         </svg>
       </motion.div>
 
