@@ -1,52 +1,56 @@
 'use server'
 
-import { createAdminClient } from '@/lib/supabaseAdmin'
-import { z } from 'zod'
+import { newsletterSubscribeSchema, newsletterTokenSchema } from '@/lib/newsletter-schema'
+import {
+  confirmNewsletterSubscription,
+  requestNewsletterSubscription,
+  unsubscribeNewsletterByToken,
+} from '@/lib/newsletter-service'
+import { checkNewsletterRateLimit } from '@/lib/server-rate-limit'
 
-const schema = z.object({
-  email: z.string().email(),
-  consent_given: z.literal('true'),
-})
+export type NewsletterFormState = {
+  error?: string
+  success?: boolean
+  pending?: boolean
+} | null
 
 export async function subscribeNewsletter(
-  _prev: { error?: string; success?: boolean } | null,
+  _prev: NewsletterFormState,
   formData: FormData,
-): Promise<{ error?: string; success?: boolean }> {
+): Promise<NewsletterFormState> {
+  const hp = (formData.get('_hp') as string | null) ?? ''
+  if (hp) return { success: true, pending: true }
+
   const raw = {
     email: formData.get('email'),
     consent_given: formData.get('consent_given'),
+    _hp: '',
   }
-  const parsed = schema.safeParse(raw)
+  const parsed = newsletterSubscribeSchema.safeParse(raw)
   if (!parsed.success) {
     return { error: 'Please provide a valid email address and accept the privacy policy.' }
   }
 
-  const supabase = createAdminClient()
-
-  // Check for existing subscriber
-  const { data: existing } = await supabase
-    .from('newsletter_subscribers')
-    .select('id, unsubscribed_at')
-    .eq('email', parsed.data.email)
-    .single()
-
-  if (existing) {
-    if (!(existing as { unsubscribed_at: string | null }).unsubscribed_at) {
-      return { error: 'This email address is already subscribed.' }
-    }
-    // Re-subscribe
-    const { error } = await supabase
-      .from('newsletter_subscribers')
-      .update({ unsubscribed_at: null, subscribed_at: new Date().toISOString() })
-      .eq('email', parsed.data.email)
-    if (error) return { error: 'Something went wrong. Please try again.' }
-    return { success: true }
+  const allowed = await checkNewsletterRateLimit()
+  if (!allowed) {
+    return { error: 'Too many attempts. Please try again in a few minutes.' }
   }
 
-  const { error } = await supabase
-    .from('newsletter_subscribers')
-    .insert({ email: parsed.data.email, consent_given: true })
-  if (error) return { error: 'Something went wrong. Please try again.' }
+  return requestNewsletterSubscription(parsed.data.email)
+}
 
-  return { success: true }
+export async function confirmNewsletter(token: string): Promise<NewsletterFormState> {
+  const parsed = newsletterTokenSchema.safeParse(token)
+  if (!parsed.success) return { error: 'Invalid or expired confirmation link.' }
+  return confirmNewsletterSubscription(parsed.data)
+}
+
+export async function unsubscribeNewsletter(
+  _prev: NewsletterFormState,
+  formData: FormData,
+): Promise<NewsletterFormState> {
+  const token = formData.get('token')
+  const parsed = newsletterTokenSchema.safeParse(token)
+  if (!parsed.success) return { error: 'Invalid unsubscribe link.' }
+  return unsubscribeNewsletterByToken(parsed.data)
 }

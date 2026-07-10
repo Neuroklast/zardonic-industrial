@@ -50,6 +50,8 @@ describe('i18n translation utility', () => {
   it('should translate newsletter keys', () => {
     expect(t('newsletter.subscribe', 'en')).toBe('SUBSCRIBE')
     expect(t('newsletter.subscribe', 'de')).toBe('ABONNIEREN')
+    expect(t('newsletter.backHome', 'en')).toBe('Back to home')
+    expect(t('newsletter.confirmSuccessTitle', 'de')).toBe('ANMELDUNG BESTÄTIGT')
   })
 
   it('should translate edit controls keys', () => {

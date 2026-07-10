@@ -177,6 +177,10 @@ CREATE TABLE IF NOT EXISTS public.newsletter_subscribers (
   email text NOT NULL UNIQUE,
   consent_given boolean NOT NULL DEFAULT true,
   subscribed_at timestamptz NOT NULL DEFAULT now(),
+  confirmed_at timestamptz,
+  confirmation_token text UNIQUE,
+  confirmation_expires_at timestamptz,
+  unsubscribe_token text UNIQUE,
   unsubscribed_at timestamptz
 );
 
@@ -216,6 +220,24 @@ ALTER TABLE public.gallery ADD COLUMN IF NOT EXISTS image_url text;
 ALTER TABLE public.gallery ADD COLUMN IF NOT EXISTS display_order integer DEFAULT 0;
 ALTER TABLE public.gallery ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
 ALTER TABLE public.gallery ADD COLUMN IF NOT EXISTS created_at timestamptz DEFAULT now();
+
+-- newsletter_subscribers: double opt-in + unsubscribe tokens
+ALTER TABLE public.newsletter_subscribers ADD COLUMN IF NOT EXISTS confirmed_at timestamptz;
+ALTER TABLE public.newsletter_subscribers ADD COLUMN IF NOT EXISTS confirmation_token text UNIQUE;
+ALTER TABLE public.newsletter_subscribers ADD COLUMN IF NOT EXISTS confirmation_expires_at timestamptz;
+ALTER TABLE public.newsletter_subscribers ADD COLUMN IF NOT EXISTS unsubscribe_token text UNIQUE;
+
+-- Legacy single-opt-in rows: treat existing active subscribers as confirmed
+UPDATE public.newsletter_subscribers
+SET confirmed_at = subscribed_at
+WHERE confirmed_at IS NULL AND unsubscribed_at IS NULL;
+
+-- Legacy confirmed rows need unsubscribe tokens for self-service opt-out
+UPDATE public.newsletter_subscribers
+SET unsubscribe_token = encode(gen_random_bytes(32), 'hex')
+WHERE confirmed_at IS NOT NULL
+  AND unsubscribed_at IS NULL
+  AND unsubscribe_token IS NULL;
 
 -- partners: visible → active
 DO $$

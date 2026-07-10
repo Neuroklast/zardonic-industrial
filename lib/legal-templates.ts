@@ -138,8 +138,8 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
       id: 'newsletter',
       title: '6. Newsletter',
       paragraphs: [
-        'If you subscribe to our newsletter, we store your email address in our Supabase database together with a record of your consent and the subscription timestamp.',
-        'Legal basis: Art. 6(1)(a) GDPR (consent). You may unsubscribe at any time by contacting us. Your data will be deleted upon unsubscription.',
+        'If you subscribe to our newsletter, we store your email address in our Supabase database together with a record of your consent and the subscription timestamp. Subscription requires double opt-in: after signing up you receive a confirmation email via Resend; your address is only added to the active mailing list after you click the confirmation link.',
+        'Legal basis: Art. 6(1)(a) GDPR (consent). You may unsubscribe at any time using the unsubscribe link in any newsletter email or on our website. Your data will be deleted upon unsubscription or upon request.',
       ],
     },
     {

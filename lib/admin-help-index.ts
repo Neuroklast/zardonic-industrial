@@ -335,7 +335,7 @@ function navDescription(href: string, label: string): string {
     '/admin/merchandise': 'Merch grid items with store links and images.',
     '/admin/soundpacks': 'Downloadable soundpacks with previews and purchase URLs.',
     '/admin/social': 'Social media profile links shown on the site.',
-    '/admin/newsletter': 'View newsletter subscribers and export list.',
+    '/admin/newsletter': 'Manage subscribers, resend confirmations, send campaigns, and export list.',
     '/admin/analytics': 'Site traffic and visitor statistics.',
     '/admin/api-keys': 'API keys for integrations and secured cron routes.',
     '/admin/health': 'External API connectivity status for sync jobs.',
