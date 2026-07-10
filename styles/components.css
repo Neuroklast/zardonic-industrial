@@ -2,6 +2,7 @@
 .overlay-loader-ring {
   width: 48px;
   height: 48px;
+  border: 2px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.2);
   border: 2px solid oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.2);
   border-top-color: var(--accent);
   border-radius: 50%;
@@ -12,6 +13,7 @@
   position: absolute;
   inset: 4px;
   border: 2px solid transparent;
+  border-top-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5);
   border-top-color: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.5);
   border-radius: 50%;
   animation: overlay-spin 1.2s linear reverse infinite;
@@ -26,6 +28,7 @@
   height: 48px;
   position: relative;
   overflow: hidden;
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   border: 1px solid oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3);
 }
 
@@ -37,6 +40,7 @@
   right: 0;
   height: 2px;
   background: var(--accent);
+  box-shadow: 0 0 8px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8);
   box-shadow: 0 0 8px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8);
   animation: overlay-scan 1s ease-in-out infinite;
 }
@@ -82,6 +86,7 @@
   content: '';
   position: absolute;
   inset: -6px;
+  border: 2px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
   border: 2px solid oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4);
   border-radius: 50%;
   animation: overlay-pulse-ring 1.2s ease-out infinite;
@@ -111,18 +116,20 @@
   position: absolute;
   inset: 0;
   border: 2px solid transparent;
+  border-top-color: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6);
   border-top-color: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.6);
   border-radius: 50%;
 }
 
 .overlay-loader-holo span:nth-child(1) { animation: overlay-spin 1s linear infinite; }
-.overlay-loader-holo span:nth-child(2) { inset: 6px; animation: overlay-spin 1.4s linear reverse infinite; border-top-color: oklch(0.7 0.2 195 / 0.5); }
+.overlay-loader-holo span:nth-child(2) { inset: 6px; animation: overlay-spin 1.4s linear reverse infinite; border-top-color: rgba(51, 204, 217, 0.5); border-top-color: oklch(0.7 0.2 195 / 0.5); }
 .overlay-loader-holo span:nth-child(3) { inset: 12px; animation: overlay-spin 0.8s linear infinite; }
 
 .overlay-loader-circuit {
   width: 48px;
   height: 48px;
   position: relative;
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   border: 1px solid oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3);
 }
 
@@ -182,6 +189,7 @@
 .overlay-loader-boot span {
   display: block;
   height: 2px;
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6);
   background: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.6);
   margin-bottom: 4px;
   animation: overlay-boot-line 0.4s ease-out forwards;
@@ -343,12 +351,23 @@
   background: linear-gradient(
     to bottom,
     transparent,
+    rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
+    var(--accent),
+    rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
+    transparent
+  );
+  background: linear-gradient(
+    to bottom,
+    transparent,
     oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8),
     var(--accent),
     oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8),
     transparent
   );
-  box-shadow: 
+  box-shadow:
+    0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8),
+    0 0 40px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5);
+  box-shadow:
     0 0 20px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8),
     0 0 40px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.5);
   animation: cyber2077-scan-build-anim 2s ease-out forwards;
@@ -569,7 +588,10 @@
   content: '';
   position: absolute;
   inset: 0;
-  background-image: 
+  background-image:
+    linear-gradient(rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.05) 1px, transparent 1px);
+  background-image:
     linear-gradient(oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.05) 1px, transparent 1px),
     linear-gradient(90deg, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
@@ -688,7 +710,18 @@
   position: absolute;
   inset: 0;
   opacity: 0.25;
-  background-image: 
+  background-image:
+    linear-gradient(90deg, transparent 98%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4) 98%),
+    linear-gradient(0deg, transparent 98%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4) 98%),
+    radial-gradient(circle at 10% 20%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 80% 40%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 30% 70%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 90% 80%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 60% 30%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 20% 50%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 70% 90%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 50% 10%, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3) 2px, transparent 2px);
+  background-image:
     linear-gradient(90deg, transparent 98%, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4) 98%),
     linear-gradient(0deg, transparent 98%, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4) 98%),
     radial-gradient(circle at 10% 20%, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3) 2px, transparent 2px),
@@ -711,8 +744,10 @@
 
 .circuit-line {
   position: absolute;
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   background: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3);
   pointer-events: none;
+  box-shadow: 0 0 4px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.5);
   box-shadow: 0 0 4px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.5);
 }
 
@@ -720,9 +755,11 @@
   position: absolute;
   width: 6px;
   height: 6px;
+  background: rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8);
   background: oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8);
   border-radius: 50%;
   pointer-events: none;
+  box-shadow: 0 0 6px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8), 0 0 12px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
   box-shadow: 0 0 6px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8), 0 0 12px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4);
   animation: node-pulse 2s ease-in-out infinite;
 }
@@ -735,6 +772,7 @@
   transform: translate(-50%, -50%);
   width: 12px;
   height: 12px;
+  border: 1px solid rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.4);
   border: 1px solid oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.4);
   border-radius: 50%;
 }
@@ -758,7 +796,11 @@
 .circuit-line-pulse.horizontal {
   height: 2px;
   width: 0;
+  background: linear-gradient(90deg, transparent, rgba(51, 204, 217, 0.9), rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7), transparent);
+  background: linear-gradient(90deg, transparent, oklch(0.7 0.2 195 / 0.9), rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7), transparent);
   background: linear-gradient(90deg, transparent, oklch(0.7 0.2 195 / 0.9), oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.7), transparent);
+  box-shadow: 0 0 8px rgba(51, 204, 217, 0.6), 0 0 16px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
+  box-shadow: 0 0 8px oklch(0.7 0.2 195 / 0.6), 0 0 16px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   box-shadow: 0 0 8px oklch(0.7 0.2 195 / 0.6), 0 0 16px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3);
   animation: data-pulse-h 1.2s ease-in-out forwards;
 }
@@ -766,7 +808,11 @@
 .circuit-line-pulse.vertical {
   width: 2px;
   height: 0;
+  background: linear-gradient(180deg, transparent, rgba(51, 204, 217, 0.9), rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7), transparent);
+  background: linear-gradient(180deg, transparent, oklch(0.7 0.2 195 / 0.9), rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.7), transparent);
   background: linear-gradient(180deg, transparent, oklch(0.7 0.2 195 / 0.9), oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.7), transparent);
+  box-shadow: 0 0 8px rgba(51, 204, 217, 0.6), 0 0 16px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
+  box-shadow: 0 0 8px oklch(0.7 0.2 195 / 0.6), 0 0 16px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.3);
   box-shadow: 0 0 8px oklch(0.7 0.2 195 / 0.6), 0 0 16px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.3);
   animation: data-pulse-v 1.2s ease-in-out forwards;
 }
@@ -921,7 +967,9 @@
   left: 0;
   right: 0;
   height: 3px;
+  background: linear-gradient(to bottom, transparent, rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.8), transparent);
   background: linear-gradient(to bottom, transparent, oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.8), transparent);
+  box-shadow: 0 0 20px rgba(var(--accent-r), var(--accent-g), var(--accent-b), 0.6);
   box-shadow: 0 0 20px oklch(var(--accent-l) var(--accent-c) var(--accent-h) / 0.6);
   animation: scan-line-reveal 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
   z-index: var(--z-local-top);

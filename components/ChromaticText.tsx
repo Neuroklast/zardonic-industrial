@@ -1,4 +1,5 @@
 import { useScrollAberration } from '@/hooks/use-scroll-aberration'
+
 import { cn } from '@/lib/utils'
 import { type ReactNode } from 'react'
 
@@ -20,11 +21,14 @@ export function ChromaticText({ children, className, intensity = 1 }: ChromaticT
   const offsetX = aberrationIntensity * intensity * 2
   const offsetY = aberrationIntensity * intensity * 0.5
 
+  const redAlpha = aberrationIntensity * 0.8
+  const cyanAlpha = aberrationIntensity * 0.6
+  const greenAlpha = aberrationIntensity * 0.5
   const textShadow = aberrationIntensity > 0.01
     ? `
-        ${offsetX}px ${offsetY}px 0 oklch(0.50 0.22 25 / ${aberrationIntensity * 0.8}),
-        ${-offsetX}px ${-offsetY}px 0 oklch(0.60 0.24 200 / ${aberrationIntensity * 0.6}),
-        ${offsetY}px ${-offsetX}px 0 oklch(0.50 0.22 120 / ${aberrationIntensity * 0.5})
+        ${offsetX}px ${offsetY}px 0 rgba(181, 43, 43, ${redAlpha}),
+        ${-offsetX}px ${-offsetY}px 0 rgba(51, 184, 204, ${cyanAlpha}),
+        ${offsetY}px ${-offsetX}px 0 rgba(51, 204, 102, ${greenAlpha})
       `
     : 'none'
 

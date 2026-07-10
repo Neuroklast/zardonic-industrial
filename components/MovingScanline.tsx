@@ -47,8 +47,8 @@ export function MovingScanline() {
         className="absolute left-0 right-0"
         style={{
           height: `${height}px`,
-          background: `linear-gradient(90deg, transparent, oklch(0.50 0.22 25 / ${opacity}), transparent)`,
-          boxShadow: `0 0 ${height * 2}px oklch(0.50 0.22 25 / ${opacity * 0.5})`,
+          background: `linear-gradient(90deg, transparent, rgba(181, 43, 43, ${opacity}), transparent)`,
+          boxShadow: `0 0 ${height * 2}px rgba(181, 43, 43, ${opacity * 0.5})`,
           animation: `scanline-move ${duration}s linear infinite`,
         }}
       />

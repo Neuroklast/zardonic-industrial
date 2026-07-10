@@ -1,5 +1,12 @@
 import { extractGoogleFontName, loadGoogleFont } from '@/lib/font-loader'
-import { hexToOklch, hexToRgba, oklchToHex, oklchWithAlpha } from '@/lib/color-utils'
+import {
+  cssColorToRgbComponents,
+  hexToOklch,
+  hexToRgba,
+  oklchToHex,
+  oklchWithAlpha,
+  resolveCssColorValue,
+} from '@/lib/color-utils'
 import type { AppearanceTheme } from '@/lib/appearance-presets'
 
 export interface AppearanceConfigInput {
@@ -42,6 +49,28 @@ function setVar(root: HTMLElement, prop: string, value: string, applied: Record<
   applied[prop] = value
 }
 
+function setColorVar(
+  root: HTMLElement,
+  prop: string,
+  color: string,
+  applied: Record<string, string>,
+) {
+  const resolved = resolveCssColorValue(color)
+  setVar(root, prop, resolved, applied)
+}
+
+function setAccentRgbVars(
+  root: HTMLElement,
+  accentColor: string,
+  applied: Record<string, string>,
+) {
+  const components = cssColorToRgbComponents(accentColor)
+  if (!components) return
+  setVar(root, '--accent-r', components.r, applied)
+  setVar(root, '--accent-g', components.g, applied)
+  setVar(root, '--accent-b', components.b, applied)
+}
+
 function applySurfaceVars(
   root: HTMLElement,
   theme: AppearanceTheme | undefined,
@@ -54,9 +83,19 @@ function applySurfaceVars(
   const cardHex = isHexColor(cardColorRaw) ? cardColorRaw : oklchToHex(cardColor)
 
   setVar(root, '--surface-section-bg-fallback', hexToRgba(cardHex, sectionPanelOpacity), applied)
-  setVar(root, '--surface-section-bg', oklchWithAlpha(cardColor, sectionPanelOpacity), applied)
+  setVar(
+    root,
+    '--surface-section-bg',
+    resolveCssColorValue(oklchWithAlpha(cardColor, sectionPanelOpacity)),
+    applied,
+  )
   setVar(root, '--surface-card-bg-fallback', hexToRgba(cardHex, cardSurfaceOpacity), applied)
-  setVar(root, '--surface-card-bg', oklchWithAlpha(cardColor, cardSurfaceOpacity), applied)
+  setVar(
+    root,
+    '--surface-card-bg',
+    resolveCssColorValue(oklchWithAlpha(cardColor, cardSurfaceOpacity)),
+    applied,
+  )
   setVar(
     root,
     '--surface-section-backdrop',
@@ -99,16 +138,21 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
     const raw = theme[key]
     if (!raw) continue
     const value = key.endsWith('Color') ? toCssColor(raw) : raw
-    setVar(root, cssVar, value, applied)
+    if (key.endsWith('Color')) {
+      setColorVar(root, cssVar, value, applied)
+    } else {
+      setVar(root, cssVar, value, applied)
+    }
 
     if (key === 'foregroundColor') {
       for (const alias of FOREGROUND_ALIAS_VARS) {
-        setVar(root, alias, value, applied)
+        setColorVar(root, alias, value, applied)
       }
     }
 
     if (key === 'accentColor') {
-      setVar(root, '--hover-color', value, applied)
+      setColorVar(root, '--hover-color', value, applied)
+      setAccentRgbVars(root, value, applied)
       const comps = parseOklchComponents(value)
       if (comps) {
         setVar(root, '--accent-l', String(comps.l), applied)
@@ -150,11 +194,12 @@ export function applyAppearanceConfig(
 
   if (config.accentColor) {
     const accent = toCssColor(config.accentColor)
-    setVar(root, '--accent', accent, applied)
+    setColorVar(root, '--accent', accent, applied)
+    setAccentRgbVars(root, accent, applied)
   }
 
   if (config.accentColorSecondary) {
-    setVar(root, '--accent-secondary', toCssColor(config.accentColorSecondary), applied)
+    setColorVar(root, '--accent-secondary', toCssColor(config.accentColorSecondary), applied)
   }
 
   if (typeof config.vignetteOpacity === 'number') {

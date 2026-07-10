@@ -200,7 +200,7 @@ export default function CyberpunkLoader({ onLoadComplete, precacheUrls = [], loa
           alt="NEUROKLAST"
           className="w-40 h-40 object-contain"
           style={{ 
-            filter: 'drop-shadow(0 0 20px oklch(0.50 0.22 25 / 0.4)) drop-shadow(0 0 40px oklch(0.50 0.22 25 / 0.15))',
+            filter: 'drop-shadow(0 0 20px rgba(181, 43, 43, 0.4)) drop-shadow(0 0 40px rgba(181, 43, 43, 0.15))',
           }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ 
