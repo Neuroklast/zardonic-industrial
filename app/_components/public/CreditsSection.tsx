@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react'
 import { m } from 'framer-motion'
 import { formatSectionHeading } from '@/lib/section-display'
-import { partnerLogoCanvasSrc, processLogoToWhiteSilhouette } from '@/lib/partner-logo-white'
+import {
+  loadLogoImageForCanvas,
+  processLogoToWhiteSilhouette,
+} from '@/lib/partner-logo-white'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface PartnerItem {
@@ -35,66 +38,60 @@ function PartnerLogoWhite({
 
   useEffect(() => {
     let cancelled = false
-    let objectUrl: string | null = null
 
     const run = async () => {
       setFailed(false)
       setProcessedSrc(null)
       try {
-        const img = new window.Image()
-        img.crossOrigin = 'anonymous'
-        img.decoding = 'async'
-        const loadSrc = partnerLogoCanvasSrc(src)
-
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve()
-          img.onerror = () => reject(new Error('logo load failed'))
-          img.src = loadSrc
-        })
-
+        const img = await loadLogoImageForCanvas(src)
         if (cancelled) return
 
         const w = img.naturalWidth || img.width
         const h = img.naturalHeight || img.height
         if (!w || !h) throw new Error('empty logo')
 
+        // Cap huge assets so getImageData stays cheap
+        const maxDim = 512
+        const scale = Math.min(1, maxDim / Math.max(w, h))
+        const cw = Math.max(1, Math.round(w * scale))
+        const ch = Math.max(1, Math.round(h * scale))
+
         const canvas = document.createElement('canvas')
-        canvas.width = w
-        canvas.height = h
+        canvas.width = cw
+        canvas.height = ch
         const ctx = canvas.getContext('2d', { willReadFrequently: true })
         if (!ctx) throw new Error('no canvas')
 
-        ctx.drawImage(img, 0, 0)
-        const raw = ctx.getImageData(0, 0, w, h)
+        ctx.clearRect(0, 0, cw, ch)
+        ctx.drawImage(img, 0, 0, cw, ch)
+        const raw = ctx.getImageData(0, 0, cw, ch)
         const processed = processLogoToWhiteSilhouette(raw)
         const out = ctx.createImageData(processed.width, processed.height)
         out.data.set(processed.data)
         ctx.putImageData(out, 0, 0)
 
-        objectUrl = canvas.toDataURL('image/png')
-        if (!cancelled) setProcessedSrc(objectUrl)
+        const dataUrl = canvas.toDataURL('image/png')
+        if (!cancelled) setProcessedSrc(dataUrl)
       } catch {
         if (!cancelled) setFailed(true)
       }
     }
 
     void run()
-
     return () => {
       cancelled = true
-      // data URLs do not need revoke; keep hook for future blob URLs
-      void objectUrl
     }
   }, [src])
 
   if (failed) {
-    // Fallback: CSS filter (alpha-preserving when PNG is already transparent)
+    // Last-resort: native img, NO invert filter (invert on white-bg PNGs = solid white box).
+    // Show original at reduced opacity so layout still works.
     return (
       <m.img
         src={src}
         alt={name}
-        className="partner-logo-white h-10 w-auto max-w-[7.5rem] object-contain md:h-14 md:max-w-[9rem]"
-        style={{ opacity: brightness }}
+        className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain opacity-80 md:h-16 md:max-w-[10rem]"
+        style={{ opacity: brightness, filter: 'none', background: 'transparent' }}
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: brightness, y: 0 }}
         whileHover={{ opacity: 1 }}
@@ -109,7 +106,7 @@ function PartnerLogoWhite({
   if (!processedSrc) {
     return (
       <span
-        className="partner-logo-white inline-block h-10 w-24 animate-pulse bg-muted/40 md:h-14 md:w-28"
+        className="partner-logo-white inline-block h-12 w-28 animate-pulse rounded-sm bg-muted/30 md:h-16 md:w-32"
         aria-label={name}
         role="img"
       />
@@ -120,8 +117,8 @@ function PartnerLogoWhite({
     <m.img
       src={processedSrc}
       alt={name}
-      className="partner-logo-white h-10 w-auto max-w-[7.5rem] object-contain md:h-14 md:max-w-[9rem]"
-      style={{ opacity: brightness, background: 'transparent' }}
+      className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain md:h-16 md:max-w-[10rem]"
+      style={{ opacity: brightness, background: 'transparent', filter: 'none' }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: brightness, y: 0 }}
       whileHover={{ opacity: 1 }}
@@ -142,7 +139,7 @@ function PartnerLogo({
   if (!item.logoUrl) {
     return (
       <m.span
-        className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground"
+        className="font-mono text-sm uppercase tracking-[0.2em] text-muted-foreground"
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -155,7 +152,7 @@ function PartnerLogo({
 
   const useWhite = item.logoWhite !== false
   const brightness =
-    logoBrightness !== undefined ? Math.min(Math.max(logoBrightness, 0.25), 1) : 0.9
+    logoBrightness !== undefined ? Math.min(Math.max(logoBrightness, 0.25), 1) : 0.92
 
   if (useWhite) {
     return <PartnerLogoWhite src={item.logoUrl} name={item.name} brightness={brightness} />
@@ -165,7 +162,7 @@ function PartnerLogo({
     <m.img
       src={item.logoUrl}
       alt={item.name}
-      className="chromatic-hover h-10 w-auto max-w-[7.5rem] object-contain transition-opacity hover:opacity-100 md:h-14 md:max-w-[9rem]"
+      className="chromatic-hover h-12 w-auto max-w-[8.5rem] object-contain transition-opacity hover:opacity-100 md:h-16 md:max-w-[10rem]"
       style={{ opacity: brightness }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: brightness, y: 0 }}
@@ -206,7 +203,7 @@ function LogoGrid({
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {items.map((item) => {
           const content = <PartnerLogo item={item} logoBrightness={logoBrightness} />
-          const wrapperClassName = 'flex min-h-24 items-center justify-center bg-transparent p-2'
+          const wrapperClassName = 'flex min-h-28 items-center justify-center bg-transparent p-3'
 
           return item.url ? (
             <a
