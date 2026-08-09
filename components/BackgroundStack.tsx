@@ -98,7 +98,19 @@ function AnimatedBackgroundLayer({ type, hudTexts, transparent, animSettings }: 
   if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain transparent={transparent} speed={animSettings?.matrixSpeed} density={animSettings?.matrixDensity} color={animSettings?.matrixColor} /></Suspense>
   if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} starCount={animSettings?.starCount} starSpeed={animSettings?.starSpeed} /></Suspense>
   if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground glowColor={animSettings?.cloudGlowColor} /></Suspense>
-  if (bg === 'glitch-grid') return <Suspense fallback={null}><GlitchGridBackground transparent={transparent} gridSize={animSettings?.glitchGridSize} scanSpeed={animSettings?.glitchScanSpeed} glitchFrequency={animSettings?.glitchFrequency} /></Suspense>
+  if (bg === 'glitch-grid') {
+    return (
+      <Suspense fallback={null}>
+        <GlitchGridBackground
+          transparent={transparent}
+          gridSize={animSettings?.glitchGridSize}
+          scanSpeed={animSettings?.glitchScanSpeed}
+          glitchFrequency={animSettings?.glitchFrequency}
+          perfMode
+        />
+      </Suspense>
+    )
+  }
   if (bg === '3d-model' && animSettings?.backgroundModelUrl) return (
     <Suspense fallback={null}>
       <ModelBackground
