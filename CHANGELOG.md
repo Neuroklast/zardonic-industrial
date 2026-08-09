@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **Hero logo entrance**: Replaced wobble/jitter with a one-shot terminal CRT boot (scanline reveal + single RGB tear). No continuous cheap motion.
+
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).
 - **Background video master switch**: Look & Feel → Background can turn desktop video ON/OFF without setting opacity to 0% or deleting the file (`backgroundVideoEnabled`).

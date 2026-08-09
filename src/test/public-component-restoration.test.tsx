@@ -59,6 +59,8 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.crt-overlay')).toBeInTheDocument()
     expect(container.querySelector('.noise-effect')).toBeInTheDocument()
     expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-boot')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-boot__scan')).toBeInTheDocument()
     expect(container.querySelectorAll('[data-draft-target="hero-logo"]')).toHaveLength(1)
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveAttribute('href', '#releases')
     expect(screen.getByRole('link', { name: /tour dates/i })).toHaveAttribute('href', '#gigs')

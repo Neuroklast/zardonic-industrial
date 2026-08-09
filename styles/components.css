@@ -992,23 +992,150 @@
   }
 }
 
-/* Hero wordmark — entrance jitter only (single image; hover uses hover-chromatic-image) */
-.hero-logo-glitch {
+/*
+ * Hero wordmark — terminal / CRT boot reveal (one-shot).
+ * Raster scan build-up + brief RGB channel tear, then solid.
+ * No position jitter / wobble / infinite loops.
+ */
+.hero-logo-boot {
   position: relative;
-  animation: hero-entrance-jitter 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  display: block;
+  width: fit-content;
+  max-width: min(92vw, 56rem);
+  margin-inline: auto;
+  opacity: 0;
+  will-change: clip-path, filter, opacity;
+  animation: hero-boot-reveal 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes hero-entrance-jitter {
-  0%   { transform: translate(-5px, 3px) skewX(-2deg); opacity: 0; }
-  15%  { transform: translate(4px, -2px) skewX(1.5deg); opacity: 0.7; }
-  30%  { transform: translate(-3px, 1px) skewX(-1deg); opacity: 0.85; }
-  50%  { transform: translate(2px, -1px) skewX(0.5deg); opacity: 0.95; }
-  70%  { transform: translate(-1px, 0px) skewX(-0.2deg); opacity: 1; }
-  100% { transform: translate(0, 0) skewX(0deg); opacity: 1; }
+.hero-logo-boot__scan {
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  z-index: 2;
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--primary, #e11) 55%, white) 35%,
+    color-mix(in srgb, var(--primary, #e11) 85%, white) 50%,
+    color-mix(in srgb, var(--primary, #e11) 55%, white) 65%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 12px color-mix(in srgb, var(--primary, #e11) 50%, transparent),
+    0 0 2px color-mix(in srgb, cyan 40%, transparent);
+  animation: hero-boot-scan 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hero-logo-boot img {
+  display: block;
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes hero-boot-reveal {
+  /* Black screen → phosphor flash */
+  0% {
+    opacity: 0;
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(4) contrast(1.5) saturate(0);
+  }
+  /* Raster starts painting top → bottom */
+  6% {
+    opacity: 1;
+    clip-path: inset(0 0 94% 0);
+    filter: brightness(2.2) contrast(1.35) saturate(0.15);
+  }
+  14% {
+    clip-path: inset(0 0 78% 0);
+    filter:
+      brightness(1.6) contrast(1.2) saturate(0.45)
+      drop-shadow(2px 0 0 color-mix(in srgb, #ff2060 70%, transparent))
+      drop-shadow(-2px 0 0 color-mix(in srgb, #20f0ff 60%, transparent));
+  }
+  28% {
+    clip-path: inset(0 0 48% 0);
+    filter:
+      brightness(1.25) contrast(1.1) saturate(0.75)
+      drop-shadow(1px 0 0 color-mix(in srgb, #ff2060 45%, transparent))
+      drop-shadow(-1px 0 0 color-mix(in srgb, #20f0ff 40%, transparent));
+  }
+  42% {
+    clip-path: inset(0 0 18% 0);
+    filter: brightness(1.1) saturate(0.95);
+  }
+  52% {
+    clip-path: inset(0 0 0 0);
+    filter: brightness(1.05);
+  }
+  /* Single terminal tear (not a wobble) */
+  58% {
+    clip-path: polygon(
+      0 0, 100% 0,
+      100% 38%, 0 36%,
+      0 44%, 100% 46%,
+      100% 100%, 0 100%
+    );
+    filter:
+      brightness(1.35) contrast(1.15)
+      drop-shadow(3px 0 0 color-mix(in srgb, #ff2060 65%, transparent))
+      drop-shadow(-3px 0 0 color-mix(in srgb, #20f0ff 55%, transparent));
+  }
+  66% {
+    clip-path: inset(0 0 0 0);
+    filter:
+      brightness(1.08)
+      drop-shadow(1px 0 0 color-mix(in srgb, #ff2060 30%, transparent))
+      drop-shadow(-1px 0 0 color-mix(in srgb, #20f0ff 25%, transparent));
+  }
+  78%, 100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes hero-boot-scan {
+  0% {
+    opacity: 0;
+    top: 0;
+  }
+  6% {
+    opacity: 0.95;
+    top: 0;
+  }
+  50% {
+    opacity: 0.85;
+    top: calc(100% - 2px);
+  }
+  58% {
+    opacity: 0.4;
+    top: calc(100% - 2px);
+  }
+  70%, 100% {
+    opacity: 0;
+    top: calc(100% - 2px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-logo-glitch {
+  .hero-logo-boot {
+    opacity: 1;
     animation: none;
+    clip-path: none;
+    filter: none;
   }
+  .hero-logo-boot__scan {
+    display: none;
+  }
+}
+
+/* Legacy class name kept for tests / external refs — aliases boot reveal */
+.hero-logo-glitch {
+  /* no continuous animation */
 }
