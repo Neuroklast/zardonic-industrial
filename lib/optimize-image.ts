@@ -2,6 +2,7 @@ import sharp from 'sharp'
 import {
   DEFAULT_MAX_IMAGE_HEIGHT,
   DEFAULT_MAX_IMAGE_WIDTH,
+  HERO_LOGO_WEBP_QUALITY,
   JPEG_QUALITY,
   WEBP_QUALITY,
 } from '@/lib/optimize-image-constants'
@@ -9,6 +10,7 @@ import {
 export {
   DEFAULT_MAX_IMAGE_HEIGHT,
   DEFAULT_MAX_IMAGE_WIDTH,
+  HERO_LOGO_WEBP_QUALITY,
   JPEG_QUALITY,
   WEBP_QUALITY,
 } from '@/lib/optimize-image-constants'
@@ -105,17 +107,19 @@ export async function optimizeImageBuffer(
 
     // auto / webp: preserve alpha when source has transparency (logos, PNGs)
     const hasAlpha = meta.hasAlpha === true
+    // High-res logo/wordmark uploads (max ≥ 3k) keep higher WebP quality
+    const q = Math.max(maxWidth, maxHeight) >= 3200 ? HERO_LOGO_WEBP_QUALITY : WEBP_QUALITY
     if (format === 'auto' && hasAlpha) {
-      const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4, alphaQuality: 100 }).toBuffer()
+      const buffer = await pipeline.webp({ quality: q, effort: 4, alphaQuality: 100 }).toBuffer()
       return { buffer, contentType: 'image/webp', extension: 'webp' }
     }
 
     if (hasAlpha && format === 'webp') {
-      const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4, alphaQuality: 100 }).toBuffer()
+      const buffer = await pipeline.webp({ quality: q, effort: 4, alphaQuality: 100 }).toBuffer()
       return { buffer, contentType: 'image/webp', extension: 'webp' }
     }
 
-    const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4 }).toBuffer()
+    const buffer = await pipeline.webp({ quality: q, effort: 4 }).toBuffer()
     return { buffer, contentType: 'image/webp', extension: 'webp' }
   } catch {
     const fallbackType = normalizedMime ?? 'application/octet-stream'

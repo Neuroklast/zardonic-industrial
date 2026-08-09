@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Appearance fonts (no hardcode)**: site fonts only from `site_config.appearance.theme` (SSR inject + global AppearanceBridge on all routes). CSS defaults are system stacks only — never Orbitron/Space Mono forced. Bio/body/heading/mono follow admin.
 
 ### Added
-- **Hero wordmark size**: Look & Feel → Hero slider `logoMaxHeightRem` (4–20rem) with live preview; stored on `site_config.hero`.
+- **Hero wordmark size**: Look & Feel → Hero slider `logoMaxHeightRem` (6–48rem) with live preview; full-bleed stage (not max-w-6xl); uploads up to 4096px + high WebP quality for sharp large/retina display.
 
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).

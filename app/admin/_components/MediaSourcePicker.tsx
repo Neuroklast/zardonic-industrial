@@ -56,7 +56,10 @@ export function MediaSourcePicker({
     setCaching(true)
     setStatus(null)
     try {
-      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix)
+      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix, {
+        maxWidth: maxOutputDimension,
+        maxHeight: maxOutputDimension,
+      })
       if (publicUrl) setPreview(publicUrl)
       setActivePath(storagePath)
       onResolved(storagePath, publicUrl || undefined)

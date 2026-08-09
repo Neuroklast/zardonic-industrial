@@ -90,7 +90,8 @@ export function HeroSection({
   /** Hide logo until client boot starts — prevents full logo flash then re-reveal (= “twice”). */
   const pendingBoot =
     bootPhase === 'idle' && Boolean(bootSequenceEnabled) && !prefersReducedMotion
-  const logoMax = logoMaxHeight || 'clamp(6rem, 22vw, 16rem)'
+  /** Prefer admin size; default large enough for impact, not capped at 16rem. */
+  const logoMax = logoMaxHeight || 'clamp(8rem, 28vw, 22rem)'
   // Content waits for boot only while it is actually playing (not idle flash).
   const contentDelay = playing ? 0.95 : pendingBoot ? 0.2 : 0
 
@@ -103,6 +104,13 @@ export function HeroSection({
   const bgStyle: React.CSSProperties = {
     backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
     filter: imageBlur ? `blur(${imageBlur}px)` : undefined,
+  }
+
+  const logoImgStyle: React.CSSProperties = {
+    maxHeight: logoMax,
+    maxWidth: 'min(96vw, 100%)',
+    width: 'auto',
+    height: 'auto',
   }
 
   return (
@@ -129,16 +137,16 @@ export function HeroSection({
       <div className="absolute inset-0 noise-effect pointer-events-none" aria-hidden="true" />
 
       <div
-        className="relative mx-auto w-full max-w-6xl px-card text-center"
+        className="relative mx-auto w-full px-card text-center"
         style={{ zIndex: 'var(--z-content)' }}
       >
         {/*
-          Wordmark stage: one logo only. Boot HUD is in normal flow under the image
-          (never absolute over it). Play class is client-only, one-shot.
+          Wordmark stage: full viewport width (not capped at max-w-6xl) so large admin sizes work.
+          Full-resolution src (R2 direct) — no wsrv downscale. Boot HUD under image.
         */}
         <div
           className={[
-            'hero-logo-stage relative mx-auto mb-6 w-fit max-w-full',
+            'hero-logo-stage relative mx-auto mb-6 w-full max-w-[min(96vw,90rem)]',
             playing ? 'hero-logo-stage--booting' : '',
             bootPhase === 'done' ? 'hero-logo-stage--done' : '',
           ]
@@ -147,7 +155,7 @@ export function HeroSection({
         >
           <div
             className={[
-              'hero-logo-glitch relative mx-auto w-fit max-w-full',
+              'hero-logo-glitch relative mx-auto w-full max-w-full',
               pendingBoot ? 'hero-logo-boot--pending' : '',
               playing ? 'hero-logo-boot' : '',
             ]
@@ -159,13 +167,11 @@ export function HeroSection({
               src={logoImageUrl}
               alt={headline}
               data-draft-target="hero-logo"
-              className="hover-chromatic-image mx-auto h-auto w-auto max-w-full object-contain brightness-110"
-              style={{
-                maxHeight: logoMax,
-                width: 'auto',
-              }}
+              className="hover-chromatic-image mx-auto h-auto w-auto object-contain brightness-110"
+              style={logoImgStyle}
               fetchPriority="high"
               decoding="async"
+              // Native full-res file; browser scales with CSS (retina-sharp when source ≥ display×dpr)
             />
           </div>
 
@@ -188,6 +194,7 @@ export function HeroSection({
           ) : null}
         </div>
 
+        <div className="mx-auto w-full max-w-6xl">
         {tagline ? (
           <m.p
             initial={prefersReducedMotion || !bootSequenceEnabled ? false : { opacity: 0 }}
@@ -241,6 +248,7 @@ export function HeroSection({
             </a>
           ) : null}
         </m.div>
+        </div>
       </div>
     </section>
   )
