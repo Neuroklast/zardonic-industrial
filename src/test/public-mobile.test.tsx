@@ -15,6 +15,13 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/min-w-\[44px\]/)
   })
 
+  it('SiteNav keeps logo in flex flow (not absolute over links)', () => {
+    const src = readSource('app/_components/public/SiteNav.tsx')
+    // Absolute logo + padding-left caused BIO to sit under the mark
+    expect(src).not.toMatch(/absolute left-\[var\(--spacing-card/)
+    expect(src).toMatch(/shrink-0/)
+  })
+
   it('GallerySection opens the shared CyberpunkOverlay lightbox', () => {
     const src = readSource('app/_components/public/GallerySection.tsx')
     expect(src).toMatch(/CyberpunkOverlay/)
