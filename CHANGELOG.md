@@ -11,7 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **Language switcher**: removed from navbar (footer only).
 - **Nav icon hover**: fixed cell size — opacity crossfade only (no expand / skew / layout shift).
-- **Hero logo entrance**: short filmic boot (~1.2s) — scan + soft trail, RGB fringe, corner ticks, mini load bar + micro terminal lines (no wobble / no layout shift). Toggle in Look & Feel → Hero (`bootSequenceEnabled`, default ON).
+- **Hero logo entrance**: short filmic boot (~1.1s, client one-shot) — single logo + scan + mini load bar under image (no RGB ghost layers, no double hydrate play). Toggle in Look & Feel → Hero (`bootSequenceEnabled`, default ON).
+- **Buttons / event modal**: remove `cyber-border` corner brackets from ticket/contact buttons; CSS kills `::before`/`::after` corners on all button-like controls so the top-left square never returns.
 
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).

@@ -552,26 +552,30 @@
   position: relative;
   border: 1px solid var(--border);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  /* Isolate so ::before/::after never paint as a solid box over children */
   isolation: isolate;
 }
 
-/* Always-visible corner accents (top-left + bottom-right) — no filled square */
+/*
+ * Corner accents via two short border edges only.
+ * Buttons / [data-slot=button] never get these — the 10×10 box reads as a solid
+ * top-left square on compact controls (event modal, CTAs).
+ */
 :is(.cyber-border)::before,
 :is(.cyber-border)::after {
   content: '';
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-color: var(--hover-color, var(--accent));
   border-style: solid;
   border-width: 0;
-  opacity: 0.85;
+  opacity: 0.75;
   pointer-events: none;
   transition: opacity 0.3s ease, border-color 0.3s ease;
   z-index: 1;
   box-sizing: border-box;
-  background: transparent;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
 :is(.cyber-border)::before {
@@ -579,6 +583,8 @@
   left: -1px;
   border-top-width: 2px;
   border-left-width: 2px;
+  border-right-width: 0;
+  border-bottom-width: 0;
 }
 
 :is(.cyber-border)::after {
@@ -586,6 +592,17 @@
   right: -1px;
   border-bottom-width: 2px;
   border-right-width: 2px;
+  border-top-width: 0;
+  border-left-width: 0;
+}
+
+/* Kill corner “squares” on any button-like control */
+:is(button, a, [role='button'], [data-slot='button']).cyber-border::before,
+:is(button, a, [role='button'], [data-slot='button']).cyber-border::after,
+.cyber-btn.cyber-border::before,
+.cyber-btn.cyber-border::after {
+  content: none !important;
+  display: none !important;
 }
 
 :is(.cyber-border):hover {

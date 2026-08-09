@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { useLenisContext } from '@/contexts/LenisContext'
 
@@ -8,6 +8,9 @@ import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
 
 const HERO_CTA_CLASS =
   'cyber-border relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
+
+/** ~ total sequence length; HUD unmounts after this so nothing can re-layer. */
+const HERO_BOOT_MS = 1100
 
 interface HeroSectionProps {
   headline: string
@@ -45,12 +48,51 @@ export function HeroSection({
   showTourDatesCta = true,
   bootSequenceEnabled = true,
 }: HeroSectionProps) {
-  const [contentLoaded] = useState(true)
   const prefersReducedMotion = useReducedMotion()
   const { scrollTo } = useLenisContext()
 
-  const runBoot = Boolean(bootSequenceEnabled) && !prefersReducedMotion
+  /**
+   * Boot is client-started only (idle → play → done).
+   * Avoids SSR markup running CSS animations that restart on hydrate (= “twice”).
+   * Single logo layer — no RGB ghost imgs that overlay the wordmark.
+   */
+  const [bootPhase, setBootPhase] = useState<'idle' | 'play' | 'done'>('idle')
+
+  useEffect(() => {
+    if (!bootSequenceEnabled || prefersReducedMotion) {
+      setBootPhase('done')
+      return
+    }
+
+    let cancelled = false
+    let endTimer = 0
+    // Double rAF: wait for first paint so the animation class attaches once, cleanly.
+    let raf2 = 0
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (cancelled) return
+        setBootPhase('play')
+        endTimer = window.setTimeout(() => {
+          if (!cancelled) setBootPhase('done')
+        }, HERO_BOOT_MS)
+      })
+    })
+
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf1)
+      cancelAnimationFrame(raf2)
+      window.clearTimeout(endTimer)
+    }
+  }, [bootSequenceEnabled, prefersReducedMotion])
+
+  const playing = bootPhase === 'play'
+  /** Hide logo until client boot starts — prevents full logo flash then re-reveal (= “twice”). */
+  const pendingBoot =
+    bootPhase === 'idle' && Boolean(bootSequenceEnabled) && !prefersReducedMotion
   const logoMax = logoMaxHeight || 'clamp(6rem, 22vw, 16rem)'
+  // Content waits for boot only while it is actually playing (not idle flash).
+  const contentDelay = playing ? 0.95 : pendingBoot ? 0.2 : 0
 
   const sectionStyle: React.CSSProperties = {
     zIndex: 'var(--z-content)',
@@ -91,50 +133,28 @@ export function HeroSection({
         style={{ zIndex: 'var(--z-content)' }}
       >
         {/*
-          Wordmark stage: optional short boot (~1.2s) — scan + RGB + mini HUD.
-          No layout shift / no position jitter. hero-logo-glitch = test alias.
+          Wordmark stage: one logo only. Boot HUD is in normal flow under the image
+          (never absolute over it). Play class is client-only, one-shot.
         */}
         <div
-          className={`hero-logo-stage relative mx-auto mb-6 w-fit max-w-full ${runBoot ? 'hero-logo-stage--boot' : ''}`}
-          style={{ maxHeight: logoMax }}
+          className={[
+            'hero-logo-stage relative mx-auto mb-6 w-fit max-w-full',
+            playing ? 'hero-logo-stage--booting' : '',
+            bootPhase === 'done' ? 'hero-logo-stage--done' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
-          {runBoot ? (
-            <>
-              <span className="hero-boot-frame hero-boot-frame--tl" aria-hidden />
-              <span className="hero-boot-frame hero-boot-frame--tr" aria-hidden />
-              <span className="hero-boot-frame hero-boot-frame--bl" aria-hidden />
-              <span className="hero-boot-frame hero-boot-frame--br" aria-hidden />
-            </>
-          ) : null}
-
           <div
-            className={`hero-logo-glitch relative ${runBoot ? 'hero-logo-boot' : ''}`}
-            style={{ maxHeight: logoMax }}
+            className={[
+              'hero-logo-glitch relative mx-auto w-fit max-w-full',
+              pendingBoot ? 'hero-logo-boot--pending' : '',
+              playing ? 'hero-logo-boot' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
           >
-            {runBoot ? (
-              <>
-                <span className="hero-logo-boot__scan" aria-hidden />
-                <span className="hero-logo-boot__scan hero-logo-boot__scan--soft" aria-hidden />
-                <span className="hero-logo-boot__rgb hero-logo-boot__rgb--r" aria-hidden>
-                  <img
-                    src={logoImageUrl}
-                    alt=""
-                    className="mx-auto h-auto w-auto max-w-full object-contain"
-                    style={{ maxHeight: logoMax }}
-                    decoding="async"
-                  />
-                </span>
-                <span className="hero-logo-boot__rgb hero-logo-boot__rgb--b" aria-hidden>
-                  <img
-                    src={logoImageUrl}
-                    alt=""
-                    className="mx-auto h-auto w-auto max-w-full object-contain"
-                    style={{ maxHeight: logoMax }}
-                    decoding="async"
-                  />
-                </span>
-              </>
-            ) : null}
+            {playing ? <span className="hero-logo-boot__scan" aria-hidden /> : null}
             <img
               src={logoImageUrl}
               alt={headline}
@@ -149,7 +169,7 @@ export function HeroSection({
             />
           </div>
 
-          {runBoot ? (
+          {playing ? (
             <div className="hero-boot-hud" aria-hidden="true">
               <div className="hero-boot-hud__row">
                 <span className="hero-boot-hud__label">SYS // WORDMARK</span>
@@ -159,18 +179,10 @@ export function HeroSection({
               </div>
               <div className="hero-boot-hud__bar">
                 <span className="hero-boot-hud__bar-fill" />
-                <span className="hero-boot-hud__bar-glitch" />
               </div>
               <div className="hero-boot-hud__code">
-                <span className="hero-boot-hud__line hero-boot-hud__line--1">
-                  &gt; decode · rgba_lock
-                </span>
-                <span className="hero-boot-hud__line hero-boot-hud__line--2">
-                  &gt; chroma // 0xA7F2
-                </span>
-                <span className="hero-boot-hud__line hero-boot-hud__line--3">
-                  &gt; sync_ok · ready
-                </span>
+                <span className="hero-boot-hud__line hero-boot-hud__line--1">&gt; decode · rgba</span>
+                <span className="hero-boot-hud__line hero-boot-hud__line--2">&gt; lock // ok</span>
               </div>
             </div>
           ) : null}
@@ -178,11 +190,11 @@ export function HeroSection({
 
         {tagline ? (
           <m.p
-            initial={prefersReducedMotion || !runBoot ? false : { opacity: 0 }}
-            animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
+            initial={prefersReducedMotion || !bootSequenceEnabled ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{
-              delay: prefersReducedMotion || !runBoot ? 0 : 1.05,
-              duration: prefersReducedMotion || !runBoot ? 0 : 0.4,
+              delay: prefersReducedMotion || !bootSequenceEnabled ? 0 : contentDelay,
+              duration: prefersReducedMotion || !bootSequenceEnabled ? 0 : 0.35,
               ease: [0.16, 1, 0.3, 1],
             }}
             className="mx-auto max-w-2xl text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
@@ -194,11 +206,11 @@ export function HeroSection({
         ) : null}
 
         <m.div
-          initial={prefersReducedMotion || !runBoot ? false : { opacity: 0 }}
-          animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
+          initial={prefersReducedMotion || !bootSequenceEnabled ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{
-            delay: prefersReducedMotion || !runBoot ? 0 : 1.15,
-            duration: prefersReducedMotion || !runBoot ? 0 : 0.35,
+            delay: prefersReducedMotion || !bootSequenceEnabled ? 0 : contentDelay + 0.12,
+            duration: prefersReducedMotion || !bootSequenceEnabled ? 0 : 0.35,
             ease: [0.16, 1, 0.3, 1],
           }}
           className="relative mt-12 flex flex-wrap justify-center gap-4"

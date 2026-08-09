@@ -169,7 +169,7 @@ export function ContactOverlayContent({ adminSettings, decorativeTexts }: Contac
               <Label className="font-mono text-xs uppercase tracking-wide">{adminSettings?.contact?.formMessageLabel || 'Message'}</Label>
               <Textarea name="message" required maxLength={5000} placeholder={adminSettings?.contact?.formMessagePlaceholder || 'Your message...'} className="bg-card border-border font-mono mt-1 min-h-[120px]" />
             </div>
-            <Button type="submit" className="w-full uppercase font-mono hover-glitch cyber-border">
+            <Button type="submit" className="w-full uppercase font-mono hover-glitch">
               <PaperPlaneTilt className="w-5 h-5 mr-2" />
               <span className="hover-chromatic">{adminSettings?.contact?.formButtonText || 'Send Message'}</span>
             </Button>
