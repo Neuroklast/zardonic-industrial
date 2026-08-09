@@ -26,7 +26,8 @@ describe('public mobile regression guards', () => {
     const src = readSource('app/_components/public/SiteNav.tsx')
     expect(src).toMatch(/nav-glitch-link/)
     expect(src).toMatch(/getNavIcon/)
-    expect(src).toMatch(/aria-label=\{item\.label\}/)
+    // Translated label (i18n) used for accessible name
+    expect(src).toMatch(/aria-label=\{label\}/)
   })
 
   it('GallerySection opens the shared CyberpunkOverlay lightbox', () => {

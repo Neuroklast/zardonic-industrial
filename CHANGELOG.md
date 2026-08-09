@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Richer click telemetry**: page-relative heatmap coords + device/browser in event meta for dashboard breakdowns.
 - **Background styles**: Look & Feel → Background adds **Terminal shell** and **Data stream** canvas layers (plus stars / glitch-grid); matrix/circuit remain available.
 - **Modal glow colour**: Theme field `modalGlowColor` persists correctly and maps to `--modal-glow` for CyberpunkOverlay edge glow (Appearance → Modal glow).
+- **Live public i18n**: Language switcher in nav + footer; chrome strings (nav, legal, cookies) use en/de/ru/it/es/pt/ja/ko from `lib/i18n.ts`.
+- **Locale auto-detect**: localStorage → browser languages → `/api/geo` country → English (`lib/locale-detect.ts`).
 - **Icon nav with glitch labels**: Desktop SiteNav shows Phosphor icons per section; hover/focus jitters/glitches to compact text so BIO and all items stay visible. Mobile keeps icon + label.
 - **Agent session control (darktunes-style)**: Expanded root `AGENTS.md` (decision trees, Production definition of done), `docs/agent/workflow.md`, `docs/agent/public-ui.md`, root `QA_CHECKLIST.md`; lessons from 2026-08-09 public UI firefight in `docs/LESSONS_LEARNED.md`.
 - **Appearance font size sliders**: Site Config → Appearance now exposes heading, body, and mono font size controls with live preview (`appearance.theme.*FontSize` → CSS variables).
