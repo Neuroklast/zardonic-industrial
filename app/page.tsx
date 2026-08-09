@@ -304,6 +304,9 @@ export default async function HomePage({
   const crtEnabled = typeof appearanceConfig.crtEnabled === 'boolean' ? appearanceConfig.crtEnabled : true
   const scanlineEnabled = typeof appearanceConfig.scanlineEnabled === 'boolean' ? appearanceConfig.scanlineEnabled : true
   const noiseEnabled = typeof appearanceConfig.noiseEnabled === 'boolean' ? appearanceConfig.noiseEnabled : true
+  const noiseIntensity =
+    typeof appearanceConfig.noiseIntensity === 'number' ? appearanceConfig.noiseIntensity : 0.4
+  const filmGrain = typeof appearanceConfig.filmGrain === 'boolean' ? appearanceConfig.filmGrain : false
   const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
   const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
   const faviconStoragePath =
@@ -316,6 +319,8 @@ export default async function HomePage({
     crtEnabled,
     scanlineEnabled,
     noiseEnabled,
+    noiseIntensity,
+    filmGrain,
     accentColor,
     accentColorSecondary,
     vignetteOpacity: typeof appearanceConfig.vignetteOpacity === 'number' ? appearanceConfig.vignetteOpacity : 0.3,
@@ -427,7 +432,13 @@ export default async function HomePage({
   )
 
   const globalEffectsSlot = (
-    <GlobalEffects crtEnabled={crtEnabled} scanlineEnabled={scanlineEnabled} noiseEnabled={noiseEnabled} />
+    <GlobalEffects
+      crtEnabled={crtEnabled}
+      scanlineEnabled={scanlineEnabled}
+      noiseEnabled={noiseEnabled}
+      noiseIntensity={noiseIntensity}
+      filmGrain={filmGrain}
+    />
   )
 
   const navLinks = buildNavLinks(allSections.filter((section) => section.visible))
@@ -459,7 +470,7 @@ export default async function HomePage({
   const systemSlot = (
     <>
       <AppearanceBridge config={appearanceBridgeConfig} />
-      <AdminDraftListener />
+      <AdminDraftListener enableDrafts={isAdminPreview} />
       <CookieConsent privacyPolicyUrl={privacyPolicyUrl} />
       <KonamiListener />
     </>
@@ -505,6 +516,13 @@ export default async function HomePage({
                   minHeight={typeof heroStyleOverrides.minHeight === 'string' ? heroStyleOverrides.minHeight : undefined}
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
+                  logoMaxHeight={
+                    typeof heroStyleOverrides.logoMaxHeight === 'string'
+                      ? heroStyleOverrides.logoMaxHeight
+                      : typeof heroStyleOverrides.logoMaxHeight === 'number'
+                        ? `${heroStyleOverrides.logoMaxHeight}rem`
+                        : undefined
+                  }
                   showTourDatesCta={isSectionVisible('gigs')}
                 />
               </SectionErrorBoundary>,

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import { m, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { MagnifyingGlassPlus, CaretDown, CaretUp } from '@phosphor-icons/react'
 import { formatSectionHeading } from '@/lib/section-display'
@@ -41,19 +41,37 @@ export function GallerySection({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const prefersReducedMotion = useReducedMotion()
 
-  const visibleItems = items.filter((item) => item.imageUrl)
+  const visibleItems = useMemo(
+    () => items.filter((item) => Boolean(item.imageUrl)),
+    [items],
+  )
   const capped = maxVisible && !showAll ? visibleItems.slice(0, maxVisible) : visibleItems
-  const imageUrls = visibleItems.map((item) => item.imageUrl ?? '')
+
+  // Full-resolution URLs for lightbox (no heavy wsrv resize)
+  const lightboxUrls = useMemo(
+    () =>
+      visibleItems.map(
+        (item) => toDirectImageUrl(item.imageUrl, { w: 1600, q: 85 }) || item.imageUrl || '',
+      ),
+    [visibleItems],
+  )
+
   const tileAspect = resolveGalleryTileAspect(aspectRatio)
 
-  function openLightbox(index: number) {
-    if (!lightbox) return
-    setLightboxIndex(index)
-  }
+  const openLightbox = useCallback(
+    (itemId: string) => {
+      if (!lightbox) return
+      const fullIndex = visibleItems.findIndex((item) => item.id === itemId)
+      if (fullIndex >= 0) setLightboxIndex(fullIndex)
+    },
+    [lightbox, visibleItems],
+  )
 
   return (
     <SectionWrapper id="gallery" data-theme-color="card border primary">
-      <SectionHeading sectionId="gallery" dataText={title}>{title}</SectionHeading>
+      <SectionHeading sectionId="gallery" dataText={title}>
+        {title}
+      </SectionHeading>
       <SectionIntro sectionId="gallery">{intro}</SectionIntro>
 
       {visibleItems.length > 0 ? (
@@ -62,43 +80,49 @@ export function GallerySection({
             className={`grid ${columns === '2' ? 'grid-cols-2' : columns === '4' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-2 md:grid-cols-3'} ${gap ? '' : 'gap-4'}`}
             style={{ gap: gap || undefined }}
           >
-            {capped.map((item, index) => (
-              <m.div
-                key={item.id}
-                initial={prefersReducedMotion ? false : { opacity: 0, clipPath: 'inset(0 0 100% 0)' }}
-                whileInView={prefersReducedMotion ? undefined : { opacity: 1, clipPath: 'inset(0 0 0% 0)' }}
-                viewport={prefersReducedMotion ? undefined : { once: true }}
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : { duration: 0.6, delay: index * 0.08, ease: [0.25, 0.46, 0.45, 0.94] }
-                }
-                className={`glitch-image group relative overflow-hidden bg-muted ${tileAspect.className} ${lightbox ? 'cursor-pointer' : ''}`}
-                onClick={() => openLightbox(index)}
-                onKeyDown={(e) => {
-                  if (lightbox && (e.key === 'Enter' || e.key === ' ')) {
-                    e.preventDefault()
-                    openLightbox(index)
+            {capped.map((item, index) => {
+              const thumb =
+                toDirectImageUrl(item.imageUrl, { w: 640, q: 75 }) || item.imageUrl || ''
+              return (
+                <m.div
+                  key={item.id}
+                  initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+                  whileInView={prefersReducedMotion ? undefined : { opacity: 1, y: 0 }}
+                  viewport={prefersReducedMotion ? undefined : { once: true, margin: '40px' }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { duration: 0.4, delay: Math.min(index * 0.04, 0.3) }
                   }
-                }}
-                role={lightbox ? 'button' : undefined}
-                tabIndex={lightbox ? 0 : undefined}
-                aria-label={lightbox ? `Open ${item.alt ?? 'gallery image'} in lightbox` : undefined}
-              >
-                <img
-                  src={toDirectImageUrl(item.imageUrl, { w: 800 }) || item.imageUrl || ''}
-                  alt={item.alt ?? ''}
-                  className="hover-chromatic-image h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-                {lightbox ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
-                    <MagnifyingGlassPlus className="h-8 w-8 text-foreground" aria-hidden />
-                  </div>
-                ) : null}
-              </m.div>
-            ))}
+                  className={`group relative overflow-hidden border border-border bg-muted ${tileAspect.className} ${lightbox ? 'cursor-pointer' : ''}`}
+                  onClick={() => openLightbox(item.id)}
+                  onKeyDown={(e) => {
+                    if (lightbox && (e.key === 'Enter' || e.key === ' ')) {
+                      e.preventDefault()
+                      openLightbox(item.id)
+                    }
+                  }}
+                  role={lightbox ? 'button' : undefined}
+                  tabIndex={lightbox ? 0 : undefined}
+                  aria-label={
+                    lightbox ? `Open ${item.alt ?? 'gallery image'} in lightbox` : undefined
+                  }
+                >
+                  <img
+                    src={thumb}
+                    alt={item.alt ?? ''}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  {lightbox ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
+                      <MagnifyingGlassPlus className="h-8 w-8 text-foreground" aria-hidden />
+                    </div>
+                  ) : null}
+                </m.div>
+              )
+            })}
           </div>
 
           {maxVisible && visibleItems.length > maxVisible ? (
@@ -106,7 +130,8 @@ export function GallerySection({
               <button
                 type="button"
                 onClick={() => setShowAll((value) => !value)}
-                className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono uppercase"
+                className="cyber-border inline-flex min-h-[44px] items-center gap-2 px-4 py-2 uppercase"
+                style={{ fontFamily: 'var(--font-mono, monospace)' }}
               >
                 {showAll ? (
                   <>
@@ -130,7 +155,7 @@ export function GallerySection({
       <AnimatePresence>
         {lightbox && lightboxIndex !== null ? (
           <SwipeableGallery
-            images={imageUrls}
+            images={lightboxUrls}
             initialIndex={lightboxIndex}
             onClose={() => setLightboxIndex(null)}
           />

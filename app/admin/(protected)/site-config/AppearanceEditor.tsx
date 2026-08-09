@@ -30,6 +30,8 @@ export interface AppearanceConfig {
   crtEnabled: boolean
   scanlineEnabled: boolean
   noiseEnabled: boolean
+  noiseIntensity: number
+  filmGrain: boolean
   accentColor: string
   accentColorSecondary: string
   vignetteOpacity: number
@@ -60,6 +62,8 @@ const DEFAULTS: AppearanceConfig = {
   crtEnabled: true,
   scanlineEnabled: true,
   noiseEnabled: true,
+  noiseIntensity: 0.4,
+  filmGrain: false,
   accentColor: '#dc2626',
   accentColorSecondary: '#7c3aed',
   vignetteOpacity: 0.3,
@@ -93,6 +97,9 @@ function parseConfig(raw: Record<string, unknown>): AppearanceConfig {
     crtEnabled: typeof raw.crtEnabled === 'boolean' ? raw.crtEnabled : DEFAULTS.crtEnabled,
     scanlineEnabled: typeof raw.scanlineEnabled === 'boolean' ? raw.scanlineEnabled : DEFAULTS.scanlineEnabled,
     noiseEnabled: typeof raw.noiseEnabled === 'boolean' ? raw.noiseEnabled : DEFAULTS.noiseEnabled,
+    noiseIntensity:
+      typeof raw.noiseIntensity === 'number' ? raw.noiseIntensity : DEFAULTS.noiseIntensity,
+    filmGrain: typeof raw.filmGrain === 'boolean' ? raw.filmGrain : DEFAULTS.filmGrain,
     accentColor: typeof raw.accentColor === 'string' ? raw.accentColor : DEFAULTS.accentColor,
     accentColorSecondary:
       typeof raw.accentColorSecondary === 'string' ? raw.accentColorSecondary : DEFAULTS.accentColorSecondary,
@@ -195,6 +202,8 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
   const [crtEnabled, setCrtEnabled] = useState(init.crtEnabled)
   const [scanlineEnabled, setScanlineEnabled] = useState(init.scanlineEnabled)
   const [noiseEnabled, setNoiseEnabled] = useState(init.noiseEnabled)
+  const [noiseIntensity, setNoiseIntensity] = useState(init.noiseIntensity)
+  const [filmGrain, setFilmGrain] = useState(init.filmGrain)
   const [accentColor, setAccentColor] = useState(init.accentColor)
   const [accentColorSecondary] = useState(init.accentColorSecondary)
   const [vignetteOpacity, setVignetteOpacity] = useState(init.vignetteOpacity)
@@ -217,6 +226,8 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
       crtEnabled,
       scanlineEnabled,
       noiseEnabled,
+      noiseIntensity,
+      filmGrain,
       accentColor,
       accentColorSecondary,
       vignetteOpacity,
@@ -233,6 +244,8 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
       crtEnabled,
       scanlineEnabled,
       noiseEnabled,
+      noiseIntensity,
+      filmGrain,
       accentColor,
       accentColorSecondary,
       vignetteOpacity,
@@ -286,6 +299,9 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
       setErrorMsg(result.error)
     } else {
       setStatus('saved')
+      // Push saved theme to open public tabs immediately
+      const { broadcastAdminRefresh } = await import('@/lib/admin-draft-channel')
+      broadcastAdminRefresh()
       router.refresh()
       setTimeout(() => setStatus('idle'), 2000)
     }
@@ -517,7 +533,8 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         {[
           { label: 'CRT overlay & vignette', checked: crtEnabled, onChange: setCrtEnabled },
           { label: 'Scanlines', checked: scanlineEnabled, onChange: setScanlineEnabled },
-          { label: 'Noise / glitch', checked: noiseEnabled, onChange: setNoiseEnabled },
+          { label: 'Noise / grain', checked: noiseEnabled, onChange: setNoiseEnabled },
+          { label: 'Film grain pattern (denser)', checked: filmGrain, onChange: setFilmGrain },
         ].map(({ label, checked, onChange }) => (
           <div key={label} className="flex items-center justify-between">
             <span className="text-xs text-zinc-300">{label}</span>
@@ -532,6 +549,12 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         ))}
 
         <div className="space-y-4 pt-2 border-t border-zinc-800">
+          <OpacitySlider
+            label="Noise grain intensity"
+            value={noiseIntensity}
+            onChange={setNoiseIntensity}
+            description="Strength of the full-page grain overlay (only when Noise is on)."
+          />
           <OpacitySlider
             label="Vignette (dark edges)"
             value={vignetteOpacity}

@@ -152,7 +152,7 @@ describe('restored public homepage components', () => {
     expect(screen.getByTestId('gig-overlay-state')).toHaveTextContent('gig')
     expect(container.querySelector('.scan-line')).toBeInTheDocument()
     expect(container.querySelectorAll('.chromatic-hover')).toHaveLength(1)
-    expect(container.querySelectorAll('.logo-white')).toHaveLength(1)
+    expect(container.querySelectorAll('.logo-white-mask')).toHaveLength(1)
     expect(screen.getByText(/credits/i)).toBeInTheDocument()
     expect(screen.getByText(/endorsements/i)).toBeInTheDocument()
   })

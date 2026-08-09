@@ -357,7 +357,12 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
   create_gallery_item: register({
     id: 'create_gallery_item',
     label: 'Create Gallery Item',
-    schema: z.object({ alt: z.string().optional() }),
+    schema: z.object({
+      storage_path: z.string().min(1).optional(),
+      alt: z.string().optional().nullable(),
+      caption: z.string().optional().nullable(),
+      display_order: z.coerce.number().optional(),
+    }),
     minDisclosure: 'basic',
     execute(input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
@@ -368,7 +373,16 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
   update_gallery_item: register({
     id: 'update_gallery_item',
     label: 'Update Gallery Item',
-    schema: z.object({ id: z.string().min(1), storage_path: z.string().optional() }),
+    schema: z
+      .object({
+        id: z.string().min(1),
+        storage_path: z.string().optional().nullable(),
+        alt: z.string().optional().nullable(),
+        caption: z.string().optional().nullable(),
+        image_url: z.string().optional().nullable(),
+        display_order: z.coerce.number().optional(),
+      })
+      .passthrough(),
     minDisclosure: 'basic',
     execute(input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }

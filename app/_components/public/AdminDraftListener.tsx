@@ -121,41 +121,51 @@ function applyFooterDraft(value: Record<string, unknown>) {
   }
 }
 
-export function AdminDraftListener() {
+/**
+ * Live admin drafts only apply when the public page is opened as the admin
+ * preview iframe (`?adminPreview=1`). The real public site updates only after
+ * Save → revalidate + broadcastAdminRefresh.
+ */
+export function AdminDraftListener({ enableDrafts = false }: { enableDrafts?: boolean }) {
   const router = useRouter()
 
-  const onDraft = useCallback((key: AdminDraftKey, value: Record<string, unknown>) => {
-    switch (key) {
-      case 'appearance':
-        applyAppearanceConfig(value)
-        break
-      case 'hero':
-        applyHeroDraft(value)
-        break
-      case 'background':
-        applyBackgroundDraft(value)
-        break
-      case 'sections':
-        applySectionsDraft(value)
-        break
-      case 'newsletter':
-        applyNewsletterDraft(value)
-        break
-      case 'merchandise':
-        applyMerchandiseDraft(value)
-        break
-      case 'footer':
-        applyFooterDraft(value)
-        break
-      default:
-        break
-    }
-  }, [])
+  const onDraft = useCallback(
+    (key: AdminDraftKey, value: Record<string, unknown>) => {
+      if (!enableDrafts) return
+      switch (key) {
+        case 'appearance':
+          applyAppearanceConfig(value)
+          break
+        case 'hero':
+          applyHeroDraft(value)
+          break
+        case 'background':
+          applyBackgroundDraft(value)
+          break
+        case 'sections':
+          applySectionsDraft(value)
+          break
+        case 'newsletter':
+          applyNewsletterDraft(value)
+          break
+        case 'merchandise':
+          applyMerchandiseDraft(value)
+          break
+        case 'footer':
+          applyFooterDraft(value)
+          break
+        default:
+          break
+      }
+    },
+    [enableDrafts],
+  )
 
   const onRefresh = useCallback(() => {
     router.refresh()
   }, [router])
 
+  // Always listen for refresh so public tabs pick up saves; drafts only when preview
   useAdminDraftListener(onDraft, onRefresh)
 
   return null

@@ -6,11 +6,8 @@ import { useLenisContext } from '@/contexts/LenisContext'
 
 import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
 
-const LOGO_IMG_CLASS =
-  'hover-chromatic-image h-32 w-auto object-contain brightness-110 md:h-48 lg:h-64'
-
 const HERO_CTA_CLASS =
-  'cyber-border hover-glitch hover-noise relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 font-mono text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
+  'cyber-border relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
 
 interface HeroSectionProps {
   headline: string
@@ -23,10 +20,10 @@ interface HeroSectionProps {
   minHeight?: string
   imageBlur?: number
   paddingTop?: string
+  /** CSS length for hero wordmark max height (e.g. 12rem, 200px). */
+  logoMaxHeight?: string
   showTourDatesCta?: boolean
 }
-
-
 
 export function HeroSection({
   headline,
@@ -39,6 +36,7 @@ export function HeroSection({
   minHeight,
   imageBlur,
   paddingTop,
+  logoMaxHeight,
   showTourDatesCta = true,
 }: HeroSectionProps) {
   const [contentLoaded] = useState(true)
@@ -91,13 +89,18 @@ export function HeroSection({
           initial={{ opacity: 1 }}
           animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
         >
-          <div className="hero-logo-glitch hover-glitch cyber2077-scan-build relative mx-auto w-fit">
+          <div className="hero-logo-glitch relative mx-auto w-fit max-w-[min(92vw,56rem)]">
             <img
               src={logoImageUrl}
               alt={headline}
               data-draft-target="hero-logo"
-              className={LOGO_IMG_CLASS}
+              className="hover-chromatic-image mx-auto h-auto w-auto max-w-full object-contain brightness-110"
+              style={{
+                maxHeight: logoMaxHeight || 'clamp(6rem, 22vw, 16rem)',
+                width: 'auto',
+              }}
               fetchPriority="high"
+              decoding="async"
             />
           </div>
         </m.div>
@@ -111,7 +114,8 @@ export function HeroSection({
               duration: prefersReducedMotion ? 0 : 0.6,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
-            className="mx-auto max-w-2xl font-mono text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
+            className="mx-auto max-w-2xl text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
+            style={{ fontFamily: 'var(--font-mono, var(--font-body, monospace))' }}
             data-draft-target="hero-tagline"
           >
             {tagline}
@@ -127,7 +131,7 @@ export function HeroSection({
             ease: [0.25, 0.46, 0.45, 0.94],
           }}
           className="relative mt-12 flex flex-wrap justify-center gap-4"
-          style={{ zIndex: 'var(--z-local-top)' }}
+          style={{ zIndex: 'var(--z-local-top)', fontFamily: 'var(--font-mono, monospace)' }}
         >
           <a
             href={ctaUrl || '#releases'}
