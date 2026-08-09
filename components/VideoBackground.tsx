@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, memo } from 'react'
 import { shouldDisableVideoBackground } from '@/lib/device-capability'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useLenisContext } from '@/contexts/LenisContext'
 
 interface VideoBackgroundProps {
   /** URL of the video file (MP4/WebM). Must be a Vercel Blob URL for reliable playback. */
@@ -74,6 +75,7 @@ const VideoBackground = memo(function VideoBackground({
 }: VideoBackgroundProps) {
   const [useFallback, setUseFallback] = useState<boolean>(() => shouldDisableVideoBackground())
   const videoRef = useRef<HTMLVideoElement>(null)
+  const { lenis } = useLenisContext()
 
   const isMobile = useIsMobile()
 
@@ -115,6 +117,8 @@ const VideoBackground = memo(function VideoBackground({
   }, [useFallback, scrollMode, activeVideoUrl])
 
   // ── Scroll mode: high-perf Lenis/window scrub (rAF + seek coalesce) ─────
+  // Prefer Lenis scroll events (same source as smooth scroll). Window scroll
+  // alone can lag/desync under heavy background paint.
   useEffect(() => {
     if (!scrollMode || useFallback) return
     const video = videoRef.current
@@ -127,7 +131,9 @@ const VideoBackground = memo(function VideoBackground({
       if (cancelled || !videoRef.current) return
       detach = attachScrollVideoSync({
         video: videoRef.current,
-        minDeltaSec: 1 / 48,
+        lenis,
+        // ~30 seeks/s max — video decode is the usual smooth-scroll killer
+        minDeltaSec: 1 / 30,
       })
     })
 
@@ -135,7 +141,7 @@ const VideoBackground = memo(function VideoBackground({
       cancelled = true
       detach?.()
     }
-  }, [scrollMode, useFallback, activeVideoUrl])
+  }, [scrollMode, useFallback, activeVideoUrl, lenis])
 
   // ── Scroll mode: error handler ───────────────────────────────────────────
   useEffect(() => {

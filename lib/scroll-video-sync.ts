@@ -14,13 +14,15 @@ export type ScrollVideoSyncOptions = {
 export function attachScrollVideoSync({
   video,
   lenis = null,
-  minDeltaSec = 1 / 45,
+  minDeltaSec = 1 / 30,
 }: ScrollVideoSyncOptions): () => void {
   let raf = 0
   let seeking = false
   let targetProgress = 0
   let lastApplied = -1
   let destroyed = false
+  /** While a seek is in flight, keep the latest target and apply once seeked. */
+  let pendingAfterSeek = false
 
   const readScrollY = () => {
     if (lenis && typeof lenis.scroll === 'number') return lenis.scroll
@@ -35,7 +37,11 @@ export function attachScrollVideoSync({
 
   const apply = () => {
     raf = 0
-    if (destroyed || seeking || document.hidden) return
+    if (destroyed || document.hidden) return
+    if (seeking) {
+      pendingAfterSeek = true
+      return
+    }
     const duration = video.duration
     if (!Number.isFinite(duration) || duration <= 0) return
     if (video.readyState < 2) return // HAVE_CURRENT_DATA
@@ -50,6 +56,11 @@ export function attachScrollVideoSync({
     const done = () => {
       seeking = false
       video.removeEventListener('seeked', done)
+      // Apply newest scroll target if user moved during seek (avoids stuck frame)
+      if (pendingAfterSeek && !destroyed) {
+        pendingAfterSeek = false
+        if (!raf) raf = requestAnimationFrame(apply)
+      }
     }
     video.addEventListener('seeked', done)
 

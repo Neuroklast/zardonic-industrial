@@ -12,6 +12,8 @@ vi.mock('@/contexts/LenisContext', () => ({
     scrollTo: vi.fn(),
     scrollY: 0,
     velocityY: 0,
+    getScrollY: () => 0,
+    getVelocityY: () => 0,
     isLiteMode: true,
   }),
 }))

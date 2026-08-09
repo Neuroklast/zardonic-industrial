@@ -24,6 +24,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -51,10 +52,17 @@ export interface LenisContextValue {
     target: HTMLElement | string | number,
     options?: LenisScrollToOptions,
   ) => void
-  /** Current vertical scroll position in pixels. */
+  /**
+   * Snapshot scroll Y (lite mode: updates; Lenis mode: prefer `lenis.on('scroll')`
+   * or `getScrollY()` so React does not re-render every wheel frame).
+   */
   scrollY: number
-  /** Current scroll velocity (positive = scrolling down). */
+  /** Snapshot velocity — same caveats as scrollY. */
   velocityY: number
+  /** Latest scroll Y without subscribing to React state (safe in rAF / canvas loops). */
+  getScrollY: () => number
+  /** Latest velocity without React re-renders. */
+  getVelocityY: () => number
   /** True when Lenis is disabled (lite mode) and native scroll is used. */
   isLiteMode: boolean
 }
@@ -64,6 +72,8 @@ export const LenisContext = createContext<LenisContextValue>({
   scrollTo: () => {},
   scrollY: 0,
   velocityY: 0,
+  getScrollY: () => 0,
+  getVelocityY: () => 0,
   isLiteMode: false,
 })
 
@@ -94,7 +104,10 @@ export function LenisProvider({
   const liteMode = prefersReducedMotion || isSlowConnection() || isLowEndHardware()
 
   const lenisRef = useRef<Lenis | null>(null)
+  const scrollYRef = useRef(0)
+  const velocityYRef = useRef(0)
   const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null)
+  /** React-visible snapshot — updated in lite mode only (not every Lenis frame). */
   const [scrollY, setScrollY] = useState(0)
   const [velocityY, setVelocityY] = useState(0)
 
@@ -105,12 +118,20 @@ export function LenisProvider({
   useEffect(() => { easingRef.current = easing }, [easing])
   useEffect(() => { durationRef.current = duration }, [duration])
 
+  const getScrollY = useCallback(() => {
+    const l = lenisRef.current
+    if (l && typeof l.scroll === 'number') return l.scroll
+    return scrollYRef.current
+  }, [])
+
+  const getVelocityY = useCallback(() => velocityYRef.current, [])
+
   // Main Lenis init effect only depends on liteMode so Lenis is never
   // recreated just because an easing function reference changed.
   useEffect(() => {
     if (liteMode) return
 
-    let rafId: number
+    let rafId = 0
     let lenis: Lenis | null = null
 
     try {
@@ -124,9 +145,13 @@ export function LenisProvider({
 
       lenisRef.current = lenis
       setLenisInstance(lenis)
+
+      // CRITICAL: update refs only — never setState on scroll.
+      // setState here re-rendered SiteNav/Hero/every consumer every frame and
+      // fought canvas/video background work (main-thread jank).
       lenis.on('scroll', (e: { scroll: number; velocity: number }) => {
-        setScrollY(e.scroll)
-        setVelocityY(e.velocity)
+        scrollYRef.current = e.scroll
+        velocityYRef.current = e.velocity
       })
 
       // Drive Lenis with our own RAF loop so we control the timing
@@ -148,16 +173,26 @@ export function LenisProvider({
     }
   }, [liteMode])
 
-  // Native scroll tracking — runs only in lite mode when Lenis is inactive.
-  // Ensures scrollY stays current so scroll-driven effects (e.g. VideoBackground
-  // scroll mode) work correctly even without Lenis.
+  // Native scroll tracking — lite mode only. rAF-coalesce so bursty scroll
+  // events do not schedule multiple React updates in one frame.
   useEffect(() => {
     if (!liteMode) return
-    const handleScroll = () => setScrollY(window.scrollY)
+    let raf = 0
+    const flush = () => {
+      raf = 0
+      const y = window.scrollY || document.documentElement.scrollTop || 0
+      scrollYRef.current = y
+      setScrollY(y)
+    }
+    const handleScroll = () => {
+      if (!raf) raf = requestAnimationFrame(flush)
+    }
     window.addEventListener('scroll', handleScroll, { passive: true })
-    // Set initial value in case the page loaded already scrolled
-    handleScroll()
-    return () => window.removeEventListener('scroll', handleScroll)
+    flush()
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [liteMode])
 
   const scrollTo = useCallback(
@@ -196,10 +231,23 @@ export function LenisProvider({
     [duration],
   )
 
+  // Stable context identity: only changes when Lenis mounts/unmounts or liteMode flips.
+  // Must NOT include per-frame scroll values as object churn.
+  const value = useMemo<LenisContextValue>(
+    () => ({
+      lenis: lenisInstance,
+      scrollTo,
+      scrollY,
+      velocityY,
+      getScrollY,
+      getVelocityY,
+      isLiteMode: liteMode,
+    }),
+    [lenisInstance, scrollTo, scrollY, velocityY, getScrollY, getVelocityY, liteMode],
+  )
+
   return (
-    <LenisContext.Provider
-      value={{ lenis: lenisInstance, scrollTo, scrollY, velocityY, isLiteMode: liteMode }}
-    >
+    <LenisContext.Provider value={value}>
       {children}
     </LenisContext.Provider>
   )
@@ -212,10 +260,10 @@ export function LenisProvider({
  *
  * @example
  * ```tsx
- * const { scrollTo, scrollY, lenis } = useLenisContext()
+ * const { scrollTo, lenis, getScrollY } = useLenisContext()
  * // Scroll to a section with nav offset
  * scrollTo(element, { offset: -80 })
- * // Subscribe to raw scroll events for custom effects
+ * // Real-time scroll: subscribe or read refs — do NOT depend on scrollY state
  * useEffect(() => {
  *   lenis?.on('scroll', handler)
  *   return () => lenis?.off('scroll', handler)

@@ -117,13 +117,23 @@ describe('LenisContext — lite mode native scroll tracking', () => {
     addSpy.mockRestore()
   })
 
-  it('scrollY updates when window scroll event fires in lite mode', () => {
+  it('scrollY updates when window scroll event fires in lite mode', async () => {
     Object.defineProperty(window, 'scrollY', { value: 200, writable: true, configurable: true })
     const { result } = renderHook(() => useLenisContext(), { wrapper })
-    act(() => {
+    await act(async () => {
       window.dispatchEvent(new Event('scroll'))
+      // lite mode coalesces updates to rAF
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve())
+      })
     })
     expect(result.current.scrollY).toBe(200)
     Object.defineProperty(window, 'scrollY', { value: 0, writable: true, configurable: true })
+  })
+
+  it('exposes getScrollY without requiring React state churn', () => {
+    const { result } = renderHook(() => useLenisContext(), { wrapper })
+    expect(typeof result.current.getScrollY).toBe('function')
+    expect(typeof result.current.getVelocityY).toBe('function')
   })
 })
