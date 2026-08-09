@@ -13,7 +13,7 @@ import { BioSection } from './_components/public/BioSection'
 import { CreditsSection } from './_components/public/CreditsSection'
 import { MusicHighlightsSection } from './_components/public/MusicHighlightsSection'
 import { PublicPageClient } from './_components/public/PublicPageClient'
-import { AppearanceBridge } from './_components/public/AppearanceBridge'
+
 import { AdminDraftListener } from './_components/public/AdminDraftListener'
 import { DraftSectionShell } from './_components/public/DraftSectionShell'
 import { MerchandiseSection } from './_components/public/MerchandiseSection'
@@ -314,42 +314,7 @@ export default async function HomePage({
   const noiseIntensity =
     typeof appearanceConfig.noiseIntensity === 'number' ? appearanceConfig.noiseIntensity : 0.4
   const filmGrain = typeof appearanceConfig.filmGrain === 'boolean' ? appearanceConfig.filmGrain : false
-  const accentColor = typeof appearanceConfig.accentColor === 'string' ? appearanceConfig.accentColor : '#dc2626'
-  const accentColorSecondary = typeof appearanceConfig.accentColorSecondary === 'string' ? appearanceConfig.accentColorSecondary : '#7c3aed'
-  const faviconStoragePath =
-    typeof appearanceConfig.faviconStoragePath === 'string' ? appearanceConfig.faviconStoragePath : null
-  const faviconFallback =
-    typeof appearanceConfig.faviconUrl === 'string' ? appearanceConfig.faviconUrl : null
-  const resolvedFaviconUrl = resolveImageUrl(faviconStoragePath, faviconFallback) ?? undefined
-
-  const appearanceBridgeConfig = {
-    crtEnabled,
-    scanlineEnabled,
-    noiseEnabled,
-    noiseIntensity,
-    filmGrain,
-    accentColor,
-    accentColorSecondary,
-    vignetteOpacity: typeof appearanceConfig.vignetteOpacity === 'number' ? appearanceConfig.vignetteOpacity : 0.3,
-    chromaticStrength: typeof appearanceConfig.chromaticStrength === 'number' ? appearanceConfig.chromaticStrength : 0.5,
-    sectionPanelOpacity:
-      typeof appearanceConfig.sectionPanelOpacity === 'number'
-        ? appearanceConfig.sectionPanelOpacity
-        : undefined,
-    sectionGridOpacity:
-      typeof appearanceConfig.sectionGridOpacity === 'number'
-        ? appearanceConfig.sectionGridOpacity
-        : undefined,
-    cardSurfaceOpacity:
-      typeof appearanceConfig.cardSurfaceOpacity === 'number'
-        ? appearanceConfig.cardSurfaceOpacity
-        : undefined,
-    faviconUrl: resolvedFaviconUrl,
-    theme:
-      appearanceConfig.theme && typeof appearanceConfig.theme === 'object'
-        ? (appearanceConfig.theme as Record<string, string>)
-        : undefined,
-  }
+  // Fonts / theme colors / favicon: applied via root layout SSR + Providers AppearanceBridge (site-wide)
 
   // Releases: convert streaming_links to typed array
   const releaseItems = releases.map((r) => {
@@ -482,7 +447,7 @@ export default async function HomePage({
 
   const systemSlot = (
     <>
-      <AppearanceBridge config={appearanceBridgeConfig} />
+      {/* Fonts/appearance applied globally via Providers + SSR layout inject — never hardcoded */}
       <AdminDraftListener enableDrafts={isAdminPreview} />
       <CookieConsent privacyPolicyUrl={privacyPolicyUrl} />
       <KonamiListener />

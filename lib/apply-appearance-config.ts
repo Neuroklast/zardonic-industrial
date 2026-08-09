@@ -8,6 +8,7 @@ import {
   resolveCssColorValue,
 } from '@/lib/color-utils'
 import type { AppearanceTheme } from '@/lib/appearance-presets'
+import { resolvePublicFonts } from '@/lib/public-fonts'
 
 export interface AppearanceConfigInput {
   crtEnabled?: boolean
@@ -124,6 +125,16 @@ const FOREGROUND_ALIAS_VARS = [
 ] as const
 
 function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Record<string, string>) {
+  // Fonts always applied from theme (or system fallback) — never leave brand hardcodes.
+  const fonts = resolvePublicFonts(theme)
+  setVar(root, '--font-heading', fonts.fontHeading, applied)
+  setVar(root, '--font-body', fonts.fontBody, applied)
+  setVar(root, '--font-mono', fonts.fontMono, applied)
+  for (const stack of [fonts.fontHeading, fonts.fontBody, fonts.fontMono]) {
+    const fontName = extractGoogleFontName(stack)
+    if (fontName) loadGoogleFont(fontName)
+  }
+
   const mappings: Array<[keyof AppearanceTheme, string]> = [
     ['primaryColor', '--primary'],
     ['accentColor', '--accent'],
@@ -134,9 +145,6 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
     ['borderColor', '--border'],
     ['secondaryColor', '--secondary'],
     ['modalGlowColor', '--modal-glow'],
-    ['fontHeading', '--font-heading'],
-    ['fontBody', '--font-body'],
-    ['fontMono', '--font-mono'],
   ]
 
   for (const [key, cssVar] of mappings) {
@@ -165,11 +173,6 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
         setVar(root, '--accent-h', String(comps.h), applied)
       }
     }
-
-    if (key === 'fontHeading' || key === 'fontBody' || key === 'fontMono') {
-      const fontName = extractGoogleFontName(value)
-      if (fontName) loadGoogleFont(fontName)
-    }
   }
 
   if (theme.headingFontSize) {
@@ -193,8 +196,14 @@ export function applyAppearanceConfig(
 ): Record<string, string> {
   const applied: Record<string, string> = {}
 
+  // Fonts always from Appearance theme (system fallback if unset) — never leave CSS brand hardcodes.
   if (config.theme) {
     applyThemeVars(root, config.theme, applied)
+  } else {
+    const fonts = resolvePublicFonts(null)
+    setVar(root, '--font-heading', fonts.fontHeading, applied)
+    setVar(root, '--font-body', fonts.fontBody, applied)
+    setVar(root, '--font-mono', fonts.fontMono, applied)
   }
 
   if (config.accentColor) {

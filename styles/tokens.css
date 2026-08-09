@@ -68,6 +68,15 @@
   --mono-font-size: 0.875rem;
   --chromatic-strength: 0.5;
 
+  /*
+   * Font faces are NEVER brand-hardcoded here.
+   * System stacks only until site_config.appearance.theme applies (SSR <style> + AppearanceBridge).
+   * next/font registers --font-orbitron etc. for when admin selects those options.
+   */
+  --font-heading: system-ui, ui-sans-serif, sans-serif;
+  --font-body: system-ui, ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   /* Semantic color aliases — map to the theme palette */
   --color-brand-primary: var(--color-accent-9, var(--accent));
   --color-brand-secondary: var(--color-accent-secondary-9, var(--accent));

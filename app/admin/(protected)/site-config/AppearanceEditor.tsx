@@ -485,22 +485,29 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
             { label: 'Heading font', key: 'fontHeading' as const, options: HEADING_FONT_OPTIONS },
             { label: 'Body font', key: 'fontBody' as const, options: BODY_FONT_OPTIONS },
             { label: 'Mono font', key: 'fontMono' as const, options: MONO_FONT_OPTIONS },
-          ].map(({ label, key, options }) => (
-            <div key={key} className="space-y-1">
-              <label className="text-xs text-zinc-400">{label}</label>
-              <select
-                value={theme[key] ?? ''}
-                onChange={(e) => updateThemeField(key, e.target.value)}
-                className="w-full text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-2 text-zinc-300"
-              >
-                {options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
+          ].map(({ label, key, options }) => {
+            const current = theme[key] ?? ''
+            const hasCurrent = !current || options.some((opt) => opt.value === current)
+            return (
+              <div key={key} className="space-y-1">
+                <label className="text-xs text-zinc-400">{label}</label>
+                <select
+                  value={current}
+                  onChange={(e) => updateThemeField(key, e.target.value)}
+                  className="w-full text-xs bg-zinc-950 border border-zinc-800 rounded px-2 py-2 text-zinc-300"
+                >
+                  {!hasCurrent ? (
+                    <option value={current}>Current (saved)</option>
+                  ) : null}
+                  {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )
+          })}
         </div>
 
         <div className="space-y-4 pt-2 border-t border-zinc-800">
