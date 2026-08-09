@@ -59,13 +59,33 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.crt-overlay')).toBeInTheDocument()
     expect(container.querySelector('.noise-effect')).toBeInTheDocument()
     expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-stage--boot')).toBeInTheDocument()
     expect(container.querySelector('.hero-logo-boot')).toBeInTheDocument()
     expect(container.querySelector('.hero-logo-boot__scan')).toBeInTheDocument()
+    expect(container.querySelectorAll('.hero-logo-boot__rgb')).toHaveLength(2)
+    expect(container.querySelector('.hero-boot-hud')).toBeInTheDocument()
+    expect(container.querySelector('.hero-boot-hud__bar-fill')).toBeInTheDocument()
+    expect(container.querySelectorAll('.hero-boot-hud__line')).toHaveLength(3)
     expect(container.querySelectorAll('[data-draft-target="hero-logo"]')).toHaveLength(1)
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveAttribute('href', '#releases')
     expect(screen.getByRole('link', { name: /tour dates/i })).toHaveAttribute('href', '#gigs')
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('bg-card/60')
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('text-foreground')
+  })
+
+  it('skips hero boot sequence when disabled', () => {
+    const { container } = render(
+      <HeroSection
+        headline="ZARDONIC"
+        tagline="Industrial Metal / Drum & Bass"
+        bootSequenceEnabled={false}
+      />,
+    )
+
+    expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-boot')).not.toBeInTheDocument()
+    expect(container.querySelector('.hero-boot-hud')).not.toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-stage--boot')).not.toBeInTheDocument()
   })
 
   it('restores the bio expand/collapse mask behaviour', () => {

@@ -532,6 +532,7 @@ export default async function HomePage({
                         : undefined
                   }
                   showTourDatesCta={isSectionVisible('gigs')}
+                  bootSequenceEnabled={heroConfig.bootSequenceEnabled !== false}
                 />
               </SectionErrorBoundary>,
               section,

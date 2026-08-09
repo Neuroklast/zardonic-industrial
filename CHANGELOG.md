@@ -9,7 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
-- **Hero logo entrance**: Replaced wobble/jitter with a one-shot terminal CRT boot (scanline reveal + single RGB tear). No continuous cheap motion.
+- **Language switcher**: removed from navbar (footer only).
+- **Nav icon hover**: fixed cell size — opacity crossfade only (no expand / skew / layout shift).
+- **Hero logo entrance**: short filmic boot (~1.2s) — scan + soft trail, RGB fringe, corner ticks, mini load bar + micro terminal lines (no wobble / no layout shift). Toggle in Look & Feel → Hero (`bootSequenceEnabled`, default ON).
 
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).

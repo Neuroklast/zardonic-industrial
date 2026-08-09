@@ -5,7 +5,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useLenisContext } from '@/contexts/LenisContext'
 import { useLocale } from '@/contexts/LocaleContext'
-import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 import { parseSectionsDraft } from '@/lib/apply-sections-draft'
@@ -181,25 +180,20 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
           </div>
         </nav>
 
-        <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-2">
-          <div className="hidden sm:block">
-            <LanguageSwitcher />
-          </div>
-          <button
-            type="button"
-            className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground md:hidden"
-            onClick={() => setOpen((value) => !value)}
-            aria-label={open ? t('aria.closeMenu') : t('aria.openMenu')}
-            aria-expanded={open}
+        <button
+          type="button"
+          className="ml-auto flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground md:hidden"
+          onClick={() => setOpen((value) => !value)}
+          aria-label={open ? t('aria.closeMenu') : t('aria.openMenu')}
+          aria-expanded={open}
+        >
+          <span
+            className="text-sm tracking-widest"
+            style={{ fontFamily: 'var(--font-mono, monospace)' }}
           >
-            <span
-              className="text-sm tracking-widest"
-              style={{ fontFamily: 'var(--font-mono, monospace)' }}
-            >
-              {open ? '[×]' : '[≡]'}
-            </span>
-          </button>
-        </div>
+            {open ? '[×]' : '[≡]'}
+          </span>
+        </button>
       </div>
 
       {open ? (
@@ -216,9 +210,6 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
               linkClass={mobileLinkClass}
             />
           ))}
-          <div className="mt-2 border-t border-border/40 pt-3 sm:hidden">
-            <LanguageSwitcher />
-          </div>
         </nav>
       ) : null}
     </header>

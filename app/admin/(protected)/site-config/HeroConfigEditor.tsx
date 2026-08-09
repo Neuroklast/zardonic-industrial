@@ -42,6 +42,9 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
     typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.35,
   )
+  const [bootSequenceEnabled, setBootSequenceEnabled] = useState<boolean>(
+    currentValue.bootSequenceEnabled === false ? false : true,
+  )
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -58,6 +61,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageStoragePath: backgroundImageStoragePath || undefined,
       backgroundImageUrl: backgroundImageUrl || undefined,
       backgroundImageOpacity,
+      bootSequenceEnabled,
     }),
     [
       headline,
@@ -69,6 +73,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageStoragePath,
       backgroundImageUrl,
       backgroundImageOpacity,
+      bootSequenceEnabled,
     ],
   )
 
@@ -213,6 +218,35 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
           </SliderPrimitive.Root>
         </div>
+
+        <div className="flex flex-wrap items-start justify-between gap-3 pt-2 border-t border-zinc-800">
+          <div>
+            <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Wordmark boot sequence</p>
+            <p className="text-xs text-zinc-500 mt-1 max-w-sm">
+              Short filmic entrance (~1.2s): scan reveal, RGB fringe, mini load bar and micro terminal lines. Off =
+              logo shows immediately.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBootSequenceEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              bootSequenceEnabled ? 'bg-red-600' : 'bg-zinc-700'
+            }`}
+            role="switch"
+            aria-checked={bootSequenceEnabled}
+            aria-label="Enable wordmark boot sequence"
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                bootSequenceEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+        <p className="text-xs font-mono text-zinc-400">
+          Boot sequence: {bootSequenceEnabled ? 'ON' : 'OFF'}
+        </p>
       </div>
 
       <div className="flex items-center gap-3 pt-1">
