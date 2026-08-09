@@ -1,8 +1,35 @@
 import type { Metadata } from 'next'
+import { Orbitron, Share_Tech_Mono, Space_Mono } from 'next/font/google'
 import { createClient } from '@/lib/supabaseServer'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 import { Providers } from './providers'
 import './globals.css'
+
+/**
+ * Self-hosted at build time via next/font — no runtime request to Google.
+ * Required for DE/GDPR (no third-party font CDN without consent).
+ */
+const fontOrbitron = Orbitron({
+  subsets: ['latin'],
+  weight: ['400', '700', '900'],
+  variable: '--font-orbitron',
+  display: 'swap',
+})
+
+const fontShareTechMono = Share_Tech_Mono({
+  subsets: ['latin'],
+  weight: '400',
+  variable: '--font-share-tech-mono',
+  display: 'swap',
+})
+
+const fontSpaceMono = Space_Mono({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-space-mono',
+  display: 'swap',
+})
 
 export const revalidate = 60
 
@@ -46,16 +73,20 @@ export default async function RootLayout({
   const { customTranslations, analyticsConfig, languages } = await getPublicSiteBootstrap()
 
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>
+    <html
+      lang="en"
+      className={`${fontOrbitron.variable} ${fontShareTechMono.variable} ${fontSpaceMono.variable}`}
+    >
+      <body
+        className={fontSpaceMono.className}
+        style={
+          {
+            '--font-heading': `var(--font-orbitron), 'Orbitron', sans-serif`,
+            '--font-mono': `var(--font-share-tech-mono), var(--font-space-mono), 'Share Tech Mono', monospace`,
+            '--font-body': `var(--font-space-mono), 'Space Mono', ui-monospace, monospace`,
+          } as React.CSSProperties
+        }
+      >
         <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig} languages={languages}>
           {children}
         </Providers>

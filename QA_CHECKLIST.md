@@ -18,8 +18,11 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
 - [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles**
 - [ ] Footer: social icons readable size; legal links not micro-type; wrap on narrow screens
-- [ ] Cookie banner / preferences still reachable
-- [ ] Legal Notice + Privacy Policy routes render from Supabase legal config
+- [ ] Cookie banner / preferences still reachable; Reject focuses first action; Escape closes customize
+- [ ] Legal Notice + Privacy Policy routes render from Supabase legal config (EN + DE via language switcher)
+- [ ] Incomplete legal fields: admin checklist red + public notice; complete: no warning
+- [ ] Network: no request to fonts.googleapis.com / fonts.gstatic.com on cold load
+- [ ] Analytics Reject → no POST /api/analytics; Accept → events only after consent
 
 ## Public browse
 

@@ -4,7 +4,19 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import { parseLegalConfig, type LegalConfig } from '@/lib/legal-content'
+import {
+  getLegalCompleteness,
+  parseLegalConfig,
+  type LegalConfig,
+  type LegalRequiredField,
+} from '@/lib/legal-content'
+
+const FIELD_LABELS: Record<LegalRequiredField, string> = {
+  operatorName: 'Operator Name',
+  street: 'Street & Number',
+  zipCity: 'ZIP + City',
+  email: 'Email',
+}
 
 interface FieldDef {
   key: keyof LegalConfig
@@ -109,8 +121,41 @@ export function LegalConfigEditor({ currentValue }: LegalConfigEditorProps) {
     )
   }
 
+  const completeness = getLegalCompleteness(values)
+
   return (
     <div className="space-y-6 pb-24" data-admin-ui="true">
+      <section
+        className={`border rounded p-4 sm:p-6 space-y-3 ${
+          completeness.complete
+            ? 'border-green-900/60 bg-green-950/20'
+            : 'border-amber-800/60 bg-amber-950/20'
+        }`}
+      >
+        <h2 className="text-sm font-semibold text-zinc-200">Impressum completeness (§ 5 DDG)</h2>
+        <p className="text-xs text-zinc-500">
+          Required before go-live. Missing fields show placeholders on the public Legal Notice.
+        </p>
+        <ul className="space-y-1 font-mono text-xs">
+          {(['operatorName', 'street', 'zipCity', 'email'] as const).map((key) => {
+            const ok = !completeness.missing.includes(key)
+            return (
+              <li key={key} className={ok ? 'text-green-400' : 'text-amber-300'}>
+                {ok ? '✓' : '○'} {FIELD_LABELS[key]}
+              </li>
+            )
+          })}
+          <li className={completeness.hasResponsible ? 'text-green-400' : 'text-amber-300'}>
+            {completeness.hasResponsible ? '✓' : '○'} Responsible person (or operator name as fallback)
+          </li>
+        </ul>
+        {!completeness.complete && (
+          <p className="text-xs text-amber-200/90">
+            Save is still allowed, but production Legal Notice will warn visitors until complete.
+          </p>
+        )}
+      </section>
+
       <section className="border border-zinc-800 rounded p-4 sm:p-6 space-y-4">
         <div>
           <h2 className="text-sm font-semibold text-zinc-200">Operator Identity</h2>

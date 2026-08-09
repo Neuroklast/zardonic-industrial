@@ -100,6 +100,30 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy, privac
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Escape: close customize panel, or dismiss is not silent — user must choose.
+  // Escape only collapses details back to simple banner.
+  useEffect(() => {
+    if (!showBanner) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showDetails) {
+        e.preventDefault()
+        setShowDetails(false)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [showBanner, showDetails])
+
+  useEffect(() => {
+    if (!showBanner) return
+    const id = window.setTimeout(() => {
+      const root = document.querySelector('[data-cookie-banner]')
+      const btn = root?.querySelector<HTMLElement>('button')
+      btn?.focus()
+    }, 900)
+    return () => window.clearTimeout(id)
+  }, [showBanner])
+
   const saveConsent = useCallback((prefs: ConsentPreferences) => {
     writeStoredConsent(prefs)
     setShowBanner(false)
@@ -127,6 +151,7 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy, privac
           role="dialog"
           aria-modal="true"
           aria-labelledby="cookie-banner-title"
+          data-cookie-banner
           className="fixed bottom-0 left-0 right-0 bg-background/98 backdrop-blur-lg border-t-2 border-primary/30 p-4 md:p-6 shadow-2xl"
           style={{ zIndex: 'var(--z-system)' } as CSSProperties}
           initial={{ y: 100, opacity: 0 }}
@@ -168,6 +193,8 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy, privac
                     variant="ghost"
                     size="sm"
                     className="font-mono"
+                    aria-expanded={showDetails}
+                    aria-controls="cookie-prefs-panel"
                   >
                     {t('cookie.customize')}
                   </Button>
@@ -182,7 +209,7 @@ export function CookieConsent({ onPreferencesChange, onOpenPrivacyPolicy, privac
               </div>
             ) : (
               // ── Detailed preferences ───────────────────────────────────────
-              <div className="space-y-4">
+              <div id="cookie-prefs-panel" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 id="cookie-banner-title" className="text-base font-bold text-primary font-mono">
                     {t('cookie.privacyPrefs')}

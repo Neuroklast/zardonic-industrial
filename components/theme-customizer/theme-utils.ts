@@ -128,27 +128,18 @@ export const THEME_PRESETS: ThemePreset[] = [
   },
 ]
 
+/**
+ * Privacy-safe fonts only: system stacks + next/font self-hosted (Orbitron,
+ * Share Tech Mono, Space Mono). No runtime Google Fonts CDN (GDPR / DE).
+ * `google: true` is legacy flag; loadGoogleFont is a no-op.
+ */
 export const FONT_OPTIONS: FontOption[] = [
-  { label: 'JetBrains Mono', value: "'JetBrains Mono', monospace", google: false },
-  { label: 'Space Grotesk', value: "'Space Grotesk', sans-serif", google: false },
+  { label: 'Orbitron (self-hosted)', value: "var(--font-orbitron), 'Orbitron', sans-serif", google: false },
+  { label: 'Share Tech Mono (self-hosted)', value: "var(--font-share-tech-mono), 'Share Tech Mono', monospace", google: false },
+  { label: 'Space Mono (self-hosted)', value: "var(--font-space-mono), 'Space Mono', monospace", google: false },
   { label: 'System Mono', value: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', google: false },
   { label: 'System Sans', value: 'ui-sans-serif, system-ui, sans-serif', google: false },
   { label: 'System Serif', value: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif", google: false },
-  { label: 'Orbitron', value: "'Orbitron', sans-serif", google: true },
-  { label: 'Share Tech Mono', value: "'Share Tech Mono', monospace", google: true },
-  { label: 'VT323', value: "'VT323', monospace", google: true },
-  { label: 'Press Start 2P', value: "'Press Start 2P', monospace", google: true },
-  { label: 'Audiowide', value: "'Audiowide', sans-serif", google: true },
-  { label: 'Rajdhani', value: "'Rajdhani', sans-serif", google: true },
-  { label: 'Chakra Petch', value: "'Chakra Petch', sans-serif", google: true },
-  { label: 'Exo 2', value: "'Exo 2', sans-serif", google: true },
-  { label: 'Tektur', value: "'Tektur', sans-serif", google: true },
-  { label: 'Oxanium', value: "'Oxanium', sans-serif", google: true },
-  { label: 'Iceland', value: "'Iceland', monospace", google: true },
-  { label: 'Michroma', value: "'Michroma', sans-serif", google: true },
-  { label: 'Russo One', value: "'Russo One', sans-serif", google: true },
-  { label: 'Bruno Ace', value: "'Bruno Ace', sans-serif", google: true },
-  { label: 'Electrolize', value: "'Electrolize', sans-serif", google: true },
 ]
 
 export const DEFAULT_OVERLAY: OverlayEffect = { enabled: false, intensity: 0.5 }

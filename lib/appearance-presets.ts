@@ -128,7 +128,7 @@ export const BUILTIN_APPEARANCE_PRESETS: SavedAppearancePreset[] = [
 ]
 
 export const HEADING_FONT_OPTIONS: { label: string; value: string }[] = [
-  { label: 'Orbitron', value: "'Orbitron', sans-serif" },
+  { label: 'Orbitron (self-hosted)', value: "var(--font-orbitron), 'Orbitron', sans-serif" },
   { label: 'Rajdhani', value: "'Rajdhani', sans-serif" },
   { label: 'Exo 2', value: "'Exo 2', sans-serif" },
   { label: 'Audiowide', value: "'Audiowide', sans-serif" },

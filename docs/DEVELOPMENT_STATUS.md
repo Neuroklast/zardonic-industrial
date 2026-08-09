@@ -1,14 +1,16 @@
 # Development Status
 
-> **Last updated:** 2026-06-24  
-> **Phase:** Pre-launch — App Router + Supabase; legacy CMS/KV retired
+> **Last updated:** 2026-08-09  
+> **Phase:** Pre-launch — App Router + Supabase; audit remediation (legal/fonts/a11y)
 
 ## Quick status
 
 | Area | Status |
 |------|--------|
 | Public site (`app/page.tsx`) | Functional — Supabase-driven sections |
-| Legal pages | `/legal-notice`, `/privacy-policy` + `/admin/legal` |
+| Legal pages | `/legal-notice`, `/privacy-policy` EN+DE + `/admin/legal` completeness |
+| Fonts | Self-hosted `next/font` (no Google CDN runtime) |
+| E2E smoke | Playwright `e2e/smoke.spec.ts` |
 | Admin (`/admin/*`) | Functional — Supabase Auth |
 | Content DB | Supabase (`supabase/schema.sql`) |
 | Media | Cloudflare R2 |

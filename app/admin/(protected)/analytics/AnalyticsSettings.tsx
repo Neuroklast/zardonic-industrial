@@ -41,11 +41,17 @@ export function AnalyticsSettings({ initialConfig }: AnalyticsSettingsProps) {
         {status === 'error' && <span className="text-xs text-red-400">{errorMsg ?? 'Error'}</span>}
         {status === 'saving' && <span className="text-xs text-zinc-500">Saving…</span>}
       </div>
+      <p className="text-xs text-zinc-500 mb-3 font-mono leading-relaxed">
+        Events are sent only when the visitor has accepted analytics in the cookie banner (opt-in).
+        Reject / no choice = no tracking. Suggested retention for stored events: up to 90 days (see Privacy Policy).
+      </p>
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg divide-y divide-zinc-800">
         <div className="flex items-center justify-between p-4">
           <div>
             <p className="text-sm font-medium text-white">Enable Analytics</p>
-            <p className="text-xs text-zinc-400 mt-0.5">Disable to stop all client-side tracking.</p>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Master switch. Still requires visitor consent for any event to leave the browser.
+            </p>
           </div>
           <button
             type="button"
