@@ -123,6 +123,20 @@ export const SECTION_REGISTRY: SectionRegistryEntry[] = [
         disclosure: 'advanced',
       },
       {
+        path: 'sections.styleOverrides.hero.logoMaxHeight',
+        label: 'Wordmark size',
+        type: 'select',
+        options: [
+          { label: 'Small', value: 'clamp(4rem, 14vw, 8rem)' },
+          { label: 'Medium (default)', value: 'clamp(6rem, 22vw, 16rem)' },
+          { label: 'Large', value: 'clamp(8rem, 28vw, 22rem)' },
+          { label: 'Extra large', value: 'clamp(10rem, 36vw, 28rem)' },
+        ],
+        defaultValue: 'clamp(6rem, 22vw, 16rem)',
+        description: 'Maximum height of the hero wordmark / logo image. Use a sharp PNG/SVG for best quality.',
+        disclosure: 'basic',
+      },
+      {
         path: 'sections.styleOverrides.hero.paddingTop',
         label: 'Padding Top',
         type: 'text',

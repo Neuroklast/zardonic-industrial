@@ -56,7 +56,7 @@ describe('public section empty states', () => {
       </>,
     )
 
-    expect(screen.getByText(/credits and endorsements coming soon/i)).toBeInTheDocument()
+    expect(screen.getByText(/credits coming soon/i)).toBeInTheDocument()
     expect(screen.getByText(/gallery coming soon/i)).toBeInTheDocument()
     expect(screen.getByText(/music highlights coming soon/i)).toBeInTheDocument()
     expect(screen.getByText(/releases coming soon/i)).toBeInTheDocument()

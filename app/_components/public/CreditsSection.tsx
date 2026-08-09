@@ -13,20 +13,67 @@ interface PartnerItem {
   logoWhite?: boolean
 }
 
-function logoImageClassName(item: PartnerItem): string {
-  const base = 'h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14'
-  const useWhiteFill = item.logoWhite !== false
-  return useWhiteFill ? `logo-white ${base}` : `chromatic-hover ${base}`
-}
-
-function logoImageStyle(item: PartnerItem, logoBrightness?: number): React.CSSProperties {
-  if (item.logoWhite !== false) {
-    if (logoBrightness !== undefined) {
-      return { ['--logo-brightness' as string]: String(logoBrightness) }
-    }
-    return {}
+function PartnerLogo({
+  item,
+  logoBrightness,
+}: {
+  item: PartnerItem
+  logoBrightness?: number
+}) {
+  if (!item.logoUrl) {
+    return (
+      <m.span
+        className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground"
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+      >
+        {item.name}
+      </m.span>
+    )
   }
-  return logoBrightness !== undefined ? { filter: `brightness(${logoBrightness})` } : { opacity: 0.7 }
+
+  const useWhite = item.logoWhite !== false
+  const brightness = logoBrightness !== undefined ? Math.min(Math.max(logoBrightness, 0.2), 1) : 0.85
+
+  if (useWhite) {
+    // Alpha-aware white: mask solid white with the PNG alpha channel
+    return (
+      <m.span
+        role="img"
+        aria-label={item.name}
+        className="logo-white-mask h-10 w-24 max-w-full md:h-14 md:w-28"
+        style={
+          {
+            ['--logo-mask' as string]: `url("${item.logoUrl}")`,
+            ['--logo-brightness' as string]: String(brightness),
+          } as React.CSSProperties
+        }
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        whileHover={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+      />
+    )
+  }
+
+  return (
+    <m.img
+      src={item.logoUrl}
+      alt={item.name}
+      className="chromatic-hover h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14"
+      style={{ opacity: brightness }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: brightness, y: 0 }}
+      whileHover={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      loading="lazy"
+      decoding="async"
+    />
+  )
 }
 
 interface CreditsAndEndorsementsProps {
@@ -38,7 +85,15 @@ interface CreditsAndEndorsementsProps {
   logoBrightness?: number
 }
 
-function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; heading: string; logoBrightness?: number }) {
+function LogoGrid({
+  items,
+  heading,
+  logoBrightness,
+}: {
+  items: PartnerItem[]
+  heading: string
+  logoBrightness?: number
+}) {
   if (items.length === 0) return null
 
   return (
@@ -47,63 +102,27 @@ function LogoGrid({ items, heading, logoBrightness }: { items: PartnerItem[]; he
         // {heading}
       </div>
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-        {items.map((item, index) => {
-          const content = item.logoUrl ? (
-            <m.img
-              src={item.logoUrl}
-              alt={item.name}
-              className={logoImageClassName(item)}
-              style={logoImageStyle(item, logoBrightness)}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: logoBrightness !== undefined ? Math.min(logoBrightness + 0.3, 1) : 0.7, y: 0 }}
-              whileHover={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : (
-            <m.span
-              className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground"
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-            >
-              {item.name}
-            </m.span>
+        {items.map((item) => {
+          const content = (
+            <PartnerLogo item={item} logoBrightness={logoBrightness} />
           )
-
           const wrapperClassName = 'flex min-h-24 items-center justify-center p-2'
 
           return item.url ? (
-            <m.a
+            <a
               key={item.id}
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
+              className={wrapperClassName}
               aria-label={item.name}
-              title={item.name}
-              className={wrapperClassName}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
             >
               {content}
-            </m.a>
+            </a>
           ) : (
-            <m.div
-              key={item.id}
-              className={wrapperClassName}
-              title={item.name}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.08 }}
-            >
+            <div key={item.id} className={wrapperClassName}>
               {content}
-            </m.div>
+            </div>
           )
         })}
       </div>
@@ -119,22 +138,24 @@ export function CreditsSection({
   intro,
   logoBrightness,
 }: CreditsAndEndorsementsProps) {
-  const hasItems = credits.length > 0 || endorsements.length > 0 || partners.length > 0
   const title = formatSectionHeading(heading, 'credits')
+  const hasAny = credits.length > 0 || endorsements.length > 0 || partners.length > 0
 
   return (
-    <SectionWrapper id="credits" data-theme-color="primary accent card border">
-      <SectionHeading sectionId="credits" dataText={title}>{title}</SectionHeading>
+    <SectionWrapper id="credits" data-theme-color="foreground card border">
+      <SectionHeading sectionId="credits" dataText={title}>
+        {title}
+      </SectionHeading>
       <SectionIntro sectionId="credits">{intro}</SectionIntro>
 
-      {hasItems ? (
+      {hasAny ? (
         <div className="space-y-12">
           <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
           <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
-          <LogoGrid items={partners} heading="PARTNERS & FRIENDS" logoBrightness={logoBrightness} />
+          <LogoGrid items={partners} heading="PARTNERS" logoBrightness={logoBrightness} />
         </div>
       ) : (
-        <SectionEmpty label="Credits and endorsements coming soon" />
+        <SectionEmpty label="Credits coming soon" />
       )}
     </SectionWrapper>
   )

@@ -78,9 +78,25 @@ body {
   line-height: var(--body-line-height, 1.6);
 }
 
+/* Ensure appearance fonts win over Tailwind defaults everywhere on the public site */
+html {
+  --tw-font-mono: var(--font-mono, ui-monospace, monospace);
+}
+
 code, kbd, samp, pre {
   font-family: var(--font-mono);
   font-size: var(--mono-font-size, 0.875rem);
+}
+
+/* Map Tailwind font utilities to appearance CSS variables so admin font picks apply site-wide */
+.font-mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+.font-sans {
+  font-family: var(--font-body, ui-sans-serif, system-ui, sans-serif);
+}
+.font-heading {
+  font-family: var(--font-heading, 'Orbitron', sans-serif);
 }
 
 /* ── Admin UI Shield ──────────────────────────────────────────────────────────

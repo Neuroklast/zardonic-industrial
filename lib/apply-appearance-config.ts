@@ -13,6 +13,10 @@ export interface AppearanceConfigInput {
   crtEnabled?: boolean
   scanlineEnabled?: boolean
   noiseEnabled?: boolean
+  /** Film grain intensity 0–1 when noise is enabled. */
+  noiseIntensity?: number
+  /** Use denser film-grain pattern. */
+  filmGrain?: boolean
   accentColor?: string
   accentColorSecondary?: string
   vignetteOpacity?: number
@@ -213,6 +217,10 @@ export function applyAppearanceConfig(
     setVar(root, '--chromatic-strength', String(config.chromaticStrength), applied)
   }
 
+  if (typeof config.noiseIntensity === 'number') {
+    setVar(root, '--noise-opacity', String(config.noiseIntensity), applied)
+  }
+
   const sectionPanelOpacity =
     typeof config.sectionPanelOpacity === 'number'
       ? config.sectionPanelOpacity
@@ -244,6 +252,17 @@ export function applyAppearanceConfig(
 
   applyGlobalEffectsVisibility(config)
 
+  // Persist for FOUC-free restore on next load (public site after Save)
+  if (typeof window !== 'undefined' && Object.keys(applied).length > 0) {
+    try {
+      const existing = localStorage.getItem('nk-theme-cache')
+      const prev = existing ? (JSON.parse(existing) as Record<string, string>) : {}
+      localStorage.setItem('nk-theme-cache', JSON.stringify({ ...prev, ...applied }))
+    } catch {
+      // private mode / quota — ignore
+    }
+  }
+
   return applied
 }
 
@@ -266,4 +285,15 @@ export function applyGlobalEffectsVisibility(config: AppearanceConfigInput): voi
   if (typeof config.noiseEnabled === 'boolean') {
     setElementDisplay('.full-page-noise', config.noiseEnabled)
   }
+  if (typeof config.noiseIntensity === 'number') {
+    document.documentElement.style.setProperty('--noise-opacity', String(config.noiseIntensity))
+  }
+  document.querySelectorAll<HTMLElement>('.full-page-noise').forEach((el) => {
+    if (typeof config.filmGrain === 'boolean') {
+      el.classList.toggle('film-grain', config.filmGrain)
+    }
+    if (typeof config.noiseIntensity === 'number') {
+      el.style.setProperty('--noise-opacity', String(config.noiseIntensity))
+    }
+  })
 }

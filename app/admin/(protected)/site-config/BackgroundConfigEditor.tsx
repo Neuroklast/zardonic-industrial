@@ -167,6 +167,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       setErrorMsg(result.error)
     } else {
       setStatus('saved')
+      const { broadcastAdminRefresh } = await import('@/lib/admin-draft-channel')
+      broadcastAdminRefresh()
       router.refresh()
       setTimeout(() => setStatus('idle'), 2000)
     }

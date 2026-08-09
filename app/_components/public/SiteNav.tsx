@@ -82,27 +82,28 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
       className="fixed left-0 right-0 top-0 border-b border-border/60 bg-background/80 backdrop-blur-sm scanline-effect"
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-card">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 overflow-hidden px-card">
         <Link
           href="/"
           aria-label="Zardonic – Home"
-          className="logo-glitch relative z-10 max-w-[7.5rem] shrink-0 overflow-hidden hover-chromatic-image"
+          className="relative z-0 flex h-9 w-[5.5rem] shrink-0 items-center overflow-hidden sm:w-[6.5rem]"
         >
           <Image
             src={LOGO_IMAGE}
             alt="Zardonic"
-            width={120}
-            height={40}
-            className="h-9 w-auto max-w-full object-contain object-left brightness-110"
+            width={104}
+            height={36}
+            className="h-8 w-auto max-h-8 max-w-full object-contain object-left brightness-110"
             priority
           />
         </Link>
 
         <nav
-          className="hidden min-w-0 flex-1 justify-end overflow-x-auto md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="relative z-10 hidden min-w-0 flex-1 justify-end overflow-x-auto md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           aria-label={ariaLabel('aria.mainNav', locale)}
+          style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
-          <div className="flex items-center gap-2 px-0.5 sm:gap-3 lg:gap-4">
+          <div className="flex items-center gap-2 pl-2 sm:gap-3 lg:gap-4">
             {links.map((item) => (
               <a
                 key={item.sectionId}

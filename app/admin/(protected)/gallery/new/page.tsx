@@ -37,12 +37,20 @@ export default function NewGalleryImagePage() {
           onError={(msg) => setError(msg)}
         />
         <div>
-          <label className="block text-sm text-zinc-300 mb-1">Alt Text</label>
-          <input name="alt" className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
+          <label className="block text-sm text-zinc-300 mb-1">Alt Text (optional)</label>
+          <input
+            name="alt"
+            placeholder="Describe the image for accessibility"
+            className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none"
+          />
         </div>
         <div>
-          <label className="block text-sm text-zinc-300 mb-1">Caption</label>
-          <input name="caption" className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none" />
+          <label className="block text-sm text-zinc-300 mb-1">Caption (optional)</label>
+          <input
+            name="caption"
+            placeholder="Optional caption"
+            className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none"
+          />
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <div className="flex gap-3">
