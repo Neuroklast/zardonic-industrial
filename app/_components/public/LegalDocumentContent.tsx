@@ -5,6 +5,8 @@ interface LegalDocumentContentProps {
   streamLabel: string
   sections: LegalSection[]
   isCustom?: boolean
+  incomplete?: boolean
+  incompleteMessage?: string
 }
 
 export function LegalDocumentContent({
@@ -12,6 +14,8 @@ export function LegalDocumentContent({
   streamLabel,
   sections,
   isCustom = false,
+  incomplete = false,
+  incompleteMessage,
 }: LegalDocumentContentProps) {
   return (
     <article className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
@@ -21,6 +25,15 @@ export function LegalDocumentContent({
           {title}
         </h1>
       </header>
+
+      {incomplete && incompleteMessage ? (
+        <div
+          role="status"
+          className="mb-6 border border-amber-700/60 bg-amber-950/40 px-4 py-3 font-mono text-xs text-amber-200/90"
+        >
+          {incompleteMessage}
+        </div>
+      ) : null}
 
       <div className="space-y-6 sm:space-y-8">
         {sections.map((section) => (

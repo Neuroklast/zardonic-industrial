@@ -1,6 +1,6 @@
 # GDPR Compliance Review — ZARDONIC Band Website
 
-**Last updated:** 2026-08-09
+**Last updated:** 2026-08-09 (audit remediation)
 
 ## Overview
 
@@ -10,12 +10,14 @@ This document reviews the GDPR compliance status of the ZARDONIC band website (N
 
 | Route | Content |
 |-------|---------|
-| `/legal-notice` | Operator details from `site_config.legal`, DDG/MStV boilerplate (English) |
-| `/privacy-policy` | GDPR template (Vercel, Supabase, R2, Resend, wsrv.nl, cookies, contact, newsletter, embeds); override via `privacyPolicyCustom` |
-| Cookie banner | Links to `/privacy-policy`; footer offers Cookie Preferences |
-| Admin | `/admin/legal` — structured operator fields + optional privacy override |
+| `/legal-notice` | Operator details from `site_config.legal`, DDG/MStV boilerplate (**EN + DE** via site locale) |
+| `/privacy-policy` | GDPR/BDSG/TDDDG template (Vercel, Supabase, R2, Resend, wsrv.nl, self-hosted fonts, analytics 90d retention, contact, newsletter, two-click embeds); override via `privacyPolicyCustom` |
+| Cookie banner | Opt-in analytics; links to `/privacy-policy`; footer Cookie Preferences |
+| Admin | `/admin/legal` — structured fields + **completeness checklist** + optional custom override |
 
 Legacy paths `/impressum`, `/privacy`, `/datenschutz` redirect to the routes above.
+
+**Operator actions:** see [OPERATOR_LAUNCH_CHECKLIST.md](./OPERATOR_LAUNCH_CHECKLIST.md) (fill Impressum fields, sign DPAs, verify consent). Templates are drafts, not legal advice.
 
 ## Data collection & processing
 
@@ -102,7 +104,7 @@ IP addresses are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage. Leg
 
 ## Compliance status
 
-**Overall: Good** — transparent policies, consent for cookies, Supabase as primary store with documented processors, pseudonymised security logging, automatic TTL on security data.
+**Overall: Good+** — bilingual legal templates, self-hosted fonts (no Google Fonts CDN), consent for analytics, two-click embeds, admin legal completeness UI, documented processors + 90-day analytics retention language. Remaining: operator must complete real identity data + DPAs; lawyer review recommended for DE production.
 
 ## Contact
 

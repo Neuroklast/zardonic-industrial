@@ -214,7 +214,10 @@ export function applyAppearanceConfig(
   }
 
   if (typeof config.chromaticStrength === 'number') {
-    setVar(root, '--chromatic-strength', String(config.chromaticStrength), applied)
+    const strength = Math.min(1, Math.max(0, config.chromaticStrength))
+    setVar(root, '--chromatic-strength', String(strength), applied)
+    // Full-page fringe scale (0–10); used by .global-chromatic-overlay
+    setVar(root, '--global-chromatic', String(strength * 10), applied)
   }
 
   if (typeof config.noiseIntensity === 'number') {
@@ -296,4 +299,26 @@ export function applyGlobalEffectsVisibility(config: AppearanceConfigInput): voi
       el.style.setProperty('--noise-opacity', String(config.noiseIntensity))
     }
   })
+
+  // Live chromatic slider: update root vars + show/hide global overlay in preview
+  if (typeof config.chromaticStrength === 'number') {
+    const strength = Math.min(1, Math.max(0, config.chromaticStrength))
+    const docRoot = document.documentElement
+    docRoot.style.setProperty('--chromatic-strength', String(strength))
+    docRoot.style.setProperty('--global-chromatic', String(strength * 10))
+    let layer = document.querySelector<HTMLElement>('[data-draft-target="global-chromatic"]')
+    if (strength > 0.01) {
+      if (!layer) {
+        layer = document.createElement('div')
+        layer.className = 'global-chromatic-overlay'
+        layer.setAttribute('data-draft-target', 'global-chromatic')
+        layer.setAttribute('aria-hidden', 'true')
+        document.body.appendChild(layer)
+      }
+      layer.style.setProperty('--global-chromatic', String(strength * 10))
+      layer.style.display = ''
+    } else if (layer) {
+      layer.style.display = 'none'
+    }
+  }
 }

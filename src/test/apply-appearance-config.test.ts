@@ -140,6 +140,7 @@ describe('applyAppearanceConfig', () => {
   it('applies chromatic strength CSS variable', () => {
     const applied = applyAppearanceConfig({ chromaticStrength: 0.25 }, root)
     expect(applied['--chromatic-strength']).toBe('0.25')
+    expect(applied['--global-chromatic']).toBe('2.5')
   })
 
   it('toggles global effect layers for live preview', () => {

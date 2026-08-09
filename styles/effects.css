@@ -31,8 +31,9 @@
 }
 
 /*
- * Nav: fixed icon cell → opacity crossfade to label.
- * Fixed 2.75rem box — no width expand, no translate/skew (no layout shift).
+ * Nav: fixed icon hit-target; label crossfades in on hover without clipping.
+ * Icon cell stays 2.75rem (no row layout shift). Label uses width:max-content
+ * + overflow:visible so full words (e.g. NEWSLETTER) are never truncated.
  */
 .nav-glitch-link {
   position: relative;
@@ -42,14 +43,15 @@
   width: 2.75rem;
   height: 2.75rem;
   flex-shrink: 0;
-  overflow: hidden;
+  overflow: visible;
   color: var(--muted-foreground, oklch(0.7 0 0));
-  transition: color 0.12s ease;
+  transition: color 0.12s ease, z-index 0s;
 }
 
 .nav-glitch-link:hover,
 .nav-glitch-link:focus-visible {
   color: var(--foreground, oklch(0.95 0 0));
+  z-index: 30;
 }
 
 .nav-glitch-link:focus-visible {
@@ -73,15 +75,22 @@
 
 .nav-glitch-label {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
   justify-content: center;
+  width: max-content;
+  max-width: none;
+  padding-inline: 0.2rem;
   font-size: 0.5625rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.12s ease;
@@ -101,6 +110,20 @@
   .nav-glitch-link:focus-visible .nav-glitch-label {
     text-shadow: none;
   }
+}
+
+/* Full-page chromatic fringe — driven by --global-chromatic (0–~10 from strength 0–1) */
+.global-chromatic-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-global-fx);
+  opacity: 1;
+  box-shadow:
+    inset calc(var(--global-chromatic, 0) * 1px) 0 calc(var(--global-chromatic, 0) * 2.5px)
+      color-mix(in srgb, var(--primary, #e11) 55%, transparent),
+    inset calc(var(--global-chromatic, 0) * -1px) 0 calc(var(--global-chromatic, 0) * 2.5px)
+      color-mix(in srgb, #20e0ff 50%, transparent);
 }
 
 .glitch-text {

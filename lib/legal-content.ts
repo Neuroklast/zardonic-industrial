@@ -104,6 +104,43 @@ export function getDataControllerLabel(config: LegalConfig): string {
   return config.operatorName || config.email || 'the website operator'
 }
 
+/** Required fields for a publishable Impressum / Legal Notice (§ 5 DDG). */
+export const LEGAL_REQUIRED_FIELDS = [
+  'operatorName',
+  'street',
+  'zipCity',
+  'email',
+] as const satisfies ReadonlyArray<keyof LegalConfig>
+
+export type LegalRequiredField = (typeof LEGAL_REQUIRED_FIELDS)[number]
+
+export interface LegalCompleteness {
+  complete: boolean
+  missing: LegalRequiredField[]
+  /** Responsible person falls back to operator — warn only if operator also empty. */
+  hasResponsible: boolean
+}
+
+export function getLegalCompleteness(config: LegalConfig): LegalCompleteness {
+  const missing = LEGAL_REQUIRED_FIELDS.filter((key) => {
+    const v = config[key]
+    return typeof v !== 'string' || !v.trim()
+  })
+  const hasResponsible = Boolean(
+    (config.responsibleName && config.responsibleName.trim()) ||
+      (config.operatorName && config.operatorName.trim()),
+  )
+  return {
+    complete: missing.length === 0 && hasResponsible,
+    missing,
+    hasResponsible,
+  }
+}
+
+export function isLegalConfigComplete(config: LegalConfig): boolean {
+  return getLegalCompleteness(config).complete
+}
+
 export async function loadLegalConfig(
   supabase: SupabaseClient,
 ): Promise<LegalConfig> {

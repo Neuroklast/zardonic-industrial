@@ -1,13 +1,17 @@
 /**
  * font-loader.ts
  *
- * Shared utilities for loading Google Fonts and extracting font names from
- * CSS font-stack strings. Used by use-app-theme.ts, AppearanceTab.tsx, and
- * ThemeCustomizerDialog.tsx.
+ * Font name helpers for theme/appearance. Remote Google Fonts injection is
+ * disabled for GDPR (DE case law on third-party font CDNs without consent).
+ * Core site fonts are self-hosted via next/font in app/layout.tsx.
  */
 
-/** Track already-injected Google Fonts links so we don't duplicate them. */
-const _loadedFonts = new Set<string>()
+/** Fonts bundled at build time with next/font (no network at runtime). */
+export const SELF_HOSTED_FONT_NAMES = new Set([
+  'Orbitron',
+  'Share Tech Mono',
+  'Space Mono',
+])
 
 /** Extract the first font-family name from a CSS font stack string.
  *  E.g. "'Orbitron', sans-serif" → "Orbitron"
@@ -21,19 +25,26 @@ export function extractGoogleFontName(fontValue: string): string | null {
     'Georgia', 'Cambria', 'Times New Roman', 'Times', 'Arial',
     'Helvetica Neue', 'Helvetica',
   ])
-  // Strip quotes and grab the first token
   const first = fontValue.replace(/['"]/g, '').split(',')[0].trim()
   if (!first || systemFonts.has(first)) return null
   return first
 }
 
-/** Dynamically inject a Google Fonts stylesheet if not already loaded. */
+/**
+ * @deprecated No-op. Google Fonts CDN is not loaded at runtime (GDPR).
+ * Self-hosted stacks only. Kept for call-site compatibility.
+ */
 export function loadGoogleFont(fontName: string): void {
-  if (_loadedFonts.has(fontName)) return
-  _loadedFonts.add(fontName)
-  const family = fontName.replace(/ /g, '+')
-  const link = document.createElement('link')
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${family}:wght@300;400;500;700;900&display=swap`
-  document.head.appendChild(link)
+  if (process.env.NODE_ENV === 'development' && fontName && !SELF_HOSTED_FONT_NAMES.has(fontName)) {
+    console.info(
+      `[fonts] Skipping remote load for "${fontName}" — use self-hosted / system stacks only (GDPR).`,
+    )
+  }
+}
+
+/** True when the stack only uses self-hosted or system fonts (no third-party CDN needed). */
+export function isPrivacySafeFontStack(fontValue: string): boolean {
+  const name = extractGoogleFontName(fontValue)
+  if (!name) return true
+  return SELF_HOSTED_FONT_NAMES.has(name)
 }

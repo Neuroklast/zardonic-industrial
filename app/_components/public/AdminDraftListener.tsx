@@ -28,9 +28,21 @@ function applyHeroDraft(value: Record<string, unknown>) {
     typeof value.logoImageUrl === 'string' && value.logoImageUrl
       ? value.logoImageUrl
       : DEFAULT_HERO_LOGO_URL
+  const logoMax =
+    typeof value.logoMaxHeight === 'string' && value.logoMaxHeight
+      ? value.logoMaxHeight
+      : typeof value.logoMaxHeightRem === 'number'
+        ? `${value.logoMaxHeightRem}rem`
+        : null
   document.querySelectorAll<HTMLImageElement>('[data-draft-target="hero-logo"]').forEach((img) => {
     img.src = logoUrl
+    if (logoMax) img.style.maxHeight = logoMax
   })
+  if (logoMax) {
+    document.querySelectorAll<HTMLElement>('.hero-logo-stage, .hero-logo-glitch').forEach((el) => {
+      el.style.maxHeight = logoMax
+    })
+  }
 
   const heroBgEl = document.querySelector<HTMLElement>('[data-draft-target="hero-bg-image"]')
   if (heroBgEl) {

@@ -38,7 +38,7 @@ const SITE_CONFIG_TABS: AdminHelpEntry[] = [
     id: 'site-config-hero',
     title: 'Hero Section',
     description:
-      'Edit headline, tagline, CTA button, hero background image/video, and the wordmark logo. Upload images with pan/zoom crop; files are optimized to WebP.',
+      'Edit headline, tagline, CTA button, hero background image/video, wordmark logo and wordmark size (max height). Upload images with pan/zoom crop; files are optimized to WebP.',
     href: `${SITE_CONFIG}?tab=hero`,
     group: 'Look & Feel',
     keywords: ['hero', 'headline', 'tagline', 'cta', 'logo', 'wordmark', 'banner', 'top'],

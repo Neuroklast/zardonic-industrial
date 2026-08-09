@@ -14,6 +14,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Hero logo entrance**: short filmic boot (~1.1s, client one-shot) — single logo + scan + mini load bar under image (no RGB ghost layers, no double hydrate play). Toggle in Look & Feel → Hero (`bootSequenceEnabled`, default ON).
 - **Buttons / event modal**: remove `cyber-border` corner brackets from ticket/contact buttons; CSS kills `::before`/`::after` corners on all button-like controls so the top-left square never returns.
 - **Smooth scroll + backgrounds**: Lenis no longer `setState`s every scroll frame (refs + `getScrollY`); scroll-video sync listens to Lenis and coalesces seeks (~30/s) so canvas/video effects do not kill wheel smoothness.
+- **Fonts (GDPR)**: Orbitron / Share Tech Mono / Space Mono via `next/font` self-host; runtime Google Fonts CDN disabled; theme picker privacy-safe stacks only.
+- **Legal DE+EN**: Impressum/Datenschutz templates locale-aware; admin completeness checklist; public incomplete banner; privacy covers self-hosted fonts + 90-day analytics retention.
+- **Cookie banner a11y**: focus first control, Escape closes customize panel.
+- **Analytics admin**: consent + retention copy.
+
+### Added
+- **Operator launch checklist**: `docs/OPERATOR_LAUNCH_CHECKLIST.md` (DPA, legal fields, production verify).
+- **E2E smoke**: Playwright (`npm run test:e2e`) for homepage, legal routes, cookie reject.
+
+### Fixed
+- **Nav labels never clip**: hover text uses `width: max-content` + `overflow: visible` (e.g. full “Newsletter”, not “ewslett”).
+- **Chromatic aberration slider**: drives a full-page fringe overlay (`--global-chromatic`) plus hover strength; live admin draft updates the overlay.
+
+### Added
+- **Hero wordmark size**: Look & Feel → Hero slider `logoMaxHeightRem` (4–20rem) with live preview; stored on `site_config.hero`.
 
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).
