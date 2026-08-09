@@ -178,7 +178,7 @@ export function GigOverlayContent({ data, artistName = '', decorativeTexts }: Gi
           <Button
             asChild
             size="lg"
-            className={`min-h-[44px] w-full font-mono uppercase tracking-wider hover-noise cyber-border sm:w-auto ${data.soldOut ? 'pointer-events-none opacity-50' : ''}`}
+            className={`min-h-[44px] w-full font-mono uppercase tracking-wider sm:w-auto ${data.soldOut ? 'pointer-events-none opacity-50' : ''}`}
           >
             <a href={data.ticketUrl} target="_blank" rel="noopener noreferrer">
               <Ticket className="mr-2 h-5 w-5" />
