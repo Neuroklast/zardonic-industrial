@@ -650,64 +650,21 @@
 }
 
 /*
- * L-corners on cards (hover) — thin gradient lines, never a filled square.
- * Same technique as .cyber-border (top-left + bottom-right).
+ * NO corner brackets on cards — period.
+ * Event/release cards use .cyber-card; any ::before top-left (border L or
+ * gradient L) reads as a solid square on hover (reported repeatedly).
+ * Hover = border color + glow only. Do not re-enable without explicit ask.
  */
 :is(.cyber-card)::before,
 :is(.cyber-card)::after {
-  content: '';
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-  z-index: 2;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  border: none;
-  background-color: transparent;
-}
-
-:is(.cyber-card)::before {
-  top: -1px;
-  left: -1px;
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white),
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white)
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white),
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white)
-    );
-  background-size: 14px 2px, 2px 14px;
-  background-position: top left, top left;
-  background-repeat: no-repeat;
-}
-
-:is(.cyber-card)::after {
-  bottom: -1px;
-  right: -1px;
-  background-image:
-    linear-gradient(
-      to left,
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white),
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white)
-    ),
-    linear-gradient(
-      to top,
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white),
-      color-mix(in srgb, var(--hover-color, var(--accent)) 90%, white)
-    );
-  background-size: 14px 2px, 2px 14px;
-  background-position: bottom right, bottom right;
-  background-repeat: no-repeat;
-}
-
-:is(.cyber-card):hover::before,
-:is(.cyber-card):hover::after {
-  opacity: 1;
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  width: 0 !important;
+  height: 0 !important;
+  border: none !important;
+  background: none !important;
+  background-image: none !important;
 }
 
 :is(.cyber-card):hover {
