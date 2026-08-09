@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import Image from 'next/image'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { VideoSourcePicker } from '@/app/admin/_components/VideoSourcePicker'
