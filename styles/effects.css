@@ -649,6 +649,20 @@
   opacity: 1;
 }
 
+/*
+ * Compact controls: never paint corner ticks.
+ * On small CTAs (Events → Tickets, View All, modal buttons) the 14×14
+ * pseudo still reads as a solid top-left square — even with gradient L-lines.
+ * Cards / larger frames keep L-corners; links & buttons do not.
+ */
+:is(button, a, [role='button'], [data-slot='button']).cyber-border::before,
+:is(button, a, [role='button'], [data-slot='button']).cyber-border::after,
+.cyber-btn.cyber-border::before,
+.cyber-btn.cyber-border::after {
+  content: none !important;
+  display: none !important;
+}
+
 :is(.scan-line) {
   position: absolute;
   width: 100%;

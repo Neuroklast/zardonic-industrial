@@ -33,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **E2E smoke**: Playwright (`npm run test:e2e`) for homepage, legal routes, cookie reject.
 
 ### Fixed
+- **Events Tickets button squares**: kill `.cyber-border` corner pseudos on `a`/`button`/`[data-slot=button]` again (L-corner restore in #317 had re-enabled them on compact CTAs).
 - **Glitch-grid scroll jank**: cache static grid; remove `getImageData` readback; cap DPR/FPS; always `perfMode` for glitch-grid so Lenis stays smooth.
 - **Nav labels never clip**: hover text uses `width: max-content` + `overflow: visible` (e.g. full “Newsletter”, not “ewslett”).
 - **Chromatic aberration slider**: drives a full-page fringe overlay (`--global-chromatic`) plus hover strength; live admin draft updates the overlay.
