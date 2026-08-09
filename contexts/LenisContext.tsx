@@ -109,7 +109,8 @@ export function LenisProvider({
   const [lenisInstance, setLenisInstance] = useState<Lenis | null>(null)
   /** React-visible snapshot — updated in lite mode only (not every Lenis frame). */
   const [scrollY, setScrollY] = useState(0)
-  const [velocityY, setVelocityY] = useState(0)
+  /** Snapshot only (lite mode / API); Lenis path keeps velocity in refs — no per-frame setState. */
+  const [velocityY] = useState(0)
 
   // Use refs for easing and duration so changing them doesn't destroy/recreate
   // Lenis mid-scroll (which would cause a visible jump).

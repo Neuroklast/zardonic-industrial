@@ -184,9 +184,8 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           <p className="text-xs text-zinc-500">
             Max height of the hero logo on the public homepage. Width scales with the image aspect ratio.
           </p>
-          {/* Live size preview */}
+          {/* Live size preview (plain img — admin only, no Next Image optimizer) */}
           <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={resolvedLogoPreview}
               alt=""

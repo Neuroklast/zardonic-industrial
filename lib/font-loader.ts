@@ -36,7 +36,6 @@ export function extractGoogleFontName(fontValue: string): string | null {
  */
 export function loadGoogleFont(fontName: string): void {
   if (process.env.NODE_ENV === 'development' && fontName && !SELF_HOSTED_FONT_NAMES.has(fontName)) {
-    // eslint-disable-next-line no-console
     console.info(
       `[fonts] Skipping remote load for "${fontName}" — use self-hosted / system stacks only (GDPR).`,
     )
