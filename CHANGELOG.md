@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Nav icon hover**: fixed cell size — opacity crossfade only (no expand / skew / layout shift).
 - **Hero logo entrance**: short filmic boot (~1.1s, client one-shot) — single logo + scan + mini load bar under image (no RGB ghost layers, no double hydrate play). Toggle in Look & Feel → Hero (`bootSequenceEnabled`, default ON).
 - **Buttons / event modal**: remove `cyber-border` corner brackets from ticket/contact buttons; CSS kills `::before`/`::after` corners on all button-like controls so the top-left square never returns.
+- **Smooth scroll + backgrounds**: Lenis no longer `setState`s every scroll frame (refs + `getScrollY`); scroll-video sync listens to Lenis and coalesces seeks (~30/s) so canvas/video effects do not kill wheel smoothness.
 
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).
