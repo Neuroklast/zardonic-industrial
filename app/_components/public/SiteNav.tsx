@@ -84,27 +84,27 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
       {/*
-        Logo sits in a reserved left slot (original size restored).
-        Nav has matching padding-left so labels never sit under the logo.
+        Normal flex row: logo is shrink-0 in document flow.
+        Never absolute-position over the links — that caused BIO under the logo.
       */}
-      <div className="relative mx-auto flex h-16 max-w-6xl items-center px-card">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-card md:gap-6">
         <Link
           href="/"
           aria-label="Zardonic – Home"
-          className="absolute left-[var(--spacing-card,1.25rem)] top-1/2 z-20 flex h-10 max-w-[7.5rem] -translate-y-1/2 items-center justify-start sm:max-w-[8.5rem]"
+          className="relative z-10 flex h-10 shrink-0 items-center"
         >
           <Image
             src={LOGO_IMAGE}
             alt="Zardonic"
             width={120}
             height={40}
-            className="h-9 w-auto max-h-9 max-w-full object-contain object-left brightness-110"
+            className="h-9 w-auto max-h-9 max-w-[7.5rem] object-contain object-left brightness-110 sm:max-w-[8.5rem]"
             priority
           />
         </Link>
 
         <nav
-          className="hidden min-w-0 flex-1 justify-end overflow-x-auto pl-[7.75rem] sm:pl-[9rem] md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="hidden min-w-0 flex-1 justify-end overflow-x-auto md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           aria-label={ariaLabel('aria.mainNav', locale)}
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
