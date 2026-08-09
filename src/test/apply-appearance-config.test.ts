@@ -35,6 +35,18 @@ describe('applyAppearanceConfig', () => {
     expect(applied['--font-heading']).toBe('system-ui, sans-serif')
   })
 
+  it('applies modalGlowColor to --modal-glow for CyberpunkOverlay', () => {
+    const applied = applyAppearanceConfig(
+      {
+        theme: {
+          modalGlowColor: 'oklch(0.60 0.20 250)',
+        },
+      },
+      root,
+    )
+    expect(applied['--modal-glow']).toBe('oklch(0.60 0.20 250)')
+  })
+
   it('applies theme font sizes to semantic typography tokens only', () => {
     const applied = applyAppearanceConfig(
       {

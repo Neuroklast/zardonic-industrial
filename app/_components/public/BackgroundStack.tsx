@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useLenisContext } from '@/contexts/LenisContext'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 import { toDirectImageUrl } from '@/lib/image-cache'
@@ -12,13 +13,19 @@ import {
   resolveActiveBackgroundVideoUrl,
   type MobileVideoMode,
 } from '@/lib/background-config'
+import {
+  isPublicBackgroundType,
+  parsePublicBackgroundType,
+  type PublicBackgroundType,
+} from '@/lib/public-background-types'
+import { attachScrollVideoSync } from '@/lib/scroll-video-sync'
 
 interface BackgroundStackProps {
   imageUrl?: string
   videoUrl?: string
   mobileVideoUrl?: string
   mobileVideoMode?: MobileVideoMode
-  backgroundType?: 'matrix' | 'circuit' | 'minimal'
+  backgroundType?: PublicBackgroundType
   imageOpacity?: number
   videoOpacity?: number
 }
@@ -28,19 +35,23 @@ const CircuitBackground = dynamic(
   () => import('@/components/CircuitBackground').then((module) => ({ default: module.CircuitBackground })),
   { ssr: false },
 )
+const TerminalBackground = dynamic(() => import('@/components/TerminalBackground'), { ssr: false })
+const DataStreamBackground = dynamic(() => import('@/components/DataStreamBackground'), { ssr: false })
+const StarField = dynamic(() => import('@/components/StarField'), { ssr: false })
+const GlitchGridBackground = dynamic(() => import('@/components/GlitchGridBackground'), { ssr: false })
 
 function AnimatedLayer({
   backgroundType,
   hasImage,
   perfMode = false,
 }: {
-  backgroundType: 'matrix' | 'circuit' | 'minimal'
+  backgroundType: PublicBackgroundType
   hasImage: boolean
   perfMode?: boolean
 }) {
   if (backgroundType === 'minimal') return null
 
-  const matrixDensity = perfMode ? 0.55 : 0.7
+  const matrixDensity = perfMode ? 0.5 : 0.7
   const matrixSpeed = perfMode ? 0.85 : 1.0
   const circuitSpeed = perfMode ? 0.8 : 1.0
   const circuitGlow = perfMode ? 0.75 : 0.8
@@ -54,17 +65,19 @@ function AnimatedLayer({
     >
       {backgroundType === 'circuit' ? (
         <CircuitBackground speed={circuitSpeed} glow={circuitGlow} />
+      ) : backgroundType === 'terminal' ? (
+        <TerminalBackground opacity={hasImage ? 0.45 : 0.6} perfMode={perfMode} />
+      ) : backgroundType === 'data-stream' ? (
+        <DataStreamBackground opacity={hasImage ? 0.4 : 0.55} perfMode={perfMode} />
+      ) : backgroundType === 'stars' ? (
+        <StarField transparent={hasImage} starCount={perfMode ? 80 : 140} starSpeed={perfMode ? 0.6 : 1} />
+      ) : backgroundType === 'glitch-grid' ? (
+        <GlitchGridBackground transparent={hasImage} />
       ) : (
         <MatrixRain transparent={hasImage} density={matrixDensity} speed={matrixSpeed} />
       )}
     </div>
   )
-}
-
-type DraftBackgroundType = 'matrix' | 'circuit' | 'minimal'
-
-function parseDraftBackgroundType(value: unknown): DraftBackgroundType | null {
-  return value === 'matrix' || value === 'circuit' || value === 'minimal' ? value : null
 }
 
 export function BackgroundStack({
@@ -78,17 +91,19 @@ export function BackgroundStack({
 }: BackgroundStackProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const isMobile = useIsMobile()
-  const [draftBackgroundType, setDraftBackgroundType] = useState<DraftBackgroundType | null>(null)
+  const { lenis } = useLenisContext()
+  const [draftBackgroundType, setDraftBackgroundType] = useState<PublicBackgroundType | null>(null)
 
   const onDraft = useCallback((key: AdminDraftKey, value: Record<string, unknown>) => {
     if (key !== 'background') return
-    const next = parseDraftBackgroundType(value.backgroundType)
-    if (next) setDraftBackgroundType(next)
+    if (isPublicBackgroundType(value.backgroundType)) {
+      setDraftBackgroundType(value.backgroundType)
+    }
   }, [])
 
   useAdminDraftListener(onDraft)
 
-  const effectiveBackgroundType = draftBackgroundType ?? backgroundType
+  const effectiveBackgroundType = draftBackgroundType ?? parsePublicBackgroundType(backgroundType)
   const mode = parseMobileVideoMode(mobileVideoMode)
 
   const activeVideoUrl = useMemo(
@@ -96,77 +111,27 @@ export function BackgroundStack({
     [videoUrl, mobileVideoUrl, mode, isMobile],
   )
 
+  // Smooth scroll-scrub: Lenis progress + rAF + seek coalescing
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || !activeVideoUrl) return
 
-    let frameId: number | null = null
-    let lastScrollY = 0
-    let scrollTimeout: number | null = null
-    const THROTTLE_MS = 180
-
-    const syncToScroll = () => {
-      frameId = null
-      const scrollY = window.scrollY
-      if (Math.abs(scrollY - lastScrollY) < 12) return
-      lastScrollY = scrollY
-
-      const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight
-      const progress = scrollableHeight > 0
-        ? Math.min(Math.max(scrollY / scrollableHeight, 0), 1)
-        : 0
-      const duration = Number.isFinite(video.duration) ? video.duration : 0
-
-      if (duration > 0) {
-        const targetTime = progress * duration
-        if (Math.abs(video.currentTime - targetTime) > 0.1) {
-          video.currentTime = targetTime
-        }
-      }
-    }
-
-    const scheduleSync = () => {
-      if (frameId !== null) return
-      frameId = window.requestAnimationFrame(syncToScroll)
-    }
-
-    scheduleSync()
-    let lastCall = 0
-    const throttledScroll = () => {
-      const now = Date.now()
-      if (now - lastCall > THROTTLE_MS) {
-        lastCall = now
-        scheduleSync()
-      }
-
-      if (scrollTimeout) clearTimeout(scrollTimeout)
-      scrollTimeout = window.setTimeout(() => {
-        if (frameId) {
-          cancelAnimationFrame(frameId)
-          frameId = null
-        }
-      }, 800)
-    }
-
-    window.addEventListener('scroll', throttledScroll, { passive: true })
-    video.addEventListener('loadedmetadata', scheduleSync)
-
-    const onVisibility = () => {
-      if (document.hidden && frameId) {
-        cancelAnimationFrame(frameId)
-        frameId = null
-      }
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-
-    return () => {
-      if (frameId !== null) cancelAnimationFrame(frameId)
-      if (scrollTimeout) clearTimeout(scrollTimeout)
-      window.removeEventListener('scroll', throttledScroll)
-      video.removeEventListener('loadedmetadata', scheduleSync)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [activeVideoUrl])
+    return attachScrollVideoSync({
+      video,
+      lenis: lenis
+        ? {
+            on: (e, cb) => {
+              lenis.on(e, cb as (s: { scroll: number }) => void)
+            },
+            off: (e, cb) => {
+              lenis.off(e, cb as (s: { scroll: number }) => void)
+            },
+            scroll: typeof lenis.scroll === 'number' ? lenis.scroll : undefined,
+          }
+        : null,
+      minDeltaSec: 1 / 48,
+    })
+  }, [activeVideoUrl, lenis])
 
   return (
     <>
@@ -213,7 +178,7 @@ export function BackgroundStack({
       <AnimatedLayer
         backgroundType={effectiveBackgroundType}
         hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
-        perfMode={Boolean(imageUrl)}
+        perfMode={Boolean(imageUrl) || Boolean(activeVideoUrl) || isMobile}
       />
     </>
   )

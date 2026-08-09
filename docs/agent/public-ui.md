@@ -86,6 +86,16 @@ File: `app/_components/public/SiteFooter.tsx`.
 - Any modal/overlay that covers the page must `lenis.stop()` on open and `lenis.start()` on close (implemented in `CyberpunkOverlay`).
 - Do not add a second Lenis instance.
 
+## Background layers & overlay glow
+
+| Topic | Rule |
+|-------|------|
+| Animation styles | `lib/public-background-types.ts` — matrix, circuit, **terminal**, **data-stream**, glitch-grid, stars, minimal |
+| Admin | Look & Feel → Background; do not hardcode only matrix/circuit |
+| Modal glow | Appearance → **Modal glow** (`theme.modalGlowColor` → CSS `--modal-glow`). Must be in theme parse keys so it persists |
+| Scroll video | Use `attachScrollVideoSync` — never set `currentTime` on every React `scrollY` state update |
+| Perf | Canvas effects: DPR cap, pause on `visibilitychange`, respect `prefers-reduced-motion`, lower density when image/video present |
+
 ---
 
 ## Visual verification checklist
