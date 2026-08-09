@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, memo } from 'react'
 import { shouldDisableVideoBackground } from '@/lib/device-capability'
 import { toDirectImageUrl } from '@/lib/image-cache'
-import { useLenisContext } from '@/contexts/LenisContext'
 import { useIsMobile } from '@/hooks/use-mobile'
 
 interface VideoBackgroundProps {
@@ -76,9 +75,6 @@ const VideoBackground = memo(function VideoBackground({
   const [useFallback, setUseFallback] = useState<boolean>(() => shouldDisableVideoBackground())
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Always call hooks unconditionally.
-  // scrollY is only used when scrollMode === true.
-  const { scrollY } = useLenisContext()
   const isMobile = useIsMobile()
 
   // Select desktop or mobile video URL based on viewport width
@@ -118,28 +114,28 @@ const VideoBackground = memo(function VideoBackground({
     }
   }, [useFallback, scrollMode, activeVideoUrl])
 
-  // ── Scroll mode: drive currentTime from Lenis scrollY ────────────────────
+  // ── Scroll mode: high-perf Lenis/window scrub (rAF + seek coalesce) ─────
   useEffect(() => {
     if (!scrollMode || useFallback) return
     const video = videoRef.current
     if (!video) return
 
-    const scrub = () => {
-      requestAnimationFrame(() => {
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-        const progress = maxScroll > 0 ? Math.max(0, Math.min(1, scrollY / maxScroll)) : 0
-        video.currentTime = progress * (video.duration || 0)
+    let detach: (() => void) | undefined
+    let cancelled = false
+
+    void import('@/lib/scroll-video-sync').then(({ attachScrollVideoSync }) => {
+      if (cancelled || !videoRef.current) return
+      detach = attachScrollVideoSync({
+        video: videoRef.current,
+        minDeltaSec: 1 / 48,
       })
-    }
+    })
 
-    // Video noch nicht bereit: warten und danach einmalig scrubben
-    if (video.readyState < 2) {
-      video.addEventListener('loadeddata', scrub, { once: true })
-      return () => video.removeEventListener('loadeddata', scrub)
+    return () => {
+      cancelled = true
+      detach?.()
     }
-
-    scrub()
-  }, [scrollY, scrollMode, useFallback])
+  }, [scrollMode, useFallback, activeVideoUrl])
 
   // ── Scroll mode: error handler ───────────────────────────────────────────
   useEffect(() => {

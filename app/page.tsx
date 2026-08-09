@@ -37,6 +37,7 @@ import {
   withoutExcludedSections,
   type SectionConfig,
 } from '@/lib/site-config-sections'
+import { parsePublicBackgroundType } from '@/lib/public-background-types'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -293,10 +294,7 @@ export default async function HomePage({
       ? bgConfig.backgroundVideoOpacity
       : undefined
 
-  const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
-  const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
-    ? rawBackgroundType
-    : 'matrix' // keep animated layers by default for the beloved current aesthetic
+  const backgroundType = parsePublicBackgroundType(bgConfig.backgroundType, 'matrix')
 
   const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.55 // slightly more visible album art
 

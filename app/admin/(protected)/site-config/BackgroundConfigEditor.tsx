@@ -13,10 +13,14 @@ import {
   parseMobileVideoMode,
   type MobileVideoMode,
 } from '@/lib/background-config'
+import {
+  PUBLIC_BACKGROUND_TYPE_LABELS,
+  PUBLIC_BACKGROUND_TYPES,
+  parsePublicBackgroundType,
+  type PublicBackgroundType,
+} from '@/lib/public-background-types'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
-
-type BackgroundType = 'matrix' | 'circuit' | 'minimal'
 
 interface BackgroundConfigEditorProps {
   currentValue: Record<string, unknown>
@@ -85,9 +89,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       typeof currentValue.video_mobile_url === 'string' ? currentValue.video_mobile_url : null,
     ) ?? '',
   )
-  const rawBgType = currentValue.backgroundType as string | undefined
-  const [backgroundType, setBackgroundType] = useState<BackgroundType>(
-    rawBgType === 'circuit' || rawBgType === 'minimal' || rawBgType === 'matrix' ? rawBgType : 'matrix',
+  const [backgroundType, setBackgroundType] = useState<PublicBackgroundType>(() =>
+    parsePublicBackgroundType(currentValue.backgroundType, 'matrix'),
   )
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
     typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.6,
@@ -179,7 +182,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <div>
         <h2 className="text-sm font-semibold text-zinc-200">Background</h2>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Site-wide image, scroll-synced video and animation layer. Preview updates live.
+          Site-wide image, scroll-synced video and animation layer. Preview updates live. Overlay glow
+          colour is under Appearance → Modal glow.
         </p>
       </div>
 
@@ -189,23 +193,26 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         </label>
         <RadioGroupPrimitive.Root
           value={backgroundType}
-          onValueChange={(v) => setBackgroundType(v as BackgroundType)}
-          className="flex flex-wrap gap-4"
+          onValueChange={(v) => setBackgroundType(parsePublicBackgroundType(v))}
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2"
         >
-          {(['matrix', 'circuit', 'minimal'] as const).map((type) => (
+          {PUBLIC_BACKGROUND_TYPES.map((type) => (
             <label key={type} className="flex items-center gap-1.5 cursor-pointer">
               <RadioGroupPrimitive.Item
                 value={type}
-                className="size-4 rounded-full border border-zinc-600 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500/20 focus:outline-none"
+                className="size-4 shrink-0 rounded-full border border-zinc-600 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500/20 focus:outline-none"
               >
                 <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
                   <span className="block size-2 rounded-full bg-red-500" />
                 </RadioGroupPrimitive.Indicator>
               </RadioGroupPrimitive.Item>
-              <span className="text-xs text-zinc-300 capitalize">{type}</span>
+              <span className="text-xs text-zinc-300">{PUBLIC_BACKGROUND_TYPE_LABELS[type]}</span>
             </label>
           ))}
         </RadioGroupPrimitive.Root>
+        <p className="text-[11px] text-zinc-500">
+          Terminal / data stream are GPU-light canvas layers (pause on hidden tab, reduced-motion off).
+        </p>
       </div>
 
       <OpacitySlider
@@ -237,7 +244,9 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <div className="space-y-4 pt-2 border-t border-zinc-800">
         <div>
           <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Desktop video</p>
-          <p className="text-xs text-zinc-500 mt-1">Scroll-synced background video on larger screens.</p>
+          <p className="text-xs text-zinc-500 mt-1">
+            Scroll-synced background video (faststart MP4 recommended for smooth seeking).
+          </p>
         </div>
 
         <VideoSourcePicker
