@@ -37,6 +37,8 @@ import {
   withoutExcludedSections,
   type SectionConfig,
 } from '@/lib/site-config-sections'
+import { parsePublicBackgroundType } from '@/lib/public-background-types'
+import { parseBackgroundVideoEnabled } from '@/lib/background-config'
 
 // Revalidate at most once per minute for quick admin updates
 export const revalidate = 60
@@ -272,16 +274,24 @@ export default async function HomePage({
     : '/assets/bg-placeholder.jpg'
   const backgroundUrl = resolveImageUrl(bgStoragePath, bgFallback) ?? bgFallback
 
-  // Background video (scroll-synced "scroll video") — keep for current look + make performant
+  // Background video (scroll-synced) — master switch backgroundVideoEnabled
   const bgVideoPath = typeof bgConfig.video_storage_path === 'string' ? bgConfig.video_storage_path : null
   const bgVideoFallback = typeof bgConfig.video_url === 'string' ? bgConfig.video_url : null
-  const backgroundVideoUrl = resolveImageUrl(bgVideoPath, bgVideoFallback)
+  const resolvedDesktopVideo = resolveImageUrl(bgVideoPath, bgVideoFallback)
 
   const bgMobileVideoPath =
     typeof bgConfig.video_mobile_storage_path === 'string' ? bgConfig.video_mobile_storage_path : null
   const bgMobileVideoFallback =
     typeof bgConfig.video_mobile_url === 'string' ? bgConfig.video_mobile_url : null
-  const backgroundMobileVideoUrl = resolveImageUrl(bgMobileVideoPath, bgMobileVideoFallback)
+  const resolvedMobileVideo = resolveImageUrl(bgMobileVideoPath, bgMobileVideoFallback)
+
+  const hasConfiguredVideo = Boolean(resolvedDesktopVideo || resolvedMobileVideo)
+  const backgroundVideoEnabled = parseBackgroundVideoEnabled(
+    bgConfig.backgroundVideoEnabled,
+    hasConfiguredVideo,
+  )
+  const backgroundVideoUrl = backgroundVideoEnabled ? resolvedDesktopVideo : null
+  const backgroundMobileVideoUrl = backgroundVideoEnabled ? resolvedMobileVideo : null
 
   const mobileVideoMode =
     bgConfig.mobileVideoMode === 'separate' || bgConfig.mobileVideoMode === 'off'
@@ -293,10 +303,7 @@ export default async function HomePage({
       ? bgConfig.backgroundVideoOpacity
       : undefined
 
-  const rawBackgroundType = typeof bgConfig.backgroundType === 'string' ? bgConfig.backgroundType : ''
-  const backgroundType = rawBackgroundType === 'circuit' || rawBackgroundType === 'minimal' || rawBackgroundType === 'matrix'
-    ? rawBackgroundType
-    : 'matrix' // keep animated layers by default for the beloved current aesthetic
+  const backgroundType = parsePublicBackgroundType(bgConfig.backgroundType, 'matrix')
 
   const backgroundOpacity = typeof bgConfig.backgroundImageOpacity === 'number' ? bgConfig.backgroundImageOpacity : 0.55 // slightly more visible album art
 
@@ -425,6 +432,7 @@ export default async function HomePage({
       videoUrl={backgroundVideoUrl ?? undefined}
       mobileVideoUrl={backgroundMobileVideoUrl ?? undefined}
       mobileVideoMode={mobileVideoMode}
+      videoEnabled={backgroundVideoEnabled}
       backgroundType={backgroundType}
       imageOpacity={backgroundOpacity}
       videoOpacity={backgroundVideoOpacity}

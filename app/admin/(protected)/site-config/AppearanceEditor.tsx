@@ -76,12 +76,33 @@ const DEFAULTS: AppearanceConfig = {
   savedPresets: [],
 }
 
+/** All theme keys we accept from storage (not only preset defaults — so modalGlowColor etc. persist). */
+const THEME_STRING_KEYS: Array<keyof AppearanceTheme> = [
+  'primaryColor',
+  'accentColor',
+  'backgroundColor',
+  'cardColor',
+  'foregroundColor',
+  'mutedForegroundColor',
+  'borderColor',
+  'secondaryColor',
+  'modalGlowColor',
+  'fontHeading',
+  'fontBody',
+  'fontMono',
+  'headingFontSize',
+  'bodyFontSize',
+  'monoFontSize',
+]
+
 function parseTheme(raw: unknown): AppearanceTheme {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_THEME }
   const source = raw as Record<string, unknown>
   const theme: AppearanceTheme = { ...DEFAULT_THEME }
-  for (const key of Object.keys(DEFAULT_THEME) as Array<keyof AppearanceTheme>) {
-    if (typeof source[key] === 'string') theme[key] = source[key] as string
+  for (const key of THEME_STRING_KEYS) {
+    if (typeof source[key] === 'string' && source[key].trim() !== '') {
+      theme[key] = source[key] as string
+    }
   }
   return theme
 }

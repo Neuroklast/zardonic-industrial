@@ -6,6 +6,16 @@ vi.mock('@/hooks/use-mobile', () => ({
   useIsMobile: vi.fn().mockReturnValue(false),
 }))
 
+vi.mock('@/contexts/LenisContext', () => ({
+  useLenisContext: () => ({
+    lenis: null,
+    scrollTo: vi.fn(),
+    scrollY: 0,
+    velocityY: 0,
+    isLiteMode: true,
+  }),
+}))
+
 import { useIsMobile } from '@/hooks/use-mobile'
 
 describe('public BackgroundStack', () => {
@@ -18,7 +28,10 @@ describe('public BackgroundStack', () => {
     vi.useFakeTimers()
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1000 })
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 })
-    Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: 3000 })
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: 3000,
+    })
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
       return window.setTimeout(() => callback(0), 0)
     })
@@ -30,17 +43,17 @@ describe('public BackgroundStack', () => {
   afterEach(() => {
     Object.defineProperty(window, 'innerHeight', { configurable: true, value: originalInnerHeight })
     Object.defineProperty(window, 'scrollY', { configurable: true, value: originalScrollY })
-    Object.defineProperty(document.documentElement, 'scrollHeight', { configurable: true, value: originalScrollHeight })
+    Object.defineProperty(document.documentElement, 'scrollHeight', {
+      configurable: true,
+      value: originalScrollHeight,
+    })
     vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
   it('renders a muted inline video without autoplay or loop', () => {
     const { container } = render(
-      <BackgroundStack
-        videoUrl="https://example.com/bg.mp4"
-        backgroundType="minimal"
-      />,
+      <BackgroundStack videoUrl="https://example.com/bg.mp4" backgroundType="minimal" />,
     )
 
     const video = container.querySelector('video') as HTMLVideoElement
@@ -54,15 +67,22 @@ describe('public BackgroundStack', () => {
 
   it('scrubs video currentTime from page scroll progress', () => {
     const { container } = render(
-      <BackgroundStack
-        videoUrl="https://example.com/bg.mp4"
-        backgroundType="minimal"
-      />,
+      <BackgroundStack videoUrl="https://example.com/bg.mp4" backgroundType="minimal" />,
     )
 
     const video = container.querySelector('video') as HTMLVideoElement
+    let currentTime = 0
     Object.defineProperty(video, 'duration', { configurable: true, value: 120 })
-    video.currentTime = 0
+    Object.defineProperty(video, 'readyState', { configurable: true, value: 4 })
+    Object.defineProperty(video, 'currentTime', {
+      configurable: true,
+      get: () => currentTime,
+      set: (value: number) => {
+        currentTime = value
+        // attachScrollVideoSync waits for seeked when seeking
+        video.dispatchEvent(new Event('seeked'))
+      },
+    })
 
     Object.defineProperty(window, 'scrollY', { configurable: true, value: 500 })
     fireEvent.scroll(window)
@@ -70,7 +90,8 @@ describe('public BackgroundStack', () => {
       vi.runAllTimers()
     })
 
-    expect(video.currentTime).toBe(30)
+    // progress = 500 / (3000-1000) = 0.25 → 30s
+    expect(currentTime).toBe(30)
   })
 
   it('applies configurable video opacity to the video wrapper', () => {

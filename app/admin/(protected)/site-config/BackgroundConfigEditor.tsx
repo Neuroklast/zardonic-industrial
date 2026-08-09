@@ -3,20 +3,24 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import Image from 'next/image'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { VideoSourcePicker } from '@/app/admin/_components/VideoSourcePicker'
 import { resolveImageUrl } from '@/lib/r2'
 import {
   DEFAULT_BACKGROUND_VIDEO_OPACITY,
+  parseBackgroundVideoEnabled,
   parseMobileVideoMode,
   type MobileVideoMode,
 } from '@/lib/background-config'
+import {
+  PUBLIC_BACKGROUND_TYPE_LABELS,
+  PUBLIC_BACKGROUND_TYPES,
+  parsePublicBackgroundType,
+  type PublicBackgroundType,
+} from '@/lib/public-background-types'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 import * as RadioGroupPrimitive from '@radix-ui/react-radio-group'
-
-type BackgroundType = 'matrix' | 'circuit' | 'minimal'
 
 interface BackgroundConfigEditorProps {
   currentValue: Record<string, unknown>
@@ -85,9 +89,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       typeof currentValue.video_mobile_url === 'string' ? currentValue.video_mobile_url : null,
     ) ?? '',
   )
-  const rawBgType = currentValue.backgroundType as string | undefined
-  const [backgroundType, setBackgroundType] = useState<BackgroundType>(
-    rawBgType === 'circuit' || rawBgType === 'minimal' || rawBgType === 'matrix' ? rawBgType : 'matrix',
+  const [backgroundType, setBackgroundType] = useState<PublicBackgroundType>(() =>
+    parsePublicBackgroundType(currentValue.backgroundType, 'matrix'),
   )
   const [backgroundImageOpacity, setBackgroundImageOpacity] = useState<number>(
     typeof currentValue.backgroundImageOpacity === 'number' ? currentValue.backgroundImageOpacity : 0.6,
@@ -96,6 +99,13 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
     typeof currentValue.backgroundVideoOpacity === 'number'
       ? currentValue.backgroundVideoOpacity
       : DEFAULT_BACKGROUND_VIDEO_OPACITY,
+  )
+  const hasInitialVideo = Boolean(
+    (typeof currentValue.video_storage_path === 'string' && currentValue.video_storage_path) ||
+      (typeof currentValue.video_url === 'string' && currentValue.video_url),
+  )
+  const [backgroundVideoEnabled, setBackgroundVideoEnabled] = useState<boolean>(() =>
+    parseBackgroundVideoEnabled(currentValue.backgroundVideoEnabled, hasInitialVideo),
   )
   const [mobileVideoMode, setMobileVideoMode] = useState<MobileVideoMode>(
     parseMobileVideoMode(currentValue.mobileVideoMode),
@@ -115,6 +125,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     }),
     [
       imageStoragePath,
@@ -127,6 +138,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     ],
   )
 
@@ -152,6 +164,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     }
   }
 
@@ -179,7 +192,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <div>
         <h2 className="text-sm font-semibold text-zinc-200">Background</h2>
         <p className="text-xs text-zinc-500 mt-0.5">
-          Site-wide image, scroll-synced video and animation layer. Preview updates live.
+          Site-wide image, scroll-synced video and animation layer. Preview updates live. Overlay glow
+          colour is under Appearance → Modal glow.
         </p>
       </div>
 
@@ -189,23 +203,26 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         </label>
         <RadioGroupPrimitive.Root
           value={backgroundType}
-          onValueChange={(v) => setBackgroundType(v as BackgroundType)}
-          className="flex flex-wrap gap-4"
+          onValueChange={(v) => setBackgroundType(parsePublicBackgroundType(v))}
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2"
         >
-          {(['matrix', 'circuit', 'minimal'] as const).map((type) => (
+          {PUBLIC_BACKGROUND_TYPES.map((type) => (
             <label key={type} className="flex items-center gap-1.5 cursor-pointer">
               <RadioGroupPrimitive.Item
                 value={type}
-                className="size-4 rounded-full border border-zinc-600 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500/20 focus:outline-none"
+                className="size-4 shrink-0 rounded-full border border-zinc-600 data-[state=checked]:border-red-500 data-[state=checked]:bg-red-500/20 focus:outline-none"
               >
                 <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
                   <span className="block size-2 rounded-full bg-red-500" />
                 </RadioGroupPrimitive.Indicator>
               </RadioGroupPrimitive.Item>
-              <span className="text-xs text-zinc-300 capitalize">{type}</span>
+              <span className="text-xs text-zinc-300">{PUBLIC_BACKGROUND_TYPE_LABELS[type]}</span>
             </label>
           ))}
         </RadioGroupPrimitive.Root>
+        <p className="text-[11px] text-zinc-500">
+          Terminal / data stream are GPU-light canvas layers (pause on hidden tab, reduced-motion off).
+        </p>
       </div>
 
       <OpacitySlider
@@ -217,6 +234,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <MediaSourcePicker
         label="Background image"
         currentUrl={imageUrl || null}
+        currentStoragePath={imageStoragePath || null}
         storagePrefix="background/images"
         editorAspectRatio={16 / 9}
         editorFitMode="cover"
@@ -225,38 +243,74 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
           if (publicUrl) setImageUrl(publicUrl)
           setErrorMsg(null)
         }}
+        onCleared={() => {
+          setImageStoragePath('')
+          setImageUrl('')
+          setErrorMsg(null)
+        }}
         onError={setErrorMsg}
       />
 
-      {imageUrl && (
-        <div className="relative w-32 h-20 rounded overflow-hidden border border-zinc-700">
-          <Image src={imageUrl} alt="Background preview" fill className="object-cover" sizes="128px" unoptimized />
-        </div>
-      )}
-
       <div className="space-y-4 pt-2 border-t border-zinc-800">
-        <div>
-          <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Desktop video</p>
-          <p className="text-xs text-zinc-500 mt-1">Scroll-synced background video on larger screens.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Desktop video</p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Scroll-synced background video (faststart MP4 recommended). Use the switch to turn it off without
+              deleting the file.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBackgroundVideoEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              backgroundVideoEnabled ? 'bg-red-600' : 'bg-zinc-700'
+            }`}
+            role="switch"
+            aria-checked={backgroundVideoEnabled}
+            aria-label="Enable background video"
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                backgroundVideoEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </div>
+        <p className="text-xs font-mono text-zinc-400">
+          Background video: {backgroundVideoEnabled ? 'ON' : 'OFF'}
+        </p>
 
         <VideoSourcePicker
           label="Desktop video (optional)"
           currentUrl={videoUrl || null}
+          currentStoragePath={videoStoragePath || null}
           storagePrefix="background/videos"
           onResolved={(path, publicUrl) => {
             setVideoStoragePath(path)
             if (publicUrl) setVideoUrl(publicUrl)
+            setBackgroundVideoEnabled(true)
+            setErrorMsg(null)
+          }}
+          onCleared={() => {
+            setVideoStoragePath('')
+            setVideoUrl('')
             setErrorMsg(null)
           }}
           onError={setErrorMsg}
         />
 
-        <OpacitySlider
-          label="Video opacity"
-          value={backgroundVideoOpacity}
-          onChange={setBackgroundVideoOpacity}
-        />
+        {backgroundVideoEnabled ? (
+          <OpacitySlider
+            label="Video opacity"
+            value={backgroundVideoOpacity}
+            onChange={setBackgroundVideoOpacity}
+          />
+        ) : (
+          <p className="text-xs text-zinc-500">
+            Video is off. Opacity is ignored until you turn video back on.
+          </p>
+        )}
       </div>
 
       <div className="space-y-3 pt-2 border-t border-zinc-800">
@@ -296,10 +350,16 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
           <VideoSourcePicker
             label="Mobile video"
             currentUrl={mobileVideoUrl || null}
+            currentStoragePath={mobileVideoStoragePath || null}
             storagePrefix="background/videos/mobile"
             onResolved={(path, publicUrl) => {
               setMobileVideoStoragePath(path)
               if (publicUrl) setMobileVideoUrl(publicUrl)
+              setErrorMsg(null)
+            }}
+            onCleared={() => {
+              setMobileVideoStoragePath('')
+              setMobileVideoUrl('')
               setErrorMsg(null)
             }}
             onError={setErrorMsg}

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useLenisContext } from '@/contexts/LenisContext'
 import { useLocale } from '@/contexts/LocaleContext'
-import { ariaLabel } from '@/lib/i18n'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 import { parseSectionsDraft } from '@/lib/apply-sections-draft'
@@ -15,6 +15,7 @@ import {
   type NavLink,
 } from '@/lib/nav-links'
 import { getNavIcon } from '@/lib/nav-icons'
+import { NAV_LABEL_I18N_KEYS } from '@/lib/locale-detect'
 import type { SectionConfig } from '@/lib/site-config-sections'
 
 const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
@@ -36,6 +37,15 @@ function draftToNavLinks(value: Record<string, unknown>): NavLink[] | null {
   return buildNavLinks(sections)
 }
 
+function useTranslatedNavLabel(sectionId: string, fallback: string): string {
+  const { t } = useLocale()
+  const key = NAV_LABEL_I18N_KEYS[sectionId]
+  if (!key) return fallback
+  const translated = t(key)
+  // t() returns key if missing — keep English compact fallback
+  return translated === key ? fallback : translated
+}
+
 function DesktopNavLink({
   item,
   onNavigate,
@@ -44,6 +54,7 @@ function DesktopNavLink({
   onNavigate: (href: string) => void
 }) {
   const Icon = getNavIcon(item.sectionId)
+  const label = useTranslatedNavLabel(item.sectionId, item.label)
 
   return (
     <a
@@ -54,14 +65,14 @@ function DesktopNavLink({
         onNavigate(item.href)
       }}
       className="nav-glitch-link"
-      aria-label={item.label}
-      title={item.label}
+      aria-label={label}
+      title={label}
     >
       <span className="nav-glitch-icon" aria-hidden>
         <Icon className="h-5 w-5" weight="regular" />
       </span>
-      <span className="nav-glitch-label" aria-hidden data-text={item.label}>
-        {item.label}
+      <span className="nav-glitch-label" aria-hidden data-text={label}>
+        {label}
       </span>
     </a>
   )
@@ -77,6 +88,7 @@ function MobileNavLink({
   linkClass: string
 }) {
   const Icon = getNavIcon(item.sectionId)
+  const label = useTranslatedNavLabel(item.sectionId, item.label)
 
   return (
     <a
@@ -89,7 +101,7 @@ function MobileNavLink({
       className={`inline-flex min-h-[48px] items-center gap-3 ${linkClass}`}
     >
       <Icon className="h-5 w-5 shrink-0" weight="regular" aria-hidden />
-      <span>{item.label}</span>
+      <span>{label}</span>
     </a>
   )
 }
@@ -100,7 +112,7 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
   const baseLinks = useMemo(() => initialLinks ?? defaultNavLinks(), [initialLinks])
   const links = draftLinks ?? baseLinks
   const { scrollTo } = useLenisContext()
-  const { locale } = useLocale()
+  const { t } = useLocale()
 
   const onDraft = useCallback((key: AdminDraftKey, value: Record<string, unknown>) => {
     if (key !== 'sections') return
@@ -141,11 +153,7 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
       className="fixed left-0 right-0 top-0 border-b border-border/60 bg-background/85 backdrop-blur-sm"
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
-      {/*
-        Logo flex sibling + icon-only desktop links so every section (incl. BIO)
-        stays visible. Hover/focus glitches icon → label text.
-      */}
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-card md:gap-4">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-card md:gap-3">
         <Link
           href="/"
           aria-label="Zardonic – Home"
@@ -163,7 +171,7 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
 
         <nav
           className="hidden min-w-0 flex-1 justify-end md:flex"
-          aria-label={ariaLabel('aria.mainNav', locale)}
+          aria-label={t('aria.mainNav')}
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
           <div className="flex flex-wrap items-center justify-end gap-0.5 sm:gap-1">
@@ -173,26 +181,31 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
           </div>
         </nav>
 
-        <button
-          type="button"
-          className="ml-auto flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground md:hidden"
-          onClick={() => setOpen((value) => !value)}
-          aria-label={open ? ariaLabel('aria.closeMenu', locale) : ariaLabel('aria.openMenu', locale)}
-          aria-expanded={open}
-        >
-          <span
-            className="text-sm tracking-widest"
-            style={{ fontFamily: 'var(--font-mono, monospace)' }}
+        <div className="ml-auto flex shrink-0 items-center gap-1 md:ml-2">
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
+          <button
+            type="button"
+            className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground md:hidden"
+            onClick={() => setOpen((value) => !value)}
+            aria-label={open ? t('aria.closeMenu') : t('aria.openMenu')}
+            aria-expanded={open}
           >
-            {open ? '[×]' : '[≡]'}
-          </span>
-        </button>
+            <span
+              className="text-sm tracking-widest"
+              style={{ fontFamily: 'var(--font-mono, monospace)' }}
+            >
+              {open ? '[×]' : '[≡]'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {open ? (
         <nav
           className="flex max-h-[min(70vh,28rem)] flex-col gap-1 overflow-y-auto border-t border-border/60 bg-background/95 px-card py-3 md:hidden"
-          aria-label={ariaLabel('aria.mobileNav', locale)}
+          aria-label={t('aria.mobileNav')}
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
           {links.map((item) => (
@@ -203,6 +216,9 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
               linkClass={mobileLinkClass}
             />
           ))}
+          <div className="mt-2 border-t border-border/40 pt-3 sm:hidden">
+            <LanguageSwitcher />
+          </div>
         </nav>
       ) : null}
     </header>
