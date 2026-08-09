@@ -31,8 +31,14 @@ describe('buildNavLinks', () => {
     expect(links.map((link) => link.sectionId)).toEqual(['contact'])
   })
 
-  it('uses custom labels when provided', () => {
-    const links = buildNavLinks([{ id: 'gigs', label: 'Live Dates', visible: true, order: 0 }])
-    expect(links[0].label).toBe('Live Dates')
+  it('uses compact default nav labels (full section titles stay on page headings)', () => {
+    const links = buildNavLinks([
+      { id: 'gigs', label: 'Tour Dates & Live Shows', visible: true, order: 0 },
+      { id: 'bio', label: 'Biography', visible: true, order: 1 },
+      { id: 'releases', label: 'Discography', visible: true, order: 2 },
+    ])
+    expect(links[0].label).toBe('Events')
+    expect(links[1].label).toBe('Bio')
+    expect(links[2].label).toBe('Releases')
   })
 })

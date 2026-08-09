@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useCallback, memo, useEffect, useRef } from 'react'
+import { useState, useCallback, memo, useEffect, useRef, useMemo } from 'react'
 import type React from 'react'
 import { motion, AnimatePresence, type PanInfo } from 'framer-motion'
 import { CaretLeft, CaretRight, X } from '@phosphor-icons/react'
+import { getRandomOverlayAnimation } from '@/lib/overlay-animations'
+import { useLenisContext } from '@/contexts/LenisContext'
 
 interface SwipeableGalleryProps {
   images: string[]
@@ -22,8 +24,12 @@ export const SwipeableGallery = memo(function SwipeableGallery({
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [[page, direction], setPage] = useState([initialIndex, 0])
   const preloadRef = useRef<Set<string>>(new Set())
+  const { lenis } = useLenisContext()
 
-  // Preload neighbors for snappy swipes
+  // Same open/close language as releases / events overlays
+  const anim = useMemo(() => getRandomOverlayAnimation(), [])
+
+  // Preload neighbors
   useEffect(() => {
     const toLoad = [
       images[currentIndex],
@@ -40,22 +46,42 @@ export const SwipeableGallery = memo(function SwipeableGallery({
     }
   }, [currentIndex, images])
 
+  // Hard scroll lock (body + Lenis) so the modal cannot be scrolled away
   useEffect(() => {
     const prevOverflow = document.body.style.overflow
+    const prevHtmlOverflow = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
 
+    lenis?.stop()
+
+    const preventScroll = (e: Event) => {
+      // Allow vertical wheel only inside the image area is unnecessary — block page scroll entirely
+      e.preventDefault()
+    }
+    // Capture phase so Lenis / nested handlers cannot scroll the page
+    window.addEventListener('wheel', preventScroll, { passive: false, capture: true })
+    window.addEventListener('touchmove', preventScroll, { passive: false, capture: true })
+
+    return () => {
+      document.body.style.overflow = prevOverflow
+      document.documentElement.style.overflow = prevHtmlOverflow
+      document.body.style.touchAction = ''
+      lenis?.start()
+      window.removeEventListener('wheel', preventScroll, { capture: true } as EventListenerOptions)
+      window.removeEventListener('touchmove', preventScroll, { capture: true } as EventListenerOptions)
+    }
+  }, [lenis])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
       if (event.key === 'ArrowRight') paginate(1)
       if (event.key === 'ArrowLeft') paginate(-1)
     }
-
     document.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = prevOverflow
-      document.removeEventListener('keydown', onKeyDown)
-    }
-    // paginate is stable enough via setState; include images.length
+    return () => document.removeEventListener('keydown', onKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onClose, images.length, currentIndex])
 
@@ -94,36 +120,43 @@ export const SwipeableGallery = memo(function SwipeableGallery({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 bg-black/95 backdrop-blur-md cyberpunk-overlay-bg"
+        initial={anim.backdrop.initial}
+        animate={anim.backdrop.animate}
+        exit={anim.backdrop.exit}
+        transition={anim.backdrop.transition ?? { duration: 0.25 }}
+        className="fixed inset-0 bg-black/90 backdrop-blur-sm cyberpunk-overlay-bg"
         style={{ zIndex: 'var(--z-modal-backdrop)' } as React.CSSProperties}
         onClick={onClose}
         aria-hidden
       />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 flex items-center justify-center p-3 md:p-8"
-        style={{ zIndex: 'var(--z-overlay)' } as React.CSSProperties}
+        initial={anim.modal.initial}
+        animate={anim.modal.animate}
+        exit={anim.modal.exit}
+        transition={anim.modal.transition ?? { duration: 0.35 }}
+        className="fixed inset-0 flex items-end justify-center p-0 pointer-events-none md:items-center md:p-8"
+        style={
+          {
+            zIndex: 'var(--z-overlay)',
+            perspective: '1000px',
+          } as React.CSSProperties
+        }
         role="dialog"
         aria-modal="true"
         aria-label="Gallery lightbox"
       >
-        {/* Cyber frame */}
-        <div className="cyber-border relative flex h-[min(88dvh,900px)] w-full max-w-6xl flex-col overflow-hidden border border-primary/30 bg-background/90 shadow-[0_0_60px_rgba(0,0,0,0.8)]">
+        <div
+          className="pointer-events-auto relative flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden border border-primary/30 bg-background/95 shadow-[0_0_60px_rgba(0,0,0,0.85)] md:h-[min(88dvh,900px)] md:rounded-[var(--radius)]"
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="pointer-events-none absolute left-0 top-0 h-3 w-3 border-l-2 border-t-2 border-primary" />
           <div className="pointer-events-none absolute right-0 top-0 h-3 w-3 border-r-2 border-t-2 border-primary" />
           <div className="pointer-events-none absolute bottom-0 left-0 h-3 w-3 border-b-2 border-l-2 border-primary" />
           <div className="pointer-events-none absolute bottom-0 right-0 h-3 w-3 border-b-2 border-r-2 border-primary" />
 
           <div
-            className="flex items-center justify-between border-b border-border/50 px-4 py-2"
+            className="flex shrink-0 items-center justify-between border-b border-border/50 px-4 py-2"
             style={{ fontFamily: 'var(--font-mono, monospace)' }}
           >
             <span className="text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
@@ -156,7 +189,7 @@ export const SwipeableGallery = memo(function SwipeableGallery({
                   src={images[currentIndex]}
                   alt=""
                   custom={direction}
-                  variants={variants}
+                  variants={imageVariants}
                   initial="enter"
                   animate="center"
                   exit="exit"
@@ -185,7 +218,7 @@ export const SwipeableGallery = memo(function SwipeableGallery({
             </button>
           </div>
 
-          <div className="flex justify-center gap-0.5 border-t border-border/50 px-2 py-2">
+          <div className="flex shrink-0 justify-center gap-0.5 border-t border-border/50 px-2 py-2">
             {images.map((_, index) => (
               <button
                 key={index}
@@ -210,7 +243,7 @@ export const SwipeableGallery = memo(function SwipeableGallery({
   )
 })
 
-const variants = {
+const imageVariants = {
   enter: (direction: number) => ({
     x: direction > 0 ? 320 : -320,
     opacity: 0,

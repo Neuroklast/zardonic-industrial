@@ -43,10 +43,13 @@ const NAV_DEFAULT_LABELS: Record<string, string> = {
   contact: 'Contact',
 }
 
+/**
+ * Compact labels for the top nav only.
+ * Full section titles (e.g. "Biography", "Discography") stay on the page headings;
+ * long titles were clipping under the logo ("…ography").
+ */
 export function resolveNavLabel(section: Pick<SectionConfig, 'id' | 'label'>): string {
-  const trimmed = section.label?.trim()
-  if (trimmed) return trimmed
-  return NAV_DEFAULT_LABELS[section.id] ?? section.id
+  return NAV_DEFAULT_LABELS[section.id] ?? section.label?.trim() ?? section.id
 }
 
 export function buildNavLinks(sections: SectionConfig[]): NavLink[] {
