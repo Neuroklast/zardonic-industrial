@@ -48,10 +48,32 @@ function getSessionId(): string {
   }
 }
 
+function detectDevice(): string {
+  if (typeof navigator === 'undefined') return 'unknown'
+  const ua = navigator.userAgent
+  if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) {
+    if (/iPad|Tablet/i.test(ua)) return 'tablet'
+    return 'mobile'
+  }
+  return 'desktop'
+}
+
+function detectBrowser(): string {
+  if (typeof navigator === 'undefined') return 'unknown'
+  const ua = navigator.userAgent
+  if (ua.includes('Edg/')) return 'edge'
+  if (ua.includes('Chrome/')) return 'chrome'
+  if (ua.includes('Firefox/')) return 'firefox'
+  if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'safari'
+  return 'other'
+}
+
 function buildMeta(): AnalyticsEventPayload['meta'] {
   if (typeof window === 'undefined') return undefined
   return {
     referrer: document.referrer || undefined,
+    device: detectDevice(),
+    browser: detectBrowser(),
     screenResolution: `${window.screen.width}x${window.screen.height}`,
     landingPage: window.location.pathname,
     sessionId: getSessionId(),

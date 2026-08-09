@@ -47,16 +47,27 @@ export function AnalyticsTracker({ config }: AnalyticsTrackerProps) {
       const clickable = target.closest('a,button,[role="button"]')
       if (!clickable) return
 
-      const rect = clickable.getBoundingClientRect()
-      const x = rect.width > 0 ? (event.clientX - rect.left) / rect.width : 0
-      const y = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0
+      // Page-relative heat coords for admin heatmap (x: 0–1 viewport, y: scroll-aware 0–2)
+      const docH = Math.max(
+        document.documentElement.scrollHeight,
+        document.body?.scrollHeight ?? 0,
+        1,
+      )
+      const scrollY = window.scrollY || document.documentElement.scrollTop || 0
+      const pageX = window.innerWidth > 0 ? event.clientX / window.innerWidth : 0
+      const pageY = (event.clientY + scrollY) / docH
 
       track({
         type: 'click',
-        target: clickable.id || clickable.getAttribute('href') || clickable.textContent?.trim().slice(0, 80) || 'unknown',
+        target:
+          clickable.id ||
+          clickable.getAttribute('href') ||
+          clickable.getAttribute('aria-label') ||
+          clickable.textContent?.trim().slice(0, 80) ||
+          'unknown',
         heatmap: {
-          x: Math.min(1, Math.max(0, x)),
-          y: Math.min(2, Math.max(0, y)),
+          x: Math.min(1, Math.max(0, pageX)),
+          y: Math.min(2, Math.max(0, pageY * 2)), // normalize long pages into 0–2 schema range
           page: pathname,
           elementTag: clickable.tagName.toLowerCase(),
         },
