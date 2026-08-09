@@ -646,47 +646,26 @@
   background-color: var(--surface-card-bg-fallback);
   background-color: var(--surface-card-bg);
   border: 1px solid var(--border);
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-:is(.cyber-card)::before {
-  content: '';
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  width: 6px;
-  height: 6px;
-  border-top: 2px solid var(--hover-color, var(--accent));
-  border-left: 2px solid var(--hover-color, var(--accent));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
+/*
+ * No corner brackets on cards — 6×6 ::before top-left reads as a solid square
+ * on event/release cards (user-reported on Events hover). Hover = border + glow only.
+ */
+:is(.cyber-card)::before,
 :is(.cyber-card)::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 6px;
-  height: 6px;
-  border-bottom: 2px solid var(--hover-color, var(--accent));
-  border-right: 2px solid var(--hover-color, var(--accent));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-:is(.cyber-card):hover::before,
-:is(.cyber-card):hover::after {
-  opacity: 1;
+  content: none !important;
+  display: none !important;
 }
 
 :is(.cyber-card):hover {
   border-color: rgba(99, 153, 166, 0.3);
   border-color: color-mix(in srgb, var(--hover-color, var(--accent)) 30%, transparent);
-  box-shadow: 
+  box-shadow:
     0 0 15px rgba(99, 153, 166, 0.1),
     inset 0 0 15px rgba(99, 153, 166, 0.03);
-  box-shadow: 
+  box-shadow:
     0 0 15px color-mix(in srgb, var(--hover-color, var(--accent)) 10%, transparent),
     inset 0 0 15px color-mix(in srgb, var(--hover-color, var(--accent)) 3%, transparent);
 }
