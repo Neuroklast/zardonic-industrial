@@ -74,9 +74,9 @@ Skipping docs because “the task was only code” is a process failure.
 ### Navigation / logo
 
 1. Logo is a **flex sibling** of the nav (`shrink-0`), not absolutely positioned over links.
-2. Nav link text comes from `resolveNavLabel` / `NAV_DEFAULT_LABELS` — **short** labels only.
+2. **Desktop nav:** icon per section (`lib/nav-icons.ts`); hover/focus glitches to **short** label (`lib/nav-links.ts`). Never rely on always-visible long text — BIO disappears when the row overflows.
 3. Section page headings may stay long (`Biography`, `Discography`) via section config — do **not** put those strings in the top nav.
-4. After any nav change: desktop screenshot or layout check that the first label (usually **BIO**) is fully visible beside the logo.
+4. After any nav change: every visible section has a desktop icon (including **bio**); mobile menu lists icon + label.
 
 ### Modals / lightboxes
 

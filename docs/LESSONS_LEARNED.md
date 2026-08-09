@@ -36,6 +36,7 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-08-09 | grok/nav-icon-glitch | Grok | Always-visible text nav labels still push BIO off-screen with many sections. Desktop: icon-only row + hover glitch to short label; mobile: icon+text. | UX/a11y | 🟠 High |
 | 2026-08-09 | grok/public-ui-firefight | Grok | Claiming “fixed” while the PR is still open leaves the user on broken Production. Definition of done = merge + Vercel Production SHA + hard-refresh verify. | Process | 🔴 Critical |
 | 2026-08-09 | grok/public-ui-firefight | Grok | Absolute-positioned nav logo + padding “slot” still lets BIO/labels sit under the wordmark when items overflow. Logo must stay a flex `shrink-0` sibling. | UX/a11y | 🔴 Critical |
 | 2026-08-09 | grok/public-ui-firefight | Grok | CSS `brightness(0) invert(1)` on partner PNGs with baked white backgrounds paints a solid white rectangle (QUESTEC). Use canvas silhouette (`partner-logo-white.ts`); never invert as the primary white-logo technique. | UX/a11y | 🔴 Critical |

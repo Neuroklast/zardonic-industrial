@@ -8,8 +8,9 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 ## Public homepage
 
 - [ ] Hero loads; primary CTAs visible and tappable (min 44px)
-- [ ] Nav logo full size; first item (**BIO**) not clipped under logo
-- [ ] Nav labels are short (Bio / Releases / …), not full section titles
+- [ ] Nav logo full size; every section has a desktop **icon** (BIO not missing)
+- [ ] Desktop: hover/focus icon → glitch to short label; mobile: icon + text
+- [ ] Hover labels are short (Bio / Releases / …), not full section titles
 - [ ] Smooth scroll to sections works (Lenis); mobile hamburger works
 - [ ] Releases: open detail → **CyberpunkOverlay** chrome (corners, label, close)
 - [ ] Events/gigs: same overlay system as releases

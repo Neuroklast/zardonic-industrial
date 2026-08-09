@@ -14,6 +14,7 @@ import {
   defaultNavLinks,
   type NavLink,
 } from '@/lib/nav-links'
+import { getNavIcon } from '@/lib/nav-icons'
 import type { SectionConfig } from '@/lib/site-config-sections'
 
 const LOGO_IMAGE = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ==.webp'
@@ -33,6 +34,64 @@ function draftToNavLinks(value: Record<string, unknown>): NavLink[] | null {
     order: entry.order,
   }))
   return buildNavLinks(sections)
+}
+
+function DesktopNavLink({
+  item,
+  onNavigate,
+}: {
+  item: NavLink
+  onNavigate: (href: string) => void
+}) {
+  const Icon = getNavIcon(item.sectionId)
+
+  return (
+    <a
+      href={item.href}
+      data-draft-target={`nav-link-${item.sectionId}`}
+      onClick={(e) => {
+        e.preventDefault()
+        onNavigate(item.href)
+      }}
+      className="nav-glitch-link"
+      aria-label={item.label}
+      title={item.label}
+    >
+      <span className="nav-glitch-icon" aria-hidden>
+        <Icon className="h-5 w-5" weight="regular" />
+      </span>
+      <span className="nav-glitch-label" aria-hidden data-text={item.label}>
+        {item.label}
+      </span>
+    </a>
+  )
+}
+
+function MobileNavLink({
+  item,
+  onNavigate,
+  linkClass,
+}: {
+  item: NavLink
+  onNavigate: (href: string) => void
+  linkClass: string
+}) {
+  const Icon = getNavIcon(item.sectionId)
+
+  return (
+    <a
+      href={item.href}
+      data-draft-target={`nav-link-${item.sectionId}`}
+      onClick={(e) => {
+        e.preventDefault()
+        onNavigate(item.href)
+      }}
+      className={`inline-flex min-h-[48px] items-center gap-3 ${linkClass}`}
+    >
+      <Icon className="h-5 w-5 shrink-0" weight="regular" aria-hidden />
+      <span>{item.label}</span>
+    </a>
+  )
 }
 
 export function SiteNav({ links: initialLinks }: SiteNavProps) {
@@ -74,9 +133,8 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
     setOpen(false)
   }
 
-  // Compact nav labels free width — keep type readable (not sub-14px)
-  const linkClass =
-    'shrink-0 whitespace-nowrap text-[0.9375rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground hover-chromatic md:text-base md:tracking-[0.12em] lg:tracking-[0.14em]'
+  const mobileLinkClass =
+    'shrink-0 whitespace-nowrap text-[0.9375rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground hover-chromatic'
 
   return (
     <header
@@ -84,10 +142,10 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
       {/*
-        Normal flex row: logo is shrink-0 in document flow.
-        Never absolute-position over the links — that caused BIO under the logo.
+        Logo flex sibling + icon-only desktop links so every section (incl. BIO)
+        stays visible. Hover/focus glitches icon → label text.
       */}
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-card md:gap-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-card md:gap-4">
         <Link
           href="/"
           aria-label="Zardonic – Home"
@@ -104,24 +162,13 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
         </Link>
 
         <nav
-          className="hidden min-w-0 flex-1 justify-end overflow-x-auto md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="hidden min-w-0 flex-1 justify-end md:flex"
           aria-label={ariaLabel('aria.mainNav', locale)}
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
-          <div className="flex items-center gap-x-3 gap-y-1 px-0.5 lg:gap-x-4 xl:gap-x-5">
+          <div className="flex flex-wrap items-center justify-end gap-0.5 sm:gap-1">
             {links.map((item) => (
-              <a
-                key={item.sectionId}
-                href={item.href}
-                data-draft-target={`nav-link-${item.sectionId}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  navigateTo(item.href)
-                }}
-                className={`inline-flex min-h-[44px] items-center ${linkClass}`}
-              >
-                {item.label}
-              </a>
+              <DesktopNavLink key={item.sectionId} item={item} onNavigate={navigateTo} />
             ))}
           </div>
         </nav>
@@ -149,18 +196,12 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
           {links.map((item) => (
-            <a
+            <MobileNavLink
               key={item.sectionId}
-              href={item.href}
-              data-draft-target={`nav-link-${item.sectionId}`}
-              onClick={(e) => {
-                e.preventDefault()
-                navigateTo(item.href)
-              }}
-              className={`inline-flex min-h-[48px] items-center ${linkClass}`}
-            >
-              {item.label}
-            </a>
+              item={item}
+              onNavigate={navigateTo}
+              linkClass={mobileLinkClass}
+            />
           ))}
         </nav>
       ) : null}
