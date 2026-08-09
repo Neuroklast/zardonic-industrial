@@ -418,9 +418,15 @@
 .partner-logo-white,
 .logo-white,
 .logo-white-mask {
+  /* Fallback filter path when canvas processing is unavailable */
   filter: brightness(0) invert(1);
   transition: filter 0.08s ease, opacity 0.2s ease;
   background: transparent !important;
+}
+
+/* Canvas-processed logos are already pure white + alpha — no invert filter */
+img.partner-logo-white[src^='data:image'] {
+  filter: none;
 }
 
 .partner-logo-white:hover,
@@ -431,6 +437,13 @@
     drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
     drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
   animation: chromatic-pulse-logo-img 0.15s ease;
+}
+
+img.partner-logo-white[src^='data:image']:hover {
+  filter:
+    drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
+    drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
+  animation: chromatic-pulse-logo-processed 0.15s ease;
 }
 
 @keyframes chromatic-pulse-logo-img {
@@ -448,10 +461,28 @@
   }
 }
 
+@keyframes chromatic-pulse-logo-processed {
+  0%, 100% {
+    filter:
+      drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
+      drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
+  }
+  50% {
+    filter:
+      drop-shadow(3px 0 0 rgba(255, 0, 100, 0.75))
+      drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.75));
+  }
+}
+
 .no-chromatic .partner-logo-white:hover,
 .no-chromatic .logo-white:hover,
 .no-chromatic .logo-white-mask:hover {
   filter: brightness(0) invert(1);
+  animation: none;
+}
+
+.no-chromatic img.partner-logo-white[src^='data:image']:hover {
+  filter: none;
   animation: none;
 }
 

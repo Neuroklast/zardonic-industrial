@@ -19,6 +19,8 @@ import { ContactOverlayContent } from '@/components/overlays/ContactOverlayConte
 import { MemberOverlayContent } from '@/components/overlays/MemberOverlayContent'
 import { GigOverlayContent } from '@/components/overlays/GigOverlayContent'
 import { ReleaseOverlayContent } from '@/components/overlays/ReleaseOverlayContent'
+import { GalleryOverlayContent } from '@/components/overlays/GalleryOverlayContent'
+import { useLenisContext } from '@/contexts/LenisContext'
 
 const OVERLAY_LOADING_TEXTS = [
   '> ACCESSING PROFILE...',
@@ -56,11 +58,17 @@ interface CyberpunkOverlayProps {
   artistName?: string
 }
 
+/** Content types that skip progressive-reveal scramble (direct content fade). */
+function isDirectRevealType(type: string | undefined): boolean {
+  return type === 'release' || type === 'gig' || type === 'gallery'
+}
+
 export default function CyberpunkOverlay({ overlay, onClose, adminSettings, artistName = '' }: CyberpunkOverlayProps) {
   const [overlayPhase, setOverlayPhase] = useState<'loading' | 'glitch' | 'revealed'>('loading')
   const [loadingText, setLoadingText] = useState(OVERLAY_LOADING_TEXTS[0])
   const [progressiveMode, setProgressiveMode] = useState(() => getRandomProgressiveMode())
   const decorativeTexts = adminSettings?.decorative
+  const { lenis } = useLenisContext()
 
   // Use a ref so the progressive modes config is always current inside the effect
   // without it being a dependency — prevents a re-run (and phase reset) whenever
@@ -115,11 +123,18 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
   useEffect(() => {
     if (!overlaySessionKey) return
     const prevOverflow = document.body.style.overflow
+    const prevHtmlOverflow = document.documentElement.style.overflow
     document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+    lenis?.stop()
     return () => {
       document.body.style.overflow = prevOverflow
+      document.documentElement.style.overflow = prevHtmlOverflow
+      document.body.style.touchAction = ''
+      lenis?.start()
     }
-  }, [overlaySessionKey])
+  }, [overlaySessionKey, lenis])
 
   useEffect(() => {
     if (!overlaySessionKey) return
@@ -265,22 +280,20 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                         <motion.div
                           key={overlaySessionKey ?? overlay.type}
                           className={
-                            overlay.type === 'release' || overlay.type === 'gig'
-                              ? undefined
-                              : progressiveMode.className
+                            isDirectRevealType(overlay.type) ? undefined : progressiveMode.className
                           }
                           initial={
-                            overlay.type === 'release' || overlay.type === 'gig'
+                            isDirectRevealType(overlay.type)
                               ? { opacity: 0, y: 8 }
                               : progressiveMode.containerVariants.loading
                           }
                           animate={
-                            overlay.type === 'release' || overlay.type === 'gig'
+                            isDirectRevealType(overlay.type)
                               ? { opacity: 1, y: 0 }
                               : progressiveMode.containerVariants.loaded
                           }
                           transition={
-                            overlay.type === 'release' || overlay.type === 'gig'
+                            isDirectRevealType(overlay.type)
                               ? { duration: 0.25, ease: 'easeOut' }
                               : progressiveMode.transition
                           }
@@ -307,6 +320,10 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
 
                           {overlay.type === 'release' && !overlay.data && (
                             <p className="text-sm font-mono text-muted-foreground">Release data unavailable.</p>
+                          )}
+
+                          {overlay.type === 'gallery' && overlay.data && (
+                            <GalleryOverlayContent data={overlay.data} />
                           )}
                         </motion.div>
                       )}

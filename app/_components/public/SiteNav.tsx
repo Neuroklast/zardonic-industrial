@@ -84,27 +84,27 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
       style={{ zIndex: 'var(--z-nav)' as React.CSSProperties['zIndex'] }}
     >
       {/*
-        Logo is absolutely positioned in a fixed-width slot.
+        Logo sits in a reserved left slot (original size restored).
         Nav has matching padding-left so labels never sit under the logo.
       */}
       <div className="relative mx-auto flex h-16 max-w-6xl items-center px-card">
         <Link
           href="/"
           aria-label="Zardonic – Home"
-          className="absolute left-[var(--spacing-card,1.25rem)] top-1/2 z-20 flex h-10 w-14 -translate-y-1/2 items-center justify-start overflow-hidden sm:w-16"
+          className="absolute left-[var(--spacing-card,1.25rem)] top-1/2 z-20 flex h-10 max-w-[7.5rem] -translate-y-1/2 items-center justify-start sm:max-w-[8.5rem]"
         >
           <Image
             src={LOGO_IMAGE}
             alt="Zardonic"
-            width={64}
+            width={120}
             height={40}
-            className="h-8 w-auto max-h-8 max-w-full object-contain object-left brightness-110"
+            className="h-9 w-auto max-h-9 max-w-full object-contain object-left brightness-110"
             priority
           />
         </Link>
 
         <nav
-          className="hidden min-w-0 flex-1 justify-end overflow-x-auto pl-16 sm:pl-[4.75rem] md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="hidden min-w-0 flex-1 justify-end overflow-x-auto pl-[7.75rem] sm:pl-[9rem] md:flex [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           aria-label={ariaLabel('aria.mainNav', locale)}
           style={{ fontFamily: 'var(--font-mono, monospace)' }}
         >
