@@ -45,19 +45,20 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [bootSequenceEnabled, setBootSequenceEnabled] = useState<boolean>(
     currentValue.bootSequenceEnabled === false ? false : true,
   )
-  /** Wordmark max height in rem (4–20). Default 12 ≈ previous clamp mid/high. */
+  /** Wordmark max height in rem (6–48). Large range for full-bleed hero marks. */
   const [logoMaxHeightRem, setLogoMaxHeightRem] = useState<number>(() => {
+    const clampSize = (n: number) => Math.min(48, Math.max(6, n))
     if (typeof currentValue.logoMaxHeightRem === 'number' && Number.isFinite(currentValue.logoMaxHeightRem)) {
-      return Math.min(20, Math.max(4, currentValue.logoMaxHeightRem))
+      return clampSize(currentValue.logoMaxHeightRem)
     }
     if (typeof currentValue.logoMaxHeight === 'string') {
       const m = currentValue.logoMaxHeight.match(/^([\d.]+)\s*rem$/i)
-      if (m) return Math.min(20, Math.max(4, Number(m[1])))
+      if (m) return clampSize(Number(m[1]))
     }
     if (typeof currentValue.logoMaxHeight === 'number' && Number.isFinite(currentValue.logoMaxHeight)) {
-      return Math.min(20, Math.max(4, currentValue.logoMaxHeight))
+      return clampSize(currentValue.logoMaxHeight)
     }
-    return 12
+    return 14
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -136,6 +137,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           currentUrl={logoImageUrl || DEFAULT_HERO_LOGO_URL}
           storagePrefix="hero/logo"
           editorFitMode="contain"
+          maxOutputDimension={4096}
           onResolved={(path, publicUrl) => {
             setLogoImageStoragePath(path)
             if (publicUrl) setLogoImageUrl(publicUrl)
@@ -144,7 +146,8 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           onError={setErrorMsg}
         />
         <p className="text-xs text-zinc-500">
-          PNG or WebP with transparency works best. Leave empty to use the default Zardonic wordmark.
+          PNG or WebP with transparency works best. Uploads keep up to 4096px (high resolution for retina / large
+          sizes). Leave empty to use the default Zardonic wordmark.
         </p>
         {logoImageUrl ? (
           <button
@@ -168,8 +171,8 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             </span>
           </label>
           <SliderPrimitive.Root
-            min={4}
-            max={20}
+            min={6}
+            max={48}
             step={0.5}
             value={[logoMaxHeightRem]}
             onValueChange={([v]) => setLogoMaxHeightRem(v)}
@@ -182,7 +185,8 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
           </SliderPrimitive.Root>
           <p className="text-xs text-zinc-500">
-            Max height of the hero logo on the public homepage. Width scales with the image aspect ratio.
+            Max height on the homepage (6–48rem ≈ {6 * 16}–{48 * 16}px). Width scales; logo can use almost full
+            viewport width. Use a high-res upload for sharp large sizes.
           </p>
           {/* Live size preview (plain img — admin only, no Next Image optimizer) */}
           <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">

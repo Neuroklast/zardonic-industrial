@@ -60,7 +60,10 @@ export function ImageUploader({
   async function uploadBlob(blob: Blob) {
     setUploading(true)
     try {
-      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix)
+      const { storagePath, publicUrl } = await submitOptimizedUpload(blob, storagePrefix, {
+        maxWidth: maxOutputDimension,
+        maxHeight: maxOutputDimension,
+      })
       setPreview(publicUrl || URL.createObjectURL(blob))
       onUpload(storagePath, publicUrl || undefined)
     } catch (err) {
