@@ -74,7 +74,11 @@ function AnimatedLayer({
       ) : backgroundType === 'stars' ? (
         <StarField transparent={hasImage} starCount={perfMode ? 80 : 140} starSpeed={perfMode ? 0.6 : 1} />
       ) : backgroundType === 'glitch-grid' ? (
-        <GlitchGridBackground transparent={hasImage} />
+        <GlitchGridBackground
+          transparent={hasImage}
+          perfMode={perfMode}
+          glitchFrequency={perfMode ? 0.15 : 0.35}
+        />
       ) : (
         <MatrixRain transparent={hasImage} density={matrixDensity} speed={matrixSpeed} />
       )}
@@ -193,7 +197,13 @@ export function BackgroundStack({
       <AnimatedLayer
         backgroundType={effectiveBackgroundType}
         hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
-        perfMode={Boolean(imageUrl) || Boolean(activeVideoUrl) || isMobile}
+        /* glitch-grid is expensive — always perfMode (plus image/video/mobile) so Lenis stays smooth */
+        perfMode={
+          effectiveBackgroundType === 'glitch-grid' ||
+          Boolean(imageUrl) ||
+          Boolean(activeVideoUrl) ||
+          isMobile
+        }
       />
     </>
   )
