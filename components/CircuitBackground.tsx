@@ -21,25 +21,34 @@ interface CircuitNode {
 export const CircuitBackground = memo(function CircuitBackground({
   speed = 1,
   glow = 0.8,
+  perfMode = false,
 }: {
   /** Pulse spawn speed multiplier: 0.5 (slow) – 3 (fast). Default 1. */
   speed?: number
   /** Glow intensity: 0–1. Default 0.8. */
   glow?: number
+  /** Reduce pulse rate / drop parallax spring / fewer nodes for scroll budget. */
+  perfMode?: boolean
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  // Keep useScroll for API stability; parallax range collapses to 0% in perfMode
+  // so springs stay idle and do not fight Lenis every frame.
   const { scrollYProgress } = useScroll()
-  const smoothProgress = useSpring(scrollYProgress, { stiffness: 60, damping: 20, restDelta: 0.001 })
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: perfMode ? 30 : 60,
+    damping: perfMode ? 40 : 20,
+    restDelta: 0.001,
+  })
   const pulseCounter = useRef(0)
   // Pulse containers per depth layer — mutations go directly to DOM, no React re-renders
   const pulseContainerDepth1 = useRef<HTMLDivElement>(null)
   const pulseContainerDepth2 = useRef<HTMLDivElement>(null)
   const pulseContainerDepth3 = useRef<HTMLDivElement>(null)
   
-  // Optimize transforms with reduced motion sensitivity
-  const layer1Y = useTransform(smoothProgress, [0, 1], ['0%', '10%'])
-  const layer2Y = useTransform(smoothProgress, [0, 1], ['0%', '25%'])
-  const layer3Y = useTransform(smoothProgress, [0, 1], ['0%', '40%'])
+  // Zero parallax in perfMode (static layers); full depth parallax otherwise
+  const layer1Y = useTransform(smoothProgress, [0, 1], perfMode ? ['0%', '0%'] : ['0%', '10%'])
+  const layer2Y = useTransform(smoothProgress, [0, 1], perfMode ? ['0%', '0%'] : ['0%', '25%'])
+  const layer3Y = useTransform(smoothProgress, [0, 1], perfMode ? ['0%', '0%'] : ['0%', '40%'])
 
   // Memoize line and node arrays to prevent recreation on every render
   const lines: CircuitLine[] = useMemo(() => [
@@ -143,9 +152,15 @@ export const CircuitBackground = memo(function CircuitBackground({
     { id: 56, x: '13%', y: '75%', depth: 3 },
   ], [])
 
-  // Memoize filtered arrays
-  const depth3Lines = useMemo(() => lines.filter(l => l.depth === 3), [lines])
-  const depth3Nodes = useMemo(() => nodes.filter(n => n.depth === 3), [nodes])
+  // Memoize filtered arrays; thin density in perfMode (keep half of depth-3 noise)
+  const depth3Lines = useMemo(() => {
+    const all = lines.filter(l => l.depth === 3)
+    return perfMode ? all.filter((_, i) => i % 2 === 0) : all
+  }, [lines, perfMode])
+  const depth3Nodes = useMemo(() => {
+    const all = nodes.filter(n => n.depth === 3)
+    return perfMode ? all.filter((_, i) => i % 2 === 0) : all
+  }, [nodes, perfMode])
   const depth2Lines = useMemo(() => lines.filter(l => l.depth === 2), [lines])
   const depth2Nodes = useMemo(() => nodes.filter(n => n.depth === 2), [nodes])
   const depth1Lines = useMemo(() => lines.filter(l => l.depth === 1), [lines])
@@ -183,8 +198,10 @@ export const CircuitBackground = memo(function CircuitBackground({
 
     const scheduleNext = () => {
       // speed=1 → 3-11s; speed=2 → 1.5-5.5s; speed=0.5 → 6-22s
-      const base = 3000 / speed
-      const variance = 8000 / speed
+      // perfMode: slower pulses to free main thread while scrolling
+      const rate = perfMode ? speed * 0.45 : speed
+      const base = 3000 / Math.max(0.25, rate)
+      const variance = 8000 / Math.max(0.25, rate)
       const delay = base + Math.random() * variance
       return setTimeout(() => {
         spawnPulse()
@@ -194,7 +211,7 @@ export const CircuitBackground = memo(function CircuitBackground({
 
     let timerId = scheduleNext()
     return () => clearTimeout(timerId)
-  }, [spawnPulse, speed])
+  }, [spawnPulse, speed, perfMode])
 
   return (
     <>

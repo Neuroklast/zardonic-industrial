@@ -1,6 +1,13 @@
 'use client'
 
 import { useEffect, useRef, memo } from 'react'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 /**
  * GlitchGridBackground — digicide-style grid/scan without main-thread thrash.
@@ -8,7 +15,7 @@ import { useEffect, useRef, memo } from 'react'
  * Perf rules (Lenis-friendly):
  * - Static grid cached on offscreen canvas (redraw only on resize)
  * - NO getImageData/putImageData (GPU readback was killing scroll)
- * - DPR capped; frame budget ~30fps (lower in perfMode)
+ * - DPR capped; shared frame budget + scroll throttle
  * - Pauses when tab hidden
  */
 
@@ -39,17 +46,16 @@ const GlitchGridBackground = memo(function GlitchGridBackground({
     const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
     if (!ctx) return
 
-    const dprCap = perfMode ? 1 : Math.min(window.devicePixelRatio || 1, 1.25)
+    const dprCap = getCanvasDpr(perfMode, 1.25)
     const gridSize = gridSizeProp ?? (perfMode ? 36 : 28)
     const scanSpeed = scanSpeedProp ?? 1
     const glitchFreq = glitchFrequencyProp ?? (perfMode ? 0.18 : 0.35)
-    const targetFps = perfMode ? 24 : 30
-    const frameMs = 1000 / targetFps
 
     let animFrame = 0
     let running = true
     let tick = 0
     let lastDraw = 0
+    let isScrolling = false
     let cssW = 0
     let cssH = 0
 
@@ -139,6 +145,10 @@ const GlitchGridBackground = memo(function GlitchGridBackground({
       })
     }
 
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
     function draw(now: number) {
       if (!running || !ctx || !canvas) return
 
@@ -146,8 +156,10 @@ const GlitchGridBackground = memo(function GlitchGridBackground({
         animFrame = requestAnimationFrame(draw)
       }
 
-      if (document.hidden) return
-      if (now - lastDraw < frameMs) return
+      if (isDocumentHidden()) return
+      // Prefer shared budget; glitch is always expensive so floor FPS a bit lower
+      const fps = Math.min(targetFpsForRuntime(perfMode, isScrolling), perfMode ? 24 : 30)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, now, fps)) return
       lastDraw = now
       tick++
 
@@ -220,20 +232,11 @@ const GlitchGridBackground = memo(function GlitchGridBackground({
       animFrame = requestAnimationFrame(draw)
     }
 
-    const onVis = () => {
-      if (!document.hidden && !prefersReduced && running) {
-        lastDraw = 0
-        cancelAnimationFrame(animFrame)
-        animFrame = requestAnimationFrame(draw)
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
-
     return () => {
       running = false
       cancelAnimationFrame(animFrame)
       window.removeEventListener('resize', onResize)
-      document.removeEventListener('visibilitychange', onVis)
+      unsubScroll()
       staticLayer = null
     }
   }, [transparent, gridSizeProp, scanSpeedProp, glitchFrequencyProp, perfMode])

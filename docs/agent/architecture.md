@@ -8,6 +8,19 @@ Next.js App Router (public + admin), Supabase (`site_config`, content tables, au
 
 Root-level `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, `cms/`, `app/` are canonical `@/*` targets. Mirror `src/` only where migration bridge requires it.
 
+## Background performance budget
+
+Shared helpers in [`lib/canvas-perf.ts`](../../lib/canvas-perf.ts):
+
+| Helper | Role |
+|--------|------|
+| `getCanvasDpr(perfMode)` | Cap 1.0 (perf) / 1.25 (default) |
+| `shouldSkipFrame` / `targetFpsForRuntime` | Idle 24–30 FPS; scrolling 12–15; hidden = 0 |
+| `subscribeScrollActivity` | Passive window scroll → isScrolling flag |
+| `resolveBackgroundPerfMode` | Mobile / video / image / heavy types → `perfMode` |
+
+Heavy types: matrix, terminal, data-stream, glitch-grid, cloud-chamber, circuit, 3d-model, cyberpunk-hud. Stars/minimal stay full quality on desktop without media. Both BackgroundStacks pass the same policy.
+
 ## PageLayout (required)
 
 Every public page uses [`layouts/PageLayout.tsx`](../../layouts/PageLayout.tsx). Slots:

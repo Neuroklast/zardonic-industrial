@@ -1,9 +1,13 @@
+'use client'
+
 import { Suspense } from 'react'
 import { m, useScroll, useTransform } from 'framer-motion'
 import VideoBackground from '@/components/VideoBackground'
 import type { BackgroundType, HudTexts, AnimationSettings } from '@/lib/types'
 import React from 'react'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { resolveBackgroundPerfMode } from '@/lib/canvas-perf'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const CircuitBackground = React.lazy(() =>
   import('@/components/CircuitBackground').then(m => ({ default: m.CircuitBackground }))
@@ -86,18 +90,63 @@ function BackgroundImage({ url, fit, opacity, parallax }: {
 }
 
 /** Renders the correct animated background component for the configured type. */
-function AnimatedBackgroundLayer({ type, hudTexts, transparent, animSettings }: {
+function AnimatedBackgroundLayer({
+  type,
+  hudTexts,
+  transparent,
+  animSettings,
+  perfMode = false,
+}: {
   type: BackgroundType | undefined
   hudTexts?: HudTexts
   transparent?: boolean
   animSettings?: AnimationSettings
+  perfMode?: boolean
 }) {
   const bg = type ?? 'circuit'
-  if (bg === 'circuit') return <Suspense fallback={null}><CircuitBackground speed={animSettings?.circuitSpeed} glow={animSettings?.circuitGlow} /></Suspense>
+  if (bg === 'circuit') {
+    return (
+      <Suspense fallback={null}>
+        <CircuitBackground
+          speed={animSettings?.circuitSpeed}
+          glow={animSettings?.circuitGlow}
+          perfMode={perfMode}
+        />
+      </Suspense>
+    )
+  }
   if (bg === 'cyberpunk-hud') return <Suspense fallback={null}><CyberpunkBackground hudTexts={hudTexts} /></Suspense>
-  if (bg === 'matrix') return <Suspense fallback={null}><MatrixRain transparent={transparent} speed={animSettings?.matrixSpeed} density={animSettings?.matrixDensity} color={animSettings?.matrixColor} /></Suspense>
-  if (bg === 'stars') return <Suspense fallback={null}><StarField transparent={transparent} starCount={animSettings?.starCount} starSpeed={animSettings?.starSpeed} /></Suspense>
-  if (bg === 'cloud-chamber') return <Suspense fallback={null}><CloudChamberBackground glowColor={animSettings?.cloudGlowColor} /></Suspense>
+  if (bg === 'matrix') {
+    return (
+      <Suspense fallback={null}>
+        <MatrixRain
+          transparent={transparent}
+          speed={animSettings?.matrixSpeed}
+          density={animSettings?.matrixDensity}
+          color={animSettings?.matrixColor}
+          perfMode={perfMode}
+        />
+      </Suspense>
+    )
+  }
+  if (bg === 'stars') {
+    return (
+      <Suspense fallback={null}>
+        <StarField
+          transparent={transparent}
+          starCount={perfMode ? Math.min(animSettings?.starCount ?? 140, 80) : animSettings?.starCount}
+          starSpeed={perfMode ? 0.6 : animSettings?.starSpeed}
+        />
+      </Suspense>
+    )
+  }
+  if (bg === 'cloud-chamber') {
+    return (
+      <Suspense fallback={null}>
+        <CloudChamberBackground glowColor={animSettings?.cloudGlowColor} perfMode={perfMode} />
+      </Suspense>
+    )
+  }
   if (bg === 'glitch-grid') {
     return (
       <Suspense fallback={null}>
@@ -106,21 +155,24 @@ function AnimatedBackgroundLayer({ type, hudTexts, transparent, animSettings }: 
           gridSize={animSettings?.glitchGridSize}
           scanSpeed={animSettings?.glitchScanSpeed}
           glitchFrequency={animSettings?.glitchFrequency}
-          perfMode
+          perfMode={perfMode}
         />
       </Suspense>
     )
   }
-  if (bg === '3d-model' && animSettings?.backgroundModelUrl) return (
-    <Suspense fallback={null}>
-      <ModelBackground
-        modelUrl={animSettings.backgroundModelUrl}
-        autoRotate={animSettings.backgroundModelAutoRotate !== false}
-        rotateSpeed={animSettings.backgroundModelRotateSpeed}
-        opacity={animSettings.backgroundModelOpacity ?? 1}
-      />
-    </Suspense>
-  )
+  if (bg === '3d-model' && animSettings?.backgroundModelUrl) {
+    return (
+      <Suspense fallback={null}>
+        <ModelBackground
+          modelUrl={animSettings.backgroundModelUrl}
+          autoRotate={animSettings.backgroundModelAutoRotate !== false}
+          rotateSpeed={animSettings.backgroundModelRotateSpeed}
+          opacity={animSettings.backgroundModelOpacity ?? 1}
+          perfMode={perfMode}
+        />
+      </Suspense>
+    )
+  }
   // 'minimal', 'video', '3d-model' (no URL) handled at BackgroundStack level — no fallback here
   return null
 }
@@ -160,7 +212,20 @@ export function BackgroundStack({
   hudTexts,
   animSettings,
 }: BackgroundStackProps) {
+  const isMobile = useIsMobile()
   const isVideoActive = backgroundType === 'video' && Boolean(animSettings?.backgroundVideoUrl)
+  // TODO: long-term prefer single BackgroundStack source (public vs components parity).
+  const overlayEffect = animSettings?.backgroundVideoOverlayEffect
+  const overlayType: BackgroundType | undefined =
+    backgroundType === 'video' && overlayEffect && overlayEffect !== 'none'
+      ? (overlayEffect as BackgroundType)
+      : backgroundType
+  const perfMode = resolveBackgroundPerfMode({
+    isMobile,
+    hasVideo: isVideoActive,
+    hasImage: Boolean(backgroundImageUrl),
+    backgroundType: overlayType ?? backgroundType,
+  })
 
   return (
     <>
@@ -202,6 +267,7 @@ export function BackgroundStack({
             hudTexts={hudTexts}
             transparent={Boolean(backgroundImageUrl && backgroundImageOverlay)}
             animSettings={animSettings}
+            perfMode={perfMode}
           />
         </div>
       )}
@@ -221,6 +287,7 @@ export function BackgroundStack({
             hudTexts={hudTexts}
             transparent={true}
             animSettings={animSettings}
+            perfMode={perfMode}
           />
         </div>
       )}

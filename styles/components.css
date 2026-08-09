@@ -1039,6 +1039,14 @@
   margin-inline: auto;
 }
 
+/* Mobile LCP: prevent huge admin logoMax from dominating viewport */
+@media (max-width: 768px) {
+  .hero-logo-stage img,
+  .hero-logo-glitch img {
+    max-height: min(var(--hero-logo-max, 14rem), 42vh) !important;
+  }
+}
+
 .hero-logo-stage--booting {
   gap: 0.55rem;
 }

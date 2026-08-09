@@ -54,8 +54,9 @@ Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2
 | TD-017 | Auth/theme not in contexts | 🟡 | M | Prop-drilling | ❌ Superseded | Supabase SSR sessions |
 | TD-018 | Missing `strict: true` in tsconfig | 🟡 | XS | Weaker types | ✅ Resolved | `tsconfig.json` `strict: true` |
 | TD-019 | No barrel exports | 🟡 | S | Verbose imports | ❌ Wont Fix | Post-launch ergonomics; explicit paths preferred for tree-shaking |
-| TD-020 | Three icon libraries | 🟡 | M | Bundle bloat | 🔄 In Progress | Phosphor primary on public chrome; Lucide/Radix remain in places — full purge post-launch |
-| TD-021 | No lazy loading (Three.js, etc.) | 🟡 | M | Poor LCP | 🔴 Open | `ModelBackground` / heavy effects — defer until perf budget defined |
+| TD-020 | Three icon libraries | 🟡 | M | Bundle bloat | 🔄 In Progress | **Public path clean (Phosphor-only under `app/_components/public`)**; Lucide remains for shadcn/admin — full purge post-launch |
+| TD-021 | No lazy loading (Three.js, etc.) | 🟡 | M | Poor LCP | ✅ Resolved | Lazy `ModelBackground` + frame budget / hidden pause / DPR cap via `lib/canvas-perf.ts` |
+| TD-039 | Canvas BG frame budget | 🟡 | M | Scroll jank vs Lenis | ✅ Resolved | Shared `lib/canvas-perf.ts`; Matrix/Terminal/DataStream/CloudChamber/Glitch/3D + dual BackgroundStack policy |
 | TD-037 | Google Fonts CDN at runtime | 🟠 | S | DE privacy risk | ✅ Resolved | `next/font` self-host + `loadGoogleFont` no-op; picker privacy-safe only |
 | TD-038 | Legal templates EN-only | 🟠 | M | DE usability / compliance UX | ✅ Resolved | DE+EN templates + locale-aware legal pages + completeness UI |
 | TD-022 | Redis client per request | 🟡 | XS | Edge waste | 🔴 Open | `api/_redis.ts` — singleton refactor when touching rate limits |

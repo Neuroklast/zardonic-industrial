@@ -1,6 +1,13 @@
 'use client'
 
 import { memo, useEffect, useRef } from 'react'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 interface TerminalBackgroundProps {
   /** Overall opacity of the effect layer (0–1). Default 0.55. */
@@ -61,6 +68,8 @@ const TerminalBackground = memo(function TerminalBackground({
     let animId = 0
     let running = true
     let lastTs = 0
+    let lastDraw = 0
+    let isScrolling = false
     let bootIndex = 0
     let bootTimer = 0
     const liveLines: string[] = []
@@ -68,7 +77,7 @@ const TerminalBackground = memo(function TerminalBackground({
     let hexOffset = 0
     let cursorBlink = 0
 
-    const dprCap = perfMode ? 1 : Math.min(window.devicePixelRatio || 1, 1.5)
+    const dprCap = getCanvasDpr(perfMode, 1.25)
     const fontSize = perfMode ? 11 : 12
     const lineH = fontSize + 4
     const maxLive = perfMode ? 14 : 22
@@ -107,8 +116,19 @@ const TerminalBackground = memo(function TerminalBackground({
       return s
     }
 
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
     const drawFrame = (ts: number) => {
       if (!running) return
+      animId = requestAnimationFrame(drawFrame)
+
+      if (isDocumentHidden()) return
+      const fps = targetFpsForRuntime(perfMode, isScrolling)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, ts, fps)) return
+      lastDraw = ts
+
       const dt = lastTs ? Math.min(48, ts - lastTs) : 16
       lastTs = ts
 
@@ -197,27 +217,15 @@ const TerminalBackground = memo(function TerminalBackground({
 
       ctx.globalAlpha = 1
       ctx.shadowBlur = 0
-      animId = requestAnimationFrame(drawFrame)
     }
 
-    const onVis = () => {
-      if (document.hidden) {
-        running = false
-        cancelAnimationFrame(animId)
-      } else if (!running) {
-        running = true
-        lastTs = 0
-        animId = requestAnimationFrame(drawFrame)
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
     animId = requestAnimationFrame(drawFrame)
 
     return () => {
       running = false
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', onResize)
-      document.removeEventListener('visibilitychange', onVis)
+      unsubScroll()
       mo.disconnect()
     }
   }, [opacity, perfMode])

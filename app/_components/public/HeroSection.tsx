@@ -107,10 +107,12 @@ export function HeroSection({
   }
 
   const logoImgStyle: React.CSSProperties = {
+    // Desktop uses admin size; mobile CSS caps via --hero-logo-max
     maxHeight: logoMax,
     maxWidth: 'min(96vw, 100%)',
     width: 'auto',
     height: 'auto',
+    ['--hero-logo-max' as string]: logoMax,
   }
 
   return (

@@ -1,6 +1,13 @@
 'use client'
 
 import { memo, useEffect, useRef } from 'react'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 interface DataStreamBackgroundProps {
   opacity?: number
@@ -17,7 +24,7 @@ type Stream = {
 
 /**
  * Horizontal / diagonal data-stream field — binary + hex glyphs with soft trails.
- * Low opacity decorative layer; DPR-capped; pauses when tab hidden.
+ * Frame-budgeted + DPR-capped so Lenis scroll stays smooth.
  */
 const DataStreamBackground = memo(function DataStreamBackground({
   opacity = 0.5,
@@ -36,8 +43,11 @@ const DataStreamBackground = memo(function DataStreamBackground({
     let animId = 0
     let running = true
     let streams: Stream[] = []
+    let last = 0
+    let lastDraw = 0
+    let isScrolling = false
     const glyph = '01ABCDEF<>[]{}/\\|#@$%&*'
-    const dprCap = perfMode ? 1 : Math.min(window.devicePixelRatio || 1, 1.5)
+    const dprCap = getCanvasDpr(perfMode, 1.25)
     const fontSize = perfMode ? 10 : 11
     const colW = fontSize + 2
 
@@ -81,9 +91,19 @@ const DataStreamBackground = memo(function DataStreamBackground({
     })
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
 
-    let last = 0
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
     const frame = (ts: number) => {
       if (!running) return
+      animId = requestAnimationFrame(frame)
+
+      if (isDocumentHidden()) return
+      const fps = targetFpsForRuntime(perfMode, isScrolling)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, ts, fps)) return
+      lastDraw = ts
+
       const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0.016
       last = ts
       const w = window.innerWidth
@@ -131,20 +151,8 @@ const DataStreamBackground = memo(function DataStreamBackground({
 
       ctx.shadowBlur = 0
       ctx.globalAlpha = 1
-      animId = requestAnimationFrame(frame)
     }
 
-    const onVis = () => {
-      if (document.hidden) {
-        running = false
-        cancelAnimationFrame(animId)
-      } else if (!running) {
-        running = true
-        last = 0
-        animId = requestAnimationFrame(frame)
-      }
-    }
-    document.addEventListener('visibilitychange', onVis)
     animId = requestAnimationFrame(frame)
 
     return () => {
@@ -152,7 +160,7 @@ const DataStreamBackground = memo(function DataStreamBackground({
       cancelAnimationFrame(animId)
       clearTimeout(resizeTimer)
       window.removeEventListener('resize', onResize)
-      document.removeEventListener('visibilitychange', onVis)
+      unsubScroll()
       mo.disconnect()
     }
   }, [opacity, perfMode])

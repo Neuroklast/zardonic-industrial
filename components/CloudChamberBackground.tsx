@@ -1,4 +1,11 @@
 import { useEffect, useRef, memo } from 'react'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 interface Particle {
   x1: number
@@ -28,13 +35,16 @@ interface Particle {
  *      streaking through a supersaturated cloud chamber.
  *   3. Occasional secondary (branching) tracks for nuclear decay aesthetics.
  *
- * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
+ * Frame-budgeted + DPR-capped; pauses when tab is hidden.
  */
 const CloudChamberBackground = memo(function CloudChamberBackground({
   glowColor,
+  perfMode = false,
 }: {
   /** Optional CSS colour to tint the particle tracks. */
   glowColor?: string
+  /** Lower density + FPS for mobile / stacked media. */
+  perfMode?: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -53,10 +63,20 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
     let particles: Particle[] = []
     let frameCount = 0
     let nextSpawnFrame = 0
+    let lastDraw = 0
+    let isScrolling = false
+    let cssW = 0
+    let cssH = 0
+    const dpr = getCanvasDpr(perfMode)
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      cssW = window.innerWidth
+      cssH = window.innerHeight
+      canvas.width = Math.floor(cssW * dpr)
+      canvas.height = Math.floor(cssH * dpr)
+      canvas.style.width = `${cssW}px`
+      canvas.style.height = `${cssH}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
     resize()
     const handleResize = () => resize()
@@ -78,8 +98,8 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
       baseY?: number,
       baseAngle?: number,
     ) => {
-      const w = canvas.width
-      const h = canvas.height
+      const w = cssW
+      const h = cssH
 
       let x1: number, y1: number
       if (secondary && baseX !== undefined && baseY !== undefined) {
@@ -99,9 +119,10 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
           ? baseAngle + (Math.random() - 0.5) * 0.5 // slight branching deviation
           : Math.random() * Math.PI * 2
 
+      const lengthScale = perfMode ? 0.7 : 1
       const length = secondary
-        ? 50 + Math.random() * 100
-        : 120 + Math.random() * 320
+        ? (50 + Math.random() * 100) * lengthScale
+        : (120 + Math.random() * 320) * lengthScale
 
       // Grow phase: ~3–6 frames (~50–100 ms at 60 fps)
       const growFrames = secondary ? 3 : 3 + Math.random() * 3
@@ -131,17 +152,28 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
     type PendingBranch = { spawnAt: number; bx: number; by: number; ba: number }
     let pendingBranches: PendingBranch[] = []
 
-    const draw = () => {
-      if (!running || document.hidden) {
-        animId = requestAnimationFrame(draw)
-        return
-      }
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
+    const spawnIntervalBase = perfMode ? 90 : 60
+    const spawnIntervalVar = perfMode ? 280 : 240
+    const branchChance = perfMode ? 0.04 : 0.08
+
+    const draw = (now: number) => {
+      if (!running) return
+      animId = requestAnimationFrame(draw)
+
+      if (isDocumentHidden()) return
+      const fps = targetFpsForRuntime(perfMode, isScrolling)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, now, fps)) return
+      lastDraw = now
 
       frameCount++
 
       // Very slow fill-fade creates the barely-visible fog/mist base
       ctx.fillStyle = 'rgba(0,0,0,0.025)'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
+      ctx.fillRect(0, 0, cssW, cssH)
 
       // Spawn any pending branches whose frame has arrived
       pendingBranches = pendingBranches.filter(b => {
@@ -156,8 +188,8 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
       if (frameCount >= nextSpawnFrame) {
         spawnParticle(false)
 
-        // ~8 % chance of a secondary branching track spawned slightly later
-        if (Math.random() < 0.08) {
+        // Chance of a secondary branching track spawned slightly later
+        if (Math.random() < branchChance) {
           const delay = 6 + Math.floor(Math.random() * 10) // frames
           const parentSnapshot = particles[particles.length - 1]
           if (parentSnapshot) {
@@ -171,8 +203,7 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
           }
         }
 
-        // Next primary track in 60–300 frames (~1–5 s at 60 fps)
-        nextSpawnFrame = frameCount + 60 + Math.floor(Math.random() * 240)
+        nextSpawnFrame = frameCount + spawnIntervalBase + Math.floor(Math.random() * spawnIntervalVar)
       }
 
       // Update and draw all live particles
@@ -206,7 +237,7 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
         ctx.strokeStyle = p.color
         ctx.lineWidth = p.secondary ? 0.8 : 1.5
         ctx.shadowColor = p.color
-        ctx.shadowBlur = p.secondary ? 2 : 5
+        ctx.shadowBlur = perfMode ? 0 : p.secondary ? 2 : 5
         ctx.beginPath()
         ctx.moveTo(p.x1, p.y1)
         ctx.lineTo(endX, endY)
@@ -215,12 +246,7 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
 
         return true
       })
-
-      animId = requestAnimationFrame(draw)
     }
-
-    const handleVisibility = () => { running = !document.hidden }
-    document.addEventListener('visibilitychange', handleVisibility)
 
     animId = requestAnimationFrame(draw)
 
@@ -229,9 +255,9 @@ const CloudChamberBackground = memo(function CloudChamberBackground({
       cancelAnimationFrame(animId)
       pendingBranches = []
       window.removeEventListener('resize', handleResize)
-      document.removeEventListener('visibilitychange', handleVisibility)
+      unsubScroll()
     }
-  }, [glowColor])
+  }, [glowColor, perfMode])
 
   return (
     <div className="fixed inset-0 pointer-events-none" aria-hidden="true">

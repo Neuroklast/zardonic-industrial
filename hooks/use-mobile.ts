@@ -6,6 +6,11 @@ export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
 
   useEffect(() => {
+    // jsdom / partial environments may omit matchMedia — treat as desktop
+    if (typeof window.matchMedia !== "function") {
+      startTransition(() => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT))
+      return
+    }
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     const onChange = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
