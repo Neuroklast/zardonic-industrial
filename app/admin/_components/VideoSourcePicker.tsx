@@ -9,22 +9,28 @@ type SourceMode = 'upload' | 'url' | 'drive'
 interface VideoSourcePickerProps {
   label?: string
   currentUrl?: string | null
+  currentStoragePath?: string | null
   storagePrefix?: string
   onResolved: (storagePath: string, publicUrl?: string) => void
+  onCleared?: () => void
   onError?: (message: string) => void
 }
 
 export function VideoSourcePicker({
   label = 'Video',
   currentUrl,
+  currentStoragePath = null,
   storagePrefix = 'uploads/videos',
   onResolved,
+  onCleared,
   onError,
 }: VideoSourcePickerProps) {
   const [mode, setMode] = useState<SourceMode>('upload')
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
+  const [activePath, setActivePath] = useState<string | null>(currentStoragePath ?? null)
   const [linkInput, setLinkInput] = useState('')
   const [caching, setCaching] = useState(false)
+  const [removing, setRemoving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
 
   async function handleCacheLink(input: string, sourceLabel: string) {
@@ -45,6 +51,7 @@ export function VideoSourcePicker({
         return
       }
       if (result.publicUrl) setPreview(result.publicUrl)
+      setActivePath(result.storagePath)
       onResolved(result.storagePath, result.publicUrl)
       setStatus(`${sourceLabel} cached to R2`)
       setLinkInput('')
@@ -54,6 +61,33 @@ export function VideoSourcePicker({
       onError?.(msg)
     } finally {
       setCaching(false)
+    }
+  }
+
+  async function handleRemove(deleteFromStorage: boolean) {
+    setRemoving(true)
+    setStatus(null)
+    try {
+      if (deleteFromStorage && activePath) {
+        const { deleteR2MediaObject } = await import('@/app/admin/_actions/r2Upload')
+        const result = await deleteR2MediaObject(activePath)
+        if (!result.ok) {
+          setStatus(result.error)
+          onError?.(result.error)
+          return
+        }
+      }
+      setPreview(null)
+      setActivePath(null)
+      setLinkInput('')
+      onCleared?.()
+      setStatus(deleteFromStorage ? 'Removed and deleted from storage' : 'Cleared (file kept in storage)')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Remove failed'
+      setStatus(msg)
+      onError?.(msg)
+    } finally {
+      setRemoving(false)
     }
   }
 
@@ -85,13 +119,45 @@ export function VideoSourcePicker({
       </div>
 
       {preview && (
-        <video
-          src={preview}
-          className="w-full max-w-xs rounded border border-zinc-700"
-          controls
-          muted
-          preload="metadata"
-        />
+        <div className="space-y-2">
+          <video
+            src={preview}
+            className="w-full max-w-xs rounded border border-zinc-700"
+            controls
+            muted
+            preload="metadata"
+          />
+          {onCleared ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={removing}
+                onClick={() => void handleRemove(false)}
+                className="px-2.5 py-1 text-xs rounded border border-zinc-700 text-zinc-300 hover:text-white disabled:opacity-50"
+              >
+                {removing ? '…' : 'Clear selection'}
+              </button>
+              {activePath ? (
+                <button
+                  type="button"
+                  disabled={removing}
+                  onClick={() => {
+                    if (
+                      typeof window !== 'undefined' &&
+                      !window.confirm('Delete this video from storage permanently?')
+                    ) {
+                      return
+                    }
+                    void handleRemove(true)
+                  }}
+                  className="px-2.5 py-1 text-xs rounded border border-red-900/60 bg-red-950/40 text-red-300 hover:text-red-200 disabled:opacity-50"
+                >
+                  {removing ? 'Deleting…' : 'Delete upload'}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       )}
 
       {mode === 'upload' && (
@@ -101,6 +167,7 @@ export function VideoSourcePicker({
           storagePrefix={storagePrefix}
           onUpload={(path, publicUrl) => {
             if (publicUrl) setPreview(publicUrl)
+            setActivePath(path)
             onResolved(path, publicUrl)
             setStatus('Uploaded to R2')
           }}

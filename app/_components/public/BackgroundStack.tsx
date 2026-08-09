@@ -25,6 +25,8 @@ interface BackgroundStackProps {
   videoUrl?: string
   mobileVideoUrl?: string
   mobileVideoMode?: MobileVideoMode
+  /** Master switch — when false, video layer is not rendered even if URLs exist. */
+  videoEnabled?: boolean
   backgroundType?: PublicBackgroundType
   imageOpacity?: number
   videoOpacity?: number
@@ -85,6 +87,7 @@ export function BackgroundStack({
   videoUrl,
   mobileVideoUrl,
   mobileVideoMode = 'same',
+  videoEnabled = true,
   backgroundType = 'matrix',
   imageOpacity = 0.55,
   videoOpacity = DEFAULT_BACKGROUND_VIDEO_OPACITY,
@@ -93,22 +96,34 @@ export function BackgroundStack({
   const isMobile = useIsMobile()
   const { lenis } = useLenisContext()
   const [draftBackgroundType, setDraftBackgroundType] = useState<PublicBackgroundType | null>(null)
+  const [draftVideoEnabled, setDraftVideoEnabled] = useState<boolean | null>(null)
 
   const onDraft = useCallback((key: AdminDraftKey, value: Record<string, unknown>) => {
     if (key !== 'background') return
     if (isPublicBackgroundType(value.backgroundType)) {
       setDraftBackgroundType(value.backgroundType)
     }
+    if (typeof value.backgroundVideoEnabled === 'boolean') {
+      setDraftVideoEnabled(value.backgroundVideoEnabled)
+    }
   }, [])
 
   useAdminDraftListener(onDraft)
 
   const effectiveBackgroundType = draftBackgroundType ?? parsePublicBackgroundType(backgroundType)
+  const effectiveVideoEnabled = draftVideoEnabled ?? videoEnabled
   const mode = parseMobileVideoMode(mobileVideoMode)
 
   const activeVideoUrl = useMemo(
-    () => resolveActiveBackgroundVideoUrl(videoUrl, mobileVideoUrl, mode, isMobile),
-    [videoUrl, mobileVideoUrl, mode, isMobile],
+    () =>
+      resolveActiveBackgroundVideoUrl(
+        videoUrl,
+        mobileVideoUrl,
+        mode,
+        isMobile,
+        effectiveVideoEnabled,
+      ),
+    [videoUrl, mobileVideoUrl, mode, isMobile, effectiveVideoEnabled],
   )
 
   // Smooth scroll-scrub: Lenis progress + rAF + seek coalescing

@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import Image from 'next/image'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { MediaSourcePicker } from '@/app/admin/_components/MediaSourcePicker'
 import { VideoSourcePicker } from '@/app/admin/_components/VideoSourcePicker'
 import { resolveImageUrl } from '@/lib/r2'
 import {
   DEFAULT_BACKGROUND_VIDEO_OPACITY,
+  parseBackgroundVideoEnabled,
   parseMobileVideoMode,
   type MobileVideoMode,
 } from '@/lib/background-config'
@@ -100,6 +100,13 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       ? currentValue.backgroundVideoOpacity
       : DEFAULT_BACKGROUND_VIDEO_OPACITY,
   )
+  const hasInitialVideo = Boolean(
+    (typeof currentValue.video_storage_path === 'string' && currentValue.video_storage_path) ||
+      (typeof currentValue.video_url === 'string' && currentValue.video_url),
+  )
+  const [backgroundVideoEnabled, setBackgroundVideoEnabled] = useState<boolean>(() =>
+    parseBackgroundVideoEnabled(currentValue.backgroundVideoEnabled, hasInitialVideo),
+  )
   const [mobileVideoMode, setMobileVideoMode] = useState<MobileVideoMode>(
     parseMobileVideoMode(currentValue.mobileVideoMode),
   )
@@ -118,6 +125,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     }),
     [
       imageStoragePath,
@@ -130,6 +138,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     ],
   )
 
@@ -155,6 +164,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       backgroundType,
       backgroundImageOpacity,
       backgroundVideoOpacity,
+      backgroundVideoEnabled,
     }
   }
 
@@ -224,6 +234,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
       <MediaSourcePicker
         label="Background image"
         currentUrl={imageUrl || null}
+        currentStoragePath={imageStoragePath || null}
         storagePrefix="background/images"
         editorAspectRatio={16 / 9}
         editorFitMode="cover"
@@ -232,40 +243,74 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
           if (publicUrl) setImageUrl(publicUrl)
           setErrorMsg(null)
         }}
+        onCleared={() => {
+          setImageStoragePath('')
+          setImageUrl('')
+          setErrorMsg(null)
+        }}
         onError={setErrorMsg}
       />
 
-      {imageUrl && (
-        <div className="relative w-32 h-20 rounded overflow-hidden border border-zinc-700">
-          <Image src={imageUrl} alt="Background preview" fill className="object-cover" sizes="128px" unoptimized />
-        </div>
-      )}
-
       <div className="space-y-4 pt-2 border-t border-zinc-800">
-        <div>
-          <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Desktop video</p>
-          <p className="text-xs text-zinc-500 mt-1">
-            Scroll-synced background video (faststart MP4 recommended for smooth seeking).
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Desktop video</p>
+            <p className="text-xs text-zinc-500 mt-1">
+              Scroll-synced background video (faststart MP4 recommended). Use the switch to turn it off without
+              deleting the file.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBackgroundVideoEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+              backgroundVideoEnabled ? 'bg-red-600' : 'bg-zinc-700'
+            }`}
+            role="switch"
+            aria-checked={backgroundVideoEnabled}
+            aria-label="Enable background video"
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform transition-transform ${
+                backgroundVideoEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
         </div>
+        <p className="text-xs font-mono text-zinc-400">
+          Background video: {backgroundVideoEnabled ? 'ON' : 'OFF'}
+        </p>
 
         <VideoSourcePicker
           label="Desktop video (optional)"
           currentUrl={videoUrl || null}
+          currentStoragePath={videoStoragePath || null}
           storagePrefix="background/videos"
           onResolved={(path, publicUrl) => {
             setVideoStoragePath(path)
             if (publicUrl) setVideoUrl(publicUrl)
+            setBackgroundVideoEnabled(true)
+            setErrorMsg(null)
+          }}
+          onCleared={() => {
+            setVideoStoragePath('')
+            setVideoUrl('')
             setErrorMsg(null)
           }}
           onError={setErrorMsg}
         />
 
-        <OpacitySlider
-          label="Video opacity"
-          value={backgroundVideoOpacity}
-          onChange={setBackgroundVideoOpacity}
-        />
+        {backgroundVideoEnabled ? (
+          <OpacitySlider
+            label="Video opacity"
+            value={backgroundVideoOpacity}
+            onChange={setBackgroundVideoOpacity}
+          />
+        ) : (
+          <p className="text-xs text-zinc-500">
+            Video is off. Opacity is ignored until you turn video back on.
+          </p>
+        )}
       </div>
 
       <div className="space-y-3 pt-2 border-t border-zinc-800">
@@ -305,10 +350,16 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
           <VideoSourcePicker
             label="Mobile video"
             currentUrl={mobileVideoUrl || null}
+            currentStoragePath={mobileVideoStoragePath || null}
             storagePrefix="background/videos/mobile"
             onResolved={(path, publicUrl) => {
               setMobileVideoStoragePath(path)
               if (publicUrl) setMobileVideoUrl(publicUrl)
+              setErrorMsg(null)
+            }}
+            onCleared={() => {
+              setMobileVideoStoragePath('')
+              setMobileVideoUrl('')
               setErrorMsg(null)
             }}
             onError={setErrorMsg}
