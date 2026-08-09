@@ -13,6 +13,12 @@ interface PartnerItem {
   logoWhite?: boolean
 }
 
+/**
+ * Partner / credit logo.
+ * White mode uses filter brightness(0) invert(1) on a real <img> so the PNG
+ * alpha channel is preserved (transparent stays transparent). CSS mask-image
+ * from cross-origin R2 URLs often fails CORS and painted a solid white box.
+ */
 function PartnerLogo({
   item,
   logoBrightness,
@@ -35,36 +41,23 @@ function PartnerLogo({
   }
 
   const useWhite = item.logoWhite !== false
-  const brightness = logoBrightness !== undefined ? Math.min(Math.max(logoBrightness, 0.2), 1) : 0.85
-
-  if (useWhite) {
-    // Alpha-aware white: mask solid white with the PNG alpha channel
-    return (
-      <m.span
-        role="img"
-        aria-label={item.name}
-        className="logo-white-mask h-10 w-24 max-w-full md:h-14 md:w-28"
-        style={
-          {
-            ['--logo-mask' as string]: `url("${item.logoUrl}")`,
-            ['--logo-brightness' as string]: String(brightness),
-          } as React.CSSProperties
-        }
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        whileHover={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-      />
-    )
-  }
+  const brightness =
+    logoBrightness !== undefined ? Math.min(Math.max(logoBrightness, 0.25), 1) : 0.9
 
   return (
     <m.img
       src={item.logoUrl}
       alt={item.name}
-      className="chromatic-hover h-10 w-auto object-contain transition-opacity hover:opacity-100 md:h-14"
-      style={{ opacity: brightness }}
+      className={
+        useWhite
+          ? 'partner-logo-white h-10 w-auto max-w-[7.5rem] object-contain md:h-14 md:max-w-[9rem]'
+          : 'chromatic-hover h-10 w-auto max-w-[7.5rem] object-contain transition-opacity hover:opacity-100 md:h-14 md:max-w-[9rem]'
+      }
+      style={
+        useWhite
+          ? { opacity: brightness }
+          : { opacity: brightness }
+      }
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: brightness, y: 0 }}
       whileHover={{ opacity: 1 }}
@@ -103,9 +96,7 @@ function LogoGrid({
       </div>
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {items.map((item) => {
-          const content = (
-            <PartnerLogo item={item} logoBrightness={logoBrightness} />
-          )
+          const content = <PartnerLogo item={item} logoBrightness={logoBrightness} />
           const wrapperClassName = 'flex min-h-24 items-center justify-center p-2'
 
           return item.url ? (

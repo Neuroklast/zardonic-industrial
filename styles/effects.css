@@ -411,66 +411,48 @@
    chromatic-pulse-image keyframes give the classic RGB-split blink. */
 
 /*
- * Alpha-aware white logo fill (white intensity ∝ PNG alpha):
- * Solid white fill masked by the logo URL in --logo-mask.
- * Transparent pixels stay transparent (no white box).
- * Set --logo-mask: url("…") and size the element (h/w) from the component.
+ * White logo fill that PRESERVES PNG alpha.
+ * brightness(0) → black RGB, invert(1) → white RGB; alpha channel is untouched.
+ * Do NOT use mask-image with remote URLs (CORS → failed mask → solid white box).
  */
+.partner-logo-white,
+.logo-white,
 .logo-white-mask {
-  display: inline-block;
-  background-color: #fff;
-  opacity: var(--logo-brightness, 1);
-  -webkit-mask-image: var(--logo-mask);
-  mask-image: var(--logo-mask);
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-mode: alpha;
-  mask-mode: alpha;
-  transition: opacity 0.2s ease, filter 0.08s ease;
+  filter: brightness(0) invert(1);
+  transition: filter 0.08s ease, opacity 0.2s ease;
+  background: transparent !important;
 }
 
+.partner-logo-white:hover,
+.logo-white:hover,
 .logo-white-mask:hover {
   filter:
+    brightness(0) invert(1)
     drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
     drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
-  animation: chromatic-pulse-logo-mask 0.15s ease;
+  animation: chromatic-pulse-logo-img 0.15s ease;
 }
 
-@keyframes chromatic-pulse-logo-mask {
+@keyframes chromatic-pulse-logo-img {
   0%, 100% {
     filter:
+      brightness(0) invert(1)
       drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
       drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
   }
   50% {
     filter:
+      brightness(0) invert(1)
       drop-shadow(3px 0 0 rgba(255, 0, 100, 0.75))
       drop-shadow(-3px 0 0 rgba(0, 255, 255, 0.75));
   }
 }
 
+.no-chromatic .partner-logo-white:hover,
+.no-chromatic .logo-white:hover,
 .no-chromatic .logo-white-mask:hover {
-  filter: none;
+  filter: brightness(0) invert(1);
   animation: none;
-}
-
-/* Legacy class kept for tests — same mask technique when --logo-mask is set */
-.logo-white {
-  display: inline-block;
-  background-color: #fff;
-  opacity: var(--logo-brightness, 1);
-  -webkit-mask-image: var(--logo-mask);
-  mask-image: var(--logo-mask);
-  -webkit-mask-size: contain;
-  mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
 }
 
 :is(.hover-noise) {
