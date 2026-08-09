@@ -57,7 +57,7 @@ describe('applySectionsDraft', () => {
     expect(intro.textContent).toBe('The story so far.')
   })
 
-  it('updates nav link labels from section headings', () => {
+  it('keeps compact nav labels (section heading labels stay on the page)', () => {
     const navLink = document.createElement('a')
     navLink.setAttribute('data-draft-target', 'nav-link-bio')
     navLink.textContent = 'Bio'
@@ -67,7 +67,8 @@ describe('applySectionsDraft', () => {
       sections: [{ id: 'bio', label: 'About Me', visible: true, order: 0 }],
     })
 
-    expect(navLink.textContent).toBe('About Me')
+    // Nav stays short; full title "About Me" only updates the section heading
+    expect(navLink.textContent).toBe('Bio')
   })
 
   it('updates order and visibility on matching section shells', () => {
