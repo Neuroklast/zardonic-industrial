@@ -1,13 +1,13 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-06-24
-> **Agent ID:** grok/build-fix-proxy-serveraction  
+> **Last Updated:** 2026-08-09  
+> **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
 
 ## Overview
 
-This document records lessons learned during development sessions. Every coding agent **must** add an entry at the end of each session. These entries help future agents avoid repeated mistakes and build on institutional knowledge.
+This document records lessons learned during development sessions. Every coding agent **must** add an entry at the end of each session when the work uncovered a non-obvious failure mode or process gap.
 
 ---
 
@@ -36,6 +36,12 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-08-09 | grok/public-ui-firefight | Grok | Claiming “fixed” while the PR is still open leaves the user on broken Production. Definition of done = merge + Vercel Production SHA + hard-refresh verify. | Process | 🔴 Critical |
+| 2026-08-09 | grok/public-ui-firefight | Grok | Absolute-positioned nav logo + padding “slot” still lets BIO/labels sit under the wordmark when items overflow. Logo must stay a flex `shrink-0` sibling. | UX/a11y | 🔴 Critical |
+| 2026-08-09 | grok/public-ui-firefight | Grok | CSS `brightness(0) invert(1)` on partner PNGs with baked white backgrounds paints a solid white rectangle (QUESTEC). Use canvas silhouette (`partner-logo-white.ts`); never invert as the primary white-logo technique. | UX/a11y | 🔴 Critical |
+| 2026-08-09 | grok/public-ui-firefight | Grok | Gallery must open `CyberpunkOverlay` (`type: 'gallery'`), not a parallel lightbox shell — users expect identical chrome to releases/events. | Architecture | 🟠 High |
+| 2026-08-09 | grok/public-ui-firefight | Grok | Long section titles in the top nav (`Biography`/`Discography`) cause clipping (`…ography`). Keep compact nav labels in `nav-links.ts`; full titles only on section headings. | UX/a11y | 🟠 High |
+| 2026-08-09 | grok/agent-session-docs | Grok | Without darktunes-style session control (AGENTS decision trees + workflow + QA + lessons), agents re-break the same public UI. Keep `docs/agent/public-ui.md` and enforce docs closeout every session. | Process | 🟠 High |
 | 2026-06-24 | grok/markdown-cleanup | Grok | Legacy markdown (Vite audits, Sanity setup, `?admin-setup`, KV-first GDPR) causes agent confusion long after stack migration — archive obsolete files under `docs/archive/`, add deprecation banners, rewrite canonical docs only, and point README at `docs/README.md` instead of listing moved paths. | Process | 🟠 High |
 | 2026-06-24 | grok/agent-docs-debloat | Grok | Root AGENTS.md beyond ~50 lines wastes context on every task — split into `docs/agent/*.md` with progressive disclosure; root file keeps only session gate + links. Update linked docs when conventions change, not the root file. | Process | 🟢 Low |
 | 2026-06-24 | grok/legal-pages-supabase | Grok | Legal Notice and Privacy Policy must live in Supabase `site_config.legal` and render as real App Router pages — footer links to `/impressum` 404'd because overlay/KV legal data was never wired to the public Next.js site. Structured operator fields inject into templates so address changes do not require editing the full policy text. | Architecture | 🟠 High |

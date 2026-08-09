@@ -9,8 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Agent session control (darktunes-style)**: Expanded root `AGENTS.md` (decision trees, Production definition of done), `docs/agent/workflow.md`, `docs/agent/public-ui.md`, root `QA_CHECKLIST.md`; lessons from 2026-08-09 public UI firefight in `docs/LESSONS_LEARNED.md`.
 - **Appearance font size sliders**: Site Config → Appearance now exposes heading, body, and mono font size controls with live preview (`appearance.theme.*FontSize` → CSS variables).
-- **Gallery lightbox**: Public gallery opens `SwipeableGallery` on tap/click; optional `lightbox` style override; “Show All” when `maxVisible` is set.
+- **Gallery lightbox**: Public gallery opens via `CyberpunkOverlay` (`type: 'gallery'`) with shared chrome; optional `lightbox` style override; “Show All” when `maxVisible` is set.
 - **Per-section error boundaries**: Public page sections wrapped in `SectionErrorBoundary` so one failing section does not crash the whole page.
 - **SSRF guard**: `lib/ssrf-guard.ts` pins DNS before fetch for image proxies; tests in `src/test/ssrf-guard.test.ts`.
 - **OG + sitemap (App Router)**: `app/api/og/route.ts`, `app/api/sitemap/route.ts`; `vercel.json` rewrite `/sitemap.xml` → `/api/sitemap`.

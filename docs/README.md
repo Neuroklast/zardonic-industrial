@@ -1,16 +1,17 @@
 # Documentation Index
 
-> **Last updated:** 2026-06-24  
+> **Last updated:** 2026-08-09  
 > **Stack:** Next.js App Router · Supabase · Cloudflare R2 · Resend
 
 ## Start here
 
 | Audience | Document |
 |----------|----------|
-| AI agents | [AGENTS.md](../AGENTS.md) → [docs/agent/](./agent/) |
+| AI agents | [AGENTS.md](../AGENTS.md) → [docs/agent/](./agent/) (session control plane) |
 | Developers | [README.md](../README.md) · [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | Operators | [ADMIN_GUIDE.md](./ADMIN_GUIDE.md) |
 | Compliance | [GDPR_COMPLIANCE.md](./GDPR_COMPLIANCE.md) |
+| QA / smoke | [QA_CHECKLIST.md](../QA_CHECKLIST.md) |
 
 ## Canonical docs (current)
 
@@ -19,23 +20,26 @@
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | System design, routes, data stores |
 | [DEVELOPMENT_STATUS.md](./DEVELOPMENT_STATUS.md) | Feature status and open work |
 | [TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md) | Technical debt register |
-| [CODING_AGENT_WORKFLOW.md](./CODING_AGENT_WORKFLOW.md) | Agent session workflow |
+| [CODING_AGENT_WORKFLOW.md](./CODING_AGENT_WORKFLOW.md) | Agent session workflow (human summary) |
 | [ADMIN_GUIDE.md](./ADMIN_GUIDE.md) | Admin panel usage |
 | [GDPR_COMPLIANCE.md](./GDPR_COMPLIANCE.md) | Privacy and processors |
 | [ACCESSIBILITY.md](./ACCESSIBILITY.md) | WCAG notes |
 | [ARCHITECTURE_DECISION_RECORDS.md](./ARCHITECTURE_DECISION_RECORDS.md) | ADRs (see superseded markers) |
 | [LESSONS_LEARNED.md](./LESSONS_LEARNED.md) | Session lessons log |
 | [CHANGELOG.md](../CHANGELOG.md) | Release history |
+| [QA_CHECKLIST.md](../QA_CHECKLIST.md) | Manual smoke checks after UI/deploy |
 
 ## Agent guides
 
 | Document | Purpose |
 |----------|---------|
+| [agent/workflow.md](./agent/workflow.md) | CI, docs closeout, PR → Production |
 | [agent/architecture.md](./agent/architecture.md) | PageLayout, site_config, legal |
 | [agent/security.md](./agent/security.md) | GDPR, auth, cookies |
 | [agent/admin.md](./agent/admin.md) | Supabase admin mutations |
 | [agent/ui.md](./agent/ui.md) | Typography, a11y |
-| [agent/session-checklist.md](./agent/session-checklist.md) | Lint/build/test gate |
+| [agent/public-ui.md](./agent/public-ui.md) | Nav, overlays, partner PNGs, footer |
+| [agent/session-checklist.md](./agent/session-checklist.md) | End-of-session gate + known fixes |
 
 ## Design & migration
 

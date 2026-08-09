@@ -1,33 +1,49 @@
 # Agent Session Checklist
 
-## Before closing a PR / task
+## Before claiming “done” / opening a PR
 
 ```
-[ ] npm run lint        → 0 errors, 0 warnings
+[ ] Topic docs read (AGENTS.md + matching docs/agent/*.md)
+[ ] npm run lint        → 0 errors (no new warnings if avoidable)
 [ ] npm run typecheck   → 0 errors
-[ ] npm run build       → 0 errors, 0 warnings
+[ ] npm run build       → 0 errors
 [ ] npm run test        → all tests pass (or document pre-existing failures)
-[ ] CHANGELOG.md        → [Unreleased] entry
+[ ] CHANGELOG.md        → [Unreleased] entry when user-visible
 [ ] docs/LESSONS_LEARNED.md → row for non-trivial lessons
-[ ] docs/agent/*.md or README → if conventions changed
+[ ] docs/agent/*.md / QA_CHECKLIST.md → if conventions or flows changed
+[ ] Public UI decision trees respected (nav / overlay / logos / footer)
+```
+
+## Before claiming “fixed on production”
+
+```
+[ ] PR CI green
+[ ] Merged to main
+[ ] Vercel Production deployment SHA == merge commit
+[ ] User told to hard-refresh for visual fixes
+[ ] Explicit re-check list given (not “should be fine”)
 ```
 
 ## During development
 
 - Minimal diffs — no unrelated refactors
-- Tests alongside new utilities/registries
-- No new deps without `npm audit` check
-- Update `docs/agent/` when introducing conventions (not a bloated root AGENTS.md)
+- Tests alongside new utilities/registries and public UI regression guards
+- No new deps without necessity + audit awareness
+- Update `docs/agent/` when introducing conventions (do not dump everything into root `AGENTS.md`)
 
 ## Known stable fixes
 
 | Area | Files | Rule |
 |------|-------|------|
 | Supabase admin auth | `app/admin/login/submit/route.ts`, `proxy.ts`, `lib/supabaseServer.ts` | Native POST login; pass cookie `options` unchanged; forward SSR cache headers; copy cookies on all proxy redirects |
-| Redis short-circuit | `api/auth.ts:validateSession` | Return false if `!isRedisConfigured()` |
-| WebGL cleanup | `ModelBackground.tsx` | Dispose geometry/material/texture before renderer |
-| Upload unmount | `useVideoUpload.ts`, `useMediaUpload.ts` | `isMountedRef` guard |
+| Redis short-circuit | `api/auth.ts` / session helpers | Return false if Redis not configured |
+| WebGL cleanup | `ModelBackground.tsx` / circuit backgrounds | Dispose geometry/material/texture before renderer |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
 | Odesli dual API | `lib/odesli.ts` | Server: `fetchOdesliLinksFromApi`; client editor: `fetchOdesliLinks` via `/api/odesli` queue |
+| Nav logo vs BIO | `SiteNav.tsx` | Flex `shrink-0` logo; never absolute over links |
+| Compact nav labels | `lib/nav-links.ts` | Short nav labels; long titles only on section headings |
+| Gallery modal | `GallerySection` + `CyberpunkOverlay` + `GalleryOverlayContent` | Same shell as releases/events |
+| Partner PNG white box | `lib/partner-logo-white.ts`, `CreditsSection.tsx` | Canvas silhouette; no CSS invert on white plates |
+| Overlay scroll lock | `CyberpunkOverlay.tsx` | Body + html overflow + Lenis stop/start |
 
-Full historical notes remain in git history and [LESSONS_LEARNED.md](../LESSONS_LEARNED.md).
+Full historical notes: [LESSONS_LEARNED.md](../LESSONS_LEARNED.md).
