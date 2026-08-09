@@ -60,7 +60,7 @@ describe('CSP connect-src parity', () => {
     expect(xfo).toBe('SAMEORIGIN')
   })
 
-  it('img-src allows blob URLs for admin media previews', () => {
+  it('img-src allows blob URLs for admin media previews (https only)', () => {
     const root = resolve(__dirname, '../..')
     const vercel = JSON.parse(readFileSync(resolve(root, 'vercel.json'), 'utf8')) as {
       headers: Array<{ headers: Array<{ key: string; value: string }> }>
@@ -74,8 +74,12 @@ describe('CSP connect-src parity', () => {
 
     const vercelImgSrc = extractDirectiveHosts(vercelCsp!, 'img-src')
     expect(vercelImgSrc).toContain('blob:')
+    expect(vercelImgSrc).toContain('https:')
+    // Prefer HTTPS-only images (no cleartext http:) for hardening
+    expect(vercelImgSrc).not.toContain('http:')
 
-    expect(nextConfig).toContain("img-src 'self' data: blob: https: http:")
+    expect(nextConfig).toContain("img-src 'self' data: blob: https:")
+    expect(nextConfig).not.toMatch(/img-src[^;]*http:/)
   })
 
   it('style-src parity between vercel.json and next.config.mjs', () => {

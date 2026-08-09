@@ -132,7 +132,7 @@ export default function TranslationsEditor({
     setTimeout(() => setStatus('idle'), 2000)
   }
 
-  const gridCols = `minmax(8rem,1fr) repeat(${languages.length}, minmax(8rem, 1fr))`
+  const gridCols = `minmax(10rem, 12rem) repeat(${languages.length}, minmax(10rem, 1fr))`
 
   return (
     <div>
@@ -193,41 +193,48 @@ export default function TranslationsEditor({
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-x-auto">
-        <div
-          className="grid text-xs font-semibold text-zinc-400 uppercase tracking-wider border-b border-zinc-800 px-4 py-2 gap-2 min-w-max"
-          style={{ gridTemplateColumns: gridCols }}
-        >
-          <span>Key</span>
-          {languages.map((lang) => (
-            <span key={lang.code}>{lang.label}</span>
-          ))}
-        </div>
-        <div className="divide-y divide-zinc-800/60">
-          {Object.entries(values).map(([key, entry]) => (
-            <div
-              key={key}
-              className="grid items-center gap-2 px-4 py-2 min-w-max"
-              style={{ gridTemplateColumns: gridCols }}
-            >
-              <code className="font-mono text-xs text-zinc-400 truncate" title={key}>
-                {key}
-              </code>
-              {languages.map((lang) => {
-                const placeholder = defaultStrings[key]?.[lang.code] ?? defaultStrings[key]?.en ?? ''
-                return (
-                  <input
-                    key={lang.code}
-                    type="text"
-                    value={entry[lang.code] ?? ''}
-                    onChange={(e) => updateField(key, lang.code, e.target.value)}
-                    placeholder={placeholder}
-                    aria-label={`${key} ${lang.label}`}
-                    className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-red-500 w-full"
-                  />
-                )
-              })}
-            </div>
-          ))}
+        <div className="min-w-max">
+          <div
+            className="grid items-center gap-3 border-b border-zinc-800 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+            style={{ gridTemplateColumns: gridCols }}
+          >
+            <span className="sticky left-0 z-[1] bg-zinc-900 pr-2">Key</span>
+            {languages.map((lang) => (
+              <span key={lang.code} className="min-w-0 truncate" title={lang.label}>
+                {lang.label}
+              </span>
+            ))}
+          </div>
+          <div className="divide-y divide-zinc-800/60">
+            {Object.entries(values).map(([key, entry]) => (
+              <div
+                key={key}
+                className="grid items-center gap-3 px-4 py-2"
+                style={{ gridTemplateColumns: gridCols }}
+              >
+                <code
+                  className="sticky left-0 z-[1] truncate bg-zinc-900 pr-2 font-mono text-xs text-zinc-400"
+                  title={key}
+                >
+                  {key}
+                </code>
+                {languages.map((lang) => {
+                  const placeholder = defaultStrings[key]?.[lang.code] ?? defaultStrings[key]?.en ?? ''
+                  return (
+                    <input
+                      key={lang.code}
+                      type="text"
+                      value={entry[lang.code] ?? ''}
+                      onChange={(e) => updateField(key, lang.code, e.target.value)}
+                      placeholder={placeholder}
+                      aria-label={`${key} ${lang.label}`}
+                      className="min-w-0 w-full rounded border border-zinc-700 bg-zinc-800 px-2 py-1 text-sm text-white placeholder:text-zinc-600 focus:border-red-500 focus:outline-none"
+                    />
+                  )
+                })}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

@@ -14,9 +14,16 @@ interface MerchandiseSectionProps {
   heading?: string
   intro?: string
   footerText: string
+  footerUrl?: string
 }
 
-export function MerchandiseSection({ items, heading, intro, footerText }: MerchandiseSectionProps) {
+export function MerchandiseSection({
+  items,
+  heading,
+  intro,
+  footerText,
+  footerUrl,
+}: MerchandiseSectionProps) {
   const title = formatSectionHeading(heading, 'merchandise')
 
   return (
@@ -24,7 +31,7 @@ export function MerchandiseSection({ items, heading, intro, footerText }: Mercha
       <SectionHeading sectionId="merchandise" dataText={title}>{title}</SectionHeading>
       <SectionIntro sectionId="merchandise">{intro}</SectionIntro>
       {items.length > 0 ? (
-        <SquareImageGrid items={items} footerText={footerText} />
+        <SquareImageGrid items={items} footerText={footerText} footerUrl={footerUrl} />
       ) : (
         <SectionEmpty label="Merchandise coming soon" />
       )}

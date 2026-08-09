@@ -29,9 +29,19 @@ export interface ImageCropEditorProps {
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
 
+const RATIO_PRESETS: Array<{ id: string; label: string; ratio: number | null }> = [
+  { id: 'free', label: 'Free', ratio: null },
+  { id: '1:1', label: '1:1', ratio: 1 },
+  { id: '4:3', label: '4:3', ratio: 4 / 3 },
+  { id: '3:2', label: '3:2', ratio: 3 / 2 },
+  { id: '16:9', label: '16:9', ratio: 16 / 9 },
+  { id: '9:16', label: '9:16', ratio: 9 / 16 },
+]
+
 export function ImageCropEditor({
   open,
   imageSrc,
+  mimeType,
   title = 'Adjust image',
   aspectRatio = null,
   fitMode = 'cover',
@@ -43,6 +53,13 @@ export function ImageCropEditor({
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
   const [dragging, setDragging] = useState(false)
   const [exporting, setExporting] = useState(false)
+  const [ratioPreset, setRatioPreset] = useState<string>(() => {
+    if (aspectRatio == null) return 'free'
+    const match = RATIO_PRESETS.find((p) => p.ratio != null && Math.abs((p.ratio ?? 0) - aspectRatio) < 0.01)
+    return match?.id ?? 'custom'
+  })
+  const [customW, setCustomW] = useState('1')
+  const [customH, setCustomH] = useState('1')
   const dragStart = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 })
   const cropRef = useRef(crop)
   const viewportRef = useRef<HTMLDivElement>(null)
@@ -55,14 +72,27 @@ export function ImageCropEditor({
     if (!open) return
     setCrop(DEFAULT_CROP_STATE)
     setImageSize({ width: 0, height: 0 })
-  }, [open, imageSrc])
+    if (aspectRatio == null) setRatioPreset('free')
+  }, [open, imageSrc, aspectRatio])
+
+  const effectiveAspect = useMemo(() => {
+    if (ratioPreset === 'custom') {
+      const w = Number(customW)
+      const h = Number(customH)
+      if (w > 0 && h > 0) return w / h
+      return null
+    }
+    const preset = RATIO_PRESETS.find((p) => p.id === ratioPreset)
+    if (preset) return preset.ratio
+    return aspectRatio ?? null
+  }, [aspectRatio, customH, customW, ratioPreset])
 
   const viewport = useMemo(
     () =>
       imageSize.width > 0
-        ? resolveEditorViewport(imageSize.width, imageSize.height, aspectRatio ?? null)
+        ? resolveEditorViewport(imageSize.width, imageSize.height, effectiveAspect)
         : { width: 320, height: 320 },
-    [aspectRatio, imageSize.height, imageSize.width],
+    [effectiveAspect, imageSize.height, imageSize.width],
   )
 
   const drawRect =
@@ -142,7 +172,14 @@ export function ImageCropEditor({
       const scaleX = output.width / viewport.width
       const scaleY = output.height / viewport.height
 
-      if (fitMode === 'contain') {
+      // Preserve transparency for PNG/WebP logos; only opaque black for photo crops
+      // when the source has no alpha and we are in cover mode.
+      const preserveAlpha =
+        !mimeType ||
+        mimeType.includes('png') ||
+        mimeType.includes('webp') ||
+        mimeType.includes('svg')
+      if (fitMode === 'contain' || preserveAlpha) {
         ctx.clearRect(0, 0, output.width, output.height)
       } else {
         ctx.fillStyle = '#000000'
@@ -219,6 +256,69 @@ export function ImageCropEditor({
               }}
             />
             <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/10" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-xs text-zinc-400 uppercase tracking-widest">Aspect ratio</span>
+            <div className="flex flex-wrap gap-1.5">
+              {RATIO_PRESETS.map((preset) => (
+                <button
+                  key={preset.id}
+                  type="button"
+                  onClick={() => {
+                    setRatioPreset(preset.id)
+                    setCrop(DEFAULT_CROP_STATE)
+                  }}
+                  className={`rounded border px-2 py-1 text-xs font-mono transition-colors ${
+                    ratioPreset === preset.id
+                      ? 'border-red-600 bg-red-900/40 text-white'
+                      : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setRatioPreset('custom')}
+                className={`rounded border px-2 py-1 text-xs font-mono transition-colors ${
+                  ratioPreset === 'custom'
+                    ? 'border-red-600 bg-red-900/40 text-white'
+                    : 'border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                Custom
+              </button>
+            </div>
+            {ratioPreset === 'custom' ? (
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={customW}
+                  onChange={(e) => {
+                    setCustomW(e.target.value)
+                    setCrop(DEFAULT_CROP_STATE)
+                  }}
+                  className="w-16 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono text-xs text-white"
+                  aria-label="Custom ratio width"
+                />
+                <span className="text-zinc-500 text-xs">:</span>
+                <input
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={customH}
+                  onChange={(e) => {
+                    setCustomH(e.target.value)
+                    setCrop(DEFAULT_CROP_STATE)
+                  }}
+                  className="w-16 rounded border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono text-xs text-white"
+                  aria-label="Custom ratio height"
+                />
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-2">

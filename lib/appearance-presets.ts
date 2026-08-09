@@ -7,6 +7,8 @@ export interface AppearanceTheme {
   mutedForegroundColor?: string
   borderColor?: string
   secondaryColor?: string
+  /** Overlay / modal edge glow (CSS color). */
+  modalGlowColor?: string
   fontHeading?: string
   fontBody?: string
   fontMono?: string

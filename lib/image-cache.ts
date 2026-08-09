@@ -116,6 +116,25 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
   // Data URLs and relative paths — return as-is
   if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('.')) return url
 
+  // Self-hosted / trusted CDNs — load directly (no wsrv.nl hop)
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      const hostname = new URL(url).hostname
+      if (
+        hostname.endsWith('.r2.dev') ||
+        hostname.endsWith('.r2.cloudflarestorage.com') ||
+        hostname.endsWith('.bcbits.com') ||
+        hostname.endsWith('.mzstatic.com') ||
+        hostname.endsWith('.supabase.co') ||
+        hostname === 'img.youtube.com'
+      ) {
+        return url
+      }
+    } catch {
+      // fall through to wsrv.nl proxy
+    }
+  }
+
   // Already proxied through wsrv.nl — avoid double-wrapping, but append new options if needed
   if (url.startsWith('https://wsrv.nl/')) {
     // If it already has query parameters, we need to append carefully to not override 'url'

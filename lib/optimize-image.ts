@@ -103,6 +103,18 @@ export async function optimizeImageBuffer(
       return { buffer, contentType: 'image/jpeg', extension: 'jpg' }
     }
 
+    // auto / webp: preserve alpha when source has transparency (logos, PNGs)
+    const hasAlpha = meta.hasAlpha === true
+    if (format === 'auto' && hasAlpha) {
+      const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4, alphaQuality: 100 }).toBuffer()
+      return { buffer, contentType: 'image/webp', extension: 'webp' }
+    }
+
+    if (hasAlpha && format === 'webp') {
+      const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4, alphaQuality: 100 }).toBuffer()
+      return { buffer, contentType: 'image/webp', extension: 'webp' }
+    }
+
     const buffer = await pipeline.webp({ quality: WEBP_QUALITY, effort: 4 }).toBuffer()
     return { buffer, contentType: 'image/webp', extension: 'webp' }
   } catch {

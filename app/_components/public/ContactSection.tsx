@@ -11,9 +11,14 @@ const fieldClass =
 interface ContactSectionProps {
   heading?: string
   intro?: string
+  privacyPolicyUrl?: string
 }
 
-export function ContactSection({ heading, intro }: ContactSectionProps) {
+export function ContactSection({
+  heading,
+  intro,
+  privacyPolicyUrl = '/privacy-policy',
+}: ContactSectionProps) {
   const [state, formAction, pending] = useActionState(submitContact, null)
   const title = formatSectionHeading(heading, 'contact')
 
@@ -28,12 +33,21 @@ export function ContactSection({ heading, intro }: ContactSectionProps) {
         </p>
       ) : (
         <form action={formAction} className="flex w-full flex-col gap-4">
+          {/* Honeypot — hidden from users; bots that fill it are silently accepted */}
+          <input
+            type="text"
+            name="_hp"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="pointer-events-none absolute h-0 w-0 overflow-hidden opacity-0"
+          />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="contact-name" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
                 Name
               </label>
-              <input id="contact-name" name="name" required className={fieldClass} autoComplete="name" />
+              <input id="contact-name" name="name" required maxLength={100} className={fieldClass} autoComplete="name" />
             </div>
             <div>
               <label htmlFor="contact-email" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -44,6 +58,7 @@ export function ContactSection({ heading, intro }: ContactSectionProps) {
                 name="email"
                 type="email"
                 required
+                maxLength={254}
                 className={fieldClass}
                 autoComplete="email"
               />
@@ -53,7 +68,7 @@ export function ContactSection({ heading, intro }: ContactSectionProps) {
             <label htmlFor="contact-subject" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
               Subject
             </label>
-            <input id="contact-subject" name="subject" required className={fieldClass} />
+            <input id="contact-subject" name="subject" required maxLength={200} className={fieldClass} />
           </div>
           <div>
             <label htmlFor="contact-message" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
@@ -64,10 +79,22 @@ export function ContactSection({ heading, intro }: ContactSectionProps) {
               name="message"
               required
               minLength={10}
+              maxLength={5000}
               rows={5}
               className={`${fieldClass} min-h-[8rem] resize-none`}
             />
           </div>
+          <p className="font-mono text-xs text-muted-foreground">
+            By sending this message you agree that we process your details to respond to your inquiry.
+            See our{' '}
+            <a
+              href={privacyPolicyUrl}
+              className="text-foreground underline underline-offset-2 transition-colors hover:text-primary"
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
           {state?.error ? (
             <p className="font-mono text-xs text-destructive">{state.error}</p>
           ) : null}

@@ -1,6 +1,6 @@
 # GDPR Compliance Review — ZARDONIC Band Website
 
-**Last updated:** 2026-06-24
+**Last updated:** 2026-08-09
 
 ## Overview
 
@@ -32,8 +32,9 @@ Legacy paths `/impressum`, `/privacy`, `/datenschutz` redirect to the routes abo
 |------|---------|-------------|
 | `site_config` | Theme, footer, legal text, catalogue sync IDs | Legitimate interest / contract (site operation) |
 | `releases`, `gigs`, `gallery`, etc. | Public site content | Legitimate interest |
-| `contact_submissions` | Contact form messages | Consent / pre-contractual steps |
-| `newsletter_subscribers` | Newsletter signups | Consent |
+| Contact form (via Resend) | Contact form messages | Pre-contractual / legitimate interest (Art. 6(1)(b)/(f)) |
+| `newsletter_subscribers` | Newsletter signups (double opt-in) | Consent (Art. 6(1)(a)) |
+| `news_posts` | Public editorial news content | Legitimate interest (no personal data from readers) |
 | `profiles` | Admin authentication role | Contract (admin access) |
 
 Supabase region and DPA: configure in Supabase dashboard; referenced in Privacy Policy template.

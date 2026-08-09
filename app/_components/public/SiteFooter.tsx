@@ -7,6 +7,7 @@ interface SocialLink {
   platform: string
   url: string
   label: string | null
+  logoUrl?: string | null
 }
 
 interface SiteFooterProps {
@@ -93,7 +94,15 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
                 aria-label={link.label ?? link.platform}
                 title={link.label ?? link.platform}
               >
-                <PlatformIcon platform={link.platform} />
+                {link.logoUrl ? (
+                  <img
+                    src={link.logoUrl}
+                    alt=""
+                    className="h-5 w-5 object-contain brightness-0 invert opacity-80 hover:opacity-100"
+                  />
+                ) : (
+                  <PlatformIcon platform={link.platform} />
+                )}
               </a>
             ))}
           </nav>

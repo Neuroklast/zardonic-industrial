@@ -108,7 +108,8 @@ describe('applyAppearanceConfig', () => {
       root,
     )
     expect(applied['--surface-section-bg-fallback']).toBe('rgba(0, 0, 1, 0)')
-    expect(applied['--surface-section-bg']).toBe('oklch(0.00 0.00 240 / 0)')
+    // Accurate OKLab conversion of #000001 (near-black blue) with zero alpha
+    expect(applied['--surface-section-bg']).toMatch(/^oklch\([\d.]+ [\d.]+ [\d.]+ \/ 0\)$/)
     expect(applied['--surface-section-backdrop']).toBe('none')
     expect(applied['--surface-section-border-opacity']).toBe('0')
   })

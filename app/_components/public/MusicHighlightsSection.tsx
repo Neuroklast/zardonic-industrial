@@ -7,7 +7,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { formatSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
@@ -58,13 +57,12 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
         className="group relative aspect-video w-full overflow-hidden border border-border bg-muted transition-colors hover:border-primary/40"
         aria-label={`Play ${title} on YouTube`}
       >
-        <Image
+        <img
           src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
           alt={title}
-          fill
-          className="object-cover opacity-50 transition-opacity group-hover:opacity-60"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          unoptimized
+          className="absolute inset-0 h-full w-full object-cover opacity-50 transition-opacity group-hover:opacity-60"
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-foreground/60 transition-colors group-hover:border-foreground">

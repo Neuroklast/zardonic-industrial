@@ -108,7 +108,7 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
       paragraphs: [
         `The data controller for this website is: ${controller}.`,
         ...(address ? [`Postal address:\n${address}`] : []),
-        'We take the protection of your personal data seriously and process it in accordance with the GDPR, the German BDSG, and the TTDSG.',
+        'We take the protection of your personal data seriously and process it in accordance with the GDPR, the German BDSG, and the TDDDG (Telecommunications Digital Services Data Protection Act; formerly TTDSG).',
         'Unless a specific retention period is stated below, personal data is deleted when the purpose of processing no longer applies, or when you withdraw consent or request erasure, unless statutory retention obligations apply.',
         'Legal bases: Art. 6(1)(a) GDPR (consent), Art. 6(1)(b) GDPR (contract/pre-contractual measures), Art. 6(1)(c) GDPR (legal obligation), Art. 6(1)(f) GDPR (legitimate interests).',
       ],
@@ -117,7 +117,7 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
       id: 'storage',
       title: '4. Browser storage, cookies, and local data',
       paragraphs: [
-        'We store your cookie consent preferences in localStorage (key: zd-cookie-consent). This is technically necessary to remember your choice. Legal basis: Art. 6(1)(f) GDPR and § 25(2) TTDSG.',
+        'We store your cookie consent preferences in localStorage (key: zd-cookie-consent). This is technically necessary to remember your choice. Legal basis: Art. 6(1)(f) GDPR and § 25(2) TDDDG.',
         'Functional preferences (language, theme, sound mute state) may be stored in localStorage without consent because they are strictly necessary for your chosen experience. Legal basis: Art. 6(1)(f) GDPR.',
         'An IndexedDB image cache may store compressed images locally to improve performance. No personal profiles are created. Legal basis: Art. 6(1)(f) GDPR.',
         'If you consent to analytics in the cookie banner, we may store anonymised usage data locally and optionally aggregate it server-side. You can revoke consent at any time via "Cookie Preferences" in the footer.',
@@ -129,9 +129,10 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
       title: '5. Contact form',
       paragraphs: [
         'When you submit our contact form, we process: name, email address, subject, and message.',
-        'Your message is transmitted to us by email via Resend. We do not sell or share this data with third parties for marketing purposes.',
+        'Your message is transmitted to us by email via Resend (USA). We do not sell or share this data with third parties for marketing purposes. A privacy notice with a link to this policy is shown next to the form.',
         'Legal basis: Art. 6(1)(b) GDPR (pre-contractual communication) or Art. 6(1)(f) GDPR (legitimate interest in responding to inquiries).',
         'Data is deleted after your request has been processed, unless statutory retention obligations require longer storage.',
+        'Public forms are rate-limited and protected against automated abuse (pseudonymised IP hashes may be stored briefly for security). Legal basis: Art. 6(1)(f) GDPR.',
       ],
     },
     {
@@ -139,20 +140,30 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
       title: '6. Newsletter',
       paragraphs: [
         'If you subscribe to our newsletter, we store your email address in our Supabase database together with a record of your consent and the subscription timestamp. Subscription requires double opt-in: after signing up you receive a confirmation email via Resend; your address is only added to the active mailing list after you click the confirmation link.',
-        'Legal basis: Art. 6(1)(a) GDPR (consent). You may unsubscribe at any time using the unsubscribe link in any newsletter email or on our website. Your data will be deleted upon unsubscription or upon request.',
+        'Legal basis: Art. 6(1)(a) GDPR (consent). You may unsubscribe at any time using the unsubscribe link in any newsletter email or via /newsletter/unsubscribe on this website. Your data will be deleted upon unsubscription or upon request.',
+        'Confirmation and unsubscribe links use signed tokens. Newsletter forms are rate-limited to prevent abuse (see security measures above).',
+      ],
+    },
+    {
+      id: 'news',
+      title: '7. News and blog content',
+      paragraphs: [
+        'Public news posts are editorial content (title, text, optional cover image). Reading news does not require an account and does not create a personal profile.',
+        'Cover images may be delivered via our media CDN (Cloudflare R2) or image proxy (wsrv.nl) as described below. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in presenting public information).',
       ],
     },
     {
       id: 'cdn',
-      title: '7. Image CDN (wsrv.nl)',
+      title: '8. Image CDN (wsrv.nl) and web fonts',
       paragraphs: [
         'To improve loading speed, images may be delivered via wsrv.nl (Images.weserv.nl). When your browser requests an image, wsrv.nl may temporarily process your IP address to deliver the content.',
         'wsrv.nl does not set tracking cookies. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in fast image delivery). More information: https://wsrv.nl',
+        'Optional custom fonts may be loaded from Google Fonts (fonts.googleapis.com / fonts.gstatic.com) when configured by the site operator. Your browser then establishes a connection to Google. Legal basis: Art. 6(1)(f) GDPR. Google privacy policy: https://policies.google.com/privacy',
       ],
     },
     {
       id: 'embeds',
-      title: '8. Third-party embeds (Spotify, YouTube)',
+      title: '9. Third-party embeds (Spotify, YouTube)',
       paragraphs: [
         'Embedded media players (Spotify, YouTube) are NOT loaded automatically. They only load after you explicitly click a load button (two-click method).',
         'When activated, your IP address and browser data may be transmitted to Spotify AB (Sweden) or Google/YouTube (USA). Legal basis: Art. 6(1)(a) GDPR (your explicit consent).',
@@ -162,22 +173,22 @@ export function buildPrivacyPolicySections(config: LegalConfig): LegalSection[] 
     },
     {
       id: 'external-links',
-      title: '9. External links and social media',
+      title: '10. External links and social media',
       paragraphs: [
-        'Our footer contains links to external social media profiles. When you click these links, you leave our website and the respective third-party privacy policies apply.',
+        'Our footer and content may contain links to external social media profiles and stores. When you click these links, you leave our website and the respective third-party privacy policies apply.',
         'We have no control over third-party websites and accept no responsibility for their content or data processing.',
       ],
     },
     {
       id: 'transfers',
-      title: '10. International data transfers',
+      title: '11. International data transfers',
       paragraphs: [
-        'Some processors (Vercel, Resend, Google/YouTube) are located in the USA. Transfers are based on appropriate safeguards such as EU Standard Contractual Clauses where applicable.',
+        'Some processors (Vercel, Cloudflare, Resend, Google/YouTube, wsrv.nl) may process data outside the EU/EEA, including the USA. Transfers are based on appropriate safeguards such as EU Standard Contractual Clauses or an adequacy decision where applicable.',
       ],
     },
     {
       id: 'rights',
-      title: '11. Your rights',
+      title: '12. Your rights',
       paragraphs: [
         'Under the GDPR you have the right to: access (Art. 15), rectification (Art. 16), erasure (Art. 17), restriction (Art. 18), data portability (Art. 20), and objection (Art. 21).',
         'If processing is based on consent, you may withdraw consent at any time without affecting the lawfulness of prior processing.',

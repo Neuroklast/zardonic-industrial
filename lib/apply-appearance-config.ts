@@ -129,6 +129,7 @@ function applyThemeVars(root: HTMLElement, theme: AppearanceTheme, applied: Reco
     ['mutedForegroundColor', '--muted-foreground'],
     ['borderColor', '--border'],
     ['secondaryColor', '--secondary'],
+    ['modalGlowColor', '--modal-glow'],
     ['fontHeading', '--font-heading'],
     ['fontBody', '--font-body'],
     ['fontMono', '--font-mono'],

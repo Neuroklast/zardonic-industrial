@@ -1,5 +1,5 @@
 import { ReactNode } from 'react'
-import Image from 'next/image'
+import { toDirectImageUrl } from '@/lib/image-cache'
 
 interface GridItem {
   id: string
@@ -11,6 +11,7 @@ interface GridItem {
 interface SquareImageGridProps {
   items: GridItem[]
   footerText?: string
+  footerUrl?: string
   className?: string
   children?: (item: GridItem) => ReactNode
 }
@@ -25,12 +26,12 @@ function GridItemTile({
   const imageBlock = (
     <div className="relative aspect-square overflow-hidden border border-border bg-muted transition-colors group-hover:border-primary/40">
       {item.imageUrl ? (
-        <Image
-          src={item.imageUrl}
+        <img
+          src={toDirectImageUrl(item.imageUrl, { w: 640 }) || item.imageUrl}
           alt={item.title}
-          fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+          className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+          decoding="async"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
@@ -74,8 +75,18 @@ function GridItemTile({
   )
 }
 
-export function SquareImageGrid({ items, footerText, className = '', children }: SquareImageGridProps) {
+export function SquareImageGrid({
+  items,
+  footerText,
+  footerUrl,
+  className = '',
+  children,
+}: SquareImageGridProps) {
   if (items.length === 0) return null
+
+  const footerClass =
+    'border-t border-border/60 pt-6 text-center text-xs text-muted-foreground transition-colors'
+  const footerStyle = { fontFamily: 'var(--font-body, inherit)' } as const
 
   return (
     <>
@@ -87,12 +98,26 @@ export function SquareImageGrid({ items, footerText, className = '', children }:
         ))}
       </div>
       {footerText ? (
-        <p
-          data-draft-target="merchandise-footer"
-          className="border-t border-border/60 pt-6 text-center font-mono text-xs text-muted-foreground"
-        >
-          {footerText}
-        </p>
+        footerUrl ? (
+          <a
+            href={footerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-draft-target="merchandise-footer"
+            className={`${footerClass} hover:text-foreground underline-offset-4 hover:underline`}
+            style={footerStyle}
+          >
+            {footerText}
+          </a>
+        ) : (
+          <p
+            data-draft-target="merchandise-footer"
+            className={footerClass}
+            style={footerStyle}
+          >
+            {footerText}
+          </p>
+        )
       ) : null}
     </>
   )

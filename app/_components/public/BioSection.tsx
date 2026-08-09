@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { m, useReducedMotion } from 'framer-motion'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
 import { formatSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
@@ -17,12 +16,13 @@ interface BioSectionProps {
 export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
   const title = formatSectionHeading(heading, 'bio')
   const [expanded, setExpanded] = useState(false)
-  const prefersReducedMotion = useReducedMotion()
   const hasContent = content.trim().length > 0
   const displayContent = hasContent ? content : 'Biography coming soon.'
 
   const bioTextClass = bodyFontSize || 'text-lg'
   const maxH = readMoreMaxHeight || '280px'
+  // Always show full content when short or expanded — avoid mask making text look "invisible"
+  const clampCollapsed = hasContent && !expanded
 
   return (
     <SectionWrapper id="bio" data-theme-color="foreground muted-foreground card border">
@@ -32,34 +32,23 @@ export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxH
       <div
         className={`overflow-hidden whitespace-pre-wrap font-light ${bioTextClass} text-muted-foreground leading-relaxed`}
         style={{
-          maxHeight: expanded ? 'none' : maxH,
-          maskImage: expanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
-          WebkitMaskImage: expanded ? 'none' : 'linear-gradient(to bottom, black 60%, transparent 100%)',
-          transition: 'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), mask-image 0.3s ease, -webkit-mask-image 0.3s ease',
+          fontFamily: 'var(--font-body, inherit)',
+          maxHeight: clampCollapsed ? maxH : 'none',
+          maskImage: clampCollapsed
+            ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
+            : 'none',
+          WebkitMaskImage: clampCollapsed
+            ? 'linear-gradient(to bottom, black 60%, transparent 100%)'
+            : 'none',
+          transition:
+            'max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), mask-image 0.3s ease, -webkit-mask-image 0.3s ease',
         }}
       >
-        <m.div
-          initial={prefersReducedMotion ? false : { opacity: 0, x: -30 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1, x: 0 }}
-          viewport={prefersReducedMotion ? undefined : { once: true }}
-          transition={
-            prefersReducedMotion
-              ? { duration: 0 }
-              : { duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }
-          }
-        >
-          {displayContent}
-        </m.div>
+        {displayContent}
       </div>
 
       {hasContent ? (
-        <m.div
-          initial={prefersReducedMotion ? false : { opacity: 0 }}
-          whileInView={prefersReducedMotion ? undefined : { opacity: 1 }}
-          viewport={prefersReducedMotion ? undefined : { once: true }}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.5, delay: 0.4 }}
-          className="mt-6"
-        >
+        <div className="mt-6">
           <button
             type="button"
             onClick={() => setExpanded((value) => !value)}
@@ -77,7 +66,7 @@ export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxH
               </>
             )}
           </button>
-        </m.div>
+        </div>
       ) : null}
     </SectionWrapper>
   )

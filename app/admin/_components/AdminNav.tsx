@@ -24,6 +24,7 @@ import {
   Export,
   Translate,
   Key,
+  Newspaper,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 import {
@@ -46,6 +47,7 @@ const NAV_ICONS: Record<string, Icon> = {
   '/admin/gigs': Calendar,
   '/admin/merchandise': TShirt,
   '/admin/soundpacks': Package,
+  '/admin/news': Newspaper,
   '/admin/social': Share,
   '/admin/newsletter': EnvelopeSimple,
   '/admin/analytics': ChartBar,

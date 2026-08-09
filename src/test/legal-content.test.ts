@@ -91,6 +91,17 @@ describe('buildPrivacyPolicySections', () => {
     expect(sections).toHaveLength(1)
     expect(sections[0].paragraphs[0]).toBe('My custom policy')
   })
+
+  it('covers newsletter double opt-in, TDDDG, and news content', () => {
+    const sections = buildPrivacyPolicySections(parseLegalConfig(sampleConfig))
+    const body = sections.map((s) => s.paragraphs.join(' ')).join(' ')
+    expect(body).toMatch(/TDDDG|Telecommunications Digital Services/)
+    expect(body).toContain('double opt-in')
+    expect(body).toMatch(/unsubscribe/i)
+    expect(sections.some((s) => s.id === 'news')).toBe(true)
+    expect(body).toMatch(/Google Fonts/i)
+    expect(body).toMatch(/rate-limited/i)
+  })
 })
 
 describe('responsible person defaults', () => {

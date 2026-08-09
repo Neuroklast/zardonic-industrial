@@ -1,18 +1,9 @@
 /**
  * Unit tests for SiteBackground component – image and video background variants.
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { render } from '@testing-library/react'
 import { SiteBackground } from '@/app/_components/public/SiteBackground'
-
-// next/image is a complex component; stub it so tests run in jsdom
-vi.mock('next/image', () => ({
-  default: (props: Record<string, unknown>) => {
-    // eslint-disable-next-line @next/next/no-img-element
-    const { fill: _fill, priority: _p, quality: _q, sizes: _s, ...rest } = props
-    return <img {...(rest as React.ImgHTMLAttributes<HTMLImageElement>)} />
-  },
-}))
 
 describe('SiteBackground', () => {
   it('renders the background image', () => {

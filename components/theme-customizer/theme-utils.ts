@@ -1,4 +1,4 @@
-import { createElement, useCallback, useEffect, useState } from 'react'
+import { createElement, useCallback, useState } from 'react'
 import type { ChangeEvent, FormEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -287,15 +287,22 @@ interface ColorInputProps {
   onChange: (value: string) => void
 }
 
+function toPickerHex(value: string): string {
+  if (value.startsWith('#')) {
+    return value.length >= 7 ? value.slice(0, 7) : oklchToHex(value)
+  }
+  return oklchToHex(value)
+}
+
 export function ColorInput({ label, value, onChange }: ColorInputProps) {
-  const [localHex, setLocalHex] = useState(() => oklchToHex(value))
+  // Draft hex while typing; null means "mirror prop value"
+  const [draftHex, setDraftHex] = useState<string | null>(null)
+  const displayHex = draftHex ?? toPickerHex(value)
 
-  useEffect(() => {
-    setLocalHex(oklchToHex(value))
-  }, [value])
-
-  const commit = useCallback((hex: string) => {
-    onChange(hexToOklch(hex))
+  const commitHex = useCallback((hex: string) => {
+    const normalized = hex.startsWith('#') ? hex : `#${hex}`
+    setDraftHex(null)
+    onChange(hexToOklch(normalized))
   }, [onChange])
 
   return createElement(
@@ -307,18 +314,35 @@ export function ColorInput({ label, value, onChange }: ColorInputProps) {
       { className: 'flex flex-1 items-center gap-2' },
       createElement('input', {
         type: 'color',
-        value: localHex,
-        onInput: (event: FormEvent<HTMLInputElement>) => setLocalHex(event.currentTarget.value),
-        onMouseUp: (event: ReactMouseEvent<HTMLInputElement>) => commit(event.currentTarget.value),
-        onChange: (event: ChangeEvent<HTMLInputElement>) => commit(event.currentTarget.value),
+        value: displayHex.length === 7 ? displayHex : '#000000',
+        onInput: (event: FormEvent<HTMLInputElement>) => setDraftHex(event.currentTarget.value),
+        onMouseUp: (event: ReactMouseEvent<HTMLInputElement>) => commitHex(event.currentTarget.value),
+        onChange: (event: ChangeEvent<HTMLInputElement>) => commitHex(event.currentTarget.value),
         className: 'h-8 w-8 cursor-pointer rounded border border-primary/20 bg-transparent',
         'aria-label': label,
       }),
       createElement(Input, {
-        value,
-        onChange: (event: ChangeEvent<HTMLInputElement>) => onChange(event.currentTarget.value),
-        className: 'h-8 flex-1 font-mono text-xs',
-        placeholder: 'oklch(0.50 0.22 25)',
+        value: displayHex,
+        onChange: (event: ChangeEvent<HTMLInputElement>) => {
+          const next = event.currentTarget.value.trim()
+          setDraftHex(next)
+          if (/^#[0-9a-fA-F]{6}$/.test(next)) {
+            commitHex(next)
+          }
+        },
+        onBlur: (event: ChangeEvent<HTMLInputElement>) => {
+          const next = event.currentTarget.value.trim()
+          if (/^#[0-9a-fA-F]{3,8}$/.test(next)) {
+            commitHex(next.length === 4
+              ? `#${next[1]}${next[1]}${next[2]}${next[2]}${next[3]}${next[3]}`
+              : next.slice(0, 7))
+          } else {
+            setDraftHex(null)
+          }
+        },
+        className: 'h-8 flex-1 font-mono text-xs uppercase',
+        placeholder: '#6399A6',
+        'aria-label': `${label} hex`,
       })
     )
   )

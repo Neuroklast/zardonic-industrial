@@ -2,6 +2,7 @@
 
 import { getApiSecret } from '@/lib/api-secrets'
 import { contactFormSchema } from '@/lib/contact-form'
+import { checkContactRateLimit } from '@/lib/server-rate-limit'
 
 function escapeHtml(str: string): string {
   return str
@@ -17,7 +18,8 @@ export async function submitContact(
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
   const hp = (formData.get('_hp') as string | null) ?? ''
-  if (hp) {
+  // Honeypot filled → pretend success (do not tip off bots)
+  if (hp.trim()) {
     return { success: true }
   }
 
@@ -33,13 +35,21 @@ export async function submitContact(
     return { error: 'Please fill in all required fields correctly.' }
   }
 
+  const allowed = await checkContactRateLimit()
+  if (!allowed) {
+    return { error: 'Too many messages. Please try again in a few minutes.' }
+  }
+
   const { name, email, subject, message } = parsed.data
   const resendKey = await getApiSecret('resend_api_key')
   const contactEmail = process.env.CONTACT_EMAIL ?? 'contact@zardonic.com'
 
   if (!resendKey) {
-    // Dev / unconfigured – log and succeed silently
-    console.info('[contact]', { name, email, subject })
+    // Dev / unconfigured – log only non-PII fields
+    console.info('[contact] message accepted (Resend not configured)', {
+      subjectLength: subject.length,
+      messageLength: message.length,
+    })
     return { success: true }
   }
 

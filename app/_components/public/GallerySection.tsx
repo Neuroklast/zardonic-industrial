@@ -7,6 +7,7 @@ import { formatSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import SwipeableGallery from '@/components/SwipeableGallery'
 import { resolveGalleryTileAspect } from '@/lib/gallery-aspect-ratio'
+import { toDirectImageUrl } from '@/lib/image-cache'
 
 interface GalleryItem {
   id: string
@@ -85,7 +86,7 @@ export function GallerySection({
                 aria-label={lightbox ? `Open ${item.alt ?? 'gallery image'} in lightbox` : undefined}
               >
                 <img
-                  src={item.imageUrl ?? ''}
+                  src={toDirectImageUrl(item.imageUrl, { w: 800 }) || item.imageUrl || ''}
                   alt={item.alt ?? ''}
                   className="hover-chromatic-image h-full w-full object-cover"
                   loading="lazy"

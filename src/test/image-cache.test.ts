@@ -86,4 +86,29 @@ describe('toDirectImageUrl', () => {
     const url = 'https://wsrv.nl/?url=https%3A%2F%2Fexample.com%2Fphoto.jpg'
     expect(toDirectImageUrl(url)).toBe(url + '&q=80&output=webp')
   })
+
+  it('serves R2 and Bandcamp URLs directly without wsrv.nl', () => {
+    const r2 = 'https://pub-c862cb6925c84a63a9bf41ce3bf1d671.r2.dev/cover-art/test.jpeg'
+    const bandcamp = 'https://f4.bcbits.com/img/a2732111435_1x1_700.avif'
+    expect(toDirectImageUrl(r2)).toBe(r2)
+    expect(toDirectImageUrl(bandcamp)).toBe(bandcamp)
+  })
+
+  it('serves Apple Music, Supabase and YouTube thumbnail hosts directly', () => {
+    const mz = 'https://is1-ssl.mzstatic.com/image/thumb/Music/v4/cover.jpg'
+    const supabase = 'https://xyzabc.supabase.co/storage/v1/object/public/images/pic.png'
+    const yt = 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
+    expect(toDirectImageUrl(mz)).toBe(mz)
+    expect(toDirectImageUrl(supabase)).toBe(supabase)
+    expect(toDirectImageUrl(yt)).toBe(yt)
+  })
+
+  it('applies width options to proxied URLs only', () => {
+    const external = 'https://example.com/photo.jpg'
+    expect(toDirectImageUrl(external, { w: 640 })).toBe(
+      `https://wsrv.nl/?url=${encodeURIComponent(external)}&w=640&q=80&output=webp`,
+    )
+    const r2 = 'https://pub.example.r2.dev/cover.jpg'
+    expect(toDirectImageUrl(r2, { w: 640 })).toBe(r2)
+  })
 })

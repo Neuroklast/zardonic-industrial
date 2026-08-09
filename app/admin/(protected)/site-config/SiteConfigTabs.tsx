@@ -135,13 +135,19 @@ export function SiteConfigTabs({
             <SimpleTextConfigEditor
               configKey="merchandise"
               title="Merchandise Section"
-              description="Footer text shown below the merch grid."
+              description="Footer text shown below the merch grid. Optional URL makes the text a link."
               fields={[
                 {
                   key: 'footerText',
                   label: 'Footer Text',
                   type: 'textarea',
                   placeholder: 'Visit the official store…',
+                },
+                {
+                  key: 'footerUrl',
+                  label: 'Footer URL',
+                  type: 'url',
+                  placeholder: 'https://store.example.com',
                 },
               ]}
               currentValue={merchandiseValue}

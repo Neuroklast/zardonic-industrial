@@ -1,8 +1,15 @@
 # Security & GDPR
 
-## Embeds (TTDSG / GDPR)
+## Embeds (TDDDG / GDPR)
 
 Spotify, YouTube, SoundCloud: **never** auto-load. Two-click consent before `<iframe>`.
+
+## Public forms
+
+- Contact + newsletter: honeypot (`_hp`), Zod validation, Resend delivery
+- Rate limits via `lib/server-rate-limit.ts` (Upstash, hashed IP + `RATE_LIMIT_SALT`)
+- Newsletter: double opt-in + explicit privacy consent checkbox
+- Contact: privacy-policy notice next to submit (Art. 6(1)(b)/(f))
 
 ## Storage & consent
 
@@ -12,7 +19,7 @@ Spotify, YouTube, SoundCloud: **never** auto-load. Two-click consent before `<if
 
 ## Data minimization
 
-Never log plaintext IPs — use `hashIp()` where server-side identification is needed.
+Never log plaintext IPs — use hashed IPs (`lib/server-rate-limit.ts` / legacy `hashIp`) where server-side identification is needed. Contact form must not log email/name in production.
 
 ## Legal content (Supabase only)
 

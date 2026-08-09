@@ -24,6 +24,7 @@ export const SECTION_ANCHOR_BY_ID: Record<string, string> = {
   merchandise: 'merch',
   soundpacks: 'soundpacks',
   gigs: 'gigs',
+  news: 'news',
   newsletter: 'newsletter',
   contact: 'contact',
 }
@@ -37,6 +38,7 @@ const NAV_DEFAULT_LABELS: Record<string, string> = {
   merchandise: 'Merch',
   soundpacks: 'Soundpacks',
   gigs: 'Events',
+  news: 'News',
   newsletter: 'Newsletter',
   contact: 'Contact',
 }

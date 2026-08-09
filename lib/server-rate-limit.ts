@@ -5,6 +5,8 @@ import { createHash, randomBytes } from 'node:crypto'
 
 const NEWSLETTER_LIMIT = 5
 const NEWSLETTER_WINDOW = '15 m' as const
+const CONTACT_LIMIT = 5
+const CONTACT_WINDOW = '15 m' as const
 
 let salt: string | null = null
 
@@ -34,23 +36,27 @@ function hashIp(ip: string): string {
 }
 
 let redis: Redis | null = null
-let newsletterRatelimit: Ratelimit | null = null
+const limiters = new Map<string, Ratelimit>()
 
-function getNewsletterRatelimit(): Ratelimit | null {
-  if (newsletterRatelimit) return newsletterRatelimit
+function getRatelimit(prefix: string, limit: number, window: `${number} ${'s' | 'm' | 'h' | 'd'}`): Ratelimit | null {
+  if (limiters.has(prefix)) return limiters.get(prefix)!
   if (!isRedisConfigured()) return null
 
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) return null
 
-  redis = new Redis({ url, token })
-  newsletterRatelimit = new Ratelimit({
+  if (!redis) {
+    redis = new Redis({ url, token })
+  }
+
+  const rl = new Ratelimit({
     redis,
-    limiter: Ratelimit.slidingWindow(NEWSLETTER_LIMIT, NEWSLETTER_WINDOW),
-    prefix: 'nk-newsletter-rl',
+    limiter: Ratelimit.slidingWindow(limit, window),
+    prefix,
   })
-  return newsletterRatelimit
+  limiters.set(prefix, rl)
+  return rl
 }
 
 async function getRequestIp(): Promise<string> {
@@ -60,13 +66,13 @@ async function getRequestIp(): Promise<string> {
   return h.get('x-real-ip') ?? '127.0.0.1'
 }
 
-/**
- * Rate limit for public newsletter server actions.
- * Returns true when allowed; false when limit exceeded.
- * No-op when Redis is not configured (local dev).
- */
-export async function checkNewsletterRateLimit(): Promise<boolean> {
-  const rl = getNewsletterRatelimit()
+async function checkLimit(
+  prefix: string,
+  limit: number,
+  window: `${number} ${'s' | 'm' | 'h' | 'd'}`,
+  label: string,
+): Promise<boolean> {
+  const rl = getRatelimit(prefix, limit, window)
   if (!rl) return true
 
   try {
@@ -74,7 +80,23 @@ export async function checkNewsletterRateLimit(): Promise<boolean> {
     const { success } = await rl.limit(hashIp(ip))
     return success
   } catch (err) {
-    console.error('[newsletter] rate limit check failed, allowing:', err)
+    console.error(`[${label}] rate limit check failed, allowing:`, err)
     return true
   }
+}
+
+/**
+ * Rate limit for public newsletter server actions.
+ * Returns true when allowed; false when limit exceeded.
+ * No-op when Redis is not configured (local dev).
+ */
+export async function checkNewsletterRateLimit(): Promise<boolean> {
+  return checkLimit('nk-newsletter-rl', NEWSLETTER_LIMIT, NEWSLETTER_WINDOW, 'newsletter')
+}
+
+/**
+ * Rate limit for public contact form server actions.
+ */
+export async function checkContactRateLimit(): Promise<boolean> {
+  return checkLimit('nk-contact-rl', CONTACT_LIMIT, CONTACT_WINDOW, 'contact')
 }

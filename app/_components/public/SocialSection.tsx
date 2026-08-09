@@ -17,6 +17,7 @@ interface SocialLink {
   platform: string
   url: string
   label: string | null
+  logoUrl?: string | null
 }
 
 interface SocialSectionProps {
@@ -71,7 +72,16 @@ function SocialButton({ link }: { link: SocialLink }) {
       className="surface-card flex items-center gap-3 border border-primary/30 hover:border-primary/60 hover:bg-primary/5 px-5 py-3 font-mono text-sm uppercase tracking-wider transition-all"
       style={{ '--icon-color': color } as React.CSSProperties}
     >
-      <Icon size={20} weight="bold" style={{ color }} aria-hidden="true" />
+      {link.logoUrl ? (
+        <img
+          src={link.logoUrl}
+          alt=""
+          className="h-5 w-5 object-contain"
+          aria-hidden="true"
+        />
+      ) : (
+        <Icon size={20} weight="bold" style={{ color }} aria-hidden="true" />
+      )}
       <span className="text-foreground/80">{displayLabel}</span>
     </m.a>
   )
