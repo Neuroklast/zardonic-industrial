@@ -74,9 +74,9 @@ export function SiteNav({ links: initialLinks }: SiteNavProps) {
     setOpen(false)
   }
 
-  // Readable size; compact tracking so many items still fit
+  // Compact nav labels free width — keep type readable (not sub-14px)
   const linkClass =
-    'shrink-0 whitespace-nowrap text-sm font-medium uppercase tracking-[0.12em] text-muted-foreground transition-colors hover:text-foreground hover-chromatic sm:text-[0.8125rem] md:text-sm lg:tracking-[0.16em]'
+    'shrink-0 whitespace-nowrap text-[0.9375rem] font-semibold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:text-foreground hover-chromatic md:text-base md:tracking-[0.12em] lg:tracking-[0.14em]'
 
   return (
     <header
