@@ -18,14 +18,29 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'merchandise', label: 'Merchandise', visible: true, order: 6 },
   { id: 'soundpacks', label: 'Soundpacks', visible: true, order: 7 },
   { id: 'gigs', label: 'Events', visible: true, order: 8 },
-  { id: 'newsletter', label: 'Newsletter', visible: true, order: 9 },
-  { id: 'contact', label: 'Contact', visible: true, order: 10 },
+  { id: 'news', label: 'News', visible: true, order: 9 },
+  { id: 'newsletter', label: 'Newsletter', visible: true, order: 10 },
+  { id: 'contact', label: 'Contact', visible: true, order: 11 },
 ]
 
 export const EXCLUDED_HOME_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
 
 export function withoutExcludedSections(items: SectionConfig[]): SectionConfig[] {
   return items.filter((section) => !EXCLUDED_HOME_SECTION_IDS.has(section.id))
+}
+
+/** Merge saved sections with defaults so newly added section ids appear without a DB rewrite. */
+export function mergeWithDefaultSections(parsed: SectionConfig[]): SectionConfig[] {
+  const byId = new Map(parsed.map((s) => [s.id, s]))
+  const maxOrder = parsed.reduce((max, s) => Math.max(max, s.order), -1)
+  let nextOrder = maxOrder + 1
+  const merged = [...parsed]
+  for (const def of DEFAULT_SECTIONS) {
+    if (!byId.has(def.id)) {
+      merged.push({ ...def, order: nextOrder++, visible: def.visible })
+    }
+  }
+  return merged
 }
 
 export function parseSections(raw: unknown): SectionConfig[] {
@@ -44,5 +59,5 @@ export function parseSections(raw: unknown): SectionConfig[] {
     }))
     .filter((s) => s.id !== '')
   if (parsed.length === 0) return DEFAULT_SECTIONS
-  return parsed
+  return mergeWithDefaultSections(parsed)
 }

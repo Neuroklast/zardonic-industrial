@@ -3,8 +3,8 @@ import { resolveImageUrl } from '@/lib/r2'
 import { deleteGalleryImage } from '@/app/admin/_actions/gallery'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { GalleryVisibilityToggle } from './GalleryVisibilityToggle'
-import Image from 'next/image'
 import Link from 'next/link'
+import { toDirectImageUrl } from '@/lib/image-cache'
 
 export default async function GalleryPage() {
   let images: Array<{
@@ -48,12 +48,12 @@ export default async function GalleryPage() {
               <div key={img.id} className="bg-zinc-900 rounded border border-zinc-800 overflow-hidden">
                 <div className="relative aspect-square bg-zinc-800">
                   {src ? (
-                    <Image
-                      src={src}
+                    <img
+                      src={toDirectImageUrl(src, { w: 400 }) || src}
                       alt={img.alt ?? ''}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      className="absolute inset-0 h-full w-full object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-zinc-600 text-xs font-mono">

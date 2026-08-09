@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import {
   DEFAULT_BACKGROUND_VIDEO_OPACITY,
   parseMobileVideoMode,
@@ -176,7 +177,7 @@ export function BackgroundStack({
           data-draft-target="bg-image"
         >
           <img
-            src={imageUrl}
+            src={toDirectImageUrl(imageUrl, { w: 1920, q: 80 }) || imageUrl}
             alt=""
             className="h-full w-full object-cover"
             loading="eager"

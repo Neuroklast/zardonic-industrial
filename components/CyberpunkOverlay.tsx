@@ -26,6 +26,29 @@ const OVERLAY_LOADING_TEXTS = [
   '> IDENTITY VERIFIED',
 ]
 
+const DEFAULT_MODAL_GLOW = 'rgba(180, 50, 50, 0.3)'
+
+/** Resolve overlay edge glow: admin theme → CSS --modal-glow → default crimson. */
+function resolveModalGlow(adminSettings: AdminSettings | undefined, alpha: number): string {
+  const fromAdmin = adminSettings?.design?.theme?.modalGlowColor
+  if (fromAdmin) {
+    if (fromAdmin.startsWith('rgba') || fromAdmin.startsWith('rgb')) return fromAdmin
+    // oklch/hex: use color-mix for alpha when possible
+    return `color-mix(in srgb, ${fromAdmin} ${Math.round(alpha * 100)}%, transparent)`
+  }
+  if (typeof document !== 'undefined') {
+    const cssVar = getComputedStyle(document.documentElement).getPropertyValue('--modal-glow').trim()
+    if (cssVar) {
+      return `color-mix(in srgb, ${cssVar} ${Math.round(alpha * 100)}%, transparent)`
+    }
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()
+    if (accent) {
+      return `color-mix(in srgb, ${accent} ${Math.round(alpha * 100)}%, transparent)`
+    }
+  }
+  return DEFAULT_MODAL_GLOW.replace('0.3', String(alpha))
+}
+
 interface CyberpunkOverlayProps {
   overlay: CyberpunkOverlayState | null
   onClose: () => void
@@ -181,9 +204,9 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               initial={{ boxShadow: '0 0 0px rgba(0, 0, 0, 0)' }}
               animate={{
                 boxShadow: [
-                  `0 0 20px ${adminSettings?.design?.theme?.modalGlowColor ?? 'rgba(180, 50, 50, 0.3)'}`,
-                  `0 0 40px ${adminSettings?.design?.theme?.modalGlowColor ?? 'rgba(180, 50, 50, 0.4)'}`,
-                  `0 0 20px ${adminSettings?.design?.theme?.modalGlowColor ?? 'rgba(180, 50, 50, 0.3)'}`,
+                  `0 0 20px ${resolveModalGlow(adminSettings, 0.35)}`,
+                  `0 0 40px ${resolveModalGlow(adminSettings, 0.5)}`,
+                  `0 0 20px ${resolveModalGlow(adminSettings, 0.35)}`,
                 ],
               }}
               data-theme-color="card card-foreground border"

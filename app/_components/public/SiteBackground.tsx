@@ -10,8 +10,8 @@
  */
 'use client'
 
-import Image from 'next/image'
 import { Suspense, lazy } from 'react'
+import { toDirectImageUrl } from '@/lib/image-cache'
 
 const CircuitBackground = lazy(() =>
   import('./CircuitBackground').then(m => ({ default: m.CircuitBackground }))
@@ -32,14 +32,13 @@ export function SiteBackground({ imageUrl, videoUrl, alt = 'Background' }: SiteB
         aria-hidden="true"
       >
         {/* Static image – always rendered as poster / fallback */}
-        <Image
-          src={imageUrl}
+        <img
+          src={toDirectImageUrl(imageUrl, { w: 1920, q: 80 }) || imageUrl}
           alt={alt}
-          fill
-          priority
-          quality={80}
-          className="object-cover object-center"
-          sizes="100vw"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
         />
 
         {/* Video background (looping, muted, no controls) */}

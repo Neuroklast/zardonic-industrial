@@ -9,6 +9,7 @@ export const SECTION_DEFAULT_HEADINGS: Record<string, string> = {
   merchandise: 'Merchandise',
   soundpacks: 'Soundpacks & Presets',
   gigs: 'Tour Dates',
+  news: 'News',
   newsletter: 'Stay Connected',
   contact: 'Contact',
 }

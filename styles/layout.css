@@ -6,22 +6,24 @@
   }
 }
 
-/* Reduce heavy effects on mobile for better scroll performance */
+/* Soften heavy effects on mobile for scroll performance — keep a light scanline/noise so
+   the cyber look still reads on Safari iOS / Chrome Android (tester: “only one small line”). */
 @media (max-width: 768px) {
   :is(.full-page-noise) {
-    display: none;
+    opacity: 0.18;
   }
 
   :is(.crt-overlay) {
-    display: none;
+    opacity: 0.25;
   }
 
   :is(.scanline-effect)::before {
-    display: none;
+    opacity: 0.35;
+    animation: none;
   }
 
   :is(.noise-effect)::before {
-    display: none;
+    opacity: 0.25;
   }
 
   .chromatic-aberration {

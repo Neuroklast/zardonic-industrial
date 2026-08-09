@@ -75,8 +75,13 @@ CREATE TABLE IF NOT EXISTS public.social_links (
   url text NOT NULL,
   label text,
   display_order integer DEFAULT 0,
-  active boolean NOT NULL DEFAULT true
+  active boolean NOT NULL DEFAULT true,
+  logo_storage_path text,
+  logo_url text
 );
+
+ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS logo_storage_path text;
+ALTER TABLE public.social_links ADD COLUMN IF NOT EXISTS logo_url text;
 
 -- ─── partners ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.partners (
@@ -486,6 +491,25 @@ BEGIN
 END;
 $$;
 
+
+-- --- news_posts ----------------------------------------------
+CREATE TABLE IF NOT EXISTS public.news_posts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  excerpt text,
+  body text NOT NULL DEFAULT '',
+  cover_storage_path text,
+  cover_url text,
+  published_at timestamptz DEFAULT now(),
+  active boolean NOT NULL DEFAULT true,
+  display_order integer DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS news_posts_slug_idx ON public.news_posts (slug);
+CREATE INDEX IF NOT EXISTS news_posts_published_idx ON public.news_posts (published_at DESC);
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -502,6 +526,7 @@ ALTER TABLE public.music_highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchandise ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.soundpacks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.news_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.sync_jobs ENABLE ROW LEVEL SECURITY;
 
@@ -698,3 +723,14 @@ INSERT INTO public.site_config (key, value) VALUES
   ('translations', '{}'::jsonb),
   ('catalogue_sync', '{"artistName":"Zardonic","itunesArtistId":"","spotifyArtistId":"","discogsArtistId":""}'::jsonb)
 ON CONFLICT (key) DO NOTHING;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='news_posts' AND policyname='Public read news') THEN
+    EXECUTE 'CREATE POLICY "Public read news" ON public.news_posts FOR SELECT USING (active = true)';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='news_posts' AND policyname='Admin all news') THEN
+    EXECUTE $p$CREATE POLICY "Admin all news" ON public.news_posts USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+END; $$;
+

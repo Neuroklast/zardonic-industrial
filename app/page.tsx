@@ -19,6 +19,7 @@ import { DraftSectionShell } from './_components/public/DraftSectionShell'
 import { MerchandiseSection } from './_components/public/MerchandiseSection'
 import { SoundpacksSection } from './_components/public/SoundpacksSection'
 import { GigsSection } from './_components/public/GigsSection'
+import { NewsSection } from './_components/public/NewsSection'
 import { NewsletterSection } from './_components/public/NewsletterSection'
 import { ContactSection } from './_components/public/ContactSection'
 import { SiteFooter } from './_components/public/SiteFooter'
@@ -65,7 +66,24 @@ interface GalleryItemRow {
   id: string; alt: string | null
   storage_path: string | null; image_url: string | null
 }
-interface SocialRow { id: string; platform: string; url: string; label: string | null }
+interface SocialRow {
+  id: string
+  platform: string
+  url: string
+  label: string | null
+  logo_storage_path?: string | null
+  logo_url?: string | null
+}
+interface NewsPostRow {
+  id: string
+  title: string
+  slug: string
+  excerpt: string | null
+  cover_storage_path: string | null
+  cover_url: string | null
+  published_at: string | null
+  display_order: number
+}
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
@@ -122,6 +140,7 @@ async function fetchAll() {
       soundpackResult,
       galleryResult,
       socialResult,
+      newsResult,
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
       supabase.from('bio').select('content').limit(1).single(),
@@ -131,7 +150,13 @@ async function fetchAll() {
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('gallery').select('id, alt, storage_path, image_url').eq('active', true).order('display_order', { ascending: true }),
-      supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
+      supabase.from('social_links').select('id, platform, url, label, logo_storage_path, logo_url').order('display_order', { ascending: true }),
+      supabase
+        .from('news_posts')
+        .select('id, title, slug, excerpt, cover_storage_path, cover_url, published_at, display_order')
+        .eq('active', true)
+        .order('display_order', { ascending: true })
+        .order('published_at', { ascending: false }),
     ])
 
     const logQueryError = (label: string, error: { message: string } | null) => {
@@ -147,6 +172,7 @@ async function fetchAll() {
     logQueryError('soundpacks', soundpackResult.error)
     logQueryError('gallery', galleryResult.error)
     logQueryError('social_links', socialResult.error)
+    logQueryError('news_posts', newsResult.error)
 
     const releaseRows = await fetchReleases(supabase)
 
@@ -161,6 +187,7 @@ async function fetchAll() {
       soundpacks: (soundpackResult.data ?? []) as CommerceItemRow[],
       gallery: (galleryResult.data ?? []) as GalleryItemRow[],
       social: (socialResult.data ?? []) as SocialRow[],
+      newsPosts: (newsResult.data ?? []) as NewsPostRow[],
     }
   } catch {
     // Return safe empty defaults when Supabase is not configured (local dev)
@@ -175,6 +202,7 @@ async function fetchAll() {
       soundpacks: [] as CommerceItemRow[],
       gallery: [] as GalleryItemRow[],
       social: [] as SocialRow[],
+      newsPosts: [] as NewsPostRow[],
     }
   }
 }
@@ -197,7 +225,7 @@ export default async function HomePage({
   const isAdminPreview = adminPreview === '1'
   const {
     configRows, bio, gigs, releases, partners,
-    musicHighlights, merch, soundpacks, gallery, social,
+    musicHighlights, merch, soundpacks, gallery, social, newsPosts,
   } = await fetchAll()
 
   const heroConfig = getConfig(configRows, 'hero')
@@ -412,9 +440,17 @@ export default async function HomePage({
     footerConfig.privacyPolicyUrl ?? footerConfig.privacyUrl ?? '/privacy-policy',
   )
 
+  const socialWithLogos = social.map((link) => ({
+    id: link.id,
+    platform: link.platform,
+    url: link.url,
+    label: link.label,
+    logoUrl: resolveImageUrl(link.logo_storage_path ?? null, link.logo_url ?? null),
+  }))
+
   const footerSlot = (
     <SiteFooter
-      socialLinks={social}
+      socialLinks={socialWithLogos}
       legalNoticeUrl={legalNoticeUrl}
       privacyPolicyUrl={privacyPolicyUrl}
     />
@@ -554,7 +590,7 @@ export default async function HomePage({
               ? wrapForPreview(
                   <SectionErrorBoundary key="social" sectionName="Social">
                     {divider}
-                    <SocialSection links={social} label={section.label} />
+                    <SocialSection links={socialWithLogos} label={section.label} />
                   </SectionErrorBoundary>,
                   section,
                 )
@@ -568,6 +604,11 @@ export default async function HomePage({
                   heading={section.label}
                   intro={section.intro}
                   footerText={String(merchandiseConfig.footerText ?? '')}
+                  footerUrl={
+                    typeof merchandiseConfig.footerUrl === 'string' && merchandiseConfig.footerUrl
+                      ? merchandiseConfig.footerUrl
+                      : undefined
+                  }
                 />
               </SectionErrorBoundary>,
               section,
@@ -598,6 +639,25 @@ export default async function HomePage({
               </SectionErrorBoundary>,
               section,
             )
+          case 'news':
+            return wrapForPreview(
+              <SectionErrorBoundary key="news" sectionName="News">
+                {divider}
+                <NewsSection
+                  posts={newsPosts.map((post) => ({
+                    id: post.id,
+                    title: post.title,
+                    slug: post.slug,
+                    excerpt: post.excerpt,
+                    coverUrl: resolveImageUrl(post.cover_storage_path, post.cover_url),
+                    publishedAt: post.published_at,
+                  }))}
+                  heading={section.label}
+                  intro={section.intro}
+                />
+              </SectionErrorBoundary>,
+              section,
+            )
           case 'newsletter':
             return wrapForPreview(
               <SectionErrorBoundary key="newsletter" sectionName="Newsletter">
@@ -615,7 +675,11 @@ export default async function HomePage({
             return wrapForPreview(
               <SectionErrorBoundary key="contact" sectionName="Contact">
                 {divider}
-                <ContactSection heading={section.label} intro={section.intro} />
+                <ContactSection
+                  heading={section.label}
+                  intro={section.intro}
+                  privacyPolicyUrl={privacyPolicyUrl}
+                />
               </SectionErrorBoundary>,
               section,
             )
@@ -628,7 +692,7 @@ export default async function HomePage({
       {!isAdminPreview && !isSectionVisible('contact') && (
         <SectionErrorBoundary sectionName="Contact">
           <SectionDivider />
-          <ContactSection heading="Contact" />
+          <ContactSection heading="Contact" privacyPolicyUrl={privacyPolicyUrl} />
         </SectionErrorBoundary>
       )}
     </PageLayout>

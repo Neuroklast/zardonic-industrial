@@ -11,6 +11,7 @@ import {
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import { formatSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import {
@@ -160,7 +161,7 @@ export function ReleasesSection({
                     <div className="aspect-square bg-muted overflow-hidden">
                       {release.coverUrl ? (
                         <img
-                          src={release.coverUrl}
+                          src={toDirectImageUrl(release.coverUrl, { w: 640 }) || release.coverUrl}
                           alt={release.title}
                           className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"

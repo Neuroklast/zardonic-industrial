@@ -70,7 +70,8 @@ export function SectionIntro({
 
   return (
     <p
-      className="-mt-8 mb-6 font-mono text-sm text-muted-foreground"
+      className="-mt-8 mb-6 text-sm text-muted-foreground"
+      style={{ fontFamily: 'var(--font-body, inherit)' }}
       data-draft-target={`section-intro-${sectionId}`}
     >
       {children}

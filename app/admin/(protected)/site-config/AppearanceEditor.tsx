@@ -53,6 +53,7 @@ const THEME_COLOR_FIELDS: Array<{ key: keyof AppearanceTheme; label: string; hin
   { key: 'accentColor', label: 'Accent', hint: 'Highlights and glow' },
   { key: 'primaryColor', label: 'Links & buttons', hint: 'Interactive elements' },
   { key: 'borderColor', label: 'Borders', hint: 'Lines and dividers' },
+  { key: 'modalGlowColor', label: 'Modal glow', hint: 'Event / overlay edge glow' },
 ]
 
 const DEFAULTS: AppearanceConfig = {
@@ -406,17 +407,34 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {THEME_COLOR_FIELDS.map(({ key, label, hint }) => {
             const value = theme[key] ?? ''
-            const hex = value ? oklchToHex(value) : '#000000'
+            const hex = value
+              ? value.startsWith('#')
+                ? value.slice(0, 7)
+                : oklchToHex(value)
+              : '#000000'
+            const safeHex = /^#[0-9a-fA-F]{6}$/.test(hex) ? hex : '#000000'
             return (
               <div key={key} className="space-y-1">
                 <label className="text-xs text-zinc-400">{label}</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={hex}
+                    value={safeHex}
                     onChange={(e) => updateThemeField(key, hexToOklch(e.target.value))}
                     className="h-8 w-10 cursor-pointer rounded border border-zinc-700 bg-transparent"
                     aria-label={`${label} color`}
+                  />
+                  <input
+                    type="text"
+                    value={safeHex.toUpperCase()}
+                    onChange={(e) => {
+                      const next = e.target.value.trim()
+                      if (/^#[0-9a-fA-F]{6}$/.test(next)) {
+                        updateThemeField(key, hexToOklch(next))
+                      }
+                    }}
+                    className="w-24 rounded border border-zinc-800 bg-zinc-950 px-2 py-1 font-mono text-xs uppercase text-zinc-300"
+                    aria-label={`${label} hex`}
                   />
                   <span className="text-xs text-zinc-500">{hint}</span>
                 </div>

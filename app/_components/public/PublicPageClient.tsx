@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
@@ -54,7 +55,7 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
       <div className="relative aspect-square overflow-hidden bg-black">
         {item.coverUrl ? (
           <img
-            src={item.coverUrl}
+            src={toDirectImageUrl(item.coverUrl, { w: 640 }) || item.coverUrl}
             alt={item.title}
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"

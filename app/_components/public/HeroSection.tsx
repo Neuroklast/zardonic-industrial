@@ -139,7 +139,7 @@ export function HeroSection({
             }}
             className={HERO_CTA_CLASS}
           >
-            <span className="hover-chromatic" data-draft-target="hero-cta">{ctaLabel || 'LISTEN NOW'}</span>
+            <span data-draft-target="hero-cta">{ctaLabel || 'LISTEN NOW'}</span>
           </a>
           {showTourDatesCta ? (
             <a
@@ -150,7 +150,7 @@ export function HeroSection({
               }}
               className={HERO_CTA_CLASS}
             >
-              <span className="hover-chromatic">TOUR DATES</span>
+              <span>TOUR DATES</span>
             </a>
           ) : null}
         </m.div>

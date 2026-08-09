@@ -24,6 +24,7 @@ import {
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
 import { formatReleaseDate } from '@/lib/format-release-date'
+import { toDirectImageUrl } from '@/lib/image-cache'
 import type { PublicReleaseCardItem } from '@/lib/public-fetch'
 import { BrowsePagination } from './BrowsePagination'
 import { BrowseToolbar } from './BrowseToolbar'
@@ -87,7 +88,7 @@ function ReleaseBrowseCard({
       <div className="aspect-square overflow-hidden bg-muted">
         {release.coverUrl ? (
           <img
-            src={release.coverUrl}
+            src={toDirectImageUrl(release.coverUrl, { w: 640 }) || release.coverUrl}
             alt={release.title}
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
@@ -159,7 +160,7 @@ function SwipeReleaseCard({ release, onClick }: { release: PublicReleaseCardItem
       <div className="relative aspect-square overflow-hidden bg-black">
         {release.coverUrl ? (
           <img
-            src={release.coverUrl}
+            src={toDirectImageUrl(release.coverUrl, { w: 640 }) || release.coverUrl}
             alt={release.title}
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
