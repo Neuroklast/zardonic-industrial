@@ -22,6 +22,13 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/shrink-0/)
   })
 
+  it('SiteNav uses icon→label glitch links on desktop', () => {
+    const src = readSource('app/_components/public/SiteNav.tsx')
+    expect(src).toMatch(/nav-glitch-link/)
+    expect(src).toMatch(/getNavIcon/)
+    expect(src).toMatch(/aria-label=\{item\.label\}/)
+  })
+
   it('GallerySection opens the shared CyberpunkOverlay lightbox', () => {
     const src = readSource('app/_components/public/GallerySection.tsx')
     expect(src).toMatch(/CyberpunkOverlay/)

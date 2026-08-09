@@ -11,13 +11,14 @@ Stack surface: `app/_components/public/*`, `components/CyberpunkOverlay.tsx`, `c
 | Do | Don't |
 |----|--------|
 | Logo in flex row: `shrink-0` sibling of `<nav>` | `position: absolute` logo over the link row |
-| Compact labels from `lib/nav-links.ts` (`Bio`, `Releases`, `Merch`, `Events`, …) | Put full section titles (`Biography`, `Discography`) in the top nav |
-| Readable type (`~15–16px`, semibold) with compact tracking | Shrink type below `text-sm` to “fit” long labels |
-| Reserve space via flex; allow `overflow-x-auto` on the **nav** only | Clip labels under the wordmark (`…ography`, `…io`) |
+| **Desktop:** icon per section (`lib/nav-icons.ts`); hover/focus **glitches** icon → compact label | Long text labels always visible (clips BIO / `…ography`) |
+| Compact labels from `lib/nav-links.ts` (`Bio`, `Releases`, …) for hover + mobile | Full section titles (`Biography`, `Discography`) in the top nav |
+| `aria-label` + `title` on icon links; mobile shows icon + text | Icon-only without accessible name |
+| CSS: `.nav-glitch-link` in `styles/effects.css` | Custom one-off hover without reduced-motion path |
 
-Files: `app/_components/public/SiteNav.tsx`, `lib/nav-links.ts`.
+Files: `app/_components/public/SiteNav.tsx`, `lib/nav-links.ts`, `lib/nav-icons.ts`, `styles/effects.css`.
 
-Regression guard: `src/test/public-mobile.test.tsx` (logo not absolute over links), `src/test/nav-links.test.ts` (compact labels).
+Regression guard: `src/test/public-mobile.test.tsx`, `src/test/nav-links.test.ts`, `src/test/nav-icons.test.ts`.
 
 ---
 

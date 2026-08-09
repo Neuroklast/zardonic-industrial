@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Icon nav with glitch labels**: Desktop SiteNav shows Phosphor icons per section; hover/focus jitters/glitches to compact text so BIO and all items stay visible. Mobile keeps icon + label.
 - **Agent session control (darktunes-style)**: Expanded root `AGENTS.md` (decision trees, Production definition of done), `docs/agent/workflow.md`, `docs/agent/public-ui.md`, root `QA_CHECKLIST.md`; lessons from 2026-08-09 public UI firefight in `docs/LESSONS_LEARNED.md`.
 - **Appearance font size sliders**: Site Config → Appearance now exposes heading, body, and mono font size controls with live preview (`appearance.theme.*FontSize` → CSS variables).
 - **Gallery lightbox**: Public gallery opens via `CyberpunkOverlay` (`type: 'gallery'`) with shared chrome; optional `lightbox` style override; “Show All” when `maxVisible` is set.
