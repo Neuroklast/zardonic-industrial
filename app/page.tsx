@@ -530,11 +530,15 @@ export default async function HomePage({
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
                   logoMaxHeight={
-                    typeof heroStyleOverrides.logoMaxHeight === 'string'
-                      ? heroStyleOverrides.logoMaxHeight
-                      : typeof heroStyleOverrides.logoMaxHeight === 'number'
-                        ? `${heroStyleOverrides.logoMaxHeight}rem`
-                        : undefined
+                    typeof heroConfig.logoMaxHeight === 'string'
+                      ? heroConfig.logoMaxHeight
+                      : typeof heroConfig.logoMaxHeightRem === 'number'
+                        ? `${heroConfig.logoMaxHeightRem}rem`
+                        : typeof heroStyleOverrides.logoMaxHeight === 'string'
+                          ? heroStyleOverrides.logoMaxHeight
+                          : typeof heroStyleOverrides.logoMaxHeight === 'number'
+                            ? `${heroStyleOverrides.logoMaxHeight}rem`
+                            : undefined
                   }
                   showTourDatesCta={isSectionVisible('gigs')}
                   bootSequenceEnabled={heroConfig.bootSequenceEnabled !== false}

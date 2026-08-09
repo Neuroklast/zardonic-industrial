@@ -45,6 +45,20 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [bootSequenceEnabled, setBootSequenceEnabled] = useState<boolean>(
     currentValue.bootSequenceEnabled === false ? false : true,
   )
+  /** Wordmark max height in rem (4–20). Default 12 ≈ previous clamp mid/high. */
+  const [logoMaxHeightRem, setLogoMaxHeightRem] = useState<number>(() => {
+    if (typeof currentValue.logoMaxHeightRem === 'number' && Number.isFinite(currentValue.logoMaxHeightRem)) {
+      return Math.min(20, Math.max(4, currentValue.logoMaxHeightRem))
+    }
+    if (typeof currentValue.logoMaxHeight === 'string') {
+      const m = currentValue.logoMaxHeight.match(/^([\d.]+)\s*rem$/i)
+      if (m) return Math.min(20, Math.max(4, Number(m[1])))
+    }
+    if (typeof currentValue.logoMaxHeight === 'number' && Number.isFinite(currentValue.logoMaxHeight)) {
+      return Math.min(20, Math.max(4, currentValue.logoMaxHeight))
+    }
+    return 12
+  })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
@@ -62,6 +76,9 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageUrl: backgroundImageUrl || undefined,
       backgroundImageOpacity,
       bootSequenceEnabled,
+      logoMaxHeightRem,
+      /** CSS length for public hero + drafts */
+      logoMaxHeight: `${logoMaxHeightRem}rem`,
     }),
     [
       headline,
@@ -74,6 +91,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageUrl,
       backgroundImageOpacity,
       bootSequenceEnabled,
+      logoMaxHeightRem,
     ],
   )
 
@@ -140,6 +158,43 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             Reset to default wordmark
           </button>
         ) : null}
+
+        <div className="space-y-2 pt-1">
+          <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
+            Wordmark size:{' '}
+            <span className="text-zinc-300 font-mono">{logoMaxHeightRem.toFixed(1)}rem</span>
+            <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
+              (~{Math.round(logoMaxHeightRem * 16)}px)
+            </span>
+          </label>
+          <SliderPrimitive.Root
+            min={4}
+            max={20}
+            step={0.5}
+            value={[logoMaxHeightRem]}
+            onValueChange={([v]) => setLogoMaxHeightRem(v)}
+            className="relative flex items-center w-full touch-none select-none h-5"
+            aria-label="Hero wordmark max height"
+          >
+            <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
+              <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
+            </SliderPrimitive.Track>
+            <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
+          </SliderPrimitive.Root>
+          <p className="text-xs text-zinc-500">
+            Max height of the hero logo on the public homepage. Width scales with the image aspect ratio.
+          </p>
+          {/* Live size preview */}
+          <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={resolvedLogoPreview}
+              alt=""
+              className="mx-auto h-auto w-auto max-w-full object-contain brightness-110"
+              style={{ maxHeight: `${logoMaxHeightRem}rem` }}
+            />
+          </div>
+        </div>
 
         <div className="space-y-1">
           <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">Alt text</label>
