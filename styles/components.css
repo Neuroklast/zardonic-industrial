@@ -993,19 +993,34 @@
 }
 
 /*
- * Hero wordmark — terminal / CRT boot reveal (one-shot).
- * Raster scan build-up + brief RGB channel tear, then solid.
- * No position jitter / wobble / infinite loops.
+ * Hero wordmark boot — short filmic terminal sequence (~1.2s one-shot).
+ * Logo: opacity + vertical clip only (no transform/skew/layout shift).
+ * HUD: mini progress + micro code lines (sibling, outside clip).
+ * RGB fringe: fixed offsets only (do not animate their position).
  */
-.hero-logo-boot {
+.hero-logo-stage {
   position: relative;
   display: block;
   width: fit-content;
   max-width: min(92vw, 56rem);
   margin-inline: auto;
+}
+
+/* room for HUD under the wordmark without shifting CTAs much */
+.hero-logo-stage--boot {
+  padding-bottom: 2.75rem;
+}
+
+.hero-logo-boot {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  overflow: hidden;
   opacity: 0;
-  will-change: clip-path, filter, opacity;
-  animation: hero-boot-reveal 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  clip-path: inset(0 0 100% 0);
+  animation: hero-boot-reveal 0.95s steps(14, end) forwards;
 }
 
 .hero-logo-boot__scan {
@@ -1013,90 +1028,234 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 0;
-  height: 2px;
-  z-index: 2;
+  height: 1px;
+  z-index: 3;
   opacity: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    color-mix(in srgb, var(--primary, #e11) 55%, white) 35%,
-    color-mix(in srgb, var(--primary, #e11) 85%, white) 50%,
-    color-mix(in srgb, var(--primary, #e11) 55%, white) 65%,
-    transparent 100%
-  );
-  box-shadow:
-    0 0 12px color-mix(in srgb, var(--primary, #e11) 50%, transparent),
-    0 0 2px color-mix(in srgb, cyan 40%, transparent);
-  animation: hero-boot-scan 1.05s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  background: color-mix(in srgb, var(--primary, #e11) 72%, white);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primary, #e11) 45%, transparent);
+  animation: hero-boot-scan 0.95s linear forwards;
 }
 
-.hero-logo-boot img {
+/* faint secondary trail behind the main scan */
+.hero-logo-boot__scan--soft {
+  height: 2px;
+  opacity: 0;
+  background: color-mix(in srgb, var(--primary, #e11) 28%, transparent);
+  box-shadow: none;
+  filter: blur(1px);
+  animation: hero-boot-scan-soft 0.95s linear forwards;
+}
+
+/* RGB channel ghosts — static offsets, fade with boot */
+.hero-logo-boot__rgb {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  mix-blend-mode: screen;
+  animation: hero-boot-rgb 0.95s linear forwards;
+}
+
+.hero-logo-boot__rgb--r {
+  transform: translateX(-1px);
+  filter: brightness(0) invert(1) sepia(1) saturate(100) hue-rotate(-50deg);
+}
+
+.hero-logo-boot__rgb--b {
+  transform: translateX(1px);
+  filter: brightness(0) invert(1) sepia(1) saturate(100) hue-rotate(160deg);
+}
+
+.hero-logo-boot__rgb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: inherit;
+  object-fit: contain;
+  margin-inline: auto;
+}
+
+.hero-logo-boot > img:not(.hero-logo-boot__rgb img) {
   display: block;
   position: relative;
   z-index: 1;
+  margin-inline: auto;
+}
+
+/* Filmic corner ticks — fade in then out with sequence */
+.hero-boot-frame {
+  pointer-events: none;
+  position: absolute;
+  width: 0.55rem;
+  height: 0.55rem;
+  z-index: 4;
+  opacity: 0;
+  border-color: color-mix(in srgb, var(--primary, #e11) 55%, transparent);
+  border-style: solid;
+  animation: hero-boot-frame 1.15s ease-out forwards;
+}
+
+.hero-boot-frame--tl {
+  top: -0.35rem;
+  left: -0.35rem;
+  border-width: 1px 0 0 1px;
+}
+
+.hero-boot-frame--tr {
+  top: -0.35rem;
+  right: -0.35rem;
+  border-width: 1px 1px 0 0;
+}
+
+.hero-boot-frame--bl {
+  bottom: 2.4rem;
+  left: -0.35rem;
+  border-width: 0 0 1px 1px;
+}
+
+.hero-boot-frame--br {
+  bottom: 2.4rem;
+  right: -0.35rem;
+  border-width: 0 1px 1px 0;
+}
+
+/* Mini HUD under wordmark */
+.hero-boot-hud {
+  pointer-events: none;
+  position: absolute;
+  left: 50%;
+  bottom: 0.15rem;
+  z-index: 5;
+  width: min(14rem, 72vw);
+  transform: translateX(-50%);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted-foreground, #888) 88%, var(--primary, #e11));
+  opacity: 0;
+  animation: hero-boot-hud 1.2s ease-out forwards;
+}
+
+.hero-boot-hud__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.28rem;
+}
+
+.hero-boot-hud__label {
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+/* pseudo-percentage via stepped bar width in a thin track */
+.hero-boot-hud__pct {
+  position: relative;
+  flex: 0 0 2.25rem;
+  height: 0.65rem;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  opacity: 0.55;
+}
+
+.hero-boot-hud__pct-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  animation: hero-boot-pct 0.9s steps(12, end) forwards;
+}
+
+.hero-boot-hud__pct-fill::after {
+  content: '100%';
+  display: block;
+  width: 2.25rem;
+  text-align: right;
+}
+
+.hero-boot-hud__bar {
+  position: relative;
+  height: 1px;
+  margin-bottom: 0.4rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground, #fff) 12%, transparent);
+}
+
+.hero-boot-hud__bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: color-mix(in srgb, var(--primary, #e11) 80%, white);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--primary, #e11) 40%, transparent);
+  animation: hero-boot-bar 0.88s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* brief tick near end of bar — filmic glitch pulse */
+.hero-boot-hud__bar-glitch {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  opacity: 0;
+  background: color-mix(in srgb, white 70%, var(--primary, #e11));
+  animation: hero-boot-bar-glitch 0.95s linear forwards;
+}
+
+.hero-boot-hud__code {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  text-align: left;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+.hero-boot-hud__line {
+  display: block;
+  opacity: 0;
+  transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.hero-boot-hud__line--1 {
+  animation: hero-boot-line 1.15s ease-out 0.12s forwards;
+}
+
+.hero-boot-hud__line--2 {
+  animation: hero-boot-line 1.15s ease-out 0.28s forwards;
+}
+
+.hero-boot-hud__line--3 {
+  animation: hero-boot-line 1.15s ease-out 0.44s forwards;
+  color: color-mix(in srgb, var(--primary, #e11) 70%, var(--muted-foreground, #888));
 }
 
 @keyframes hero-boot-reveal {
-  /* Black screen → phosphor flash */
   0% {
     opacity: 0;
     clip-path: inset(0 0 100% 0);
-    filter: brightness(4) contrast(1.5) saturate(0);
   }
-  /* Raster starts painting top → bottom */
   6% {
     opacity: 1;
     clip-path: inset(0 0 94% 0);
-    filter: brightness(2.2) contrast(1.35) saturate(0.15);
   }
-  14% {
-    clip-path: inset(0 0 78% 0);
-    filter:
-      brightness(1.6) contrast(1.2) saturate(0.45)
-      drop-shadow(2px 0 0 color-mix(in srgb, #ff2060 70%, transparent))
-      drop-shadow(-2px 0 0 color-mix(in srgb, #20f0ff 60%, transparent));
+  48% {
+    clip-path: inset(0 0 28% 0);
   }
-  28% {
-    clip-path: inset(0 0 48% 0);
-    filter:
-      brightness(1.25) contrast(1.1) saturate(0.75)
-      drop-shadow(1px 0 0 color-mix(in srgb, #ff2060 45%, transparent))
-      drop-shadow(-1px 0 0 color-mix(in srgb, #20f0ff 40%, transparent));
+  /* micro hold — filmic stutter without position jump */
+  56% {
+    clip-path: inset(0 0 24% 0);
   }
-  42% {
-    clip-path: inset(0 0 18% 0);
-    filter: brightness(1.1) saturate(0.95);
-  }
-  52% {
-    clip-path: inset(0 0 0 0);
-    filter: brightness(1.05);
-  }
-  /* Single terminal tear (not a wobble) */
-  58% {
-    clip-path: polygon(
-      0 0, 100% 0,
-      100% 38%, 0 36%,
-      0 44%, 100% 46%,
-      100% 100%, 0 100%
-    );
-    filter:
-      brightness(1.35) contrast(1.15)
-      drop-shadow(3px 0 0 color-mix(in srgb, #ff2060 65%, transparent))
-      drop-shadow(-3px 0 0 color-mix(in srgb, #20f0ff 55%, transparent));
-  }
-  66% {
-    clip-path: inset(0 0 0 0);
-    filter:
-      brightness(1.08)
-      drop-shadow(1px 0 0 color-mix(in srgb, #ff2060 30%, transparent))
-      drop-shadow(-1px 0 0 color-mix(in srgb, #20f0ff 25%, transparent));
-  }
-  78%, 100% {
+  100% {
     opacity: 1;
     clip-path: inset(0 0 0 0);
-    filter: none;
-    transform: none;
   }
 }
 
@@ -1105,37 +1264,179 @@
     opacity: 0;
     top: 0;
   }
-  6% {
+  4% {
     opacity: 0.95;
     top: 0;
   }
+  88% {
+    opacity: 0.5;
+    top: 100%;
+  }
+  100% {
+    opacity: 0;
+    top: 100%;
+  }
+}
+
+@keyframes hero-boot-scan-soft {
+  0% {
+    opacity: 0;
+    top: 0;
+  }
+  6% {
+    opacity: 0.35;
+    top: 0;
+  }
+  90% {
+    opacity: 0.12;
+    top: 100%;
+  }
+  100% {
+    opacity: 0;
+    top: 100%;
+  }
+}
+
+@keyframes hero-boot-rgb {
+  0%,
+  10% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.32;
+  }
   50% {
-    opacity: 0.85;
-    top: calc(100% - 2px);
+    opacity: 0.18;
+  }
+  72%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hero-boot-frame {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.7;
+  }
+  70% {
+    opacity: 0.45;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hero-boot-hud {
+  0% {
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hero-boot-bar {
+  0% {
+    width: 0%;
+  }
+  12% {
+    width: 8%;
+  }
+  40% {
+    width: 42%;
+  }
+  62% {
+    width: 71%;
+  }
+  88% {
+    width: 94%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes hero-boot-bar-glitch {
+  0%,
+  55% {
+    opacity: 0;
+    left: 0;
   }
   58% {
-    opacity: 0.4;
-    top: calc(100% - 2px);
+    opacity: 0.85;
+    left: 68%;
   }
-  70%, 100% {
+  62% {
     opacity: 0;
-    top: calc(100% - 2px);
+    left: 72%;
+  }
+  78% {
+    opacity: 0.7;
+    left: 90%;
+  }
+  82%,
+  100% {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
+@keyframes hero-boot-pct {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes hero-boot-line {
+  0% {
+    opacity: 0;
+    max-width: 0;
+  }
+  12% {
+    opacity: 0.7;
+    max-width: 100%;
+  }
+  70% {
+    opacity: 0.55;
+    max-width: 100%;
+  }
+  100% {
+    opacity: 0;
+    max-width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-logo-stage--boot {
+    padding-bottom: 0;
+  }
+
   .hero-logo-boot {
     opacity: 1;
-    animation: none;
     clip-path: none;
-    filter: none;
+    animation: none;
   }
-  .hero-logo-boot__scan {
+
+  .hero-logo-boot__scan,
+  .hero-logo-boot__rgb,
+  .hero-boot-frame,
+  .hero-boot-hud {
     display: none;
   }
 }
 
-/* Legacy class name kept for tests / external refs — aliases boot reveal */
+/* Legacy class name kept for tests — no continuous animation */
 .hero-logo-glitch {
-  /* no continuous animation */
 }
