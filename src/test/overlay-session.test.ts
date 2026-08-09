@@ -52,6 +52,15 @@ describe('getOverlaySessionKey', () => {
     expect(getOverlaySessionKey({ type: 'contact' })).toBe('contact')
   })
 
+  it('returns gallery-scoped key with count and index', () => {
+    expect(
+      getOverlaySessionKey({
+        type: 'gallery',
+        data: { images: ['a.png', 'b.png'], initialIndex: 1 },
+      }),
+    ).toBe('gallery:2:1')
+  })
+
   it('produces stable keys for same release regardless of object identity', () => {
     const keyA = getOverlaySessionKey({ type: 'release', data: { ...mockRelease } })
     const keyB = getOverlaySessionKey({ type: 'release', data: { ...mockRelease, title: 'Different title' } })

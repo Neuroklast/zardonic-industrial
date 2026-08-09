@@ -11,6 +11,12 @@ export function getOverlaySessionKey(overlay: CyberpunkOverlayState | null): str
       return overlay.data?.id ? `gig:${overlay.data.id}` : 'gig:unknown'
     case 'member':
       return overlay.data?.id ? `member:${overlay.data.id}` : 'member:unknown'
+    case 'gallery': {
+      const idx = overlay.data?.initialIndex ?? 0
+      const count = overlay.data?.images?.length ?? 0
+      // Include index so reopening a different photo restarts the session animation
+      return `gallery:${count}:${idx}`
+    }
     default:
       return overlay.type
   }

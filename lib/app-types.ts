@@ -129,9 +129,17 @@ export const DEFAULT_SITE_DATA: SiteData = {
   social: {},
 }
 
+/** Gallery lightbox payload — same CyberpunkOverlay shell as releases / events. */
+export interface GalleryOverlayData {
+  images: string[]
+  initialIndex: number
+  alts?: string[]
+}
+
 /** Discriminated union so TypeScript narrows `data` to the correct type per overlay variant. */
 export type CyberpunkOverlayState =
   | { type: 'contact'; data?: never }
   | { type: 'gig'; data: Gig }
   | { type: 'release'; data: Release }
   | { type: 'member'; data: Member }
+  | { type: 'gallery'; data: GalleryOverlayData }

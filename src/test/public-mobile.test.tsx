@@ -15,9 +15,10 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/min-w-\[44px\]/)
   })
 
-  it('GallerySection supports lightbox interaction', () => {
+  it('GallerySection opens the shared CyberpunkOverlay lightbox', () => {
     const src = readSource('app/_components/public/GallerySection.tsx')
-    expect(src).toMatch(/SwipeableGallery/)
+    expect(src).toMatch(/CyberpunkOverlay/)
+    expect(src).toMatch(/type: 'gallery'/)
     expect(src).toMatch(/role=\{lightbox \? 'button' : undefined\}/)
   })
 
@@ -25,6 +26,7 @@ describe('public mobile regression guards', () => {
     const src = readSource('components/CyberpunkOverlay.tsx')
     expect(src).toMatch(/role="dialog"/)
     expect(src).toMatch(/aria-modal="true"/)
+    expect(src).toMatch(/GalleryOverlayContent/)
   })
 
   it('SiteNav mobile links have 44px touch targets', () => {
@@ -32,8 +34,8 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/min-h-\[44px\]/)
   })
 
-  it('SwipeableGallery lightbox dots are keyboard buttons', () => {
-    const src = readSource('components/SwipeableGallery.tsx')
+  it('Gallery overlay dots are keyboard buttons', () => {
+    const src = readSource('components/overlays/GalleryOverlayContent.tsx')
     expect(src).toMatch(/aria-label=\{`Go to image/)
     expect(src).toMatch(/type="button"/)
   })
