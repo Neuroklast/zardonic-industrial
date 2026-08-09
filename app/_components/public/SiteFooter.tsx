@@ -1,6 +1,8 @@
 'use client'
 
 import { CookiePreferencesButton } from '@/components/CookieConsent'
+import LanguageSwitcher from '@/components/LanguageSwitcher'
+import { useLocale } from '@/contexts/LocaleContext'
 
 interface SocialLink {
   id: string
@@ -79,6 +81,7 @@ const footerLinkClass =
 
 export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: SiteFooterProps) {
   const year = new Date().getFullYear()
+  const { t } = useLocale()
 
   return (
     <footer
@@ -86,10 +89,12 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
       style={{ zIndex: 'var(--z-content)' as React.CSSProperties['zIndex'] }}
     >
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-7 px-card sm:gap-8">
+        <LanguageSwitcher />
+
         {socialLinks.length > 0 ? (
           <nav
             className="flex flex-wrap items-center justify-center gap-3 sm:gap-5"
-            aria-label="Social media links"
+            aria-label={t('footer.socialNav')}
           >
             {socialLinks.map((link) => (
               <a
@@ -117,16 +122,16 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
 
         <nav
           className="flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-5"
-          aria-label="Legal links"
+          aria-label={t('footer.legalNav')}
         >
           <a href={legalNoticeUrl} data-draft-target="footer-legal" className={footerLinkClass}>
-            Legal Notice
+            {t('footer.legal')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">
             ·
           </span>
           <a href={privacyPolicyUrl} data-draft-target="footer-privacy" className={footerLinkClass}>
-            Privacy Policy
+            {t('footer.privacy')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">
             ·
@@ -138,7 +143,7 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
         </nav>
 
         <p className="text-center font-mono text-sm uppercase tracking-[0.16em] text-muted-foreground/85 sm:text-base sm:tracking-[0.18em]">
-          © {year} Zardonic
+          {t('footer.copyrightLine').replace('{0}', String(year))}
         </p>
       </div>
     </footer>

@@ -28,7 +28,8 @@ describe('LocaleContext', () => {
     localStorage.clear()
   })
 
-  it('should provide default locale (en)', () => {
+  it('should provide default locale (en) when browser is English/unknown', () => {
+    // jsdom typically has en; storage empty → en
     render(
       <LocaleProvider>
         <TestConsumer />

@@ -35,6 +35,7 @@ const translations: Record<string, Record<string, string>> = {
   'footer.defaultGenres':      { en: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', de: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', ru: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', it: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', es: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', pt: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', ja: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO', ko: 'HARD TECHNO · CYBERPUNK · DNB · DARK ELECTRO' },
   'footer.label':              { en: 'LABEL: {0}', de: 'LABEL: {0}', ru: 'ЛЕЙБЛ: {0}', it: 'ETICHETTA: {0}', es: 'SELLO: {0}', pt: 'SELO: {0}', ja: 'レーベル: {0}', ko: '레이블: {0}' },
   'footer.copyright':          { en: '© {0} All rights reserved.', de: '© {0} Alle Rechte vorbehalten.', ru: '© {0} Все права защищены.', it: '© {0} Tutti i diritti riservati.', es: '© {0} Todos los derechos reservados.', pt: '© {0} Todos os direitos reservados.', ja: '© {0} 全著作権所有。', ko: '© {0} 모든 권리 보유.' },
+  'footer.copyrightLine':      { en: '© {0} Zardonic', de: '© {0} Zardonic', ru: '© {0} Zardonic', it: '© {0} Zardonic', es: '© {0} Zardonic', pt: '© {0} Zardonic', ja: '© {0} Zardonic', ko: '© {0} Zardonic' },
   'footer.legalNotice':        { en: 'LEGAL NOTICE', de: 'IMPRESSUM', ru: 'LEGAL NOTICE', it: 'LEGAL NOTICE', es: 'LEGAL NOTICE', pt: 'LEGAL NOTICE', ja: 'LEGAL NOTICE', ko: 'LEGAL NOTICE' },
   'footer.datenschutz':        { en: 'PRIVACY POLICY', de: 'DATENSCHUTZ', ru: 'ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ', it: 'PRIVACY', es: 'POLÍTICA DE PRIVACIDAD', pt: 'POLÍTICA DE PRIVACIDADE', ja: 'プライバシーポリシー', ko: '개인정보 처리방침' },
   'footer.admin':              { en: 'ADMIN', de: 'ADMIN', ru: 'ADMIN', it: 'ADMIN', es: 'ADMIN', pt: 'ADMIN', ja: 'ADMIN', ko: 'ADMIN' },
@@ -43,18 +44,30 @@ const translations: Record<string, Record<string, string>> = {
 
   // ── Navigation ──────────────────────────────────────────────────────
   'nav.home':                  { en: 'HOME', de: 'STARTSEITE', ru: 'ГЛАВНАЯ', it: 'HOME', es: 'INICIO', pt: 'INÍCIO', ja: 'ホーム', ko: '홈' },
-  'nav.news':                  { en: 'NEWS', de: 'NEUIGKEITEN', ru: 'НОВОСТИ', it: 'NOTIZIE', es: 'NOTICIAS', pt: 'NOTÍCIAS', ja: 'ニュース', ko: '뉴스' },
+  'nav.news':                  { en: 'NEWS', de: 'NEWS', ru: 'НОВОСТИ', it: 'NEWS', es: 'NEWS', pt: 'NEWS', ja: 'ニュース', ko: '뉴스' },
   'nav.biography':             { en: 'BIOGRAPHY', de: 'BIOGRAFIE', ru: 'БИОГРАФИЯ', it: 'BIOGRAFIA', es: 'BIOGRAFÍA', pt: 'BIOGRAFIA', ja: '経歴', ko: '바이오그래피' },
   'nav.bio':                   { en: 'BIO', de: 'BIO', ru: 'БИО', it: 'BIO', es: 'BIO', pt: 'BIO', ja: 'BIO', ko: 'BIO' },
   'nav.music':                 { en: 'MUSIC', de: 'MUSIK', ru: 'МУЗЫКА', it: 'MUSICA', es: 'MÚSICA', pt: 'MÚSICA', ja: '音楽', ko: '음악' },
   'nav.gallery':               { en: 'GALLERY', de: 'GALERIE', ru: 'ГАЛЕРЕЯ', it: 'GALLERIA', es: 'GALERÍA', pt: 'GALERIA', ja: 'ギャラリー', ko: '갤러리' },
   'nav.gigs':                  { en: 'GIGS', de: 'AUFTRITTE', ru: 'КОНЦЕРТЫ', it: 'CONCERTI', es: 'CONCIERTOS', pt: 'CONCERTOS', ja: 'ライブ', ko: '공연' },
-  'nav.releases':              { en: 'RELEASES', de: 'VERÖFFENTLICHUNGEN', ru: 'РЕЛИЗЫ', it: 'USCITE', es: 'LANZAMIENTOS', pt: 'LANÇAMENTOS', ja: 'リリース', ko: '릴리즈' },
+  'nav.events':                { en: 'EVENTS', de: 'EVENTS', ru: 'СОБЫТИЯ', it: 'EVENTI', es: 'EVENTOS', pt: 'EVENTOS', ja: 'イベント', ko: '이벤트' },
+  'nav.releases':              { en: 'RELEASES', de: 'RELEASES', ru: 'РЕЛИЗЫ', it: 'USCITE', es: 'LANZAMIENTOS', pt: 'LANÇAMENTOS', ja: 'リリース', ko: '릴리즈' },
+  'nav.merch':                 { en: 'MERCH', de: 'MERCH', ru: 'МЕРЧ', it: 'MERCH', es: 'MERCH', pt: 'MERCH', ja: 'グッズ', ko: '머치' },
+  'nav.credits':               { en: 'CREDITS', de: 'CREDITS', ru: 'КРЕДИТЫ', it: 'CREDITI', es: 'CRÉDITOS', pt: 'CRÉDITOS', ja: 'クレジット', ko: '크레딧' },
+  'nav.soundpacks':            { en: 'SOUNDPACKS', de: 'SOUNDPACKS', ru: 'САУНДПАКЫ', it: 'SOUNDPACK', es: 'SOUNDPACKS', pt: 'SOUNDPACKS', ja: 'サウンドパック', ko: '사운드팩' },
+  'nav.contact':               { en: 'CONTACT', de: 'KONTAKT', ru: 'КОНТАКТ', it: 'CONTATTO', es: 'CONTACTO', pt: 'CONTACTO', ja: 'コンタクト', ko: '연락처' },
   'nav.media':                 { en: 'MEDIA', de: 'MEDIEN', ru: 'МЕДИА', it: 'MEDIA', es: 'MEDIA', pt: 'MEDIA', ja: 'メディア', ko: '미디어' },
   'nav.connect':               { en: 'CONNECT', de: 'VERBINDEN', ru: 'КОНТАКТ', it: 'CONTATTA', es: 'CONTACTO', pt: 'CONTACTO', ja: 'コンタクト', ko: '연결' },
   'nav.newsletter':            { en: 'NEWSLETTER', de: 'NEWSLETTER', ru: 'РАССЫЛКА', it: 'NEWSLETTER', es: 'NEWSLETTER', pt: 'NEWSLETTER', ja: 'ニュースレター', ko: '뉴스레터' },
+  'nav.language':              { en: 'Language', de: 'Sprache', ru: 'Язык', it: 'Lingua', es: 'Idioma', pt: 'Idioma', ja: '言語', ko: '언어' },
   'nav.closePlayer':           { en: 'Close music player', de: 'Musik-Player schließen', ru: 'Закрыть плеер', it: 'Chiudi il lettore musicale', es: 'Cerrar el reproductor de música', pt: 'Fechar o leitor de música', ja: '音楽プレイヤーを閉じる', ko: '음악 플레이어 닫기' },
   'nav.openPlayer':            { en: 'Open music player', de: 'Musik-Player öffnen', ru: 'Открыть плеер', it: 'Apri il lettore musicale', es: 'Abrir el reproductor de música', pt: 'Abrir o leitor de música', ja: '音楽プレイヤーを開く', ko: '음악 플레이어 열기' },
+
+  // ── Footer (public chrome) ──────────────────────────────────────────
+  'footer.legal':              { en: 'Legal Notice', de: 'Impressum', ru: 'Правовая информация', it: 'Note legali', es: 'Aviso legal', pt: 'Aviso legal', ja: '特定商取引法', ko: '법적 고지' },
+  'footer.privacy':            { en: 'Privacy Policy', de: 'Datenschutz', ru: 'Конфиденциальность', it: 'Privacy', es: 'Privacidad', pt: 'Privacidade', ja: 'プライバシー', ko: '개인정보' },
+  'footer.socialNav':          { en: 'Social media links', de: 'Social-Media-Links', ru: 'Ссылки на соцсети', it: 'Link social', es: 'Enlaces de redes sociales', pt: 'Ligações de redes sociais', ja: 'ソーシャルメディア', ko: '소셜 미디어 링크' },
+  'footer.legalNav':           { en: 'Legal links', de: 'Rechtliche Links', ru: 'Юридические ссылки', it: 'Link legali', es: 'Enlaces legales', pt: 'Ligações legais', ja: '法的リンク', ko: '법적 링크' },
 
   // ── ARIA (public) ───────────────────────────────────────────────────
   'aria.mainNav':              { en: 'Main navigation', de: 'Hauptnavigation', ru: 'Основная навигация', it: 'Navigazione principale', es: 'Navegación principal', pt: 'Navegação principal', ja: 'メインナビゲーション', ko: '기본 탐색' },
