@@ -1,8 +1,9 @@
 'use server'
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { requireAdmin } from '@/app/admin/_actions/auth'
+import { MEDIA_BUCKET } from '@/lib/constants'
 
 function buildR2Client(): S3Client {
   const accountId = process.env.R2_ACCOUNT_ID
@@ -55,4 +56,34 @@ export async function uploadBufferToR2(
     }),
   )
   return { publicUrl: buildPublicUrl(objectPath), objectPath }
+}
+
+/**
+ * Delete an object from R2 media bucket.
+ * Rejects path traversal and empty keys. Admin-only.
+ */
+export async function deleteR2MediaObject(
+  objectPath: string,
+  bucket: string = MEDIA_BUCKET,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  await requireAdmin()
+
+  const path = objectPath.trim().replace(/^\/+/, '')
+  if (!path || path.includes('..') || path.includes('\\')) {
+    return { ok: false, error: 'Invalid storage path' }
+  }
+
+  try {
+    const client = buildR2Client()
+    await client.send(
+      new DeleteObjectCommand({
+        Bucket: bucket,
+        Key: path,
+      }),
+    )
+    return { ok: true }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Delete failed'
+    return { ok: false, error: message }
+  }
 }

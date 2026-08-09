@@ -1,44 +1,37 @@
 import { describe, expect, it } from 'vitest'
 import {
-  parseMobileVideoMode,
+  parseBackgroundVideoEnabled,
   resolveActiveBackgroundVideoUrl,
 } from '@/lib/background-config'
 
-describe('background-config', () => {
-  it('parseMobileVideoMode defaults to same', () => {
-    expect(parseMobileVideoMode(undefined)).toBe('same')
-    expect(parseMobileVideoMode('invalid')).toBe('same')
-    expect(parseMobileVideoMode('off')).toBe('off')
-    expect(parseMobileVideoMode('separate')).toBe('separate')
+describe('parseBackgroundVideoEnabled', () => {
+  it('uses explicit boolean', () => {
+    expect(parseBackgroundVideoEnabled(true, false)).toBe(true)
+    expect(parseBackgroundVideoEnabled(false, true)).toBe(false)
   })
 
-  it('resolveActiveBackgroundVideoUrl uses desktop on desktop', () => {
-    expect(
-      resolveActiveBackgroundVideoUrl('https://desktop.mp4', 'https://mobile.mp4', 'separate', false),
-    ).toBe('https://desktop.mp4')
+  it('defaults to hasConfiguredVideo when key missing', () => {
+    expect(parseBackgroundVideoEnabled(undefined, true)).toBe(true)
+    expect(parseBackgroundVideoEnabled(undefined, false)).toBe(false)
   })
+})
 
-  it('resolveActiveBackgroundVideoUrl hides video when mobile mode is off', () => {
+describe('resolveActiveBackgroundVideoUrl', () => {
+  it('returns undefined when video master switch is off', () => {
     expect(
-      resolveActiveBackgroundVideoUrl('https://desktop.mp4', undefined, 'off', true),
+      resolveActiveBackgroundVideoUrl('https://x/v.mp4', undefined, 'same', false, false),
     ).toBeUndefined()
   })
 
-  it('resolveActiveBackgroundVideoUrl uses mobile video when separate', () => {
+  it('returns desktop url when enabled', () => {
     expect(
-      resolveActiveBackgroundVideoUrl('https://desktop.mp4', 'https://mobile.mp4', 'separate', true),
-    ).toBe('https://mobile.mp4')
+      resolveActiveBackgroundVideoUrl('https://x/v.mp4', undefined, 'same', false, true),
+    ).toBe('https://x/v.mp4')
   })
 
-  it('resolveActiveBackgroundVideoUrl falls back to desktop when separate but no mobile url', () => {
+  it('respects mobile off mode', () => {
     expect(
-      resolveActiveBackgroundVideoUrl('https://desktop.mp4', undefined, 'separate', true),
-    ).toBe('https://desktop.mp4')
-  })
-
-  it('resolveActiveBackgroundVideoUrl uses desktop on mobile when mode is same', () => {
-    expect(
-      resolveActiveBackgroundVideoUrl('https://desktop.mp4', 'https://mobile.mp4', 'same', true),
-    ).toBe('https://desktop.mp4')
+      resolveActiveBackgroundVideoUrl('https://x/v.mp4', 'https://x/m.mp4', 'off', true, true),
+    ).toBeUndefined()
   })
 })
