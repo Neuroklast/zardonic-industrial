@@ -446,6 +446,11 @@ export default async function HomePage({
       noiseEnabled={noiseEnabled}
       noiseIntensity={noiseIntensity}
       filmGrain={filmGrain}
+      chromaticStrength={
+        typeof appearanceConfig.chromaticStrength === 'number'
+          ? appearanceConfig.chromaticStrength
+          : 0.5
+      }
     />
   )
 

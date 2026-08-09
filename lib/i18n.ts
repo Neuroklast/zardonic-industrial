@@ -58,7 +58,8 @@ const translations: Record<string, Record<string, string>> = {
   'nav.contact':               { en: 'CONTACT', de: 'KONTAKT', ru: 'КОНТАКТ', it: 'CONTATTO', es: 'CONTACTO', pt: 'CONTACTO', ja: 'コンタクト', ko: '연락처' },
   'nav.media':                 { en: 'MEDIA', de: 'MEDIEN', ru: 'МЕДИА', it: 'MEDIA', es: 'MEDIA', pt: 'MEDIA', ja: 'メディア', ko: '미디어' },
   'nav.connect':               { en: 'CONNECT', de: 'VERBINDEN', ru: 'КОНТАКТ', it: 'CONTATTA', es: 'CONTACTO', pt: 'CONTACTO', ja: 'コンタクト', ko: '연결' },
-  'nav.newsletter':            { en: 'NEWSLETTER', de: 'NEWSLETTER', ru: 'РАССЫЛКА', it: 'NEWSLETTER', es: 'NEWSLETTER', pt: 'NEWSLETTER', ja: 'ニュースレター', ko: '뉴스레터' },
+  /* Full words only — desktop hover labels must never clip (nav CSS width:max-content). */
+  'nav.newsletter':            { en: 'Newsletter', de: 'Newsletter', ru: 'Рассылка', it: 'Newsletter', es: 'Newsletter', pt: 'Newsletter', ja: 'ニュース', ko: '뉴스레터' },
   'nav.language':              { en: 'Language', de: 'Sprache', ru: 'Язык', it: 'Lingua', es: 'Idioma', pt: 'Idioma', ja: '言語', ko: '언어' },
   'nav.closePlayer':           { en: 'Close music player', de: 'Musik-Player schließen', ru: 'Закрыть плеер', it: 'Chiudi il lettore musicale', es: 'Cerrar el reproductor de música', pt: 'Fechar o leitor de música', ja: '音楽プレイヤーを閉じる', ko: '음악 플레이어 닫기' },
   'nav.openPlayer':            { en: 'Open music player', de: 'Musik-Player öffnen', ru: 'Открыть плеер', it: 'Apri il lettore musicale', es: 'Abrir el reproductor de música', pt: 'Abrir o leitor de música', ja: '音楽プレイヤーを開く', ko: '음악 플레이어 열기' },

@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Operator launch checklist**: `docs/OPERATOR_LAUNCH_CHECKLIST.md` (DPA, legal fields, production verify).
 - **E2E smoke**: Playwright (`npm run test:e2e`) for homepage, legal routes, cookie reject.
 
+### Fixed
+- **Nav labels never clip**: hover text uses `width: max-content` + `overflow: visible` (e.g. full “Newsletter”, not “ewslett”).
+- **Chromatic aberration slider**: drives a full-page fringe overlay (`--global-chromatic`) plus hover strength; live admin draft updates the overlay.
+
 ### Added
 - **Delete uploads**: Media/Video pickers can clear selection or permanently delete the R2 object (`deleteR2MediaObject`).
 - **Background video master switch**: Look & Feel → Background can turn desktop video ON/OFF without setting opacity to 0% or deleting the file (`backgroundVideoEnabled`).

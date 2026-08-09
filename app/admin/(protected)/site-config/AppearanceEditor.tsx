@@ -586,7 +586,7 @@ export function AppearanceEditor({ currentValue }: AppearanceEditorProps) {
             label="Chromatic aberration"
             value={chromaticStrength}
             onChange={setChromaticStrength}
-            description="Color fringing on hover effects."
+            description="Full-page RGB fringe + stronger hover fringing. 0 = off, 1 = strong."
           />
         </div>
       </AdminAccordion>
