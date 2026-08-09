@@ -1,3 +1,7 @@
+'use client'
+
+import { useIsMobile } from '@/hooks/use-mobile'
+
 interface GlobalEffectsProps {
   crtEnabled?: boolean
   scanlineEnabled?: boolean
@@ -11,6 +15,10 @@ interface GlobalEffectsProps {
    * Applies a full-page RGB fringe overlay + drives --chromatic-strength for hovers.
    */
   chromaticStrength?: number
+  /**
+   * Force lite mode (weaker noise/chroma). Defaults to true on mobile via useIsMobile.
+   */
+  lite?: boolean
 }
 
 export function GlobalEffects({
@@ -20,25 +28,46 @@ export function GlobalEffects({
   noiseIntensity = 0.4,
   filmGrain = false,
   chromaticStrength = 0.5,
+  lite,
 }: GlobalEffectsProps) {
-  const chroma = Math.min(1, Math.max(0, chromaticStrength))
+  const isMobile = useIsMobile()
+  const liteMode = lite ?? isMobile
+
+  // Mobile-lite: quieter grain + weaker chromatic fringe so scroll/LCP stay calm
+  const effectiveNoise = liteMode ? noiseIntensity * 0.5 : noiseIntensity
+  const effectiveChroma = liteMode ? chromaticStrength * 0.35 : chromaticStrength
+  const showNoise = noiseEnabled && effectiveNoise >= 0.08
+  const chroma = Math.min(1, Math.max(0, effectiveChroma))
   // Map 0–1 → 0–10px-scale var so the slider is visibly effective
   const globalChromatic = chroma * 10
 
   return (
     <>
-      {crtEnabled ? <div className="crt-overlay" /> : null}
-      {crtEnabled ? <div className="crt-vignette" /> : null}
-      {scanlineEnabled ? <div className="crt-scanline-bg" /> : null}
-      {noiseEnabled ? (
+      {crtEnabled ? (
+        <div className={`crt-overlay${liteMode ? ' global-fx-lite' : ''}`} />
+      ) : null}
+      {crtEnabled ? (
+        <div className={`crt-vignette${liteMode ? ' global-fx-lite' : ''}`} />
+      ) : null}
+      {scanlineEnabled ? (
+        <div className={`crt-scanline-bg${liteMode ? ' global-fx-lite' : ''}`} />
+      ) : null}
+      {showNoise ? (
         <div
-          className={`full-page-noise periodic-noise-glitch${filmGrain ? ' film-grain' : ''}`}
-          style={{ ['--noise-opacity' as string]: String(noiseIntensity) }}
+          className={[
+            'full-page-noise',
+            liteMode ? '' : 'periodic-noise-glitch',
+            filmGrain ? 'film-grain' : '',
+            liteMode ? 'global-fx-lite' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          style={{ ['--noise-opacity' as string]: String(effectiveNoise) }}
         />
       ) : null}
       {chroma > 0.01 ? (
         <div
-          className="global-chromatic-overlay"
+          className={`global-chromatic-overlay${liteMode ? ' global-fx-lite' : ''}`}
           aria-hidden="true"
           data-draft-target="global-chromatic"
           style={

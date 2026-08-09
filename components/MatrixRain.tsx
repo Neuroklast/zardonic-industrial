@@ -1,9 +1,17 @@
+'use client'
+
 import React, { useEffect, useRef, memo } from 'react'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 /**
- * MatrixRain – Canvas-based cascading character rain inspired by the Matrix.
- * Renders on a transparent canvas so the site background colour shows through.
- * Respects `prefers-reduced-motion` and pauses when the tab is hidden.
+ * MatrixRain – cascading character rain.
+ * Frame-budgeted + DPR-capped so Lenis scroll stays smooth.
  */
 interface MatrixRainProps {
   transparent?: boolean
@@ -13,9 +21,16 @@ interface MatrixRainProps {
   density?: number
   /** Override colour (CSS colour string). Defaults to --primary CSS variable. */
   color?: string
+  perfMode?: boolean
 }
 
-const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 0.7, color }: MatrixRainProps) {
+const MatrixRain = memo(function MatrixRain({
+  transparent,
+  speed = 1,
+  density = 0.7,
+  color,
+  perfMode = false,
+}: MatrixRainProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -26,55 +41,54 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (prefersReduced) return
 
-    const ctx = canvas.getContext('2d')
+    const dpr = getCanvasDpr(perfMode)
+    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true })
     if (!ctx) return
 
     const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF'
-    const fontSize = 14
-    let animId: number
+    const fontSize = perfMode ? 16 : 14
+    let animId = 0
     let drops: number[] = []
+    let lastDraw = 0
+    let isScrolling = false
+    let cssW = 0
+    let cssH = 0
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-      const cols = Math.floor(canvas.width / fontSize)
-      drops = Array.from({ length: cols }, () => Math.random() * -50)
+      cssW = window.innerWidth
+      cssH = window.innerHeight
+      canvas.width = Math.floor(cssW * dpr)
+      canvas.height = Math.floor(cssH * dpr)
+      canvas.style.width = `${cssW}px`
+      canvas.style.height = `${cssH}px`
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      const cols = Math.floor(cssW / fontSize)
+      const colCount = perfMode ? Math.ceil(cols * 0.65) : cols
+      drops = Array.from({ length: Math.max(1, colCount) }, () => Math.random() * -50)
     }
 
     resize()
 
-    // Use ResizeObserver on the canvas itself (more precise than window resize)
-    // and debounce to avoid resetting the canvas on every pixel during drag.
     const resizeObserver = new ResizeObserver(() => {
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = setTimeout(resize, 150)
     })
     resizeObserver.observe(canvas)
 
-    // Resolve color once (outside the animation loop) and cache it.
-    // Re-reading getComputedStyle on every rAF frame forces a synchronous
-    // layout recalculation — expensive and unnecessary since the CSS variable
-    // changes only when the admin saves new theme settings.
-    const getColor = () => color ?? (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#cc3300')
+    const getColor = () =>
+      color ??
+      (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#cc3300')
     let cachedColor = getColor()
 
-    const resolveColor = (): string => cachedColor
-
-    // Refresh the cached color whenever the --primary theme CSS variable changes.
-    // MutationObserver on <html> style attribute detects setProperty() calls
-    // from useAppTheme without polling. We check whether --primary actually
-    // changed to avoid redundant work on unrelated style mutations.
     const observer = new MutationObserver(() => {
       const newColor = getColor()
-      if (newColor !== cachedColor) {
-        cachedColor = newColor
-      }
+      if (newColor !== cachedColor) cachedColor = newColor
     })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
 
     const applyColor = (ctx2d: CanvasRenderingContext2D, base: string, baseColorRatio = 0.9) => {
-      const supportsColorMix = typeof CSS !== 'undefined' &&
-        CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')
+      const supportsColorMix =
+        typeof CSS !== 'undefined' && CSS.supports('color', 'color-mix(in srgb, red 50%, blue)')
       if (supportsColorMix) {
         ctx2d.fillStyle = `color-mix(in srgb, ${base} ${Math.round(baseColorRatio * 100)}%, white)`
       } else {
@@ -82,57 +96,49 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
       }
     }
 
-    // Speed controls how often a drop advances: higher speed = advance more often
-    // We use a fractional frame accumulator so sub-1 speed works correctly.
     let frameCount = 0
-    // Threshold for skipping: speed=1 → every 2nd frame, speed=2 → every frame
-    const frameSkip = Math.max(1, Math.round(2 / speed))
+    const frameSkip = Math.max(1, Math.round((perfMode ? 3 : 2) / Math.max(0.5, speed)))
 
-    const draw = () => {
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
+    const loop = (now: number) => {
+      animId = requestAnimationFrame(loop)
+      if (isDocumentHidden()) return
+
+      const fps = targetFpsForRuntime(perfMode, isScrolling)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, now, fps)) return
+
       frameCount++
-      if (frameCount % frameSkip !== 0) {
-        animId = requestAnimationFrame(draw)
-        return
-      }
+      if (frameCount % frameSkip !== 0) return
+      lastDraw = now
 
-      // Fade previous frame
       if (transparent) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.clearRect(0, 0, cssW, cssH)
       } else {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
+        ctx.fillRect(0, 0, cssW, cssH)
       }
 
-      const primaryColor = resolveColor()
       ctx.font = `${fontSize}px monospace`
+      const primaryColor = cachedColor
+      const step = perfMode ? 1.15 : 1
 
       drops.forEach((y, i) => {
-        const char = chars[Math.floor(Math.random() * chars.length)]
-        const x = i * fontSize
-
+        const char = chars[(Math.random() * chars.length) | 0]
+        const x = i * fontSize * (perfMode ? 1.35 : 1)
         applyColor(ctx, primaryColor, 0.9)
         ctx.fillText(char, x, y * fontSize)
 
-        // Density controls reset probability: higher density = less frequent resets
-        const resetThreshold = 1 - (density * 0.025)
+        const resetThreshold = 1 - density * (perfMode ? 0.018 : 0.025)
         if (Math.random() > resetThreshold) {
           drops[i] = 0
         } else {
-          drops[i] += 1
+          drops[i] += step
         }
       })
     }
-
-    let running = true
-    const loop = () => {
-      if (running && !document.hidden) draw()
-      animId = requestAnimationFrame(loop)
-    }
-
-    const handleVisibility = () => {
-      running = !document.hidden
-    }
-    document.addEventListener('visibilitychange', handleVisibility)
 
     animId = requestAnimationFrame(loop)
 
@@ -141,9 +147,9 @@ const MatrixRain = memo(function MatrixRain({ transparent, speed = 1, density = 
       observer.disconnect()
       resizeObserver.disconnect()
       clearTimeout(debounceTimerRef.current)
-      document.removeEventListener('visibilitychange', handleVisibility)
+      unsubScroll()
     }
-  }, [transparent, speed, density, color])
+  }, [transparent, speed, density, color, perfMode])
 
   return (
     <canvas

@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Performance
+- **Canvas frame budget** (`lib/canvas-perf.ts`): shared DPR cap, scroll-activity throttle (≈12–15 FPS while scrolling), idle 24–30 FPS, pause when tab hidden. Wired into Matrix, Terminal, DataStream, CloudChamber, Glitch-grid, ModelBackground (3D).
+- **BackgroundStack policy**: mobile / image / video / heavy types → `perfMode`; stars/minimal stay full quality on desktop without media. Both public + `components/BackgroundStack` parity.
+- **CircuitBackground**: `perfMode` zeros parallax range, thins depth-3 nodes, slows pulse spawn.
+- **Global FX mobile-lite**: quieter noise/chroma; no periodic noise glitch class on mobile (`global-fx-lite`).
+- **Hero mobile logo cap**: `max-height: min(admin, 42vh)` under 768px so large admin sizes do not dominate LCP.
+- **3D ModelBackground**: low-power preference in perfMode, antialias off, frame-budgeted render loop, full dispose on unmount.
+- **Scroll-video**: still coalesced via `attachScrollVideoSync` (~1/48s); animated overlays always perfMode when video is active. Operator: prefer faststart MP4 for scrub.
+
 ### Changed
 - **Language switcher**: removed from navbar (footer only).
 - **Nav icon hover**: fixed cell size — opacity crossfade only (no expand / skew / layout shift).

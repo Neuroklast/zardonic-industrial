@@ -1,22 +1,32 @@
 import { useEffect, useRef, memo } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import {
+  getCanvasDpr,
+  isDocumentHidden,
+  shouldSkipFrame,
+  subscribeScrollActivity,
+  targetFpsForRuntime,
+} from '@/lib/canvas-perf'
 
 /**
  * ModelBackground — renders a .glb/.gltf 3D model as a full-screen page background.
  * Uses vanilla Three.js with a WebGLRenderer in a fixed canvas layer.
- * The model auto-rotates (optionally) and the scene is darkened to act as background.
+ * Frame-budgeted; pauses when tab is hidden; DPR-capped in perfMode.
  */
 const ModelBackground = memo(function ModelBackground({
   modelUrl,
   autoRotate = true,
   rotateSpeed = 0.003,
   opacity = 1,
+  perfMode = false,
 }: {
   modelUrl: string
   autoRotate?: boolean
   rotateSpeed?: number
   opacity?: number
+  /** Cap DPR + FPS; thinner GPU load for mobile / stacked media. */
+  perfMode?: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -24,13 +34,16 @@ const ModelBackground = memo(function ModelBackground({
     const canvas = canvasRef.current
     if (!canvas) return
 
+    const dpr = getCanvasDpr(perfMode, 1.25)
+
     // Renderer
     const renderer = new THREE.WebGLRenderer({
       canvas,
-      antialias: true,
+      antialias: !perfMode,
       alpha: true,
+      powerPreference: perfMode ? 'low-power' : 'default',
     })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(dpr)
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setClearColor(0x000000, 0)
 
@@ -81,24 +94,42 @@ const ModelBackground = memo(function ModelBackground({
     window.addEventListener('resize', handleResize)
 
     // Animation loop
-    let animFrame: number
+    let animFrame = 0
+    let lastDraw = 0
+    let isScrolling = false
+    let running = true
     const prefersReduced =
       typeof window !== 'undefined' &&
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    const animate = () => {
+    const unsubScroll = subscribeScrollActivity((s) => {
+      isScrolling = s
+    }, 220)
+
+    const animate = (now: number) => {
+      if (!running) return
+      animFrame = requestAnimationFrame(animate)
+
+      if (isDocumentHidden()) return
+      const fps = targetFpsForRuntime(perfMode, isScrolling)
+      if (fps <= 0 || shouldSkipFrame(lastDraw, now, fps)) return
+      lastDraw = now
+
       if (model && autoRotate && !prefersReduced) {
-        model.rotation.y += rotateSpeed
+        // Slightly slower spin while scrolling / in perfMode
+        const spin = rotateSpeed * (isScrolling || perfMode ? 0.55 : 1)
+        model.rotation.y += spin
       }
       renderer.render(scene, camera)
-      animFrame = requestAnimationFrame(animate)
     }
-    animate()
+    animFrame = requestAnimationFrame(animate)
 
     return () => {
+      running = false
       cancelAnimationFrame(animFrame)
       window.removeEventListener('resize', handleResize)
+      unsubScroll()
       // Dispose all scene objects to free GPU memory (geometries, materials, textures)
       scene.traverse((obj) => {
         if (obj instanceof THREE.Mesh) {
@@ -120,7 +151,7 @@ const ModelBackground = memo(function ModelBackground({
       })
       renderer.dispose()
     }
-  }, [modelUrl, autoRotate, rotateSpeed])
+  }, [modelUrl, autoRotate, rotateSpeed, perfMode])
 
   return (
     <canvas

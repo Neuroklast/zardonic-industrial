@@ -34,3 +34,21 @@
     animation: none;
   }
 }
+
+/* Global FX lite (mobile host) — quieter CRT/noise/chroma than desktop admin defaults */
+.global-fx-lite.crt-overlay {
+  opacity: 0.22;
+  animation: none;
+}
+.global-fx-lite.crt-vignette {
+  opacity: 0.7;
+}
+.global-fx-lite.crt-scanline-bg {
+  opacity: 0.35;
+}
+.global-fx-lite.full-page-noise {
+  opacity: min(0.2, var(--noise-opacity, 0.2));
+}
+.global-fx-lite.global-chromatic-overlay {
+  opacity: 0.55;
+}

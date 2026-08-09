@@ -19,6 +19,7 @@ import {
   type PublicBackgroundType,
 } from '@/lib/public-background-types'
 import { attachScrollVideoSync } from '@/lib/scroll-video-sync'
+import { resolveBackgroundPerfMode } from '@/lib/canvas-perf'
 
 interface BackgroundStackProps {
   imageUrl?: string
@@ -66,7 +67,7 @@ function AnimatedLayer({
       data-draft-bg-type={backgroundType}
     >
       {backgroundType === 'circuit' ? (
-        <CircuitBackground speed={circuitSpeed} glow={circuitGlow} />
+        <CircuitBackground speed={circuitSpeed} glow={circuitGlow} perfMode={perfMode} />
       ) : backgroundType === 'terminal' ? (
         <TerminalBackground opacity={hasImage ? 0.45 : 0.6} perfMode={perfMode} />
       ) : backgroundType === 'data-stream' ? (
@@ -80,7 +81,12 @@ function AnimatedLayer({
           glitchFrequency={perfMode ? 0.15 : 0.35}
         />
       ) : (
-        <MatrixRain transparent={hasImage} density={matrixDensity} speed={matrixSpeed} />
+        <MatrixRain
+          transparent={hasImage}
+          density={matrixDensity}
+          speed={matrixSpeed}
+          perfMode={perfMode}
+        />
       )}
     </div>
   )
@@ -197,13 +203,13 @@ export function BackgroundStack({
       <AnimatedLayer
         backgroundType={effectiveBackgroundType}
         hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
-        /* glitch-grid is expensive — always perfMode (plus image/video/mobile) so Lenis stays smooth */
-        perfMode={
-          effectiveBackgroundType === 'glitch-grid' ||
-          Boolean(imageUrl) ||
-          Boolean(activeVideoUrl) ||
-          isMobile
-        }
+        /* Shared policy: mobile / media / heavy types → frame-budgeted canvas layers */
+        perfMode={resolveBackgroundPerfMode({
+          isMobile,
+          hasVideo: Boolean(activeVideoUrl),
+          hasImage: Boolean(imageUrl),
+          backgroundType: effectiveBackgroundType,
+        })}
       />
     </>
   )
