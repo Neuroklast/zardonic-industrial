@@ -27,7 +27,11 @@ async function fetchCounts(): Promise<ContentCounts> {
       supabase.from('gigs').select('id', { count: 'exact', head: true }),
       supabase.from('gallery').select('id', { count: 'exact', head: true }),
       supabase.from('partners').select('id', { count: 'exact', head: true }),
-      supabase.from('newsletter_subscribers').select('id', { count: 'exact', head: true }),
+      supabase
+        .from('newsletter_subscribers')
+        .select('id', { count: 'exact', head: true })
+        .not('confirmed_at', 'is', null)
+        .is('unsubscribed_at', null),
       supabase.from('social_links').select('id', { count: 'exact', head: true }),
     ])
     return {
@@ -61,7 +65,7 @@ export default async function AnalyticsPage() {
     { icon: Calendar, label: 'Events',       value: counts.gigs,        href: '/admin/gigs' },
     { icon: Images,  label: 'Gallery Images', value: counts.gallery,   href: '/admin/gallery' },
     { icon: Users,   label: 'Partners',     value: counts.partners,    href: '/admin/partners' },
-    { icon: Envelope, label: 'Subscribers', value: counts.subscribers, href: '/admin/newsletter' },
+    { icon: Envelope, label: 'Active Subscribers', value: counts.subscribers, href: '/admin/newsletter' },
     { icon: ChartBar, label: 'Social Links', value: counts.socialLinks, href: '/admin/social' },
   ]
 
