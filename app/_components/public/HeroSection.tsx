@@ -68,51 +68,47 @@ export function HeroSection({
             ...bgStyle,
             opacity: backgroundImageOpacity,
           }}
-          initial={{ opacity: 0 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
           animate={{ opacity: backgroundImageOpacity }}
-          transition={{ duration: prefersReducedMotion ? 0 : 1.2, ease: 'easeInOut' }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.9, ease: [0.16, 1, 0.3, 1] }}
           aria-hidden="true"
         />
       )}
 
       <div className="absolute inset-0 noise-effect pointer-events-none" aria-hidden="true" />
 
-      <m.div
-        initial={{ opacity: 0 }}
-        animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
-        transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
+      <div
         className="relative mx-auto w-full max-w-6xl px-card text-center"
         style={{ zIndex: 'var(--z-content)' }}
       >
-        <m.div
-          className="relative mb-6"
-          initial={{ opacity: 1 }}
-          animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
-        >
-          <div className="hero-logo-glitch relative mx-auto w-fit max-w-[min(92vw,56rem)]">
-            <img
-              src={logoImageUrl}
-              alt={headline}
-              data-draft-target="hero-logo"
-              className="hover-chromatic-image mx-auto h-auto w-auto max-w-full object-contain brightness-110"
-              style={{
-                maxHeight: logoMaxHeight || 'clamp(6rem, 22vw, 16rem)',
-                width: 'auto',
-              }}
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </m.div>
+        {/*
+          Terminal boot reveal: CRT raster build + one RGB tear.
+          Class hero-logo-glitch kept for regression tests; boot styles on hero-logo-boot.
+        */}
+        <div className="hero-logo-glitch hero-logo-boot relative mb-6">
+          <span className="hero-logo-boot__scan" aria-hidden />
+          <img
+            src={logoImageUrl}
+            alt={headline}
+            data-draft-target="hero-logo"
+            className="hover-chromatic-image mx-auto h-auto w-auto max-w-full object-contain brightness-110"
+            style={{
+              maxHeight: logoMaxHeight || 'clamp(6rem, 22vw, 16rem)',
+              width: 'auto',
+            }}
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
 
         {tagline ? (
           <m.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
+            animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
             transition={{
-              delay: prefersReducedMotion ? 0 : 0.3,
-              duration: prefersReducedMotion ? 0 : 0.6,
-              ease: [0.25, 0.46, 0.45, 0.94],
+              delay: prefersReducedMotion ? 0 : 0.75,
+              duration: prefersReducedMotion ? 0 : 0.45,
+              ease: [0.16, 1, 0.3, 1],
             }}
             className="mx-auto max-w-2xl text-sm uppercase tracking-[0.3em] text-muted-foreground md:text-base"
             style={{ fontFamily: 'var(--font-mono, var(--font-body, monospace))' }}
@@ -123,12 +119,12 @@ export function HeroSection({
         ) : null}
 
         <m.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={contentLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          initial={prefersReducedMotion ? false : { opacity: 0 }}
+          animate={contentLoaded ? { opacity: 1 } : { opacity: 0 }}
           transition={{
-            delay: prefersReducedMotion ? 0 : 0.6,
-            duration: prefersReducedMotion ? 0 : 0.8,
-            ease: [0.25, 0.46, 0.45, 0.94],
+            delay: prefersReducedMotion ? 0 : 0.95,
+            duration: prefersReducedMotion ? 0 : 0.4,
+            ease: [0.16, 1, 0.3, 1],
           }}
           className="relative mt-12 flex flex-wrap justify-center gap-4"
           style={{ zIndex: 'var(--z-local-top)', fontFamily: 'var(--font-mono, monospace)' }}
@@ -158,7 +154,7 @@ export function HeroSection({
             </a>
           ) : null}
         </m.div>
-      </m.div>
+      </div>
     </section>
   )
 }
