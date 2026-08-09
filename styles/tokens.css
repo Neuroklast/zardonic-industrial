@@ -68,6 +68,14 @@
   --mono-font-size: 0.875rem;
   --chromatic-strength: 0.5;
 
+  /*
+   * Default public fonts (next/font variables from app/layout.tsx).
+   * Appearance admin overwrites these on documentElement — do not lock them on <body>.
+   */
+  --font-heading: var(--font-orbitron), 'Orbitron', ui-sans-serif, sans-serif;
+  --font-body: var(--font-space-mono), 'Space Mono', ui-monospace, monospace;
+  --font-mono: var(--font-share-tech-mono), var(--font-space-mono), 'Share Tech Mono', ui-monospace, monospace;
+
   /* Semantic color aliases — map to the theme palette */
   --color-brand-primary: var(--color-accent-9, var(--accent));
   --color-brand-secondary: var(--color-accent-secondary-9, var(--accent));

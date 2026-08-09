@@ -267,7 +267,7 @@ function buildPrivacyEn(config: LegalConfig): LegalSection[] {
       paragraphs: [
         'To improve loading speed, images may be delivered via wsrv.nl (Images.weserv.nl). When your browser requests an image, wsrv.nl may temporarily process your IP address to deliver the content.',
         'wsrv.nl does not set tracking cookies. Legal basis: Art. 6(1)(f) GDPR (legitimate interest in fast image delivery). More information: https://wsrv.nl',
-        'Website fonts (Orbitron, Share Tech Mono, Space Mono) are self-hosted with the site build (next/font). Your browser does not contact Google Fonts servers for these default fonts.',
+        'Default website fonts (Orbitron, Share Tech Mono, Space Mono) are self-hosted with the site build (next/font). If the site operator selects additional typefaces in Appearance, those may be loaded from Google Fonts when applied. Legal basis for optional remote fonts: Art. 6(1)(f) GDPR (presentation of the website as configured by the operator).',
       ],
     },
     {
@@ -390,7 +390,7 @@ function buildPrivacyDe(config: LegalConfig): LegalSection[] {
       paragraphs: [
         'Zur Performance-Optimierung können Bilder über wsrv.nl ausgeliefert werden. Dabei kann Ihre IP-Adresse kurzzeitig verarbeitet werden.',
         'wsrv.nl setzt keine Tracking-Cookies. Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO. Weitere Informationen: https://wsrv.nl',
-        'Die Standard-Webfonts (Orbitron, Share Tech Mono, Space Mono) werden mit dem Website-Build self-hosted (next/font). Für diese Fonts stellt Ihr Browser keine Verbindung zu Google Fonts her.',
+        'Standard-Webfonts (Orbitron, Share Tech Mono, Space Mono) werden mit dem Website-Build self-hosted (next/font). Wählt der Betreiber unter Appearance weitere Schriften, können diese bei Anwendung von Google Fonts geladen werden. Rechtsgrundlage für optionale Remote-Fonts: Art. 6 Abs. 1 lit. f DSGVO (Darstellung der Website wie vom Betreiber konfiguriert).'
       ],
     },
     {

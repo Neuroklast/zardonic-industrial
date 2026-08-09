@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Nav labels never clip**: hover text uses `width: max-content` + `overflow: visible` (e.g. full “Newsletter”, not “ewslett”).
 - **Chromatic aberration slider**: drives a full-page fringe overlay (`--global-chromatic`) plus hover strength; live admin draft updates the overlay.
 - **cyber-card corners**: removed hover top-left/bottom-right bracket squares on event/release cards (border + glow only).
+- **Appearance body/heading fonts**: stop locking `--font-body` on `<body>` (blocked admin changes for Bio); restore on-demand Google Font load for non–self-hosted picks; body uses `var(--font-body)`.
 
 ### Added
 - **Hero wordmark size**: Look & Feel → Hero slider `logoMaxHeightRem` (4–20rem) with live preview; stored on `site_config.hero`.

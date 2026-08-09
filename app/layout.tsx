@@ -6,8 +6,9 @@ import { Providers } from './providers'
 import './globals.css'
 
 /**
- * Self-hosted at build time via next/font — no runtime request to Google.
- * Required for DE/GDPR (no third-party font CDN without consent).
+ * Self-hosted at build time via next/font (CSS variables only).
+ * Defaults live on :root / html so AppearanceBridge can override --font-body
+ * etc. on documentElement without fighting body inline styles.
  */
 const fontOrbitron = Orbitron({
   subsets: ['latin'],
@@ -77,16 +78,12 @@ export default async function RootLayout({
       lang="en"
       className={`${fontOrbitron.variable} ${fontShareTechMono.variable} ${fontSpaceMono.variable}`}
     >
-      <body
-        className={fontSpaceMono.className}
-        style={
-          {
-            '--font-heading': `var(--font-orbitron), 'Orbitron', sans-serif`,
-            '--font-mono': `var(--font-share-tech-mono), var(--font-space-mono), 'Share Tech Mono', monospace`,
-            '--font-body': `var(--font-space-mono), 'Space Mono', ui-monospace, monospace`,
-          } as React.CSSProperties
-        }
-      >
+      {/*
+        Do NOT set --font-body/--font-heading as fixed stacks on <body> —
+        that blocked Appearance → Body font (bio uses var(--font-body)).
+        Defaults are in tokens.css; AppearanceBridge/applyAppearanceConfig override :root.
+      */}
+      <body className="font-public-root">
         <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig} languages={languages}>
           {children}
         </Providers>

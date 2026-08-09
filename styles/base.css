@@ -72,8 +72,10 @@ body.no-select a {
   letter-spacing: var(--heading-letter-spacing);
 }
 
-/* Body size — admin slider sets --body-font-size; default comes from --font-size-body. */
-body {
+/* Body size + family — admin Appearance body font sets --font-body (bio + site). */
+body,
+.font-public-root {
+  font-family: var(--font-body, ui-sans-serif, system-ui, sans-serif);
   font-size: var(--body-font-size, var(--font-size-body));
   line-height: var(--body-line-height, 1.6);
 }

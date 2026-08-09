@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import {
   extractGoogleFontName,
   isPrivacySafeFontStack,
@@ -6,7 +6,7 @@ import {
   SELF_HOSTED_FONT_NAMES,
 } from '@/lib/font-loader'
 
-describe('font-loader (privacy-first)', () => {
+describe('font-loader', () => {
   beforeEach(() => {
     document.head.innerHTML = ''
   })
@@ -18,6 +18,7 @@ describe('font-loader (privacy-first)', () => {
   it('extracts first family name from stack', () => {
     expect(extractGoogleFontName("'Orbitron', sans-serif")).toBe('Orbitron')
     expect(extractGoogleFontName('system-ui')).toBeNull()
+    expect(extractGoogleFontName("var(--font-orbitron), 'Orbitron', sans-serif")).toBe('Orbitron')
   })
 
   it('treats self-hosted and system stacks as privacy-safe', () => {
@@ -27,10 +28,16 @@ describe('font-loader (privacy-first)', () => {
     expect(SELF_HOSTED_FONT_NAMES.has('Orbitron')).toBe(true)
   })
 
-  it('loadGoogleFont does not inject fonts.googleapis.com links', () => {
-    loadGoogleFont('Rajdhani')
+  it('does not inject Google CSS for self-hosted names', () => {
     loadGoogleFont('Orbitron')
-    const links = Array.from(document.querySelectorAll('link[href*="fonts.googleapis"]'))
-    expect(links).toHaveLength(0)
+    loadGoogleFont('Space Mono')
+    expect(document.querySelectorAll('link[href*="fonts.googleapis"]')).toHaveLength(0)
+  })
+
+  it('injects Google CSS once for admin-selected remote fonts (e.g. Inter for bio body)', () => {
+    loadGoogleFont('Inter')
+    loadGoogleFont('Inter')
+    const links = document.querySelectorAll('link[href*="fonts.googleapis"][href*="Inter"]')
+    expect(links.length).toBe(1)
   })
 })
