@@ -27,7 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Glitch-grid scroll jank**: cache static grid; remove `getImageData` readback; cap DPR/FPS; always `perfMode` for glitch-grid so Lenis stays smooth.
 - **Nav labels never clip**: hover text uses `width: max-content` + `overflow: visible` (e.g. full “Newsletter”, not “ewslett”).
 - **Chromatic aberration slider**: drives a full-page fringe overlay (`--global-chromatic`) plus hover strength; live admin draft updates the overlay.
-- **cyber-card corners**: removed hover top-left/bottom-right bracket squares on event/release cards (border + glow only).
+- **cyber-border / cyber-card corners**: restore top-left + bottom-right **L-edges** (thin gradient lines only — no filled square).
 - **Appearance fonts (no hardcode)**: site fonts only from `site_config.appearance.theme` (SSR inject + global AppearanceBridge on all routes). CSS defaults are system stacks only — never Orbitron/Space Mono forced. Bio/body/heading/mono follow admin.
 
 ### Added
