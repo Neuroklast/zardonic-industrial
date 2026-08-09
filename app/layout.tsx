@@ -2,13 +2,18 @@ import type { Metadata } from 'next'
 import { Orbitron, Share_Tech_Mono, Space_Mono } from 'next/font/google'
 import { createClient } from '@/lib/supabaseServer'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
+import {
+  buildPublicFontCssVars,
+  googleFontsStylesheetHref,
+  remoteFontFamiliesToLoad,
+  resolvePublicFonts,
+} from '@/lib/public-fonts'
 import { Providers } from './providers'
 import './globals.css'
 
 /**
- * Self-hosted at build time via next/font (CSS variables only).
- * Defaults live on :root / html so AppearanceBridge can override --font-body
- * etc. on documentElement without fighting body inline styles.
+ * next/font only registers file variables for when Appearance selects them.
+ * They are NOT forced as site body/heading — admin theme is source of truth.
  */
 const fontOrbitron = Orbitron({
   subsets: ['latin'],
@@ -71,20 +76,38 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { customTranslations, analyticsConfig, languages } = await getPublicSiteBootstrap()
+  const { customTranslations, analyticsConfig, languages, appearance } =
+    await getPublicSiteBootstrap()
+
+  const fonts = resolvePublicFonts(appearance.theme)
+  const fontCss = buildPublicFontCssVars(fonts)
+  const remoteFonts = remoteFontFamiliesToLoad(fonts)
 
   return (
     <html
       lang="en"
       className={`${fontOrbitron.variable} ${fontShareTechMono.variable} ${fontSpaceMono.variable}`}
     >
-      {/*
-        Do NOT set --font-body/--font-heading as fixed stacks on <body> —
-        that blocked Appearance → Body font (bio uses var(--font-body)).
-        Defaults are in tokens.css; AppearanceBridge/applyAppearanceConfig override :root.
-      */}
+      <head>
+        {/* Admin-configured remote faces — only when theme requests them */}
+        {remoteFonts.map((name) => (
+          <link
+            key={name}
+            rel="stylesheet"
+            href={googleFontsStylesheetHref(name)}
+            data-zd-font={name}
+          />
+        ))}
+        {/* SSR: apply Appearance fonts before paint (all routes, not only homepage) */}
+        <style dangerouslySetInnerHTML={{ __html: fontCss }} />
+      </head>
       <body className="font-public-root">
-        <Providers customTranslations={customTranslations} analyticsConfig={analyticsConfig} languages={languages}>
+        <Providers
+          customTranslations={customTranslations}
+          analyticsConfig={analyticsConfig}
+          languages={languages}
+          appearance={appearance}
+        >
           {children}
         </Providers>
       </body>

@@ -21,7 +21,7 @@ html {
 }
 
 body {
-  font-family: var(--font-body, 'Share Tech Mono', monospace);
+  font-family: var(--font-body, system-ui, ui-sans-serif, sans-serif);
   overflow-x: hidden;
   /* Performance optimizations */
   -webkit-font-smoothing: antialiased;
@@ -60,9 +60,9 @@ body.no-select a {
   }
 }
 
-/* Section titles only — card/browse headings keep their own text-* utilities. */
+/* Section titles — family always from Appearance --font-heading */
 .section-heading {
-  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-family: var(--font-heading, system-ui, ui-sans-serif, sans-serif);
   font-size: var(--font-size-heading);
   text-shadow: var(--heading-text-shadow,
     0.5px 0 0 rgba(255, 255, 255, 0.15),
@@ -72,33 +72,32 @@ body.no-select a {
   letter-spacing: var(--heading-letter-spacing);
 }
 
-/* Body size + family — admin Appearance body font sets --font-body (bio + site). */
+/* Body size + family from Appearance only */
 body,
 .font-public-root {
-  font-family: var(--font-body, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-body, system-ui, ui-sans-serif, sans-serif);
   font-size: var(--body-font-size, var(--font-size-body));
   line-height: var(--body-line-height, 1.6);
 }
 
-/* Ensure appearance fonts win over Tailwind defaults everywhere on the public site */
 html {
   --tw-font-mono: var(--font-mono, ui-monospace, monospace);
 }
 
 code, kbd, samp, pre {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono, ui-monospace, monospace);
   font-size: var(--mono-font-size, 0.875rem);
 }
 
-/* Map Tailwind font utilities to appearance CSS variables so admin font picks apply site-wide */
+/* Tailwind utilities map to Appearance CSS variables — never hardcode faces here */
 .font-mono {
   font-family: var(--font-mono, ui-monospace, monospace);
 }
 .font-sans {
-  font-family: var(--font-body, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-body, system-ui, ui-sans-serif, sans-serif);
 }
 .font-heading {
-  font-family: var(--font-heading, 'Orbitron', sans-serif);
+  font-family: var(--font-heading, system-ui, ui-sans-serif, sans-serif);
 }
 
 /* ── Admin UI Shield ──────────────────────────────────────────────────────────

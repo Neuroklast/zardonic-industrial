@@ -607,7 +607,7 @@
 }
 
 :is(.data-label) {
-  font-family: var(--data-label-font-family, 'Share Tech Mono', monospace);
+  font-family: var(--data-label-font-family, var(--font-mono, ui-monospace, monospace));
   font-size: var(--data-label-font-size, 10px);
   text-transform: uppercase;
   letter-spacing: 2px;

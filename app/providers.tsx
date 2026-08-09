@@ -7,6 +7,8 @@ import type { FallbackProps } from 'react-error-boundary'
 import { LenisProvider } from '@/contexts/LenisContext'
 import { LocaleProvider } from '@/contexts/LocaleContext'
 import { AnalyticsTracker } from '@/components/AnalyticsTracker'
+import { AppearanceBridge } from '@/app/_components/public/AppearanceBridge'
+import type { AppearanceConfigInput } from '@/lib/apply-appearance-config'
 import type { AnalyticsConfig } from '@/lib/analytics-config'
 import type { SiteLanguage } from '@/lib/i18n'
 import type { CustomTranslations } from '@/lib/translations-config'
@@ -26,6 +28,8 @@ interface ProvidersProps {
   customTranslations?: CustomTranslations
   analyticsConfig?: AnalyticsConfig
   languages?: SiteLanguage[]
+  /** Applied on every public page — fonts never hardcoded outside Appearance. */
+  appearance?: AppearanceConfigInput
 }
 
 export function Providers({
@@ -33,6 +37,7 @@ export function Providers({
   customTranslations,
   analyticsConfig,
   languages,
+  appearance = {},
 }: ProvidersProps) {
   const [queryClient] = useState(
     () =>
@@ -49,6 +54,7 @@ export function Providers({
         <LocaleProvider customTranslations={customTranslations} languages={languages}>
           <QueryClientProvider client={queryClient}>
             <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <AppearanceBridge config={appearance} />
               {children}
             </ErrorBoundary>
           </QueryClientProvider>
