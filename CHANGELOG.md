@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Hero wordmark scale**: remove hard `56rem` stage width cap; logo can grow to full content column width (page `px-card` margins only). Admin height slider still drives max-height; mobile keeps `42vh` LCP cap.
+- **Hero boot timing**: wordmark entrance starts when the hero stage is **in view** (`IntersectionObserver`), not on page mount alone — still the short logo boot (scan + HUD under image), not a page-level loader.
+
 ### Performance
 - **Canvas frame budget** (`lib/canvas-perf.ts`): shared DPR cap, scroll-activity throttle (≈12–15 FPS while scrolling), idle 24–30 FPS, pause when tab hidden. Wired into Matrix, Terminal, DataStream, CloudChamber, Glitch-grid, ModelBackground (3D).
 - **BackgroundStack policy**: mobile / image / video / heavy types → `perfMode`; stars/minimal stay full quality on desktop without media. Both public + `components/BackgroundStack` parity.
