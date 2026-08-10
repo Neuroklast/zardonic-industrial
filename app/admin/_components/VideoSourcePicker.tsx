@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { VideoUploader } from '@/app/admin/_components/VideoUploader'
 import { cacheRemoteVideoToR2 } from '@/app/admin/_actions/cacheRemoteVideo'
+import { deletePreviousR2ObjectIfReplaced } from '@/app/admin/_lib/deletePreviousR2Object'
 
 type SourceMode = 'upload' | 'url' | 'drive'
 
@@ -33,6 +34,27 @@ export function VideoSourcePicker({
   const [removing, setRemoving] = useState(false)
   const [status, setStatus] = useState<string | null>(null)
 
+  async function commitNewMedia(
+    storagePath: string,
+    publicUrl: string | undefined,
+    successMessage: string,
+  ) {
+    const previousPath = activePath
+    if (publicUrl) setPreview(publicUrl)
+    setActivePath(storagePath)
+    onResolved(storagePath, publicUrl)
+    setLinkInput('')
+
+    const cleanup = await deletePreviousR2ObjectIfReplaced(previousPath, storagePath)
+    if (cleanup.error) {
+      setStatus(`${successMessage} — previous file not deleted: ${cleanup.error}`)
+      return
+    }
+    setStatus(
+      cleanup.deleted ? `${successMessage} (previous file removed from storage)` : successMessage,
+    )
+  }
+
   async function handleCacheLink(input: string, sourceLabel: string) {
     const trimmed = input.trim()
     if (!trimmed) {
@@ -50,11 +72,11 @@ export function VideoSourcePicker({
         onError?.(msg)
         return
       }
-      if (result.publicUrl) setPreview(result.publicUrl)
-      setActivePath(result.storagePath)
-      onResolved(result.storagePath, result.publicUrl)
-      setStatus(`${sourceLabel} cached to R2`)
-      setLinkInput('')
+      await commitNewMedia(
+        result.storagePath,
+        result.publicUrl,
+        `${sourceLabel} cached to R2`,
+      )
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to cache video'
       setStatus(msg)
@@ -166,10 +188,7 @@ export function VideoSourcePicker({
           currentUrl={preview}
           storagePrefix={storagePrefix}
           onUpload={(path, publicUrl) => {
-            if (publicUrl) setPreview(publicUrl)
-            setActivePath(path)
-            onResolved(path, publicUrl)
-            setStatus('Uploaded to R2')
+            void commitNewMedia(path, publicUrl, 'Uploaded to R2')
           }}
           onError={(msg) => {
             setStatus(msg)

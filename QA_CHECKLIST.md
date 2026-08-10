@@ -42,6 +42,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
+- [ ] Media replace: upload a second image/video → previous R2 object removed (status mentions previous file removed); failed upload must not delete the old file
 - [ ] Legal admin saves and public pages reflect changes after revalidate
 
 ## After deploy

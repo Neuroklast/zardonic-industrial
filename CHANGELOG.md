@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- **R2 media replace auto-cleanup**: after a successful image/video upload or remote cache in `MediaSourcePicker` / `VideoSourcePicker`, the previous R2 object is deleted automatically (`deletePreviousR2ObjectIfReplaced`). Failed deletes do not undo the new upload.
+
 ### Added
 - **Look & Feel live preview device toggle**: split preview header has **Desktop / Mobile** — mobile constrains the iframe to 390px so media queries (hero mobile width, nav, etc.) match a phone without resizing the admin window.
 
