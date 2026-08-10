@@ -6,6 +6,8 @@ Next.js App Router (public + admin), Supabase (`site_config`, content tables, au
 
 **Never dual-mount the same path:** root `api/<name>.ts` can shadow `app/api/<name>/route.ts` on Vercel. Public `/api/geo` is App Router only.
 
+**Public Supabase reads:** use `createPublicClient()` from `lib/supabaseServer.ts` (cookie-less anon). Do not use `createClient()` (cookie session) for homepage/browse content — admin JWT skew must not blank the public site.
+
 ## Import paths
 
 Root-level `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, `cms/`, `app/` are canonical `@/*` targets. Mirror `src/` only where migration bridge requires it.

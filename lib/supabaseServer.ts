@@ -1,4 +1,5 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createClient as createSupabaseJsClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 /**
@@ -73,51 +74,81 @@ function makeCookieAdapter(
   }
 }
 
+function requireAnonEnv(): { url: string; anonKey: string } | null {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (url && anonKey) return { url, anonKey }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.',
+    )
+  }
+  console.warn('⚠️ Supabase not configured — degraded mode for local dev (public site will use fallbacks).')
+  return null
+}
+
+/** Fluent stub for local dev without Supabase env (supports common query chains). */
+function createDevStubClient() {
+  const makeQueryBuilder = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const builder: any = {
+      select: () => builder,
+      eq: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      single: () => Promise.resolve({ data: null, error: null }),
+      maybeSingle: () => Promise.resolve({ data: null, error: null }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      then: (onF: any, onR: any) => Promise.resolve({ data: [], error: null }).then(onF, onR),
+    }
+    return builder
+  }
+  return {
+    from: () => makeQueryBuilder(),
+    auth: {
+      getUser: () => Promise.resolve({ data: { user: null }, error: null }),
+      signInWithPassword: () =>
+        Promise.resolve({ data: null, error: { message: 'Supabase not configured locally' } }),
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any
+}
+
+/**
+ * Cookie-less anon client for public content (homepage, browse pages).
+ *
+ * Does **not** attach browser session cookies. Admin JWT clock skew
+ * ("JWT issued at future") must never empty the public site.
+ */
+export function createPublicClient(): SupabaseClient {
+  const env = requireAnonEnv()
+  if (!env) return createDevStubClient() as SupabaseClient
+
+  return createSupabaseJsClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  })
+}
+
 /**
  * Creates a Supabase server client with cookie-based auth.
  * Safe to use in Server Components where cookies are read-only;
  * setAll errors are silently ignored.
+ *
+ * Prefer {@link createPublicClient} for unauthenticated public data so a bad
+ * admin session cookie cannot break SSR content queries.
  */
 export const createClient = async () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!url || !anonKey) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.',
-      )
-    }
-    console.warn('⚠️ Supabase not configured — degraded mode for local dev (public site will use fallbacks).')
-    // Fluent stub that supports common chaining: .from().select().eq().order().limit().single()/.maybeSingle()
-    // Also thenable so `await supabase.from().select()` works for queries without terminal method.
-    const makeQueryBuilder = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const builder: any = {
-        select: () => builder,
-        eq: () => builder,
-        order: () => builder,
-        limit: () => builder,
-        single: () => Promise.resolve({ data: null, error: null }),
-        maybeSingle: () => Promise.resolve({ data: null, error: null }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        then: (onF: any, onR: any) => Promise.resolve({ data: [], error: null }).then(onF, onR),
-      }
-      return builder
-    }
-    return {
-      from: () => makeQueryBuilder(),
-      auth: {
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured locally' } }),
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any
-  }
+  const env = requireAnonEnv()
+  if (!env) return createDevStubClient()
 
   const cookieStore = await cookies()
 
-  return createServerClient(url, anonKey, {
+  return createServerClient(env.url, env.anonKey, {
     cookies: makeCookieAdapter(cookieStore, true /* swallow for SC */, null),
   })
 }
@@ -128,45 +159,12 @@ export const createClient = async () => {
  * silently swallowed so that token refreshes are correctly persisted.
  */
 export const createActionClient = async () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  if (!url || !anonKey) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'Missing required Supabase environment variables: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set.',
-      )
-    }
-    console.warn('⚠️ Supabase not configured — degraded mode for local dev (public site will use fallbacks).')
-    // Fluent stub that supports common chaining: .from().select().eq().order().limit().single()/.maybeSingle()
-    // Also thenable so `await supabase.from().select()` works for queries without terminal method.
-    const makeQueryBuilder = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const builder: any = {
-        select: () => builder,
-        eq: () => builder,
-        order: () => builder,
-        limit: () => builder,
-        single: () => Promise.resolve({ data: null, error: null }),
-        maybeSingle: () => Promise.resolve({ data: null, error: null }),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        then: (onF: any, onR: any) => Promise.resolve({ data: [], error: null }).then(onF, onR),
-      }
-      return builder
-    }
-    return {
-      from: () => makeQueryBuilder(),
-      auth: {
-        getUser: () => Promise.resolve({ data: { user: null }, error: null }),
-        signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured locally' } }),
-      },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any
-  }
+  const env = requireAnonEnv()
+  if (!env) return createDevStubClient()
 
   const cookieStore = await cookies()
 
-  return createServerClient(url, anonKey, {
+  return createServerClient(env.url, env.anonKey, {
     cookies: makeCookieAdapter(cookieStore, false /* do not swallow — actions/layouts must persist refreshes */, null),
   })
 }

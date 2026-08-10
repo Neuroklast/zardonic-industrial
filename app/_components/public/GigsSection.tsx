@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { m } from 'framer-motion'
+import { m, useReducedMotion } from 'framer-motion'
 import { formatIsoDateCompact, formatIsoDateLong } from '@/lib/format-display-date'
 import { HOMEPAGE_GIG_LIMIT } from '@/lib/browse-pagination'
 import { mapGigRowToOverlayGig, type PublicGigRow } from '@/lib/gig-public-mapper'
@@ -38,6 +38,7 @@ function GigList({
   heading: string
   onGigClick: (gig: PublicGigRow) => void
 }) {
+  const prefersReducedMotion = useReducedMotion()
   const visibleGigs = gigs.slice(0, HOMEPAGE_GIG_LIMIT)
 
   if (gigs.length === 0) return null
@@ -55,12 +56,13 @@ function GigList({
         return (
           <m.article
             key={gig.id}
-            initial={{ opacity: 0, x: -50, clipPath: 'polygon(0 0, 0 0, 0 100%, 0 100%)' }}
-            whileInView={{ opacity: 1, x: 0, clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)' }}
-            viewport={{ once: true }}
+            // Use animate (not whileInView): Lenis + IO can leave opacity:0 forever on the homepage
+            // while /gigs browse always used animate and looked "fine". Prefer-reduced-motion: no hide.
+            initial={prefersReducedMotion ? false : { opacity: 0, x: -24 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{
-              duration: 0.8,
-              delay: index * 0.1,
+              duration: prefersReducedMotion ? 0 : 0.55,
+              delay: prefersReducedMotion ? 0 : index * 0.08,
               ease: [0.25, 0.46, 0.45, 0.94],
             }}
           >
@@ -146,9 +148,8 @@ export function GigsSection({ upcoming, past, artistName = '', heading, intro }:
             <GigList gigs={past} heading={t('gigs.past').toUpperCase()} onGigClick={handleGigClick} />
             {upcoming.length > HOMEPAGE_GIG_LIMIT || past.length > HOMEPAGE_GIG_LIMIT ? (
               <m.div
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
+                initial={false}
+                animate={{ opacity: 1 }}
                 className="flex justify-center pt-2"
               >
                 <Link

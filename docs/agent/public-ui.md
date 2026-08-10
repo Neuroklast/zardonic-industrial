@@ -22,6 +22,16 @@ Regression guard: `src/test/public-mobile.test.tsx`, `src/test/nav-links.test.ts
 
 ---
 
+## Homepage lists (gigs / cards)
+
+1. Critical list items must not rely solely on Framer `whileInView` with `initial={{ opacity: 0 }}` — Lenis + IntersectionObserver can leave them invisible forever.
+2. Prefer `animate={{ opacity: 1 }}` (as on `/gigs` browse) or `useReducedMotion` with `initial={false}`.
+3. Match reduced-motion handling used in `ReleasesSection` / `GallerySection`.
+
+Public content SSR: `createPublicClient()` (cookie-less), not session `createClient()`.
+
+---
+
 ## CyberpunkOverlay (single modal system)
 
 **All** of these use `CyberpunkOverlay`:
