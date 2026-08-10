@@ -23,6 +23,10 @@ Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOp
 - Client guard: `SERVER_ACTION_IMAGE_UPLOAD_MAX_BYTES` (~3.5 MB) in `lib/optimize-image-constants.ts`.
 - Do **not** export crop as raw full-res PNG for upload.
 
+### Replace → auto-delete previous R2 object
+
+`MediaSourcePicker` / `VideoSourcePicker` call `deletePreviousR2ObjectIfReplaced` **only after** a successful new upload or remote cache. The new path is committed first; delete failures do not roll back the new media (status warns). Manual **Delete upload** still available. **Clear selection** never deletes storage.
+
 ## AdminActionRegistry
 
 Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.

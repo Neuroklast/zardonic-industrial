@@ -6,6 +6,7 @@ import { ImageUploader } from '@/app/admin/_components/ImageUploader'
 import { ImageCropEditor } from '@/app/admin/_components/ImageCropEditor'
 import { fetchRemoteImageForEdit } from '@/app/admin/_actions/fetchRemoteImageForEdit'
 import { cacheRemoteImageToR2 } from '@/app/admin/_actions/cacheRemoteImage'
+import { deletePreviousR2ObjectIfReplaced } from '@/app/admin/_lib/deletePreviousR2Object'
 import { submitOptimizedUpload } from '@/app/admin/_lib/submitOptimizedUpload'
 import { formatImageUploadError } from '@/lib/image-crop-export'
 import { shouldOpenImageEditor, type CropFitMode } from '@/lib/image-crop-math'
@@ -53,6 +54,27 @@ export function MediaSourcePicker({
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorSrc, setEditorSrc] = useState<string | null>(null)
 
+  async function commitNewMedia(
+    storagePath: string,
+    publicUrl: string | undefined,
+    successMessage: string,
+  ) {
+    const previousPath = activePath
+    if (publicUrl) setPreview(publicUrl)
+    setActivePath(storagePath)
+    onResolved(storagePath, publicUrl)
+    setLinkInput('')
+
+    const cleanup = await deletePreviousR2ObjectIfReplaced(previousPath, storagePath)
+    if (cleanup.error) {
+      setStatus(`${successMessage} — previous file not deleted: ${cleanup.error}`)
+      return
+    }
+    setStatus(
+      cleanup.deleted ? `${successMessage} (previous file removed from storage)` : successMessage,
+    )
+  }
+
   async function finalizeUpload(blob: Blob) {
     setCaching(true)
     setStatus(null)
@@ -61,11 +83,7 @@ export function MediaSourcePicker({
         maxWidth: maxOutputDimension,
         maxHeight: maxOutputDimension,
       })
-      if (publicUrl) setPreview(publicUrl)
-      setActivePath(storagePath)
-      onResolved(storagePath, publicUrl || undefined)
-      setStatus('Uploaded to R2 (optimized)')
-      setLinkInput('')
+      await commitNewMedia(storagePath, publicUrl || undefined, 'Uploaded to R2 (optimized)')
     } catch (err) {
       const msg = formatImageUploadError(err)
       setStatus(msg)
@@ -152,11 +170,11 @@ export function MediaSourcePicker({
         onError?.(msg)
         return
       }
-      if (result.publicUrl) setPreview(result.publicUrl)
-      setActivePath(result.storagePath)
-      onResolved(result.storagePath, result.publicUrl)
-      setStatus(`${sourceLabel} cached to R2`)
-      setLinkInput('')
+      await commitNewMedia(
+        result.storagePath,
+        result.publicUrl,
+        `${sourceLabel} cached to R2`,
+      )
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to cache image'
       setStatus(msg)
@@ -248,10 +266,7 @@ export function MediaSourcePicker({
           editorFitMode={editorFitMode}
           maxOutputDimension={maxOutputDimension}
           onUpload={(path, publicUrl) => {
-            if (publicUrl) setPreview(publicUrl)
-            setActivePath(path)
-            onResolved(path, publicUrl)
-            setStatus('Uploaded to R2 (optimized)')
+            void commitNewMedia(path, publicUrl, 'Uploaded to R2 (optimized)')
           }}
           onError={(msg) => {
             setStatus(msg)
