@@ -135,7 +135,7 @@ describe('public BackgroundStack', () => {
       />,
     )
 
-    const source = container.querySelector('video source') as HTMLSourceElement
-    expect(source.src).toContain('mobile.mp4')
+    const video = container.querySelector('video') as HTMLVideoElement
+    expect(video.src).toContain('mobile.mp4')
   })
 })

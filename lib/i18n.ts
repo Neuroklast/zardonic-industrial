@@ -143,19 +143,45 @@ const translations: Record<string, Record<string, string>> = {
   'news.editTitle':            { en: 'EDIT NEWS', de: 'NEUIGKEITEN BEARBEITEN', ru: 'РЕДАКТИРОВАТЬ НОВОСТЬ', it: 'MODIFICA NOTIZIE', es: 'EDITAR NOTICIAS', pt: 'EDITAR NOTÍCIAS', ja: 'ニュースを編集', ko: '뉴스 편집' },
   'news.addTitle':             { en: 'ADD NEWS', de: 'NEUIGKEIT HINZUFÜGEN', ru: 'ДОБАВИТЬ НОВОСТЬ', it: 'AGGIUNGI NOTIZIA', es: 'AGREGAR NOTICIA', pt: 'ADICIONAR NOTÍCIA', ja: 'ニュースを追加', ko: '뉴스 추가' },
 
+  // ── Public section titles (homepage chrome) ─────────────────────────
+  'section.bio':               { en: 'Biography', de: 'Biografie', ru: 'Биография', it: 'Biografia', es: 'Biografía', pt: 'Biografia', ja: '経歴', ko: '바이오그래피' },
+  'section.credits':           { en: 'Credit Highlights', de: 'Credits', ru: 'Кредиты', it: 'Crediti', es: 'Créditos', pt: 'Créditos', ja: 'クレジット', ko: '크레딧' },
+  'section.gallery':           { en: 'Gallery', de: 'Galerie', ru: 'Галерея', it: 'Galleria', es: 'Galería', pt: 'Galeria', ja: 'ギャラリー', ko: '갤러리' },
+  'section.musicHighlights':   { en: 'Music Highlights', de: 'Musik-Highlights', ru: 'Музыкальные хиты', it: 'Highlight musicali', es: 'Destacados musicales', pt: 'Destaques musicais', ja: 'ミュージックハイライト', ko: '뮤직 하이라이트' },
+  'section.releases':          { en: 'Releases', de: 'Veröffentlichungen', ru: 'Релизы', it: 'Uscite', es: 'Lanzamientos', pt: 'Lançamentos', ja: 'リリース', ko: '릴리즈' },
+  'section.merchandise':       { en: 'Merchandise', de: 'Merchandise', ru: 'Мерч', it: 'Merchandise', es: 'Merchandise', pt: 'Merchandise', ja: 'グッズ', ko: '머천다이즈' },
+  'section.soundpacks':        { en: 'Soundpacks & Presets', de: 'Soundpacks & Presets', ru: 'Саундпаки и пресеты', it: 'Soundpack e preset', es: 'Soundpacks y presets', pt: 'Soundpacks e presets', ja: 'サウンドパック', ko: '사운드팩' },
+  'section.gigs':              { en: 'Tour Dates', de: 'Tourdaten', ru: 'Даты тура', it: 'Date del tour', es: 'Fechas de gira', pt: 'Datas de digressão', ja: 'ツアー日程', ko: '투어 일정' },
+  'section.news':              { en: 'News', de: 'News', ru: 'Новости', it: 'Notizie', es: 'Noticias', pt: 'Notícias', ja: 'ニュース', ko: '뉴스' },
+  'section.newsletter':        { en: 'Stay Connected', de: 'Bleib verbunden', ru: 'Оставайтесь на связи', it: 'Resta connesso', es: 'Mantente conectado', pt: 'Fique ligado', ja: 'つながる', ko: '연결 유지' },
+  'section.contact':           { en: 'Contact', de: 'Kontakt', ru: 'Контакт', it: 'Contatto', es: 'Contacto', pt: 'Contacto', ja: 'コンタクト', ko: '연락처' },
+
   // ── BiographySection ────────────────────────────────────────────────
   'bio.defaultTitle':          { en: 'BIOGRAPHY', de: 'BIOGRAFIE', ru: 'БИОГРАФИЯ', it: 'BIOGRAFIA', es: 'BIOGRAFÍA', pt: 'BIOGRAFIA', ja: '経歴', ko: '바이오그래피' },
   'bio.editButton':            { en: 'Edit Bio', de: 'Bio bearbeiten', ru: 'Редактировать биографию', it: 'Modifica Bio', es: 'Editar Bio', pt: 'Editar Bio', ja: '経歴を編集', ko: '바이오 편집' },
+  'bio.readMore':              { en: 'Read More', de: 'Mehr lesen', ru: 'Читать дальше', it: 'Leggi di più', es: 'Leer más', pt: 'Ler mais', ja: '続きを読む', ko: '더 읽기' },
+  'bio.showLess':              { en: 'Show Less', de: 'Weniger anzeigen', ru: 'Показать меньше', it: 'Mostra meno', es: 'Mostrar menos', pt: 'Mostrar menos', ja: '表示を減らす', ko: '덜 보기' },
+  'bio.empty':                 { en: 'Biography coming soon.', de: 'Biografie folgt in Kürze.', ru: 'Биография скоро появится.', it: 'Biografia in arrivo.', es: 'Biografía próximamente.', pt: 'Biografia em breve.', ja: '経歴は近日公開。', ko: '바이오그래피 준비 중.' },
 
   // ── GigsSection ─────────────────────────────────────────────────────
   'gigs.defaultTitle':         { en: 'UPCOMING GIGS', de: 'ANSTEHENDE AUFTRITTE', ru: 'ПРЕДСТОЯЩИЕ КОНЦЕРТЫ', it: 'PROSSIMI CONCERTI', es: 'PRÓXIMAS ACTUACIONES', pt: 'PRÓXIMOS CONCERTOS', ja: 'ライブ情報', ko: '다가오는 공연' },
   'gigs.noGigs':               { en: 'No upcoming gigs scheduled.', de: 'Keine anstehenden Auftritte geplant.', ru: 'Концертов не запланировано.', it: 'Nessun concerto in programma.', es: 'No hay actuaciones programadas.', pt: 'Sem concertos agendados.', ja: '予定されているライブはありません。', ko: '예정된 공연이 없습니다.' },
+  'gigs.upcoming':             { en: 'Upcoming', de: 'Bevorstehend', ru: 'Предстоящие', it: 'In arrivo', es: 'Próximos', pt: 'Próximos', ja: '今後', ko: '예정' },
+  'gigs.past':                 { en: 'Past', de: 'Vergangen', ru: 'Прошедшие', it: 'Passati', es: 'Pasados', pt: 'Passados', ja: '過去', ko: '지난' },
+  'gigs.viewAll':              { en: 'View All Events ({0})', de: 'Alle Events anzeigen ({0})', ru: 'Все события ({0})', it: 'Vedi tutti gli eventi ({0})', es: 'Ver todos los eventos ({0})', pt: 'Ver todos os eventos ({0})', ja: 'すべてのイベント ({0})', ko: '모든 이벤트 ({0})' },
+  'gigs.empty':                { en: 'Tour dates coming soon', de: 'Tourdaten folgen in Kürze', ru: 'Даты тура скоро', it: 'Date del tour in arrivo', es: 'Fechas de gira pronto', pt: 'Datas de digressão em breve', ja: 'ツアー日程は近日公開', ko: '투어 일정 준비 중' },
   'gigs.tickets':              { en: 'TICKETS', de: 'TICKETS', ru: 'БИЛЕТЫ', it: 'BIGLIETTI', es: 'ENTRADAS', pt: 'BILHETES', ja: 'チケット', ko: '티켓' },
   'gigs.addGig':               { en: 'Add Gig', de: 'Auftritt hinzufügen', ru: 'Добавить концерт', it: 'Aggiungi concerto', es: 'Agregar actuación', pt: 'Adicionar concerto', ja: 'ライブを追加', ko: '공연 추가' },
   'gigs.sync':                 { en: 'Sync Gigs', de: 'Auftritte synchronisieren', ru: 'Синхронизировать концерты', it: 'Sincronizza concerti', es: 'Sincronizar actuaciones', pt: 'Sincronizar concertos', ja: 'ライブを同期', ko: '공연 동기화' },
   'gigs.support':              { en: 'Support:', de: 'Support:', ru: 'Поддержка:', it: 'Supporto:', es: 'Soporte:', pt: 'Suporte:', ja: 'サポート:', ko: '서포트:' },
   'gigs.showLess':             { en: 'Show Less', de: 'Weniger anzeigen', ru: 'Показать меньше', it: 'Mostra meno', es: 'Mostrar menos', pt: 'Mostrar menos', ja: '表示を減らす', ko: '덜 보기' },
   'gigs.seeMore':              { en: 'See More', de: 'Mehr sehen', ru: 'Посмотреть больше', it: 'Vedi altro', es: 'Ver más', pt: 'Ver mais', ja: 'もっと見る', ko: '더 보기' },
+
+  // ── Credits (public chrome) ─────────────────────────────────────────
+  'credits.groupCredits':      { en: 'Credits', de: 'Credits', ru: 'Кредиты', it: 'Crediti', es: 'Créditos', pt: 'Créditos', ja: 'クレジット', ko: '크레딧' },
+  'credits.groupEndorsements': { en: 'Endorsements', de: 'Endorsements', ru: 'Эндорменты', it: 'Endorsement', es: 'Endorsements', pt: 'Endorsements', ja: 'エンドースメント', ko: '엔도스먼트' },
+  'credits.groupPartners':     { en: 'Partners', de: 'Partner', ru: 'Партнёры', it: 'Partner', es: 'Partners', pt: 'Parceiros', ja: 'パートナー', ko: '파트너' },
+  'credits.empty':             { en: 'Credits coming soon', de: 'Credits folgen in Kürze', ru: 'Кредиты скоро', it: 'Crediti in arrivo', es: 'Créditos pronto', pt: 'Créditos em breve', ja: 'クレジット近日公開', ko: '크레딧 준비 중' },
 
   // ── ReleasesSection ─────────────────────────────────────────────────
   'releases.defaultTitle':     { en: 'RELEASES', de: 'VERÖFFENTLICHUNGEN', ru: 'РЕЛИЗЫ', it: 'USCITE', es: 'LANZAMIENTOS', pt: 'LANÇAMENTOS', ja: 'リリース', ko: '릴리즈' },

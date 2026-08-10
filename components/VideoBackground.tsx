@@ -131,7 +131,18 @@ const VideoBackground = memo(function VideoBackground({
       if (cancelled || !videoRef.current) return
       detach = attachScrollVideoSync({
         video: videoRef.current,
-        lenis,
+        lenis: lenis
+          ? {
+              on: (e, cb) => {
+                lenis.on(e, cb as (instance: { scroll: number; progress: number }) => void)
+              },
+              off: (e, cb) => {
+                lenis.off(e, cb as (instance: { scroll: number; progress: number }) => void)
+              },
+              getScroll: () => lenis.scroll,
+              getProgress: () => lenis.progress,
+            }
+          : null,
         // ~30 seeks/s max — video decode is the usual smooth-scroll killer
         minDeltaSec: 1 / 30,
       })

@@ -3,7 +3,8 @@
 import { useState, useCallback, useMemo } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { MagnifyingGlassPlus, CaretDown, CaretUp } from '@phosphor-icons/react'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState } from '@/lib/app-types'
@@ -37,7 +38,8 @@ export function GallerySection({
   gap,
   lightbox = true,
 }: GallerySectionProps) {
-  const title = formatSectionHeading(heading, 'gallery')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'gallery', t)
   const [showAll, setShowAll] = useState(false)
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const prefersReducedMotion = useReducedMotion()

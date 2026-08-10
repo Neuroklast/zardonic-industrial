@@ -1,7 +1,8 @@
 'use client'
 
 import { useActionState } from 'react'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 import { submitContact } from '@/app/_actions/contact'
 
@@ -19,8 +20,9 @@ export function ContactSection({
   intro,
   privacyPolicyUrl = '/privacy-policy',
 }: ContactSectionProps) {
+  const { t } = useLocale()
   const [state, formAction, pending] = useActionState(submitContact, null)
-  const title = formatSectionHeading(heading, 'contact')
+  const title = resolveSectionHeading(heading, 'contact', t)
 
   return (
     <SectionWrapper id="contact" data-theme-color="foreground card border input">
@@ -29,7 +31,7 @@ export function ContactSection({
 
       {state?.success ? (
         <p className="border border-border px-4 py-3 font-mono text-sm text-foreground">
-          Message sent. Thank you.
+          {t('contact.success')}
         </p>
       ) : (
         <form action={formAction} className="flex w-full flex-col gap-4">
@@ -45,13 +47,13 @@ export function ContactSection({
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="contact-name" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                Name
+                {t('contact.nameLabel')}
               </label>
-              <input id="contact-name" name="name" required maxLength={100} className={fieldClass} autoComplete="name" />
+              <input id="contact-name" name="name" required maxLength={100} className={fieldClass} autoComplete="name" placeholder={t('contact.namePlaceholder')} />
             </div>
             <div>
               <label htmlFor="contact-email" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                Email
+                {t('contact.emailLabel')}
               </label>
               <input
                 id="contact-email"
@@ -61,18 +63,19 @@ export function ContactSection({
                 maxLength={254}
                 className={fieldClass}
                 autoComplete="email"
+                placeholder={t('contact.emailPlaceholder')}
               />
             </div>
           </div>
           <div>
             <label htmlFor="contact-subject" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Subject
+              {t('contact.subjectLabel')}
             </label>
-            <input id="contact-subject" name="subject" required maxLength={200} className={fieldClass} />
+            <input id="contact-subject" name="subject" required maxLength={200} className={fieldClass} placeholder={t('contact.subjectPlaceholder')} />
           </div>
           <div>
             <label htmlFor="contact-message" className="mb-1 block font-mono text-xs uppercase tracking-wider text-muted-foreground">
-              Message
+              {t('contact.messageLabel')}
             </label>
             <textarea
               id="contact-message"
@@ -82,16 +85,16 @@ export function ContactSection({
               maxLength={5000}
               rows={5}
               className={`${fieldClass} min-h-[8rem] resize-none`}
+              placeholder={t('contact.messagePlaceholder')}
             />
           </div>
           <p className="font-mono text-xs text-muted-foreground">
-            By sending this message you agree that we process your details to respond to your inquiry.
-            See our{' '}
+            {t('contact.description')}{' '}
             <a
               href={privacyPolicyUrl}
               className="text-foreground underline underline-offset-2 transition-colors hover:text-primary"
             >
-              Privacy Policy
+              {t('footer.privacy')}
             </a>
             .
           </p>
@@ -104,7 +107,7 @@ export function ContactSection({
               disabled={pending}
               className="min-h-[44px] border border-border px-6 py-2 font-mono text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground disabled:opacity-50"
             >
-              {pending ? 'Sending…' : 'Send Message'}
+              {pending ? t('contact.sending') : t('contact.send')}
             </button>
           </div>
         </form>

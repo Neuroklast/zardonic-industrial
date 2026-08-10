@@ -986,47 +986,38 @@
  * - HUD is position:absolute under the stage — must NOT shift the logo (flex-centered hero)
  * - Class applied client-side after paint so hydrate does not double-play
  *
- * Sizing: .hero-logo-glitch is a full-width box with height = --hero-logo-max.
- * The img scales up/down with object-fit:contain inside that box (max-height alone
- * does not upscale small uploads — the box does).
+ * Sizing: admin controls WIDTH only (--hero-logo-width as % of content column).
+ * Height follows intrinsic aspect ratio (no max-height). Centered in the stage.
  */
 .hero-logo-stage {
   position: relative;
-  display: block;
-  /* Full content width (parent supplies px-card / page margins). No artificial width cap. */
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
   max-width: 100%;
   margin-inline: auto;
 }
 
-/* Sizing box: width = content column; height = admin size (drives how wide wide logos get). */
+/* Width box: % of content column (px-card margins on parent). Height = auto via img. */
 .hero-logo-glitch {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: var(--hero-logo-max, 14rem);
-  max-height: var(--hero-logo-max, 14rem);
+  display: block;
+  width: var(--hero-logo-width, 55%);
+  max-width: 100%;
+  height: auto;
   margin-inline: auto;
+  flex-shrink: 0;
 }
 
 .hero-logo-glitch img,
 .hero-logo-stage img {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
+  width: 100%;
   height: auto;
+  max-width: 100%;
+  /* No max-height — aspect ratio preserved from source */
   object-fit: contain;
-}
-
-/* Mobile LCP: shrink the sizing box, not only the img max-height */
-@media (max-width: 768px) {
-  .hero-logo-glitch {
-    height: min(var(--hero-logo-max, 14rem), 42vh);
-    max-height: min(var(--hero-logo-max, 14rem), 42vh);
-  }
 }
 
 /* Pre-boot hold: invisible until play class attaches (no full-logo flash). */

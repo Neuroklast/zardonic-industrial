@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { m } from 'framer-motion'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import {
   loadLogoImageForCanvas,
   processLogoToWhiteSilhouette,
@@ -235,7 +236,8 @@ export function CreditsSection({
   intro,
   logoBrightness,
 }: CreditsAndEndorsementsProps) {
-  const title = formatSectionHeading(heading, 'credits')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'credits', t)
   const hasAny = credits.length > 0 || endorsements.length > 0 || partners.length > 0
 
   return (
@@ -247,12 +249,12 @@ export function CreditsSection({
 
       {hasAny ? (
         <div className="space-y-12">
-          <LogoGrid items={credits} heading="CREDITS" logoBrightness={logoBrightness} />
-          <LogoGrid items={endorsements} heading="ENDORSEMENTS" logoBrightness={logoBrightness} />
-          <LogoGrid items={partners} heading="PARTNERS" logoBrightness={logoBrightness} />
+          <LogoGrid items={credits} heading={t('credits.groupCredits').toUpperCase()} logoBrightness={logoBrightness} />
+          <LogoGrid items={endorsements} heading={t('credits.groupEndorsements').toUpperCase()} logoBrightness={logoBrightness} />
+          <LogoGrid items={partners} heading={t('credits.groupPartners').toUpperCase()} logoBrightness={logoBrightness} />
         </div>
       ) : (
-        <SectionEmpty label="Credits coming soon" />
+        <SectionEmpty label={t('credits.empty')} />
       )}
     </SectionWrapper>
   )

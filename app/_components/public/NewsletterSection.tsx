@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { formatSectionHeading } from '@/lib/section-display'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 import { subscribeNewsletter } from '@/app/_actions/newsletter'
 import { useLocale } from '@/contexts/LocaleContext'
@@ -16,7 +16,7 @@ interface NewsletterSectionProps {
 export function NewsletterSection({ heading, intro, body, privacyPolicyUrl = '/privacy-policy' }: NewsletterSectionProps) {
   const { t } = useLocale()
   const [state, formAction, pending] = useActionState(subscribeNewsletter, null)
-  const title = formatSectionHeading(heading, 'newsletter')
+  const title = resolveSectionHeading(heading, 'newsletter', t)
 
   return (
     <SectionWrapper id="newsletter" data-theme-color="foreground card border input">

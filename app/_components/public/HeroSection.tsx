@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { useLenisContext } from '@/contexts/LenisContext'
+import { useLocale } from '@/contexts/LocaleContext'
 
 import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
 
@@ -26,8 +27,11 @@ interface HeroSectionProps {
   minHeight?: string
   imageBlur?: number
   paddingTop?: string
-  /** CSS length for hero wordmark max height (e.g. 12rem, 200px). */
-  logoMaxHeight?: string
+  /**
+   * Wordmark width as % of the content column (page margins via px-card).
+   * Height follows aspect ratio — no max-height cap.
+   */
+  logoWidthPercent?: number
   showTourDatesCta?: boolean
   /**
    * Short filmic terminal boot for the wordmark (scan, mini bar, micro code).
@@ -48,13 +52,16 @@ export function HeroSection({
   minHeight,
   imageBlur,
   paddingTop,
-  logoMaxHeight,
+  logoWidthPercent,
   showTourDatesCta = true,
   bootSequenceEnabled = true,
 }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion()
   const { scrollTo } = useLenisContext()
+  const { t } = useLocale()
   const stageRef = useRef<HTMLDivElement>(null)
+  const ctaText = ctaLabel?.trim() || t('hero.listenNow')
+  const tourCtaText = t('hero.tourDates')
 
   /**
    * Boot is client + visibility-gated (idle → play → done).
@@ -122,8 +129,11 @@ export function HeroSection({
   const playing = bootPhase === 'play'
   /** Hide logo until client boot starts — prevents full logo flash then re-reveal (= “twice”). */
   const pendingBoot = bootPhase === 'idle' && !skipBoot
-  /** Prefer admin size; default large enough for impact, not capped at 16rem. */
-  const logoMax = logoMaxHeight || 'clamp(8rem, 28vw, 22rem)'
+  /** Width % of content column; height free (aspect ratio from image). */
+  const widthPct = (() => {
+    const n = typeof logoWidthPercent === 'number' && Number.isFinite(logoWidthPercent) ? logoWidthPercent : 55
+    return Math.min(100, Math.max(15, n))
+  })()
   // Content waits for boot only while it is actually playing (not idle flash).
   const contentDelay = playing ? 0.95 : pendingBoot ? 0.2 : 0
 
@@ -138,13 +148,9 @@ export function HeroSection({
     filter: imageBlur ? `blur(${imageBlur}px)` : undefined,
   }
 
-  /**
-   * Sizing is driven by a full-width box of height = admin size (--hero-logo-max).
-   * max-height alone does not upscale small uploads; the box + object-fit does.
-   * Wide wordmarks grow until they hit the content column (px-card margins).
-   */
+  /** Width-only size: --hero-logo-width drives the box; img is width 100% / height auto. */
   const stageStyle: React.CSSProperties = {
-    ['--hero-logo-max' as string]: logoMax,
+    ['--hero-logo-width' as string]: `${widthPct}%`,
   }
 
   return (
@@ -175,9 +181,8 @@ export function HeroSection({
         style={{ zIndex: 'var(--z-content)' }}
       >
         {/*
-          Wordmark stage: full content width (px-card margins only).
-          Sizing box height = admin size → wide logos scale toward full column width.
-          Boot HUD is absolute under the box (no layout shift / logo jump).
+          Wordmark: width = admin % of content column, centered, aspect ratio preserved.
+          Boot HUD absolute under the box (no layout shift).
         */}
         <div
           ref={stageRef}
@@ -269,7 +274,7 @@ export function HeroSection({
             }}
             className={HERO_CTA_CLASS}
           >
-            <span data-draft-target="hero-cta">{ctaLabel || 'LISTEN NOW'}</span>
+            <span data-draft-target="hero-cta">{ctaText}</span>
           </a>
           {showTourDatesCta ? (
             <a
@@ -280,7 +285,7 @@ export function HeroSection({
               }}
               className={HERO_CTA_CLASS}
             >
-              <span>TOUR DATES</span>
+              <span>{tourCtaText}</span>
             </a>
           ) : null}
         </m.div>

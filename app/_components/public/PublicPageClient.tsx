@@ -14,7 +14,8 @@ import {
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface PublicReleaseCardItem {
@@ -84,7 +85,8 @@ export function PublicPageClient({
   releaseCardVariant,
   releaseHoverEffect,
 }: PublicPageClientProps) {
-  const title = formatSectionHeading(heading, 'releases')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'releases', t)
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
 

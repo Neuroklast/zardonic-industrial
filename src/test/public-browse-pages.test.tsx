@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -13,11 +14,16 @@ vi.mock('@/components/releases/ReleasesSwipeLayout', () => ({
   ReleasesSwipeLayout: () => <div data-testid="releases-swipe-layout" />,
 }))
 
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { GigsBrowseClient } from '@/app/_components/public/GigsBrowseClient'
 import { ReleasesBrowseClient } from '@/app/_components/public/ReleasesBrowseClient'
 import { GigsSection } from '@/app/_components/public/GigsSection'
 import type { PublicGigRow } from '@/lib/gig-public-mapper'
 import type { PublicReleaseCardItem } from '@/lib/public-fetch'
+
+function renderWithLocale(ui: ReactElement) {
+  return render(<LocaleProvider>{ui}</LocaleProvider>)
+}
 
 const root = resolve(import.meta.dirname, '../..')
 
@@ -135,7 +141,7 @@ describe('public browse pages', () => {
       festival_name: null,
     }))
 
-    render(<GigsSection upcoming={upcoming} past={[]} />)
+    renderWithLocale(<GigsSection upcoming={upcoming} past={[]} />)
     expect(screen.getByRole('link', { name: /view all events/i })).toHaveAttribute('href', '/gigs')
   })
 })

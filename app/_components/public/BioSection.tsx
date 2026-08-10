@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface BioSectionProps {
@@ -14,10 +15,11 @@ interface BioSectionProps {
 }
 
 export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxHeight }: BioSectionProps) {
-  const title = formatSectionHeading(heading, 'bio')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'bio', t)
   const [expanded, setExpanded] = useState(false)
   const hasContent = content.trim().length > 0
-  const displayContent = hasContent ? content : 'Biography coming soon.'
+  const displayContent = hasContent ? content : t('bio.empty')
 
   const bioTextClass = bodyFontSize || 'text-lg'
   const maxH = readMoreMaxHeight || '280px'
@@ -57,12 +59,12 @@ export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxH
             {expanded ? (
               <>
                 <CaretUp className="h-4 w-4" />
-                Show Less
+                {t('bio.showLess')}
               </>
             ) : (
               <>
                 <CaretDown className="h-4 w-4" />
-                Read More
+                {t('bio.readMore')}
               </>
             )}
           </button>

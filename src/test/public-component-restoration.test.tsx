@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/components/CyberpunkOverlay', () => ({
@@ -7,12 +8,17 @@ vi.mock('@/components/CyberpunkOverlay', () => ({
   ),
 }))
 
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GigsSection } from '@/app/_components/public/GigsSection'
 import { GlobalEffects } from '@/app/_components/public/GlobalEffects'
 import { HeroSection } from '@/app/_components/public/HeroSection'
 import { ReleasesSection } from '@/app/_components/public/ReleasesSection'
+
+function renderWithLocale(ui: ReactElement) {
+  return render(<LocaleProvider>{ui}</LocaleProvider>)
+}
 
 type IoCallback = IntersectionObserverCallback
 
@@ -61,7 +67,7 @@ beforeAll(() => {
 describe('restored public homepage components', () => {
   it('restores the hero glitch logo, overlays, and dual CTAs', () => {
     ioInstances.length = 0
-    const { container } = render(
+    const { container } = renderWithLocale(
       <>
         <GlobalEffects />
         <HeroSection
@@ -89,7 +95,7 @@ describe('restored public homepage components', () => {
 
   it('starts hero wordmark boot only when the stage is in view', async () => {
     ioInstances.length = 0
-    const { container } = render(
+    const { container } = renderWithLocale(
       <HeroSection headline="ZARDONIC" tagline="Industrial Metal / Drum & Bass" />,
     )
 
@@ -129,7 +135,7 @@ describe('restored public homepage components', () => {
   })
 
   it('skips hero boot sequence when disabled', () => {
-    const { container } = render(
+    const { container } = renderWithLocale(
       <HeroSection
         headline="ZARDONIC"
         tagline="Industrial Metal / Drum & Bass"
@@ -143,23 +149,23 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.hero-boot-hud')).not.toBeInTheDocument()
   })
 
-  it('applies hero sizing box via --hero-logo-max (upscale path)', () => {
-    const { container } = render(
+  it('applies hero width via --hero-logo-width (aspect ratio free height)', () => {
+    const { container } = renderWithLocale(
       <HeroSection
         headline="ZARDONIC"
-        logoMaxHeight="28rem"
+        logoWidthPercent={80}
         bootSequenceEnabled={false}
       />,
     )
 
     const stage = container.querySelector('.hero-logo-stage') as HTMLElement | null
     expect(stage).toBeTruthy()
-    expect(stage?.style.getPropertyValue('--hero-logo-max')).toBe('28rem')
+    expect(stage?.style.getPropertyValue('--hero-logo-width')).toBe('80%')
     expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
   })
 
   it('restores the bio expand/collapse mask behaviour', () => {
-    render(<BioSection content={'Line one\nLine two\nLine three'} />)
+    renderWithLocale(<BioSection content={'Line one\nLine two\nLine three'} />)
 
     expect(screen.getByText(/biography/i)).toBeInTheDocument()
     const button = screen.getByRole('button', { name: /read more/i })
@@ -177,7 +183,7 @@ describe('restored public homepage components', () => {
       streamingLinks: [{ platform: 'spotify', url: `https://example.com/${index}` }],
     }))
 
-    const { container } = render(<ReleasesSection releases={releases} />)
+    const { container } = renderWithLocale(<ReleasesSection releases={releases} />)
 
     expect(container.querySelectorAll('.cyber-card')).toHaveLength(8)
     expect(screen.getByRole('link', { name: /view all/i })).toHaveAttribute('href', '/releases')
@@ -196,14 +202,14 @@ describe('restored public homepage components', () => {
       streamingLinks: [{ platform: 'spotify', url: 'https://example.com/click' }],
     }
 
-    render(<ReleasesSection releases={[release]} onReleaseClick={onReleaseClick} />)
+    renderWithLocale(<ReleasesSection releases={[release]} onReleaseClick={onReleaseClick} />)
 
     fireEvent.click(screen.getByRole('button', { name: /open release details for clickable release/i }))
     expect(onReleaseClick).toHaveBeenCalledWith(release)
   })
 
   it('restores gigs cards and credits logo grids', () => {
-    const { container } = render(
+    const { container } = renderWithLocale(
       <>
         <GigsSection
           upcoming={[

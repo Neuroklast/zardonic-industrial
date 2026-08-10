@@ -136,7 +136,8 @@ export function BackgroundStack({
     [videoUrl, mobileVideoUrl, mode, isMobile, effectiveVideoEnabled],
   )
 
-  // Smooth scroll-scrub: Lenis progress + rAF + seek coalescing
+  // Smooth scroll-scrub: Lenis progress + rAF + seek coalescing.
+  // Always pass live getScroll/getProgress — never freeze lenis.scroll at attach time.
   useEffect(() => {
     const video = videoRef.current
     if (!video || !activeVideoUrl) return
@@ -146,12 +147,13 @@ export function BackgroundStack({
       lenis: lenis
         ? {
             on: (e, cb) => {
-              lenis.on(e, cb as (s: { scroll: number }) => void)
+              lenis.on(e, cb as (instance: { scroll: number; progress: number }) => void)
             },
             off: (e, cb) => {
-              lenis.off(e, cb as (s: { scroll: number }) => void)
+              lenis.off(e, cb as (instance: { scroll: number; progress: number }) => void)
             },
-            scroll: typeof lenis.scroll === 'number' ? lenis.scroll : undefined,
+            getScroll: () => lenis.scroll,
+            getProgress: () => lenis.progress,
           }
         : null,
       minDeltaSec: 1 / 48,
@@ -188,14 +190,13 @@ export function BackgroundStack({
             ref={videoRef}
             className="h-full w-full object-cover"
             data-draft-target="bg-video"
+            src={activeVideoUrl}
             muted
             playsInline
             preload="auto"
             poster={imageUrl}
             aria-hidden="true"
-          >
-            <source src={activeVideoUrl} />
-          </video>
+          />
           <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
         </div>
       ) : null}

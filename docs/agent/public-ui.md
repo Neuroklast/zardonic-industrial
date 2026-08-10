@@ -83,17 +83,16 @@ File: `app/_components/public/SiteFooter.tsx`.
 
 | Do | Don't |
 |----|--------|
-| Stage width = **100% of content column** (`px-card` margins only) | Hard `max-width: 56rem` (or similar) on `.hero-logo-stage` |
-| Size via **box** height `logoMaxHeight` / `--hero-logo-max` + `object-fit: contain` (upscales small files) | Only `max-height` on the `<img>` (does not grow past intrinsic size) |
+| Size by **width %** of content column (`logoWidthPercent` → `--hero-logo-width`) | Max-height slider / `max-height` caps that fight wide wordmarks |
+| `width: 100%` of that box, `height: auto` — preserve aspect ratio | Stretch / force height boxes |
+| Center in stage (`flex` + margin auto on glitch box) | Absolute logo over the nav |
 | Boot HUD **`position: absolute`** under the logo box | In-flow HUD that shifts/pushes the logo when the bar appears |
-| Boot sequence: short filmic one-shot (~1.1s) when **stage is in view** (`IntersectionObserver`) | Page-level `LoadingScreen` / `ActiveLoader` for the wordmark |
-| Hold logo pending until visible, then play once → done | SSR CSS animation that restarts on hydrate |
-| Mobile LCP: shrink **sizing box** to `min(admin, 42vh)` under 768px | Let 48rem admin height dominate mobile viewport |
-| Toggle: Look & Feel → Hero → `bootSequenceEnabled` | Re-introduce RGB ghost layers over the mark |
+| Boot sequence: short filmic one-shot (~1.1s) when **stage is in view** | Page-level loader for the wordmark |
+| Toggle: Look & Feel → Hero → `bootSequenceEnabled` | RGB ghost layers over the mark |
 
 Files: `app/_components/public/HeroSection.tsx`, `styles/components.css` (`.hero-logo-stage`, `.hero-logo-glitch`, `.hero-logo-boot*`), admin `HeroConfigEditor.tsx`.
 
-Regression: `src/test/public-component-restoration.test.tsx` (pending until in view; skip when disabled).
+Regression: `src/test/public-component-restoration.test.tsx` (width CSS var; pending until in view; skip when disabled).
 
 ---
 

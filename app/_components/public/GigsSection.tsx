@@ -8,7 +8,8 @@ import { HOMEPAGE_GIG_LIMIT } from '@/lib/browse-pagination'
 import { mapGigRowToOverlayGig, type PublicGigRow } from '@/lib/gig-public-mapper'
 import type { CyberpunkOverlayState } from '@/lib/app-types'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { ArrowRight, CalendarBlank, MapPin } from '@phosphor-icons/react'
 
@@ -124,9 +125,10 @@ function GigList({
 }
 
 export function GigsSection({ upcoming, past, artistName = '', heading, intro }: GigsSectionProps) {
+  const { t } = useLocale()
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
   const hasGigs = upcoming.length > 0 || past.length > 0
-  const title = formatSectionHeading(heading, 'gigs')
+  const title = resolveSectionHeading(heading, 'gigs', t)
 
   const handleGigClick = (gig: PublicGigRow) => {
     setOverlay({ type: 'gig', data: mapGigRowToOverlayGig(gig) })
@@ -140,8 +142,8 @@ export function GigsSection({ upcoming, past, artistName = '', heading, intro }:
 
         {hasGigs ? (
           <div className="space-y-10">
-            <GigList gigs={upcoming} heading="UPCOMING" onGigClick={handleGigClick} />
-            <GigList gigs={past} heading="PAST" onGigClick={handleGigClick} />
+            <GigList gigs={upcoming} heading={t('gigs.upcoming').toUpperCase()} onGigClick={handleGigClick} />
+            <GigList gigs={past} heading={t('gigs.past').toUpperCase()} onGigClick={handleGigClick} />
             {upcoming.length > HOMEPAGE_GIG_LIMIT || past.length > HOMEPAGE_GIG_LIMIT ? (
               <m.div
                 initial={{ opacity: 0 }}
@@ -153,14 +155,14 @@ export function GigsSection({ upcoming, past, artistName = '', heading, intro }:
                   href="/gigs"
                   className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
                 >
-                  View All Events ({upcoming.length + past.length})
+                  {t('gigs.viewAll').replace('{0}', String(upcoming.length + past.length))}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </m.div>
             ) : null}
           </div>
         ) : (
-          <SectionEmpty label="Tour dates coming soon" />
+          <SectionEmpty label={t('gigs.empty')} />
         )}
       </SectionWrapper>
 
