@@ -155,6 +155,8 @@ const translations: Record<string, Record<string, string>> = {
   'section.news':              { en: 'News', de: 'News', ru: 'Новости', it: 'Notizie', es: 'Noticias', pt: 'Notícias', ja: 'ニュース', ko: '뉴스' },
   'section.newsletter':        { en: 'Stay Connected', de: 'Bleib verbunden', ru: 'Оставайтесь на связи', it: 'Resta connesso', es: 'Mantente conectado', pt: 'Fique ligado', ja: 'つながる', ko: '연결 유지' },
   'section.contact':           { en: 'Contact', de: 'Kontakt', ru: 'Контакт', it: 'Contatto', es: 'Contacto', pt: 'Contacto', ja: 'コンタクト', ko: '연락처' },
+  'section.errorRender':       { en: 'Failed to render', de: 'Darstellung fehlgeschlagen', ru: 'Ошибка отображения', it: 'Errore di rendering', es: 'Error al renderizar', pt: 'Falha ao renderizar', ja: '表示に失敗しました', ko: '렌더링 실패' },
+  'section.errorRetry':        { en: 'Retry', de: 'Erneut versuchen', ru: 'Повторить', it: 'Riprova', es: 'Reintentar', pt: 'Tentar novamente', ja: '再試行', ko: '다시 시도' },
 
   // ── BiographySection ────────────────────────────────────────────────
   'bio.defaultTitle':          { en: 'BIOGRAPHY', de: 'BIOGRAFIE', ru: 'БИОГРАФИЯ', it: 'BIOGRAFIA', es: 'BIOGRAFÍA', pt: 'BIOGRAFIA', ja: '経歴', ko: '바이오그래피' },

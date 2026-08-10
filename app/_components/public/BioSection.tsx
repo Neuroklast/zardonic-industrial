@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import { CaretDown, CaretUp } from '@phosphor-icons/react'
 import { useLocale } from '@/contexts/LocaleContext'
+import { asDisplayString } from '@/lib/safe-string'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface BioSectionProps {
-  content: string
+  /** Biography body text from Supabase `bio.content`. Non-strings are coerced safely. */
+  content: string | null | undefined
   heading?: string
   intro?: string
   bodyFontSize?: string
@@ -18,11 +20,17 @@ export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxH
   const { t } = useLocale()
   const title = resolveSectionHeading(heading, 'bio', t)
   const [expanded, setExpanded] = useState(false)
-  const hasContent = content.trim().length > 0
-  const displayContent = hasContent ? content : t('bio.empty')
+  // Never call .trim() on non-strings — that threw and tripped SectionErrorBoundary
+  const safeContent = asDisplayString(content)
+  const hasContent = safeContent.trim().length > 0
+  const displayContent = hasContent ? safeContent : t('bio.empty')
 
-  const bioTextClass = bodyFontSize || 'text-lg'
-  const maxH = readMoreMaxHeight || '280px'
+  const bioTextClass =
+    typeof bodyFontSize === 'string' && bodyFontSize.trim() ? bodyFontSize : 'text-lg'
+  const maxH =
+    typeof readMoreMaxHeight === 'string' && readMoreMaxHeight.trim()
+      ? readMoreMaxHeight
+      : '280px'
   // Always show full content when short or expanded — avoid mask making text look "invisible"
   const clampCollapsed = hasContent && !expanded
 
@@ -58,12 +66,12 @@ export function BioSection({ content, heading, intro, bodyFontSize, readMoreMaxH
           >
             {expanded ? (
               <>
-                <CaretUp className="h-4 w-4" />
+                <CaretUp className="h-4 w-4" aria-hidden />
                 {t('bio.showLess')}
               </>
             ) : (
               <>
-                <CaretDown className="h-4 w-4" />
+                <CaretDown className="h-4 w-4" aria-hidden />
                 {t('bio.readMore')}
               </>
             )}

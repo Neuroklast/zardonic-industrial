@@ -47,5 +47,7 @@
 | Overlay scroll lock | `CyberpunkOverlay.tsx` | Body + html overflow + Lenis stop/start |
 | Hero wordmark size | `HeroSection.tsx`, `HeroConfigEditor.tsx` | Separate **desktop** + **mobile** width % (`logoWidthPercent` / `logoWidthPercentMobile`); never one shared % |
 | Look & Feel preview device | `AdminPreviewPane.tsx` | Desktop / Mobile toggle constrains iframe (390px) so media queries fire |
+| Bio section crash | `BioSection.tsx`, `lib/safe-string.ts`, `app/page.tsx` | Always coerce `bio.content` before `.trim()`; section errors stay in `SectionErrorBoundary` |
+| Section error fallback | `SectionErrorBoundary.tsx`, `lib/i18n.ts` | i18n keys `section.errorRender` / `section.errorRetry`; do not hardcode English only |
 
 Full historical notes: [LESSONS_LEARNED.md](../LESSONS_LEARNED.md).

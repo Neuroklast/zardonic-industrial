@@ -28,6 +28,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Analytics Reject → no POST /api/analytics; Accept → events only after consent
 - [ ] Background: video ON → no static bg image layer under video; video OFF → image with opacity
 - [ ] Background: desktop video ON + mobile “No video” → video on desktop, image fallback on phone
+- [ ] Biography section renders text (or “coming soon”); **no** red “[Bio] – Failed to render” box
+- [ ] Language switch (ES/DE/…): section error fallback strings localize if a section ever crashes; Retry remounts
 
 ## Public browse
 
