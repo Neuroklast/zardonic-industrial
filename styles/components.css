@@ -991,8 +991,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: fit-content;
-  max-width: min(92vw, 56rem);
+  /* Full content width (parent supplies px-card / page margins). No artificial 56rem cap. */
+  width: 100%;
+  max-width: 100%;
   margin-inline: auto;
 }
 

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/components/CyberpunkOverlay', () => ({
@@ -14,14 +14,32 @@ import { GlobalEffects } from '@/app/_components/public/GlobalEffects'
 import { HeroSection } from '@/app/_components/public/HeroSection'
 import { ReleasesSection } from '@/app/_components/public/ReleasesSection'
 
+type IoCallback = IntersectionObserverCallback
+
+const ioInstances: Array<{
+  callback: IoCallback
+  observe: (target: Element) => void
+  disconnect: () => void
+}> = []
+
 beforeAll(() => {
   class MockIntersectionObserver implements IntersectionObserver {
     readonly root = null
     readonly rootMargin = '0px'
     readonly thresholds = [0]
+    private readonly callback: IoCallback
+
+    constructor(callback: IoCallback) {
+      this.callback = callback
+      ioInstances.push({
+        callback,
+        observe: (target: Element) => this.observe(target),
+        disconnect: () => this.disconnect(),
+      })
+    }
 
     disconnect() {}
-    observe() {}
+    observe(_target: Element) {}
     takeRecords() {
       return []
     }
@@ -42,6 +60,7 @@ beforeAll(() => {
 
 describe('restored public homepage components', () => {
   it('restores the hero glitch logo, overlays, and dual CTAs', () => {
+    ioInstances.length = 0
     const { container } = render(
       <>
         <GlobalEffects />
@@ -59,13 +78,54 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.crt-overlay')).toBeInTheDocument()
     expect(container.querySelector('.noise-effect')).toBeInTheDocument()
     expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
-    // Boot is client one-shot: first paint is pending (no double SSR/hydrate run)
+    // Boot waits for hero visibility — first paint stays pending until IntersectionObserver fires
     expect(container.querySelector('.hero-logo-boot--pending')).toBeInTheDocument()
     expect(container.querySelectorAll('[data-draft-target="hero-logo"]')).toHaveLength(1)
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveAttribute('href', '#releases')
     expect(screen.getByRole('link', { name: /tour dates/i })).toHaveAttribute('href', '#gigs')
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('bg-card/60')
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('text-foreground')
+  })
+
+  it('starts hero wordmark boot only when the stage is in view', async () => {
+    ioInstances.length = 0
+    const { container } = render(
+      <HeroSection headline="ZARDONIC" tagline="Industrial Metal / Drum & Bass" />,
+    )
+
+    expect(container.querySelector('.hero-logo-boot--pending')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-boot')).not.toBeInTheDocument()
+    expect(ioInstances.length).toBeGreaterThan(0)
+
+    const stage = container.querySelector('.hero-logo-stage')
+    expect(stage).toBeTruthy()
+
+    await act(async () => {
+      ioInstances[0]?.callback(
+        [
+          {
+            isIntersecting: true,
+            intersectionRatio: 0.5,
+            target: stage as Element,
+            boundingClientRect: {} as DOMRectReadOnly,
+            intersectionRect: {} as DOMRectReadOnly,
+            rootBounds: null,
+            time: 0,
+          },
+        ],
+        ioInstances[0] as unknown as IntersectionObserver,
+      )
+      // Double rAF + state flush
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      })
+    })
+
+    expect(container.querySelector('.hero-logo-boot')).toBeInTheDocument()
+    expect(container.querySelector('.hero-boot-hud')).toBeInTheDocument()
+    expect(container.querySelector('.hero-logo-boot--pending')).not.toBeInTheDocument()
   })
 
   it('skips hero boot sequence when disabled', () => {

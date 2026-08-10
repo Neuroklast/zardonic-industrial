@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { m, useReducedMotion } from 'framer-motion'
 import { useLenisContext } from '@/contexts/LenisContext'
 
@@ -11,6 +11,9 @@ const HERO_CTA_CLASS =
 
 /** ~ total sequence length; HUD unmounts after this so nothing can re-layer. */
 const HERO_BOOT_MS = 1100
+
+/** Fraction of the stage that must be visible before the wordmark boot starts. */
+const HERO_BOOT_VISIBLE_RATIO = 0.2
 
 interface HeroSectionProps {
   headline: string
@@ -28,6 +31,7 @@ interface HeroSectionProps {
   showTourDatesCta?: boolean
   /**
    * Short filmic terminal boot for the wordmark (scan, mini bar, micro code).
+   * Starts when the hero stage is in view — not a page-level loader.
    * Default true. When false, logo shows immediately with no entrance gimmicks.
    */
   bootSequenceEnabled?: boolean
@@ -50,46 +54,74 @@ export function HeroSection({
 }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion()
   const { scrollTo } = useLenisContext()
+  const stageRef = useRef<HTMLDivElement>(null)
 
   /**
-   * Boot is client-started only (idle → play → done).
-   * Avoids SSR markup running CSS animations that restart on hydrate (= “twice”).
-   * Single logo layer — no RGB ghost imgs that overlay the wordmark.
+   * Boot is client + visibility-gated (idle → play → done).
+   * - idle: hold logo invisible until the stage is on-screen (no flash, no early play off-screen)
+   * - play: one-shot CSS entrance after first paint
+   * - done: static wordmark
+   * Not a page loader — only the hero wordmark.
+   * Skip path is derived (no sync setState in effect) for disabled / reduced-motion.
    */
-  const [bootPhase, setBootPhase] = useState<'idle' | 'play' | 'done'>('idle')
+  const skipBoot = !bootSequenceEnabled || Boolean(prefersReducedMotion)
+  const [visibilityBoot, setVisibilityBoot] = useState<'idle' | 'play' | 'done'>('idle')
+  const bootPhase: 'idle' | 'play' | 'done' = skipBoot ? 'done' : visibilityBoot
 
   useEffect(() => {
-    if (!bootSequenceEnabled || prefersReducedMotion) {
-      setBootPhase('done')
-      return
-    }
+    if (skipBoot) return
+
+    const stage = stageRef.current
+    if (!stage) return
 
     let cancelled = false
     let endTimer = 0
-    // Double rAF: wait for first paint so the animation class attaches once, cleanly.
+    let raf1 = 0
     let raf2 = 0
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
-        if (cancelled) return
-        setBootPhase('play')
-        endTimer = window.setTimeout(() => {
-          if (!cancelled) setBootPhase('done')
-        }, HERO_BOOT_MS)
+    let started = false
+
+    const startBoot = () => {
+      if (cancelled || started) return
+      started = true
+      // Double rAF: wait for first paint so the animation class attaches once, cleanly.
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          if (cancelled) return
+          setVisibilityBoot('play')
+          endTimer = window.setTimeout(() => {
+            if (!cancelled) setVisibilityBoot('done')
+          }, HERO_BOOT_MS)
+        })
       })
-    })
+    }
+
+    // Start only when the hero stage is actually visible (homepage: fires immediately).
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && entry.intersectionRatio >= HERO_BOOT_VISIBLE_RATIO) {
+            startBoot()
+            observer.disconnect()
+            break
+          }
+        }
+      },
+      { root: null, rootMargin: '0px', threshold: [0, HERO_BOOT_VISIBLE_RATIO, 0.5, 1] },
+    )
+    observer.observe(stage)
 
     return () => {
       cancelled = true
+      observer.disconnect()
       cancelAnimationFrame(raf1)
       cancelAnimationFrame(raf2)
       window.clearTimeout(endTimer)
     }
-  }, [bootSequenceEnabled, prefersReducedMotion])
+  }, [skipBoot])
 
   const playing = bootPhase === 'play'
   /** Hide logo until client boot starts — prevents full logo flash then re-reveal (= “twice”). */
-  const pendingBoot =
-    bootPhase === 'idle' && Boolean(bootSequenceEnabled) && !prefersReducedMotion
+  const pendingBoot = bootPhase === 'idle' && !skipBoot
   /** Prefer admin size; default large enough for impact, not capped at 16rem. */
   const logoMax = logoMaxHeight || 'clamp(8rem, 28vw, 22rem)'
   // Content waits for boot only while it is actually playing (not idle flash).
@@ -107,9 +139,10 @@ export function HeroSection({
   }
 
   const logoImgStyle: React.CSSProperties = {
-    // Desktop uses admin size; mobile CSS caps via --hero-logo-max
+    // Desktop: admin max-height; width fills content column (parent has page margins via px-card).
+    // Mobile CSS further caps height via --hero-logo-max.
     maxHeight: logoMax,
-    maxWidth: 'min(96vw, 100%)',
+    maxWidth: '100%',
     width: 'auto',
     height: 'auto',
     ['--hero-logo-max' as string]: logoMax,
@@ -143,12 +176,13 @@ export function HeroSection({
         style={{ zIndex: 'var(--z-content)' }}
       >
         {/*
-          Wordmark stage: full viewport width (not capped at max-w-6xl) so large admin sizes work.
-          Full-resolution src (R2 direct) — no wsrv downscale. Boot HUD under image.
+          Wordmark stage: full content width (page margins from px-card only — no max-w-6xl / 56rem cap).
+          Full-resolution src (R2 direct) — no wsrv downscale. Boot HUD under image when in view.
         */}
         <div
+          ref={stageRef}
           className={[
-            'hero-logo-stage relative mx-auto mb-6 w-full max-w-[min(96vw,90rem)]',
+            'hero-logo-stage relative mx-auto mb-6 w-full max-w-full',
             playing ? 'hero-logo-stage--booting' : '',
             bootPhase === 'done' ? 'hero-logo-stage--done' : '',
           ]
