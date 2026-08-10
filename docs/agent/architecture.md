@@ -2,7 +2,9 @@
 
 ## Stack
 
-Next.js App Router (public + admin), Supabase (`site_config`, content tables, auth), Cloudflare R2, Resend. Legacy `api/` + KV remain for some endpoints — prefer Supabase for new public features.
+Next.js App Router (public + admin), Supabase (`site_config`, content tables, auth), Cloudflare R2, Resend. Legacy root `api/` remains for some proxies (rate-limited via Upstash) — prefer `app/api/**` for new routes.
+
+**Never dual-mount the same path:** root `api/<name>.ts` can shadow `app/api/<name>/route.ts` on Vercel. Public `/api/geo` is App Router only.
 
 ## Import paths
 

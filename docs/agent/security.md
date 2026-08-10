@@ -49,6 +49,8 @@ Never browser `signInWithPassword` + `router.push` (cookie race / redirect loops
 
 Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`, Supabase keys, etc.).
 
+Legacy `api/_ratelimit.ts` **fails closed (503)** when Upstash is configured but unreachable. Production `ENOTFOUND` on `*.upstash.io` means the Redis database was deleted/renamed — update `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (or remove both to skip rate limiting in non-prod only).
+
 ## CSP (`unsafe-inline` styles)
 
 Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; script-src remains restricted.

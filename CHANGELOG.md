@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
 
 ### Fixed
+- **`/api/geo` production 503**: removed legacy `api/geo.ts` (Upstash rate-limit fail-closed). Canonical handler is App Router `app/api/geo/route.ts` (Vercel country header only, no Redis). Root cause of logs: dead `UPSTASH_REDIS_REST_URL` host `prepared-corgi-90453.upstash.io` (DNS ENOTFOUND).
 - **Bio section render crash**: `BioSection` no longer throws when `content` is null/undefined/non-string (previously tripped `SectionErrorBoundary` → “[Bio] – Failed to render”). Content is normalized at fetch and in the component via `asDisplayString`. Section error fallback is i18n-aware (`section.errorRender` / `section.errorRetry`).
 - **Background image vs video stacking**: when desktop (or mobile) video is active, the static background image layer is hidden so image opacity cannot composite under the video. Video off / mobile “No video” falls back to the background image only on that viewport.
 - **Hero wordmark mobile vs desktop width**: one width % cannot look right on both breakpoints (desktop ~65% → tiny on phone). Admin now has **Desktop width** + **Mobile width** (`logoWidthPercent` / `logoWidthPercentMobile`). CSS is mobile-first; unset mobile defaults to `max(desktop, 90%)` so existing saves still nearly fill the phone column.
