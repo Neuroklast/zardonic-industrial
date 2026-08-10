@@ -31,21 +31,32 @@ function applyHeroDraft(value: Record<string, unknown>) {
   document.querySelectorAll<HTMLImageElement>('[data-draft-target="hero-logo"]').forEach((img) => {
     img.src = logoUrl
   })
-  // Width-only: --hero-logo-width as % of content column (height follows aspect ratio).
+  // Width-only: separate desktop / mobile % of content column (height follows aspect ratio).
+  const clampW = (n: number) => Math.min(100, Math.max(15, Math.round(n)))
   let widthPct: number | null = null
   if (typeof value.logoWidthPercent === 'number' && Number.isFinite(value.logoWidthPercent)) {
-    widthPct = Math.min(100, Math.max(15, value.logoWidthPercent))
+    widthPct = clampW(value.logoWidthPercent)
   } else if (typeof value.logoMaxHeightRem === 'number' && Number.isFinite(value.logoMaxHeightRem)) {
-    widthPct = Math.min(100, Math.max(15, Math.round((value.logoMaxHeightRem / 48) * 100)))
+    widthPct = clampW((value.logoMaxHeightRem / 48) * 100)
   }
-  if (widthPct != null) {
-    const widthCss = `${widthPct}%`
+  const widthPctMobile =
+    typeof value.logoWidthPercentMobile === 'number' && Number.isFinite(value.logoWidthPercentMobile)
+      ? clampW(value.logoWidthPercentMobile)
+      : widthPct != null
+        ? clampW(Math.max(widthPct, 90))
+        : null
+  if (widthPct != null || widthPctMobile != null) {
+    const widthCss = widthPct != null ? `${widthPct}%` : null
+    const widthMobileCss = widthPctMobile != null ? `${widthPctMobile}%` : null
     document.querySelectorAll<HTMLElement>('.hero-logo-stage').forEach((el) => {
-      el.style.setProperty('--hero-logo-width', widthCss)
+      if (widthCss) el.style.setProperty('--hero-logo-width', widthCss)
+      if (widthMobileCss) el.style.setProperty('--hero-logo-width-mobile', widthMobileCss)
     })
+    // Clear any old inline width override so CSS media queries can switch desktop/mobile.
     document.querySelectorAll<HTMLElement>('.hero-logo-glitch').forEach((el) => {
-      el.style.setProperty('--hero-logo-width', widthCss)
-      el.style.width = widthCss
+      if (widthCss) el.style.setProperty('--hero-logo-width', widthCss)
+      if (widthMobileCss) el.style.setProperty('--hero-logo-width-mobile', widthMobileCss)
+      el.style.removeProperty('width')
       el.style.height = 'auto'
       el.style.maxHeight = 'none'
     })

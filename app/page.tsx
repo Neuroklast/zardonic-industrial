@@ -508,6 +508,12 @@ export default async function HomePage({
                     }
                     return undefined
                   })()}
+                  logoWidthPercentMobile={
+                    typeof heroConfig.logoWidthPercentMobile === 'number' &&
+                    Number.isFinite(heroConfig.logoWidthPercentMobile)
+                      ? heroConfig.logoWidthPercentMobile
+                      : undefined
+                  }
                   showTourDatesCta={isSectionVisible('gigs')}
                   bootSequenceEnabled={heroConfig.bootSequenceEnabled !== false}
                 />

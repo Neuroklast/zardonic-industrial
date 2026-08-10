@@ -28,10 +28,15 @@ interface HeroSectionProps {
   imageBlur?: number
   paddingTop?: string
   /**
-   * Wordmark width as % of the content column (page margins via px-card).
+   * Wordmark width as % of the content column on desktop (md+).
    * Height follows aspect ratio — no max-height cap.
    */
   logoWidthPercent?: number
+  /**
+   * Wordmark width as % of the content column on mobile (below md breakpoint).
+   * Defaults higher than desktop so a single desktop-tuned % is not tiny on phones.
+   */
+  logoWidthPercentMobile?: number
   showTourDatesCta?: boolean
   /**
    * Short filmic terminal boot for the wordmark (scan, mini bar, micro code).
@@ -53,6 +58,7 @@ export function HeroSection({
   imageBlur,
   paddingTop,
   logoWidthPercent,
+  logoWidthPercentMobile,
   showTourDatesCta = true,
   bootSequenceEnabled = true,
 }: HeroSectionProps) {
@@ -129,11 +135,20 @@ export function HeroSection({
   const playing = bootPhase === 'play'
   /** Hide logo until client boot starts — prevents full logo flash then re-reveal (= “twice”). */
   const pendingBoot = bootPhase === 'idle' && !skipBoot
-  /** Width % of content column; height free (aspect ratio from image). */
-  const widthPct = (() => {
-    const n = typeof logoWidthPercent === 'number' && Number.isFinite(logoWidthPercent) ? logoWidthPercent : 55
-    return Math.min(100, Math.max(15, n))
-  })()
+  /** Clamp width % of content column; height free (aspect ratio from image). */
+  const clampWidthPct = (n: number) => Math.min(100, Math.max(15, Math.round(n)))
+  const widthPct = clampWidthPct(
+    typeof logoWidthPercent === 'number' && Number.isFinite(logoWidthPercent) ? logoWidthPercent : 55,
+  )
+  /**
+   * Mobile needs its own %. Same desktop value looks tiny on a phone column.
+   * Unset → max(desktop, 90) so existing desktop-only configs still fill mobile width.
+   */
+  const widthPctMobile = clampWidthPct(
+    typeof logoWidthPercentMobile === 'number' && Number.isFinite(logoWidthPercentMobile)
+      ? logoWidthPercentMobile
+      : Math.max(widthPct, 90),
+  )
   // Content waits for boot only while it is actually playing (not idle flash).
   const contentDelay = playing ? 0.95 : pendingBoot ? 0.2 : 0
 
@@ -148,9 +163,13 @@ export function HeroSection({
     filter: imageBlur ? `blur(${imageBlur}px)` : undefined,
   }
 
-  /** Width-only size: --hero-logo-width drives the box; img is width 100% / height auto. */
+  /**
+   * Width-only size: CSS vars drive the box; img is width 100% / height auto.
+   * Mobile uses --hero-logo-width-mobile; desktop (md+) uses --hero-logo-width.
+   */
   const stageStyle: React.CSSProperties = {
     ['--hero-logo-width' as string]: `${widthPct}%`,
+    ['--hero-logo-width-mobile' as string]: `${widthPctMobile}%`,
   }
 
   return (

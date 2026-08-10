@@ -38,7 +38,7 @@ const SITE_CONFIG_TABS: AdminHelpEntry[] = [
     id: 'site-config-hero',
     title: 'Hero Section',
     description:
-      'Edit headline, tagline, CTA button, hero background image/video, wordmark logo and wordmark size (max height). Upload images with pan/zoom crop; files are optimized to WebP.',
+      'Edit headline, tagline, CTA button, hero background image/video, wordmark logo and wordmark size (desktop + mobile width %). Upload images with pan/zoom crop; files are optimized to WebP.',
     href: `${SITE_CONFIG}?tab=hero`,
     group: 'Look & Feel',
     keywords: ['hero', 'headline', 'tagline', 'cta', 'logo', 'wordmark', 'banner', 'top'],
@@ -191,10 +191,10 @@ const HOWTO_ENTRIES: AdminHelpEntry[] = [
     id: 'help-hero-wordmark',
     title: 'How do I change the hero wordmark?',
     description:
-      'Go to Look & Feel → Hero. The wordmark logo is separate from the hero background — upload or replace it in the logo/wordmark field.',
+      'Go to Look & Feel → Hero. Upload the wordmark image, then set Desktop width and Mobile width separately (one % cannot look right on both). The logo is separate from the hero background.',
     href: `${SITE_CONFIG}?tab=hero`,
     group: 'Help',
-    keywords: ['wordmark', 'logo', 'hero', 'brand', 'header image'],
+    keywords: ['wordmark', 'logo', 'hero', 'brand', 'header image', 'width', 'mobile', 'size'],
     priority: 74,
   },
   {
