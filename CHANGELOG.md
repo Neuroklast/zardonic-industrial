@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Look & Feel live preview device toggle**: split preview header has **Desktop / Mobile** — mobile constrains the iframe to 390px so media queries (hero mobile width, nav, etc.) match a phone without resizing the admin window.
+
 ### Fixed
 - **Hero wordmark mobile vs desktop width**: one width % cannot look right on both breakpoints (desktop ~65% → tiny on phone). Admin now has **Desktop width** + **Mobile width** (`logoWidthPercent` / `logoWidthPercentMobile`). CSS is mobile-first; unset mobile defaults to `max(desktop, 90%)` so existing saves still nearly fill the phone column.
 - **Admin image upload 413 / React #441**: crop editor exported full-res **PNG**, which often inflated a ~600 KB source past Next’s **1 MB Server Action body limit** (`Body exceeded 1 MB limit` on `/admin/site-config`). Export now prefers **WebP** with size-downscale, body limit raised to **4 MB**, and clearer client error messages.

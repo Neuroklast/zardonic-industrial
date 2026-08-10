@@ -61,6 +61,19 @@ UI: `CatalogueSyncClient`, `DataMaintenanceClient` + `hooks/useSyncJobPoll.ts`.
 
 `/admin/data` → `DataMaintenanceClient.tsx` — AlertDialog confirmations, progress for batch enrichment.
 
+## Look & Feel live preview
+
+`AdminPreviewPane` (`app/admin/_components/AdminPreviewPane.tsx`) wraps site-config tabs:
+
+| Control | Behaviour |
+|---------|-----------|
+| Editor only / Split preview | Hide or show the public iframe |
+| **Desktop / Mobile** | Constrains iframe width (mobile = 390px) so CSS media queries fire — hero `logoWidthPercentMobile`, mobile nav, etc. |
+| Refresh | Reload iframe + draft broadcast |
+| New tab | Open `/?adminPreview=1` |
+
+Drafts: `broadcastAdminDraft` → public `AdminDraftListener` in the iframe. Save still required for production.
+
 ## Legal editor
 
 `/admin/legal` — `LegalConfigEditor.tsx`. Draft preview: `broadcastAdminDraft('legal', ...)`.
