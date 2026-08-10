@@ -46,6 +46,11 @@ export const revalidate = 60
 // ─── Type helpers ────────────────────────────────────────────────────────────
 interface SiteConfigRow { key: string; value: Record<string, unknown> }
 interface BioRow { content: string | null }
+
+/** Normalize Supabase bio.content so BioSection never receives a non-string. */
+function normalizeBioContent(raw: unknown): string {
+  return typeof raw === 'string' ? raw : ''
+}
 interface GigRow {
   id: string; title: string; venue: string | null; city: string | null
   country: string | null; event_date: string; ticket_url: string | null
@@ -180,7 +185,7 @@ async function fetchAll() {
 
     return {
       configRows: (configResult.data ?? []) as SiteConfigRow[],
-      bio: (bioResult.data as BioRow | null)?.content ?? '',
+      bio: normalizeBioContent((bioResult.data as BioRow | null)?.content),
       gigs: (gigResult.data ?? []) as GigRow[],
       releases: releaseRows,
       partners: (partnerResult.data ?? []) as PartnerRow[],

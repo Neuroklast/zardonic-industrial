@@ -49,6 +49,24 @@ describe('public section empty states', () => {
     expect(screen.getByText(/biography coming soon/i)).toBeInTheDocument()
   })
 
+  it('does not crash when bio content is null or undefined', () => {
+    const { unmount } = renderWithLocale(<BioSection content={null} />)
+    expect(screen.getByText(/biography coming soon/i)).toBeInTheDocument()
+    unmount()
+
+    renderWithLocale(<BioSection content={undefined} />)
+    expect(screen.getByText(/biography coming soon/i)).toBeInTheDocument()
+  })
+
+  it('does not crash when bio content is a non-string (malformed data)', () => {
+    // Runtime/API shape guards — TypeScript allows only string|null|undefined, but
+    // clients can still receive bad serialized data from cache/import paths.
+    renderWithLocale(
+      <BioSection content={{ story: 'x' } as unknown as string} />,
+    )
+    expect(screen.getByText(/biography coming soon/i)).toBeInTheDocument()
+  })
+
   it('keeps content sections visible with empty placeholder states', () => {
     renderWithLocale(
       <>
