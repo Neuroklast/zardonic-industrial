@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Hero/logo crop export resolution**: crop editor no longer exports at the ~420px UI viewport size; export uses source-pixel scale (capped at maxOutputDimension, e.g. 4096 for hero). Fixes pixelated large wordmarks — re-upload required for already-saved low-res crops.
 - **Hero wordmark size**: admin slider is **width %** of the content column (`logoWidthPercent`, 15–100); height follows aspect ratio with **no max-height**. Centered in the hero. Legacy `logoMaxHeightRem` maps roughly to %.
 - **Background video scroll scrub**: Lenis adapter no longer freezes `scroll` at attach time; uses live `getScroll` / `getProgress` so scrubbing moves with the page again.
 - **Public i18n chrome**: section titles, hero CTAs, bio/gigs/credits/contact UI strings use `t()` + `resolveSectionHeading` (custom admin labels still win).

@@ -9,6 +9,7 @@ import {
   DEFAULT_CROP_STATE,
   resolveEditorViewport,
   resolveOutputSize,
+  resolveSourceScale,
   type CropFitMode,
   type CropState,
 } from '@/lib/image-crop-math'
@@ -162,7 +163,10 @@ export function ImageCropEditor({
         img.src = imageSrc
       })
 
-      const output = resolveOutputSize(viewport, maxOutputDimension)
+      // Export at source resolution (not the ~420px editor viewport) so large
+      // hero wordmarks stay sharp on retina / full-width display.
+      const sourceScale = resolveSourceScale(imageSize.width, drawRect.width)
+      const output = resolveOutputSize(viewport, maxOutputDimension, sourceScale)
       const canvas = document.createElement('canvas')
       canvas.width = output.width
       canvas.height = output.height
@@ -171,6 +175,8 @@ export function ImageCropEditor({
 
       const scaleX = output.width / viewport.width
       const scaleY = output.height / viewport.height
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
 
       // Preserve transparency for PNG/WebP logos; only opaque black for photo crops
       // when the source has no alpha and we are in cover mode.

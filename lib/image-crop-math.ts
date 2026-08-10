@@ -101,20 +101,42 @@ export function resolveEditorViewport(
   return { width: Math.round(height * ratio), height }
 }
 
-/** Output canvas size preserving viewport aspect, capped by maxOutputDimension. */
+/**
+ * Output canvas size for crop export.
+ *
+ * @param viewport — editor UI crop window (often ≤420px)
+ * @param maxOutputDimension — longest edge cap (e.g. 4096 for hero logos)
+ * @param sourceScale — native image pixels per viewport pixel
+ *   (`imageNaturalWidth / drawRect.width`). Use this so export is full-res
+ *   from the source file, not the tiny UI preview. Default 1 keeps old behaviour.
+ */
 export function resolveOutputSize(
   viewport: CropViewport,
   maxOutputDimension: number,
+  sourceScale = 1,
 ): CropViewport {
-  const longest = Math.max(viewport.width, viewport.height)
-  if (longest <= maxOutputDimension) {
-    return { ...viewport }
+  const scale = Number.isFinite(sourceScale) && sourceScale > 0 ? sourceScale : 1
+  let width = Math.max(1, Math.round(viewport.width * scale))
+  let height = Math.max(1, Math.round(viewport.height * scale))
+  const longest = Math.max(width, height)
+  if (maxOutputDimension > 0 && longest > maxOutputDimension) {
+    const factor = maxOutputDimension / longest
+    width = Math.max(1, Math.round(width * factor))
+    height = Math.max(1, Math.round(height * factor))
   }
-  const factor = maxOutputDimension / longest
-  return {
-    width: Math.round(viewport.width * factor),
-    height: Math.round(viewport.height * factor),
-  }
+  return { width, height }
+}
+
+/**
+ * Native pixels per editor viewport pixel for the current draw rect.
+ * Export at this scale so logos are not locked to the ~420px UI viewport.
+ */
+export function resolveSourceScale(
+  imageNaturalWidth: number,
+  drawRectWidth: number,
+): number {
+  if (imageNaturalWidth <= 0 || drawRectWidth <= 0) return 1
+  return imageNaturalWidth / drawRectWidth
 }
 
 export function shouldOpenImageEditor(mimeType: string): boolean {

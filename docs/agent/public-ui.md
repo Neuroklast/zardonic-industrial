@@ -85,6 +85,7 @@ File: `app/_components/public/SiteFooter.tsx`.
 |----|--------|
 | Size by **width %** of content column (`logoWidthPercent` → `--hero-logo-width`) | Max-height slider / `max-height` caps that fight wide wordmarks |
 | `width: 100%` of that box, `height: auto` — preserve aspect ratio | Stretch / force height boxes |
+| Crop/export at **source resolution** (`resolveSourceScale` + `maxOutputDimension`, e.g. 4096) | Export at editor UI viewport (~420px) → pixelated large logos |
 | Center in stage (`flex` + margin auto on glitch box) | Absolute logo over the nav |
 | Boot HUD **`position: absolute`** under the logo box | In-flow HUD that shifts/pushes the logo when the bar appears |
 | Boot sequence: short filmic one-shot (~1.1s) when **stage is in view** | Page-level loader for the wordmark |
