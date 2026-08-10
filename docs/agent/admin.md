@@ -15,6 +15,14 @@ New public-facing config → **Supabase `site_config`**, not KV.
 
 Revalidate paths include `/`, `/legal-notice`, `/privacy-policy` after saves.
 
+## Image uploads (hero / media)
+
+Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOptimizedImage` → R2.
+
+- Next `experimental.serverActions.bodySizeLimit` = **4mb** (default is **1mb** — full-res PNG crops hit this and show production **React #441** / 413).
+- Client guard: `SERVER_ACTION_IMAGE_UPLOAD_MAX_BYTES` (~3.5 MB) in `lib/optimize-image-constants.ts`.
+- Do **not** export crop as raw full-res PNG for upload.
+
 ## AdminActionRegistry
 
 Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.

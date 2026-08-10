@@ -43,6 +43,8 @@ Public pages: `/legal-notice`, `/privacy-policy`.
 
 Images and video upload to **Cloudflare R2** via admin upload actions. URLs are stored as `*_storage_path` columns with optional legacy URL fallbacks.
 
+**Images (crop → upload):** The crop editor exports **WebP** (not full-res PNG) and the Server Action body limit is **4 MB** (`next.config` `experimental.serverActions.bodySizeLimit`). Source files may be up to 10 MB before crop; after export the payload must stay under ~3.5 MB. If upload fails with React error **#441** or **413**, the crop export was almost certainly too large for the previous 1 MB default — retry after deploy, or use a smaller source.
+
 ## Data maintenance (`/admin/data`)
 
 **Data Maintenance** panel (below export/import):

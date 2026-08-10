@@ -13,6 +13,7 @@ import {
   type CropFitMode,
   type CropState,
 } from '@/lib/image-crop-math'
+import { encodeCanvasForUpload } from '@/lib/image-crop-export'
 import * as SliderPrimitive from '@radix-ui/react-slider'
 
 export interface ImageCropEditorProps {
@@ -25,6 +26,7 @@ export interface ImageCropEditorProps {
   maxOutputDimension?: number
   onCancel: () => void
   onConfirm: (blob: Blob) => void
+  onError?: (message: string) => void
 }
 
 const MIN_ZOOM = 1
@@ -49,6 +51,7 @@ export function ImageCropEditor({
   maxOutputDimension = 2400,
   onCancel,
   onConfirm,
+  onError,
 }: ImageCropEditorProps) {
   const [crop, setCrop] = useState<CropState>(DEFAULT_CROP_STATE)
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 })
@@ -200,14 +203,16 @@ export function ImageCropEditor({
         drawRect.height * scaleY,
       )
 
-      const blob = await new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (b) => (b ? resolve(b) : reject(new Error('Failed to export image'))),
-          'image/png',
-          0.92,
-        )
-      })
+      // Prefer WebP over full-res PNG — PNG inflate of a 600 KB source often
+      // exceeds Next’s Server Action body limit (default 1 MB) and surfaces as
+      // production React error #441 / HTTP 413.
+      const blob = await encodeCanvasForUpload(canvas, { preserveAlpha })
       onConfirm(blob)
+    } catch (err) {
+      // Surface export failures (size limit, canvas errors) instead of silent fail
+      console.error('[ImageCropEditor] export failed', err)
+      const msg = err instanceof Error ? err.message : 'Failed to export image'
+      onError?.(msg)
     } finally {
       setExporting(false)
     }
