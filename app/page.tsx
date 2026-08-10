@@ -494,17 +494,20 @@ export default async function HomePage({
                   minHeight={typeof heroStyleOverrides.minHeight === 'string' ? heroStyleOverrides.minHeight : undefined}
                   imageBlur={typeof heroStyleOverrides.heroImageBlur === 'number' ? heroStyleOverrides.heroImageBlur : undefined}
                   paddingTop={typeof heroStyleOverrides.paddingTop === 'string' ? heroStyleOverrides.paddingTop : undefined}
-                  logoMaxHeight={
-                    typeof heroConfig.logoMaxHeight === 'string'
-                      ? heroConfig.logoMaxHeight
-                      : typeof heroConfig.logoMaxHeightRem === 'number'
-                        ? `${heroConfig.logoMaxHeightRem}rem`
-                        : typeof heroStyleOverrides.logoMaxHeight === 'string'
-                          ? heroStyleOverrides.logoMaxHeight
-                          : typeof heroStyleOverrides.logoMaxHeight === 'number'
-                            ? `${heroStyleOverrides.logoMaxHeight}rem`
-                            : undefined
-                  }
+                  logoWidthPercent={(() => {
+                    if (typeof heroConfig.logoWidthPercent === 'number' && Number.isFinite(heroConfig.logoWidthPercent)) {
+                      return heroConfig.logoWidthPercent
+                    }
+                    // Legacy height-rem slider → approximate width % so old saves still look large.
+                    if (typeof heroConfig.logoMaxHeightRem === 'number' && Number.isFinite(heroConfig.logoMaxHeightRem)) {
+                      return Math.min(100, Math.max(15, Math.round((heroConfig.logoMaxHeightRem / 48) * 100)))
+                    }
+                    if (typeof heroConfig.logoMaxHeight === 'string') {
+                      const m = heroConfig.logoMaxHeight.match(/^([\d.]+)\s*rem$/i)
+                      if (m) return Math.min(100, Math.max(15, Math.round((Number(m[1]) / 48) * 100)))
+                    }
+                    return undefined
+                  })()}
                   showTourDatesCta={isSectionVisible('gigs')}
                   bootSequenceEnabled={heroConfig.bootSequenceEnabled !== false}
                 />

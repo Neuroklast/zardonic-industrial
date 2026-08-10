@@ -45,20 +45,21 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [bootSequenceEnabled, setBootSequenceEnabled] = useState<boolean>(
     currentValue.bootSequenceEnabled === false ? false : true,
   )
-  /** Wordmark max height in rem (6–48). Large range for full-bleed hero marks. */
-  const [logoMaxHeightRem, setLogoMaxHeightRem] = useState<number>(() => {
-    const clampSize = (n: number) => Math.min(48, Math.max(6, n))
+  /** Wordmark width as % of content column (15–100). Height follows aspect ratio. */
+  const [logoWidthPercent, setLogoWidthPercent] = useState<number>(() => {
+    const clampW = (n: number) => Math.min(100, Math.max(15, Math.round(n)))
+    if (typeof currentValue.logoWidthPercent === 'number' && Number.isFinite(currentValue.logoWidthPercent)) {
+      return clampW(currentValue.logoWidthPercent)
+    }
+    // Legacy height-rem → approximate width %
     if (typeof currentValue.logoMaxHeightRem === 'number' && Number.isFinite(currentValue.logoMaxHeightRem)) {
-      return clampSize(currentValue.logoMaxHeightRem)
+      return clampW((currentValue.logoMaxHeightRem / 48) * 100)
     }
     if (typeof currentValue.logoMaxHeight === 'string') {
       const m = currentValue.logoMaxHeight.match(/^([\d.]+)\s*rem$/i)
-      if (m) return clampSize(Number(m[1]))
+      if (m) return clampW((Number(m[1]) / 48) * 100)
     }
-    if (typeof currentValue.logoMaxHeight === 'number' && Number.isFinite(currentValue.logoMaxHeight)) {
-      return clampSize(currentValue.logoMaxHeight)
-    }
-    return 14
+    return 55
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -77,9 +78,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageUrl: backgroundImageUrl || undefined,
       backgroundImageOpacity,
       bootSequenceEnabled,
-      logoMaxHeightRem,
-      /** CSS length for public hero + drafts */
-      logoMaxHeight: `${logoMaxHeightRem}rem`,
+      logoWidthPercent,
     }),
     [
       headline,
@@ -92,7 +91,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageUrl,
       backgroundImageOpacity,
       bootSequenceEnabled,
-      logoMaxHeightRem,
+      logoWidthPercent,
     ],
   )
 
@@ -164,20 +163,20 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
 
         <div className="space-y-2 pt-1">
           <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
-            Wordmark size:{' '}
-            <span className="text-zinc-300 font-mono">{logoMaxHeightRem.toFixed(1)}rem</span>
+            Wordmark width:{' '}
+            <span className="text-zinc-300 font-mono">{logoWidthPercent}%</span>
             <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
-              (~{Math.round(logoMaxHeightRem * 16)}px)
+              of content column
             </span>
           </label>
           <SliderPrimitive.Root
-            min={6}
-            max={48}
-            step={0.5}
-            value={[logoMaxHeightRem]}
-            onValueChange={([v]) => setLogoMaxHeightRem(v)}
+            min={15}
+            max={100}
+            step={1}
+            value={[logoWidthPercent]}
+            onValueChange={([v]) => setLogoWidthPercent(v)}
             className="relative flex items-center w-full touch-none select-none h-5"
-            aria-label="Hero wordmark max height"
+            aria-label="Hero wordmark width percent"
           >
             <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
               <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
@@ -185,18 +184,19 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
           </SliderPrimitive.Root>
           <p className="text-xs text-zinc-500">
-            Max height on the homepage (6–48rem ≈ {6 * 16}–{48 * 16}px). Width scales with the image aspect
-            ratio up to the full content column (page margins only — no fixed pixel width cap). Use a
-            high-res upload for sharp large sizes. On mobile the height is also capped at ~42vh for LCP.
+            Width as % of the content column (page margins only). Height scales with the image aspect
+            ratio — no max-height. 100% = full content width. Use a high-res upload for sharp large sizes.
           </p>
-          {/* Live size preview (plain img — admin only, no Next Image optimizer) */}
+          {/* Live preview: width % of preview panel, aspect preserved, centered */}
           <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
-            <img
-              src={resolvedLogoPreview}
-              alt=""
-              className="mx-auto h-auto w-auto max-w-full object-contain brightness-110"
-              style={{ maxHeight: `${logoMaxHeightRem}rem` }}
-            />
+            <div className="flex w-full items-center justify-center">
+              <img
+                src={resolvedLogoPreview}
+                alt=""
+                className="h-auto object-contain brightness-110"
+                style={{ width: `${logoWidthPercent}%`, maxWidth: '100%' }}
+              />
+            </div>
           </div>
         </div>
 

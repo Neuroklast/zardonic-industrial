@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
@@ -34,7 +35,8 @@ function formatDate(iso: string | null): string {
 }
 
 export function NewsSection({ posts, heading, intro }: NewsSectionProps) {
-  const title = formatSectionHeading(heading, 'news')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'news', t)
 
   return (
     <SectionWrapper id="news" data-theme-color="foreground card border primary">

@@ -1,4 +1,7 @@
-import { formatSectionHeading } from '@/lib/section-display'
+'use client'
+
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { SquareImageGrid } from './SquareImageGrid'
 
@@ -16,7 +19,8 @@ interface SoundpacksSectionProps {
 }
 
 export function SoundpacksSection({ items, heading, intro }: SoundpacksSectionProps) {
-  const title = formatSectionHeading(heading, 'soundpacks')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'soundpacks', t)
 
   return (
     <SectionWrapper id="soundpacks" data-theme-color="foreground card border primary">

@@ -28,20 +28,28 @@ function applyHeroDraft(value: Record<string, unknown>) {
     typeof value.logoImageUrl === 'string' && value.logoImageUrl
       ? value.logoImageUrl
       : DEFAULT_HERO_LOGO_URL
-  const logoMax =
-    typeof value.logoMaxHeight === 'string' && value.logoMaxHeight
-      ? value.logoMaxHeight
-      : typeof value.logoMaxHeightRem === 'number'
-        ? `${value.logoMaxHeightRem}rem`
-        : null
   document.querySelectorAll<HTMLImageElement>('[data-draft-target="hero-logo"]').forEach((img) => {
     img.src = logoUrl
-    if (logoMax) {
-      img.style.maxHeight = logoMax
-      img.style.setProperty('--hero-logo-max', logoMax)
-    }
   })
-  // Stage is width:100% of the content column — do not clamp stage height to the logo max.
+  // Width-only: --hero-logo-width as % of content column (height follows aspect ratio).
+  let widthPct: number | null = null
+  if (typeof value.logoWidthPercent === 'number' && Number.isFinite(value.logoWidthPercent)) {
+    widthPct = Math.min(100, Math.max(15, value.logoWidthPercent))
+  } else if (typeof value.logoMaxHeightRem === 'number' && Number.isFinite(value.logoMaxHeightRem)) {
+    widthPct = Math.min(100, Math.max(15, Math.round((value.logoMaxHeightRem / 48) * 100)))
+  }
+  if (widthPct != null) {
+    const widthCss = `${widthPct}%`
+    document.querySelectorAll<HTMLElement>('.hero-logo-stage').forEach((el) => {
+      el.style.setProperty('--hero-logo-width', widthCss)
+    })
+    document.querySelectorAll<HTMLElement>('.hero-logo-glitch').forEach((el) => {
+      el.style.setProperty('--hero-logo-width', widthCss)
+      el.style.width = widthCss
+      el.style.height = 'auto'
+      el.style.maxHeight = 'none'
+    })
+  }
 
   const heroBgEl = document.querySelector<HTMLElement>('[data-draft-target="hero-bg-image"]')
   if (heroBgEl) {

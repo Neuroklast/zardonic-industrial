@@ -9,7 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
-- **Hero wordmark scale**: remove hard `56rem` stage width cap; logo can grow to full content column width (page `px-card` margins only). Admin height slider still drives max-height; mobile keeps `42vh` LCP cap.
+- **Hero wordmark size**: admin slider is **width %** of the content column (`logoWidthPercent`, 15–100); height follows aspect ratio with **no max-height**. Centered in the hero. Legacy `logoMaxHeightRem` maps roughly to %.
+- **Background video scroll scrub**: Lenis adapter no longer freezes `scroll` at attach time; uses live `getScroll` / `getProgress` so scrubbing moves with the page again.
+- **Public i18n chrome**: section titles, hero CTAs, bio/gigs/credits/contact UI strings use `t()` + `resolveSectionHeading` (custom admin labels still win).
+- **Hero boot layout**: load bar / HUD is `position: absolute` under the logo — no longer pushes the wordmark up while booting.
 - **Hero boot timing**: wordmark entrance starts when the hero stage is **in view** (`IntersectionObserver`), not on page mount alone — still the short logo boot (scan + HUD under image), not a page-level loader.
 
 ### Performance

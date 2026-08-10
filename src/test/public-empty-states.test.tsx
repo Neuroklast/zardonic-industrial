@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { BioSection } from '@/app/_components/public/BioSection'
 import { CreditsSection } from '@/app/_components/public/CreditsSection'
 import { GallerySection } from '@/app/_components/public/GallerySection'
@@ -8,6 +10,10 @@ import { MerchandiseSection } from '@/app/_components/public/MerchandiseSection'
 import { MusicHighlightsSection } from '@/app/_components/public/MusicHighlightsSection'
 import { ReleasesSection } from '@/app/_components/public/ReleasesSection'
 import { SoundpacksSection } from '@/app/_components/public/SoundpacksSection'
+
+function renderWithLocale(ui: ReactElement) {
+  return render(<LocaleProvider>{ui}</LocaleProvider>)
+}
 
 beforeAll(() => {
   class MockIntersectionObserver implements IntersectionObserver {
@@ -37,14 +43,14 @@ beforeAll(() => {
 
 describe('public section empty states', () => {
   it('keeps the bio section visible when biography content is empty', () => {
-    render(<BioSection content="" />)
+    renderWithLocale(<BioSection content="" />)
 
     expect(screen.getByRole('heading', { name: /^biography/i })).toBeInTheDocument()
     expect(screen.getByText(/biography coming soon/i)).toBeInTheDocument()
   })
 
   it('keeps content sections visible with empty placeholder states', () => {
-    render(
+    renderWithLocale(
       <>
         <CreditsSection credits={[]} endorsements={[]} />
         <GallerySection items={[]} />

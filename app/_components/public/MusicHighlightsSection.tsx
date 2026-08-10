@@ -7,7 +7,8 @@
 'use client'
 
 import { useState } from 'react'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface MusicHighlight {
@@ -99,7 +100,8 @@ interface MusicHighlightsSectionProps {
 }
 
 export function MusicHighlightsSection({ highlights, heading, intro }: MusicHighlightsSectionProps) {
-  const title = formatSectionHeading(heading, 'music-highlights')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'music-highlights', t)
 
   return (
     <SectionWrapper id="music" data-theme-color="foreground card border primary">

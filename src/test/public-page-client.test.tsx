@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { LocaleProvider } from '@/contexts/LocaleContext'
 import { PublicPageClient } from '@/app/_components/public/PublicPageClient'
 
 vi.mock('@/components/CyberpunkOverlay', () => ({
@@ -37,27 +38,29 @@ beforeAll(() => {
 describe('PublicPageClient', () => {
   it('opens release overlay state on release card click', () => {
     render(
-      <PublicPageClient
-        releases={[
-          {
-            id: 'release-1',
-            title: 'Release One',
-            type: 'single',
-            release_date: '2026-01-01',
-            coverUrl: null,
-            streamingLinks: [],
-            overlayRelease: {
+      <LocaleProvider>
+        <PublicPageClient
+          releases={[
+            {
               id: 'release-1',
               title: 'Release One',
-              artwork: '',
-              year: '2026',
-              releaseDate: '2026-01-01',
-              streamingLinks: [],
               type: 'single',
+              release_date: '2026-01-01',
+              coverUrl: null,
+              streamingLinks: [],
+              overlayRelease: {
+                id: 'release-1',
+                title: 'Release One',
+                artwork: '',
+                year: '2026',
+                releaseDate: '2026-01-01',
+                streamingLinks: [],
+                type: 'single',
+              },
             },
-          },
-        ]}
-      />,
+          ]}
+        />
+      </LocaleProvider>,
     )
 
     expect(screen.getByTestId('overlay-state')).toHaveTextContent('none')

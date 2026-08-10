@@ -12,7 +12,8 @@ import {
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
 import { toDirectImageUrl } from '@/lib/image-cache'
-import { formatSectionHeading } from '@/lib/section-display'
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import {
   ApplePodcastsLogo,
@@ -79,7 +80,8 @@ export function ReleasesSection({
 }: ReleasesSectionProps) {
   const [activeFilter, setActiveFilter] = useState<ReleaseTypeFilter>('')
   const prefersReducedMotion = useReducedMotion()
-  const title = formatSectionHeading(heading, 'releases')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'releases', t)
 
   const filteredReleases = useMemo(() => {
     const sorted = sortReleasesByDate(releases)

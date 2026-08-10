@@ -1,4 +1,7 @@
-import { formatSectionHeading } from '@/lib/section-display'
+'use client'
+
+import { useLocale } from '@/contexts/LocaleContext'
+import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { SquareImageGrid } from './SquareImageGrid'
 
@@ -24,7 +27,8 @@ export function MerchandiseSection({
   footerText,
   footerUrl,
 }: MerchandiseSectionProps) {
-  const title = formatSectionHeading(heading, 'merchandise')
+  const { t } = useLocale()
+  const title = resolveSectionHeading(heading, 'merchandise', t)
 
   return (
     <SectionWrapper id="merch" data-theme-color="foreground card border primary">

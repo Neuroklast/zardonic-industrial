@@ -983,30 +983,41 @@
  * Hero wordmark boot — short filmic one-shot (~1.1s).
  * - Single logo image (no RGB ghost layers that overlay the wordmark)
  * - Clip reveal + one scan line only
- * - HUD in normal flow BELOW the logo (never absolute over the image)
+ * - HUD is position:absolute under the stage — must NOT shift the logo (flex-centered hero)
  * - Class applied client-side after paint so hydrate does not double-play
+ *
+ * Sizing: admin controls WIDTH only (--hero-logo-width as % of content column).
+ * Height follows intrinsic aspect ratio (no max-height). Centered in the stage.
  */
 .hero-logo-stage {
   position: relative;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  /* Full content width (parent supplies px-card / page margins). No artificial 56rem cap. */
   width: 100%;
   max-width: 100%;
   margin-inline: auto;
 }
 
-/* Mobile LCP: prevent huge admin logoMax from dominating viewport */
-@media (max-width: 768px) {
-  .hero-logo-stage img,
-  .hero-logo-glitch img {
-    max-height: min(var(--hero-logo-max, 14rem), 42vh) !important;
-  }
+/* Width box: % of content column (px-card margins on parent). Height = auto via img. */
+.hero-logo-glitch {
+  position: relative;
+  display: block;
+  width: var(--hero-logo-width, 55%);
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+  flex-shrink: 0;
 }
 
-.hero-logo-stage--booting {
-  gap: 0.55rem;
+.hero-logo-glitch img,
+.hero-logo-stage img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  /* No max-height — aspect ratio preserved from source */
+  object-fit: contain;
 }
 
 /* Pre-boot hold: invisible until play class attaches (no full-logo flash). */
@@ -1015,11 +1026,6 @@
 }
 
 .hero-logo-boot {
-  position: relative;
-  display: block;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
   overflow: hidden;
   opacity: 0;
   /* one continuous top→bottom reveal — no mid-hold (felt like a second pass) */
@@ -1028,10 +1034,8 @@
 }
 
 .hero-logo-boot > img {
-  display: block;
   position: relative;
   z-index: 1;
-  margin-inline: auto;
   /* faint chromatic fringe on the real image only — no extra <img> layers */
   animation: hero-boot-chroma 0.9s ease-out forwards;
 }
@@ -1050,12 +1054,16 @@
   animation: hero-boot-scan 0.9s linear forwards;
 }
 
-/* Mini HUD — document flow under wordmark, never covers the image */
+/* Mini HUD — absolutely under the logo box so logo stays put while bar appears */
 .hero-boot-hud {
   pointer-events: none;
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 2;
   width: min(13.5rem, 70vw);
-  flex-shrink: 0;
+  margin-top: 0.5rem;
+  transform: translateX(-50%);
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.5625rem;
   letter-spacing: 0.12em;
@@ -1272,6 +1280,4 @@
   }
 }
 
-/* Legacy class name kept for tests — no continuous animation */
-.hero-logo-glitch {
-}
+/* `.hero-logo-glitch` sizing rules live above (boot + sizing box). */
