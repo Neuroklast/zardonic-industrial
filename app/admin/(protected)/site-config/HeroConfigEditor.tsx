@@ -145,8 +145,10 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           onError={setErrorMsg}
         />
         <p className="text-xs text-zinc-500">
-          PNG or WebP with transparency works best. Uploads keep up to 4096px (high resolution for retina / large
-          sizes). Leave empty to use the default Zardonic wordmark.
+          PNG or WebP with transparency works best. Upload a large source (ideally ≥2000px wide) for sharp
+          display at high width %. Exports keep up to 4096px. If the logo looks pixelated, re-upload after a
+          crop-export fix so the file is full resolution (not the editor preview size). Leave empty for the
+          default Zardonic wordmark.
         </p>
         {logoImageUrl ? (
           <button

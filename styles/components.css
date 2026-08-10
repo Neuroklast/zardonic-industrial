@@ -1018,6 +1018,9 @@
   max-width: 100%;
   /* No max-height — aspect ratio preserved from source */
   object-fit: contain;
+  /* Smooth upscale if source is still smaller than display (prefer high-res upload) */
+  image-rendering: auto;
+  -ms-interpolation-mode: bicubic;
 }
 
 /* Pre-boot hold: invisible until play class attaches (no full-logo flash). */
