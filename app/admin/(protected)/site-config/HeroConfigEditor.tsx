@@ -45,9 +45,9 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
   const [bootSequenceEnabled, setBootSequenceEnabled] = useState<boolean>(
     currentValue.bootSequenceEnabled === false ? false : true,
   )
-  /** Wordmark width as % of content column (15–100). Height follows aspect ratio. */
+  const clampW = (n: number) => Math.min(100, Math.max(15, Math.round(n)))
+  /** Desktop wordmark width as % of content column (15–100). Height follows aspect ratio. */
   const [logoWidthPercent, setLogoWidthPercent] = useState<number>(() => {
-    const clampW = (n: number) => Math.min(100, Math.max(15, Math.round(n)))
     if (typeof currentValue.logoWidthPercent === 'number' && Number.isFinite(currentValue.logoWidthPercent)) {
       return clampW(currentValue.logoWidthPercent)
     }
@@ -60,6 +60,17 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       if (m) return clampW((Number(m[1]) / 48) * 100)
     }
     return 55
+  })
+  /** Mobile wordmark width — separate because desktop % looks tiny on a phone column. */
+  const [logoWidthPercentMobile, setLogoWidthPercentMobile] = useState<number>(() => {
+    if (
+      typeof currentValue.logoWidthPercentMobile === 'number' &&
+      Number.isFinite(currentValue.logoWidthPercentMobile)
+    ) {
+      return clampW(currentValue.logoWidthPercentMobile)
+    }
+    // Sensible first paint: nearly full content width on phones (matches original wordmark feel).
+    return 90
   })
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
@@ -79,6 +90,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageOpacity,
       bootSequenceEnabled,
       logoWidthPercent,
+      logoWidthPercentMobile,
     }),
     [
       headline,
@@ -92,6 +104,7 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
       backgroundImageOpacity,
       bootSequenceEnabled,
       logoWidthPercent,
+      logoWidthPercentMobile,
     ],
   )
 
@@ -163,41 +176,91 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
           </button>
         ) : null}
 
-        <div className="space-y-2 pt-1">
-          <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
-            Wordmark width:{' '}
-            <span className="text-zinc-300 font-mono">{logoWidthPercent}%</span>
-            <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
-              of content column
-            </span>
-          </label>
-          <SliderPrimitive.Root
-            min={15}
-            max={100}
-            step={1}
-            value={[logoWidthPercent]}
-            onValueChange={([v]) => setLogoWidthPercent(v)}
-            className="relative flex items-center w-full touch-none select-none h-5"
-            aria-label="Hero wordmark width percent"
-          >
-            <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
-              <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
-            </SliderPrimitive.Track>
-            <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
-          </SliderPrimitive.Root>
+        <div className="space-y-4 pt-1">
           <p className="text-xs text-zinc-500">
             Width as % of the content column (page margins only). Height scales with the image aspect
-            ratio — no max-height. 100% = full content width. Use a high-res upload for sharp large sizes.
+            ratio — no max-height. Desktop and mobile are separate: one value cannot look right on both.
           </p>
-          {/* Live preview: width % of preview panel, aspect preserved, centered */}
-          <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
-            <div className="flex w-full items-center justify-center">
-              <img
-                src={resolvedLogoPreview}
-                alt=""
-                className="h-auto object-contain brightness-110"
-                style={{ width: `${logoWidthPercent}%`, maxWidth: '100%' }}
-              />
+
+          <div className="space-y-2">
+            <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
+              Desktop width:{' '}
+              <span className="text-zinc-300 font-mono">{logoWidthPercent}%</span>
+              <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
+                (md and up)
+              </span>
+            </label>
+            <SliderPrimitive.Root
+              min={15}
+              max={100}
+              step={1}
+              value={[logoWidthPercent]}
+              onValueChange={([v]) => setLogoWidthPercent(v)}
+              className="relative flex items-center w-full touch-none select-none h-5"
+              aria-label="Hero wordmark desktop width percent"
+            >
+              <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
+                <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
+              </SliderPrimitive.Track>
+              <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
+            </SliderPrimitive.Root>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-xs text-zinc-400 font-semibold uppercase tracking-widest">
+              Mobile width:{' '}
+              <span className="text-zinc-300 font-mono">{logoWidthPercentMobile}%</span>
+              <span className="text-zinc-600 font-normal normal-case tracking-normal ml-1">
+                (phones)
+              </span>
+            </label>
+            <SliderPrimitive.Root
+              min={15}
+              max={100}
+              step={1}
+              value={[logoWidthPercentMobile]}
+              onValueChange={([v]) => setLogoWidthPercentMobile(v)}
+              className="relative flex items-center w-full touch-none select-none h-5"
+              aria-label="Hero wordmark mobile width percent"
+            >
+              <SliderPrimitive.Track className="relative h-1 grow rounded-full bg-zinc-700">
+                <SliderPrimitive.Range className="absolute h-full rounded-full bg-red-500" />
+              </SliderPrimitive.Track>
+              <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
+            </SliderPrimitive.Root>
+            <p className="text-xs text-zinc-500">
+              Phones are a narrow column — 85–100% usually matches the old full-width wordmark feel.
+              Desktop can stay lower (e.g. 55–70%) without shrinking mobile.
+            </p>
+          </div>
+
+          {/* Live previews: desktop + mobile % of their preview rails */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500">Desktop preview</p>
+              <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
+                <div className="flex w-full items-center justify-center">
+                  <img
+                    src={resolvedLogoPreview}
+                    alt=""
+                    className="h-auto object-contain brightness-110"
+                    style={{ width: `${logoWidthPercent}%`, maxWidth: '100%' }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500">Mobile preview</p>
+              <div className="mx-auto flex max-w-[14rem] justify-center rounded border border-zinc-800 bg-zinc-950/80 p-3">
+                <div className="flex w-full items-center justify-center">
+                  <img
+                    src={resolvedLogoPreview}
+                    alt=""
+                    className="h-auto object-contain brightness-110"
+                    style={{ width: `${logoWidthPercentMobile}%`, maxWidth: '100%' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

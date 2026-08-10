@@ -83,17 +83,20 @@ File: `app/_components/public/SiteFooter.tsx`.
 
 | Do | Don't |
 |----|--------|
-| Size by **width %** of content column (`logoWidthPercent` → `--hero-logo-width`) | Max-height slider / `max-height` caps that fight wide wordmarks |
-| `width: 100%` of that box, `height: auto` — preserve aspect ratio | Stretch / force height boxes |
+| Size by **width %** of content column — **desktop and mobile separately** (`logoWidthPercent` → `--hero-logo-width`, `logoWidthPercentMobile` → `--hero-logo-width-mobile`) | One shared % for all breakpoints (desktop-tuned values look tiny on phones) |
+| Mobile-first CSS: default to mobile var, `md+` switches to desktop var | Inline `style.width` that fights the media query |
+| `width: 100%` of that box, `height: auto` — preserve aspect ratio | Stretch / force height boxes / max-height caps |
 | Crop/export at **source resolution** (`resolveSourceScale` + `maxOutputDimension`, e.g. 4096) | Export at editor UI viewport (~420px) → pixelated large logos |
 | Center in stage (`flex` + margin auto on glitch box) | Absolute logo over the nav |
 | Boot HUD **`position: absolute`** under the logo box | In-flow HUD that shifts/pushes the logo when the bar appears |
 | Boot sequence: short filmic one-shot (~1.1s) when **stage is in view** | Page-level loader for the wordmark |
 | Toggle: Look & Feel → Hero → `bootSequenceEnabled` | RGB ghost layers over the mark |
 
+**Defaults:** desktop ~55%; mobile unset → `max(desktop, 90)` so existing desktop-only saves still nearly fill the phone column. Admin: Look & Feel → Hero has two sliders.
+
 Files: `app/_components/public/HeroSection.tsx`, `styles/components.css` (`.hero-logo-stage`, `.hero-logo-glitch`, `.hero-logo-boot*`), admin `HeroConfigEditor.tsx`.
 
-Regression: `src/test/public-component-restoration.test.tsx` (width CSS var; pending until in view; skip when disabled).
+Regression: `src/test/public-component-restoration.test.tsx` (desktop + mobile CSS vars; pending until in view; skip when disabled).
 
 ---
 

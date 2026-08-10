@@ -161,7 +161,25 @@ describe('restored public homepage components', () => {
     const stage = container.querySelector('.hero-logo-stage') as HTMLElement | null
     expect(stage).toBeTruthy()
     expect(stage?.style.getPropertyValue('--hero-logo-width')).toBe('80%')
+    // Unset mobile → max(desktop, 90) so desktop-only configs still fill phones
+    expect(stage?.style.getPropertyValue('--hero-logo-width-mobile')).toBe('90%')
     expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
+  })
+
+  it('applies separate mobile and desktop hero width vars', () => {
+    const { container } = renderWithLocale(
+      <HeroSection
+        headline="ZARDONIC"
+        logoWidthPercent={65}
+        logoWidthPercentMobile={95}
+        bootSequenceEnabled={false}
+      />,
+    )
+
+    const stage = container.querySelector('.hero-logo-stage') as HTMLElement | null
+    expect(stage).toBeTruthy()
+    expect(stage?.style.getPropertyValue('--hero-logo-width')).toBe('65%')
+    expect(stage?.style.getPropertyValue('--hero-logo-width-mobile')).toBe('95%')
   })
 
   it('restores the bio expand/collapse mask behaviour', () => {

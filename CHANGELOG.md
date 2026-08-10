@@ -9,9 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Hero wordmark mobile vs desktop width**: one width % cannot look right on both breakpoints (desktop ~65% → tiny on phone). Admin now has **Desktop width** + **Mobile width** (`logoWidthPercent` / `logoWidthPercentMobile`). CSS is mobile-first; unset mobile defaults to `max(desktop, 90%)` so existing saves still nearly fill the phone column.
 - **Admin image upload 413 / React #441**: crop editor exported full-res **PNG**, which often inflated a ~600 KB source past Next’s **1 MB Server Action body limit** (`Body exceeded 1 MB limit` on `/admin/site-config`). Export now prefers **WebP** with size-downscale, body limit raised to **4 MB**, and clearer client error messages.
 - **Hero/logo crop export resolution**: crop editor no longer exports at the ~420px UI viewport size; export uses source-pixel scale (capped at maxOutputDimension, e.g. 4096 for hero). Fixes pixelated large wordmarks — re-upload required for already-saved low-res crops.
-- **Hero wordmark size**: admin slider is **width %** of the content column (`logoWidthPercent`, 15–100); height follows aspect ratio with **no max-height**. Centered in the hero. Legacy `logoMaxHeightRem` maps roughly to %.
+- **Hero wordmark size**: admin sliders are **width %** of the content column (desktop + mobile, 15–100); height follows aspect ratio with **no max-height**. Centered in the hero. Legacy `logoMaxHeightRem` maps roughly to desktop %.
 - **Background video scroll scrub**: Lenis adapter no longer freezes `scroll` at attach time; uses live `getScroll` / `getProgress` so scrubbing moves with the page again.
 - **Public i18n chrome**: section titles, hero CTAs, bio/gigs/credits/contact UI strings use `t()` + `resolveSectionHeading` (custom admin labels still win).
 - **Hero boot layout**: load bar / HUD is `position: absolute` under the logo — no longer pushes the wordmark up while booting.

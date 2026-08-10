@@ -986,7 +986,8 @@
  * - HUD is position:absolute under the stage — must NOT shift the logo (flex-centered hero)
  * - Class applied client-side after paint so hydrate does not double-play
  *
- * Sizing: admin controls WIDTH only (--hero-logo-width as % of content column).
+ * Sizing: admin controls WIDTH only as % of content column.
+ * Mobile and desktop are separate vars — one % cannot look right on both.
  * Height follows intrinsic aspect ratio (no max-height). Centered in the stage.
  */
 .hero-logo-stage {
@@ -999,15 +1000,22 @@
   margin-inline: auto;
 }
 
-/* Width box: % of content column (px-card margins on parent). Height = auto via img. */
+/* Width box: mobile-first (phone column). Height = auto via img. */
 .hero-logo-glitch {
   position: relative;
   display: block;
-  width: var(--hero-logo-width, 55%);
+  width: var(--hero-logo-width-mobile, var(--hero-logo-width, 90%));
   max-width: 100%;
   height: auto;
   margin-inline: auto;
   flex-shrink: 0;
+}
+
+/* Desktop / tablet: use the desktop width % (often lower than mobile). */
+@media (min-width: 768px) {
+  .hero-logo-glitch {
+    width: var(--hero-logo-width, 55%);
+  }
 }
 
 .hero-logo-glitch img,
