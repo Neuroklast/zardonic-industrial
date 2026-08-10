@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
-- **Hero wordmark scale**: remove hard `56rem` stage width cap; logo can grow to full content column width (page `px-card` margins only). Admin height slider still drives max-height; mobile keeps `42vh` LCP cap.
+- **Hero wordmark scale**: sizing box (full content width × admin height) with `object-fit: contain` so logos **upscale** toward page width; removed hard `56rem` stage cap. Mobile keeps `42vh` LCP box cap.
+- **Hero boot layout**: load bar / HUD is `position: absolute` under the logo — no longer pushes the wordmark up while booting.
 - **Hero boot timing**: wordmark entrance starts when the hero stage is **in view** (`IntersectionObserver`), not on page mount alone — still the short logo boot (scan + HUD under image), not a page-level loader.
 
 ### Performance

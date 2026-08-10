@@ -9,7 +9,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 
 - [ ] Hero loads; primary CTAs visible and tappable (min 44px)
 - [ ] Hero wordmark boot (~1s scan + mini bar under logo) plays when hero is on-screen; not a full-page loader
-- [ ] Hero size slider: large rem values can fill content width (page margins only); no ~900px artificial cap
+- [ ] Boot load bar does **not** shift the logo upward (HUD absolute under logo)
+- [ ] Hero size slider: large rem values grow/upscale toward full content width (not stuck at intrinsic px size)
 - [ ] Nav logo full size; every section has a desktop **icon** (BIO not missing)
 - [ ] Desktop: hover/focus icon → glitch to short label; mobile: icon + text
 - [ ] Hover labels are short (Bio / Releases / …), not full section titles

@@ -185,18 +185,22 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
             <SliderPrimitive.Thumb className="block size-4 rounded-full border border-red-500 bg-zinc-900 shadow focus:outline-none cursor-grab" />
           </SliderPrimitive.Root>
           <p className="text-xs text-zinc-500">
-            Max height on the homepage (6–48rem ≈ {6 * 16}–{48 * 16}px). Width scales with the image aspect
-            ratio up to the full content column (page margins only — no fixed pixel width cap). Use a
-            high-res upload for sharp large sizes. On mobile the height is also capped at ~42vh for LCP.
+            Display size (6–48rem ≈ {6 * 16}–{48 * 16}px box height). The wordmark scales up inside a
+            full-width box so wider marks grow toward the full content column (page margins only).
+            Use a high-res upload for sharp large sizes. Mobile also caps at ~42vh for LCP.
           </p>
-          {/* Live size preview (plain img — admin only, no Next Image optimizer) */}
+          {/* Live size preview — same box model as public hero */}
           <div className="flex justify-center rounded border border-zinc-800 bg-zinc-950/80 p-4">
-            <img
-              src={resolvedLogoPreview}
-              alt=""
-              className="mx-auto h-auto w-auto max-w-full object-contain brightness-110"
-              style={{ maxHeight: `${logoMaxHeightRem}rem` }}
-            />
+            <div
+              className="flex w-full items-center justify-center"
+              style={{ height: `${logoMaxHeightRem}rem`, maxHeight: `${logoMaxHeightRem}rem` }}
+            >
+              <img
+                src={resolvedLogoPreview}
+                alt=""
+                className="max-h-full max-w-full object-contain brightness-110"
+              />
+            </div>
           </div>
         </div>
 

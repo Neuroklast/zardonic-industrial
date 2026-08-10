@@ -36,12 +36,18 @@ function applyHeroDraft(value: Record<string, unknown>) {
         : null
   document.querySelectorAll<HTMLImageElement>('[data-draft-target="hero-logo"]').forEach((img) => {
     img.src = logoUrl
-    if (logoMax) {
-      img.style.maxHeight = logoMax
-      img.style.setProperty('--hero-logo-max', logoMax)
-    }
   })
-  // Stage is width:100% of the content column — do not clamp stage height to the logo max.
+  // Sizing box = full content width × admin height (--hero-logo-max). Do not pin img maxHeight alone.
+  if (logoMax) {
+    document.querySelectorAll<HTMLElement>('.hero-logo-stage').forEach((el) => {
+      el.style.setProperty('--hero-logo-max', logoMax)
+    })
+    document.querySelectorAll<HTMLElement>('.hero-logo-glitch').forEach((el) => {
+      el.style.setProperty('--hero-logo-max', logoMax)
+      el.style.height = logoMax
+      el.style.maxHeight = logoMax
+    })
+  }
 
   const heroBgEl = document.querySelector<HTMLElement>('[data-draft-target="hero-bg-image"]')
   if (heroBgEl) {

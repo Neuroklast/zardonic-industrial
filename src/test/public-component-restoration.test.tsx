@@ -143,6 +143,21 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.hero-boot-hud')).not.toBeInTheDocument()
   })
 
+  it('applies hero sizing box via --hero-logo-max (upscale path)', () => {
+    const { container } = render(
+      <HeroSection
+        headline="ZARDONIC"
+        logoMaxHeight="28rem"
+        bootSequenceEnabled={false}
+      />,
+    )
+
+    const stage = container.querySelector('.hero-logo-stage') as HTMLElement | null
+    expect(stage).toBeTruthy()
+    expect(stage?.style.getPropertyValue('--hero-logo-max')).toBe('28rem')
+    expect(container.querySelector('.hero-logo-glitch')).toBeInTheDocument()
+  })
+
   it('restores the bio expand/collapse mask behaviour', () => {
     render(<BioSection content={'Line one\nLine two\nLine three'} />)
 
