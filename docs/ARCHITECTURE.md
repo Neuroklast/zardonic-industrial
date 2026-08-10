@@ -45,7 +45,9 @@ Admin uploads (images, video, favicon). URLs resolved through `lib/r2.ts` (`reso
 
 ### Upstash Redis (legacy `api/`)
 
-Rate limiting, security profiles, legacy KV endpoints — not the source of truth for public site content.
+Rate limiting for remaining root `api/*` serverless handlers (`image-proxy`, Odesli/Spotify/iTunes helpers, etc.) — not the source of truth for public site content.
+
+**Ops:** `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` must resolve to a live database. A deleted/renamed host yields DNS `ENOTFOUND`; legacy `applyRateLimit` then **fails closed (503)**. Public `/api/geo` does **not** use Redis (App Router only).
 
 ## Admin
 
@@ -81,7 +83,9 @@ Legacy `AdminPanel.tsx` / `cms/AdminShell.tsx` (KV-based) still exist in the rep
 
 ## App Router API routes
 
-Examples under `app/api/`: `bandsintown`, `gigs-sync`, `releases-track-enrich` (daily cron). Legacy handlers live under root `api/` for Vercel serverless compatibility.
+Examples under `app/api/`: `geo`, `bandsintown`, `gigs-sync`, `releases-track-enrich` (daily cron), `og`, `sitemap`, analytics, sync-jobs.
+
+**Route precedence:** On Vercel, a root `api/<name>.ts` Serverless Function can **shadow** `app/api/<name>/route.ts` for the same path. Do not keep both. Prefer App Router; delete the legacy file when a successor exists.
 
 Release enrichment stack: `lib/release-enrichment.ts`, `lib/release-streaming-enrichment.ts`, `lib/odesli.ts` — see [agent/architecture.md](./agent/architecture.md).
 

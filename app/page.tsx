@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
+import { splitGigsByDate } from '@/lib/gig-browse'
 import { PageLayout } from '@/layouts/PageLayout'
 import { CookieConsent } from '@/components/CookieConsent'
 import KonamiListener from '@/components/KonamiListener'
@@ -93,7 +94,7 @@ interface NewsPostRow {
 }
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
-async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>): Promise<ReleaseRow[]> {
+async function fetchReleases(supabase: ReturnType<typeof createPublicClient>): Promise<ReleaseRow[]> {
   const fullSelect =
     'id, title, type, release_date, description, cover_storage_path, cover_url, streaming_links, artists, tracks, custom_links, manually_edited'
   const legacySelect =
@@ -123,19 +124,22 @@ async function fetchReleases(supabase: Awaited<ReturnType<typeof createClient>>)
     return []
   }
 
-  return (fallbackData ?? []).map((row: Partial<ReleaseDbRow>) => ({
+  // Dynamic select strings are not const-literal-parsed by supabase-js generics
+  const rows = (fallbackData ?? []) as Partial<ReleaseDbRow>[]
+  return rows.map((row) => ({
     ...(row as ReleaseDbRow),
     description: null,
     artists: [],
     tracks: [],
     custom_links: [],
-    manually_edited: 'manually_edited' in row ? !!(row as ReleaseDbRow).manually_edited : false,
+    manually_edited: 'manually_edited' in row ? !!row.manually_edited : false,
   }))
 }
 
 async function fetchAll() {
   try {
-    const supabase = await createClient()
+    // Cookie-less anon client: public content must not fail on admin JWT clock skew
+    const supabase = createPublicClient()
 
     const [
       configResult,
@@ -150,7 +154,8 @@ async function fetchAll() {
       newsResult,
     ] = await Promise.all([
       supabase.from('site_config').select('key, value'),
-      supabase.from('bio').select('content').limit(1).single(),
+      // maybeSingle: empty bio table is not an error (single() would log PGRST116)
+      supabase.from('bio').select('content').limit(1).maybeSingle(),
       supabase.from('gigs').select('id, title, venue, city, country, event_date, ticket_url, festival_name, description').eq('active', true).order('event_date', { ascending: true }),
       supabase.from('partners').select('id, name, url, logo_storage_path, logo_url, category, logo_white').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('music_highlights').select('id, title, youtube_url, description').eq('active', true).order('display_order', { ascending: true }),
@@ -371,10 +376,8 @@ export default async function HomePage({
     imageUrl: resolveImageUrl(row.storage_path, row.image_url),
   })
 
-  // Gigs: split upcoming vs past
-  const now = new Date()
-  const upcoming = gigs.filter((g) => new Date(g.event_date) >= now)
-  const past = gigs.filter((g) => new Date(g.event_date) < now).reverse()
+  // Gigs: split upcoming vs past (shared helper — same rules as /gigs browse)
+  const { upcoming, past } = splitGigsByDate(gigs)
 
   // Helper: is a section visible in the saved site config?
   function isSectionVisible(id: string) {

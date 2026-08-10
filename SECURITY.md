@@ -53,12 +53,13 @@ All API inputs are validated through strict [Zod](https://zod.dev/) schemas (`ap
 - **Security Settings**: All settings type-checked and range-bounded
 
 ### Rate Limiting
-All API endpoints are protected by rate limiting (`api/_ratelimit.ts`):
+Legacy root `api/*` handlers use `api/_ratelimit.ts` (Upstash Redis):
 - **Algorithm**: Sliding window — 30 requests per 60 seconds per client
-- **Backend**: Upstash Redis (`@upstash/redis`)
+- **Backend**: Upstash Redis via `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
 - **GDPR Compliance**: Client IPs are hashed with SHA-256 + a secret salt before use as rate-limit keys. No plaintext IPs are stored. Rate-limit state auto-expires after the window period.
-- **Response**: HTTP 429 `Too Many Requests` when the limit is exceeded
-- **Graceful Degradation**: If Redis is unavailable, requests are allowed through
+- **Response**: HTTP 429 when the limit is exceeded; **HTTP 503 fail-closed** when Redis is configured but unreachable (e.g. DNS `ENOTFOUND` for a deleted database). Fix env vars — do not re-enable by removing rate limits on security-sensitive routes.
+- **Not configured**: if both Upstash env vars are absent, rate limiting is skipped (local dev).
+- **App Router**: public forms use `lib/server-rate-limit.ts` (fail-open on Redis errors). `/api/geo` has no Redis dependency (`app/api/geo/route.ts` only).
 
 ### SSRF Protection (Image Proxy)
 Implemented in `lib/ssrf-guard.ts` (used by `api/image-proxy.ts` and `api/image-proxy-protected.ts`):

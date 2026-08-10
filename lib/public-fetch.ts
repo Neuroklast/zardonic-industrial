@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import type { PublicGigRow } from '@/lib/gig-public-mapper'
 import {
@@ -20,7 +20,7 @@ export interface PublicReleaseCardItem {
 }
 
 export async function fetchPublicReleaseRows(): Promise<ReleaseDbRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const fullSelect =
     'id, title, type, release_date, description, cover_storage_path, cover_url, streaming_links, artists, tracks, custom_links, manually_edited'
   const legacySelect =
@@ -50,13 +50,15 @@ export async function fetchPublicReleaseRows(): Promise<ReleaseDbRow[]> {
     return []
   }
 
-  return (fallbackData ?? []).map((row: Partial<ReleaseDbRow>) => ({
+  // Dynamic select strings are not const-literal-parsed by supabase-js generics
+  const rows = (fallbackData ?? []) as Partial<ReleaseDbRow>[]
+  return rows.map((row) => ({
     ...(row as ReleaseDbRow),
     description: null,
     artists: [],
     tracks: [],
     custom_links: [],
-    manually_edited: 'manually_edited' in row ? !!(row as ReleaseDbRow).manually_edited : false,
+    manually_edited: 'manually_edited' in row ? !!row.manually_edited : false,
   }))
 }
 
@@ -85,7 +87,7 @@ export async function fetchPublicReleaseCardItems(): Promise<PublicReleaseCardIt
 }
 
 export async function fetchPublicGigs(): Promise<PublicGigRow[]> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data, error } = await supabase
     .from('gigs')
     .select('id, title, venue, city, country, event_date, ticket_url, festival_name, description')
@@ -102,7 +104,7 @@ export async function fetchPublicGigs(): Promise<PublicGigRow[]> {
 
 export async function fetchPublicArtistName(): Promise<string> {
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('site_config')
       .select('value')

@@ -44,7 +44,19 @@ Prefer **EU regions** where the product allows (Supabase project region, R2 loca
 - Spotify/YouTube embeds load only after two-click consent
 - SoundCloud is link-only (no auto embed)
 
-## 5. Production verify
+## 5. Upstash Redis (legacy rate limits)
+
+If production logs show `Rate limit check failed` + `ENOTFOUND …upstash.io`:
+
+1. Open [Upstash Console](https://console.upstash.com/) → create or restore a Redis database (free tier is enough for rate limits)
+2. Copy **REST URL** + **REST TOKEN**
+3. Vercel → Project → Settings → Environment Variables → set:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+4. Redeploy production (env changes do not apply to the live deployment until redeploy)
+5. Confirm `GET /api/geo` returns 200 (App Router path — no Redis). Hit a remaining legacy proxy (e.g. `/api/odesli`) only after Redis is live if you still use those routes
+
+## 6. Production verify
 
 1. Deploy SHA matches expected `main` merge
 2. Hard refresh (Ctrl+Shift+R)

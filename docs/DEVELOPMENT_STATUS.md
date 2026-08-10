@@ -15,7 +15,8 @@
 | Admin (`/admin/*`) | Functional — Supabase Auth; Look & Feel **Desktop/Mobile** live preview |
 | Content DB | Supabase (`supabase/schema.sql`) |
 | Media | Cloudflare R2 (WebP crop uploads, 4 MB body limit) |
-| Legacy `api/` | Slim — image proxies, Odesli/Spotify/iTunes/Bandsintown helpers, rate limiting |
+| Legacy `api/` | Slim — image proxies, Odesli/Spotify/iTunes/Bandsintown helpers, rate limiting (needs live Upstash) |
+| Public geo | App Router (`app/api/geo`) — no Redis; do not reintroduce `api/geo.ts` |
 | OG / sitemap | App Router (`app/api/og`, `app/api/sitemap`) |
 | Tests | Vitest — 700+ tests (`npm run test`) |
 | Tech debt | [TECH_DEBT_TRACKER.md](./TECH_DEBT_TRACKER.md) — 5 post-launch items open |
