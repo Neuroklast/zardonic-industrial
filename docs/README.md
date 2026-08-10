@@ -1,6 +1,6 @@
 # Documentation Index
 
-> **Last updated:** 2026-08-09  
+> **Last updated:** 2026-08-10  
 > **Stack:** Next.js App Router · Supabase · Cloudflare R2 · Resend
 
 ## Start here

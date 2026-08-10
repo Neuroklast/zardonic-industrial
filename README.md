@@ -26,7 +26,7 @@ A cyberpunk-themed artist website for **ZARDONIC**, built on **Next.js App Route
 
 ### Public Site
 - **3D Loading Screen** — Three.js model loading with real progress tracking and IndexedDB image pre-caching
-- **Glitch Logo** — Hero logo with chromatic aberration RGB channel separation and jitter effects
+- **Hero wordmark** — Configurable image logo with separate **desktop / mobile width %**, short filmic boot when in view, aspect ratio preserved (no max-height)
 - **Cyberpunk UI** — Scanline overlays, CRT effects, noise grain, circuit board background (all toggleable)
 - **Spotify Integration** — GDPR-compliant two-click embedded Spotify player with dynamic CI colour-theming
 - **LLM Discoverability** — `public/llm.txt` served at `/llm.txt`
@@ -42,6 +42,8 @@ A cyberpunk-themed artist website for **ZARDONIC**, built on **Next.js App Route
 ### Admin CMS
 Access the admin at `/admin/login` using Supabase Auth; protected routes require `profiles.role = admin`.
 
+- **Look & Feel live preview** — Split pane with **Desktop / Mobile** iframe widths (mobile = 390px) so media queries match a phone; draft changes before Save
+- **Hero editor** — Wordmark upload (high-res WebP crop), independent desktop/mobile width sliders, boot sequence toggle
 - **Section Visibility** — Show/hide any section (Bio, Music, Gigs, Releases, Gallery, Connect, Credits)
 - **Theme Customization** — Colors, fonts, and favicon uploads stored in R2
 - **Animation Controls** — Toggle glitch, scanline, chromatic, CRT, noise, and circuit effects

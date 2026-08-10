@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **Look & Feel live preview device toggle**: split preview header has **Desktop / Mobile** — mobile constrains the iframe to 390px so media queries (hero mobile width, nav, etc.) match a phone without resizing the admin window.
 
+### Documentation
+- README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
+
 ### Fixed
 - **Hero wordmark mobile vs desktop width**: one width % cannot look right on both breakpoints (desktop ~65% → tiny on phone). Admin now has **Desktop width** + **Mobile width** (`logoWidthPercent` / `logoWidthPercentMobile`). CSS is mobile-first; unset mobile defaults to `max(desktop, 90%)` so existing saves still nearly fill the phone column.
 - **Admin image upload 413 / React #441**: crop editor exported full-res **PNG**, which often inflated a ~600 KB source past Next’s **1 MB Server Action body limit** (`Body exceeded 1 MB limit` on `/admin/site-config`). Export now prefers **WebP** with size-downscale, body limit raised to **4 MB**, and clearer client error messages.
@@ -26,7 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **BackgroundStack policy**: mobile / image / video / heavy types → `perfMode`; stars/minimal stay full quality on desktop without media. Both public + `components/BackgroundStack` parity.
 - **CircuitBackground**: `perfMode` zeros parallax range, thins depth-3 nodes, slows pulse spawn.
 - **Global FX mobile-lite**: quieter noise/chroma; no periodic noise glitch class on mobile (`global-fx-lite`).
-- **Hero mobile logo cap**: `max-height: min(admin, 42vh)` under 768px so large admin sizes do not dominate LCP.
+- **Hero mobile sizing**: use separate mobile width % (not a max-height cap); large square logos are controlled by width on phones.
 - **3D ModelBackground**: low-power preference in perfMode, antialias off, frame-budgeted render loop, full dispose on unmount.
 - **Scroll-video**: still coalesced via `attachScrollVideoSync` (~1/48s); animated overlays always perfMode when video is active. Operator: prefer faststart MP4 for scrub.
 
