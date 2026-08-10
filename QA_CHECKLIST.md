@@ -37,6 +37,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 
 - [ ] Login works; protected routes redirect when logged out
 - [ ] Site config / sections draft does not break public nav labels
+- [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
+- [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
 - [ ] Legal admin saves and public pages reflect changes after revalidate
 

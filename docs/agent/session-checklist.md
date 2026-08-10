@@ -45,5 +45,7 @@
 | Gallery modal | `GallerySection` + `CyberpunkOverlay` + `GalleryOverlayContent` | Same shell as releases/events |
 | Partner PNG white box | `lib/partner-logo-white.ts`, `CreditsSection.tsx` | Canvas silhouette; no CSS invert on white plates |
 | Overlay scroll lock | `CyberpunkOverlay.tsx` | Body + html overflow + Lenis stop/start |
+| Hero wordmark size | `HeroSection.tsx`, `HeroConfigEditor.tsx` | Separate **desktop** + **mobile** width % (`logoWidthPercent` / `logoWidthPercentMobile`); never one shared % |
+| Look & Feel preview device | `AdminPreviewPane.tsx` | Desktop / Mobile toggle constrains iframe (390px) so media queries fire |
 
 Full historical notes: [LESSONS_LEARNED.md](../LESSONS_LEARNED.md).

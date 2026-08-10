@@ -37,6 +37,7 @@ This document records lessons learned during development sessions. Every coding 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
 | 2026-08-10 | grok/hero-logo-mobile-width | Grok | A single hero wordmark width % cannot serve desktop and mobile: phone content columns are narrow, so a desktop-tuned value (e.g. 65%) looks “way too small” while height is fine. Always expose **separate desktop/mobile width %** (or mobile-first CSS vars); never assume one % is responsive. | UX/a11y | 🟠 High |
+| 2026-08-10 | grok/admin-preview-device | Grok | Admin live preview must offer a **device width toggle** (iframe ~390px for mobile). Resizing the admin window or using only desktop pane width does not exercise phone media queries (hero mobile width, mobile nav). | UX/a11y | 🟡 Medium |
 | 2026-08-09 | grok/nav-icon-glitch | Grok | Always-visible text nav labels still push BIO off-screen with many sections. Desktop: icon-only row + hover glitch to short label; mobile: icon+text. | UX/a11y | 🟠 High |
 | 2026-08-09 | grok/public-ui-firefight | Grok | Claiming “fixed” while the PR is still open leaves the user on broken Production. Definition of done = merge + Vercel Production SHA + hard-refresh verify. | Process | 🔴 Critical |
 | 2026-08-09 | grok/public-ui-firefight | Grok | Absolute-positioned nav logo + padding “slot” still lets BIO/labels sit under the wordmark when items overflow. Logo must stay a flex `shrink-0` sibling. | UX/a11y | 🔴 Critical |

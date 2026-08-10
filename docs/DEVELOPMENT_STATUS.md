@@ -1,19 +1,20 @@
 # Development Status
 
-> **Last updated:** 2026-08-09  
-> **Phase:** Pre-launch — App Router + Supabase; audit remediation (legal/fonts/a11y)
+> **Last updated:** 2026-08-10  
+> **Phase:** Pre-launch — App Router + Supabase; public UI polish + Look & Feel preview
 
 ## Quick status
 
 | Area | Status |
 |------|--------|
 | Public site (`app/page.tsx`) | Functional — Supabase-driven sections |
+| Hero wordmark | Desktop + mobile width %; filmic boot when in view; high-res crop export |
 | Legal pages | `/legal-notice`, `/privacy-policy` EN+DE + `/admin/legal` completeness |
 | Fonts | Self-hosted `next/font` (no Google CDN runtime) |
 | E2E smoke | Playwright `e2e/smoke.spec.ts` |
-| Admin (`/admin/*`) | Functional — Supabase Auth |
+| Admin (`/admin/*`) | Functional — Supabase Auth; Look & Feel **Desktop/Mobile** live preview |
 | Content DB | Supabase (`supabase/schema.sql`) |
-| Media | Cloudflare R2 |
+| Media | Cloudflare R2 (WebP crop uploads, 4 MB body limit) |
 | Legacy `api/` | Slim — image proxies, Odesli/Spotify/iTunes/Bandsintown helpers, rate limiting |
 | OG / sitemap | App Router (`app/api/og`, `app/api/sitemap`) |
 | Tests | Vitest — 700+ tests (`npm run test`) |
@@ -22,6 +23,7 @@
 ## Public features
 
 - [x] Hero, bio, releases, gigs, gallery, merch, soundpacks, partners
+- [x] Hero wordmark: separate desktop/mobile width, aspect-preserving, boot HUD absolute
 - [x] Music highlights, contact (Resend server action), newsletter (Supabase)
 - [x] Cookie consent + privacy policy link
 - [x] Legal Notice & Privacy Policy (English, `site_config.legal`)
@@ -34,6 +36,8 @@
 
 - [x] Supabase login, role-gated routes
 - [x] Site config, sections, appearance, legal editor
+- [x] Look & Feel split preview with Desktop / Mobile iframe width toggle
+- [x] Hero dual width sliders + high-res WebP crop export
 - [x] CRUD for releases, gigs, gallery, partners, etc.
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
 - [x] Data import/export + **data maintenance** (purge/sync, track enrichment)

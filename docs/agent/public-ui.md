@@ -94,7 +94,9 @@ File: `app/_components/public/SiteFooter.tsx`.
 
 **Defaults:** desktop ~55%; mobile unset → `max(desktop, 90)` so existing desktop-only saves still nearly fill the phone column. Admin: Look & Feel → Hero has two sliders.
 
-Files: `app/_components/public/HeroSection.tsx`, `styles/components.css` (`.hero-logo-stage`, `.hero-logo-glitch`, `.hero-logo-boot*`), admin `HeroConfigEditor.tsx`.
+**Preview:** Look & Feel split pane **Desktop / Mobile** (`AdminPreviewPane`) — mobile iframe is 390px so phone media queries apply without resizing the admin window.
+
+Files: `app/_components/public/HeroSection.tsx`, `styles/components.css` (`.hero-logo-stage`, `.hero-logo-glitch`, `.hero-logo-boot*`), admin `HeroConfigEditor.tsx`, `AdminPreviewPane.tsx`.
 
 Regression: `src/test/public-component-restoration.test.tsx` (desktop + mobile CSS vars; pending until in view; skip when disabled).
 

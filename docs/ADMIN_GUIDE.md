@@ -1,6 +1,6 @@
 # Admin Guide
 
-> **Last updated:** 2026-06-24
+> **Last updated:** 2026-08-10
 
 The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabase user that has `profiles.role = 'admin'`.
 
@@ -13,7 +13,7 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Section | Path | Purpose |
 |---------|------|---------|
 | Dashboard | `/admin` | Overview |
-| Site Config | `/admin/site-config` | Hero, background, appearance, footer URLs |
+| Site Config (Look & Feel) | `/admin/site-config` | Hero, background, appearance, footer URLs + **live preview** |
 | Legal & Privacy | `/admin/legal` | Operator details, privacy policy override |
 | Biography | `/admin/bio` | Bio text |
 | Gallery | `/admin/gallery` | Images |
@@ -23,6 +23,33 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Data | `/admin/data` | Import/export + **data maintenance** |
 
 Full nav is in `app/admin/_config/nav-groups.ts`.
+
+## Look & Feel live preview
+
+On **Site Config**, the split preview pane:
+
+| Control | What it does |
+|---------|----------------|
+| **Editor only / Split preview** | Hide or show the public site iframe |
+| **Desktop / Mobile** | Mobile constrains the iframe to **390px** so CSS media queries match a phone (hero mobile width, mobile nav, etc.) without resizing the admin window |
+| **Refresh** | Reload the iframe and re-broadcast drafts |
+| **New tab** | Open `/?adminPreview=1` full size |
+
+Draft edits (hero, theme, background, …) appear in the preview **before Save**. Production only updates after **Save** (~60s cache revalidate).
+
+## Hero wordmark
+
+**Look & Feel → Hero** (`site_config.hero`):
+
+| Field | Notes |
+|-------|--------|
+| Wordmark image | PNG/WebP with transparency; upload large sources (≥2000px) for sharp large sizes |
+| **Desktop width %** | Width of content column on `md+` (15–100); height follows aspect ratio |
+| **Mobile width %** | Separate phone width (often 85–100%). One % cannot look right on both breakpoints |
+| Boot sequence | Optional ~1.1s filmic entrance when the hero is on-screen |
+| Background overlay | Optional full-bleed image behind the wordmark only |
+
+If mobile width was never saved, the public site uses `max(desktop, 90%)` so phones still fill nearly full content width.
 
 ## Legal & Privacy (`/admin/legal`)
 
@@ -43,7 +70,7 @@ Public pages: `/legal-notice`, `/privacy-policy`.
 
 Images and video upload to **Cloudflare R2** via admin upload actions. URLs are stored as `*_storage_path` columns with optional legacy URL fallbacks.
 
-**Images (crop → upload):** The crop editor exports **WebP** (not full-res PNG) and the Server Action body limit is **4 MB** (`next.config` `experimental.serverActions.bodySizeLimit`). Source files may be up to 10 MB before crop; after export the payload must stay under ~3.5 MB. If upload fails with React error **#441** or **413**, the crop export was almost certainly too large for the previous 1 MB default — retry after deploy, or use a smaller source.
+**Images (crop → upload):** The crop editor exports **WebP** (not full-res PNG) and the Server Action body limit is **4 MB** (`next.config` `experimental.serverActions.bodySizeLimit`). Source files may be up to 10 MB before crop; after export the payload must stay under ~3.5 MB. If upload fails with React error **#441** or **413**, the crop export was almost certainly too large for the previous 1 MB default — retry after deploy, or use a smaller source. Hero crops export at **source resolution** (up to 4096px), not the editor viewport size.
 
 ## Data maintenance (`/admin/data`)
 
