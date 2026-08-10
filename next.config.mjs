@@ -44,6 +44,14 @@ const SECURITY_HEADERS = [
 ]
 
 const nextConfig = {
+  // Image crop export + FormData uploads go through Server Actions.
+  // Default is 1 MB; hero/logo full-res exports often exceed that after PNG inflate.
+  // Keep under Vercel serverless request body (~4.5 MB).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '4mb',
+    },
+  },
   async redirects() {
     return [
       { source: '/impressum', destination: '/legal-notice', permanent: true },

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ImageCropEditor } from '@/app/admin/_components/ImageCropEditor'
 import { submitOptimizedUpload } from '@/app/admin/_lib/submitOptimizedUpload'
+import { formatImageUploadError } from '@/lib/image-crop-export'
 import { shouldOpenImageEditor, type CropFitMode } from '@/lib/image-crop-math'
 import { REMOTE_IMAGE_MAX_BYTES } from '@/lib/remote-image-url'
 
@@ -44,6 +45,7 @@ export function ImageUploader({
   const [preview, setPreview] = useState<string | null>(currentUrl ?? null)
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorSrc, setEditorSrc] = useState<string | null>(null)
+  const [editorMime, setEditorMime] = useState<string | undefined>(undefined)
   const [pendingObjectUrl, setPendingObjectUrl] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -67,8 +69,7 @@ export function ImageUploader({
       setPreview(publicUrl || URL.createObjectURL(blob))
       onUpload(storagePath, publicUrl || undefined)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
-      onError?.(msg)
+      onError?.(formatImageUploadError(err))
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -78,6 +79,7 @@ export function ImageUploader({
   function closeEditor() {
     setEditorOpen(false)
     setEditorSrc(null)
+    setEditorMime(undefined)
     if (pendingObjectUrl) {
       URL.revokeObjectURL(pendingObjectUrl)
       setPendingObjectUrl(null)
@@ -106,6 +108,7 @@ export function ImageUploader({
       const objectUrl = URL.createObjectURL(file)
       setPendingObjectUrl(objectUrl)
       setEditorSrc(objectUrl)
+      setEditorMime(file.type)
       setEditorOpen(true)
       return
     }
@@ -142,11 +145,13 @@ export function ImageUploader({
         <ImageCropEditor
           open={editorOpen}
           imageSrc={editorSrc}
+          mimeType={editorMime}
           title="Adjust & crop image"
           aspectRatio={editorAspectRatio}
           fitMode={editorFitMode}
           maxOutputDimension={maxOutputDimension}
           onCancel={closeEditor}
+          onError={(msg) => onError?.(msg)}
           onConfirm={(blob) => {
             closeEditor()
             void uploadBlob(blob)

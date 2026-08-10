@@ -7,6 +7,7 @@ import { ImageCropEditor } from '@/app/admin/_components/ImageCropEditor'
 import { fetchRemoteImageForEdit } from '@/app/admin/_actions/fetchRemoteImageForEdit'
 import { cacheRemoteImageToR2 } from '@/app/admin/_actions/cacheRemoteImage'
 import { submitOptimizedUpload } from '@/app/admin/_lib/submitOptimizedUpload'
+import { formatImageUploadError } from '@/lib/image-crop-export'
 import { shouldOpenImageEditor, type CropFitMode } from '@/lib/image-crop-math'
 
 type SourceMode = 'upload' | 'url' | 'drive'
@@ -66,7 +67,7 @@ export function MediaSourcePicker({
       setStatus('Uploaded to R2 (optimized)')
       setLinkInput('')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
+      const msg = formatImageUploadError(err)
       setStatus(msg)
       onError?.(msg)
     } finally {
@@ -318,6 +319,10 @@ export function MediaSourcePicker({
           onCancel={() => {
             setEditorOpen(false)
             setEditorSrc(null)
+          }}
+          onError={(msg) => {
+            setStatus(msg)
+            onError?.(msg)
           }}
           onConfirm={(blob) => {
             setEditorOpen(false)
