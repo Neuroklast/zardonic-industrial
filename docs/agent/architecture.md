@@ -21,6 +21,8 @@ Shared helpers in [`lib/canvas-perf.ts`](../../lib/canvas-perf.ts):
 
 Heavy types: matrix, terminal, data-stream, glitch-grid, cloud-chamber, circuit, 3d-model, cyberpunk-hud. Stars/minimal stay full quality on desktop without media. Both BackgroundStacks pass the same policy.
 
+**Image vs video exclusivity (public `BackgroundStack`):** render the static background image only when `resolveActiveBackgroundVideoUrl` returns nothing for the current viewport. Active video must not leave the image layer at opacity underneath. Mobile `mobileVideoMode: 'off'` → image fallback on mobile while desktop video can remain on.
+
 ## PageLayout (required)
 
 Every public page uses [`layouts/PageLayout.tsx`](../../layouts/PageLayout.tsx). Slots:

@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
 
 ### Fixed
+- **Background image vs video stacking**: when desktop (or mobile) video is active, the static background image layer is hidden so image opacity cannot composite under the video. Video off / mobile “No video” falls back to the background image only on that viewport.
 - **Hero wordmark mobile vs desktop width**: one width % cannot look right on both breakpoints (desktop ~65% → tiny on phone). Admin now has **Desktop width** + **Mobile width** (`logoWidthPercent` / `logoWidthPercentMobile`). CSS is mobile-first; unset mobile defaults to `max(desktop, 90%)` so existing saves still nearly fill the phone column.
 - **Admin image upload 413 / React #441**: crop editor exported full-res **PNG**, which often inflated a ~600 KB source past Next’s **1 MB Server Action body limit** (`Body exceeded 1 MB limit` on `/admin/site-config`). Export now prefers **WebP** with size-downscale, body limit raised to **4 MB**, and clearer client error messages.
 - **Hero/logo crop export resolution**: crop editor no longer exports at the ~420px UI viewport size; export uses source-pixel scale (capped at maxOutputDimension, e.g. 4096 for hero). Fixes pixelated large wordmarks — re-upload required for already-saved low-res crops.

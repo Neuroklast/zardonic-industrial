@@ -160,9 +160,15 @@ export function BackgroundStack({
     })
   }, [activeVideoUrl, lenis])
 
+  // Image is only a fallback when no video is active for this viewport.
+  // When video plays, hide the image layer entirely so its opacity cannot
+  // composite under the video (desktop video on + mobile off → image only on mobile).
+  const showBackgroundImage = Boolean(imageUrl) && !activeVideoUrl
+  const hasMedia = showBackgroundImage || Boolean(activeVideoUrl)
+
   return (
     <>
-      {imageUrl ? (
+      {imageUrl && showBackgroundImage ? (
         <div
           className="fixed inset-0 pointer-events-none"
           style={{ zIndex: 'var(--z-bg-image)', opacity: imageOpacity }}
@@ -194,7 +200,6 @@ export function BackgroundStack({
             muted
             playsInline
             preload="auto"
-            poster={imageUrl}
             aria-hidden="true"
           />
           <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
@@ -203,12 +208,12 @@ export function BackgroundStack({
 
       <AnimatedLayer
         backgroundType={effectiveBackgroundType}
-        hasImage={Boolean(imageUrl) || Boolean(activeVideoUrl)}
+        hasImage={hasMedia}
         /* Shared policy: mobile / media / heavy types → frame-budgeted canvas layers */
         perfMode={resolveBackgroundPerfMode({
           isMobile,
           hasVideo: Boolean(activeVideoUrl),
-          hasImage: Boolean(imageUrl),
+          hasImage: showBackgroundImage,
           backgroundType: effectiveBackgroundType,
         })}
       />

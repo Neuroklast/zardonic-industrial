@@ -51,6 +51,18 @@ Draft edits (hero, theme, background, …) appear in the preview **before Save**
 
 If mobile width was never saved, the public site uses `max(desktop, 90%)` so phones still fill nearly full content width.
 
+## Background (image + video)
+
+**Look & Feel → Background** (`site_config.background`):
+
+| Control | Behaviour |
+|---------|-----------|
+| Background image | Static layer with opacity; shown only when **no** video is active for that viewport |
+| Desktop video ON/OFF | Master switch — off keeps the file but shows the image instead |
+| Mobile: Same / Separate / No video | “No video on mobile” uses the background image on phones while desktop can keep video |
+
+When video is playing, the image is not rendered underneath (no double-opacity stack).
+
 ## Legal & Privacy (`/admin/legal`)
 
 Stored in Supabase `site_config.legal`:

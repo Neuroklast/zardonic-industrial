@@ -26,6 +26,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Incomplete legal fields: admin checklist red + public notice; complete: no warning
 - [ ] Network: no request to fonts.googleapis.com / fonts.gstatic.com on cold load
 - [ ] Analytics Reject → no POST /api/analytics; Accept → events only after consent
+- [ ] Background: video ON → no static bg image layer under video; video OFF → image with opacity
+- [ ] Background: desktop video ON + mobile “No video” → video on desktop, image fallback on phone
 
 ## Public browse
 
