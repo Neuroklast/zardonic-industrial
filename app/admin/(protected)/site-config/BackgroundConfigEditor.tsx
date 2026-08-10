@@ -317,7 +317,8 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
         <div>
           <p className="text-xs text-zinc-400 font-semibold uppercase tracking-widest">Mobile video</p>
           <p className="text-xs text-zinc-500 mt-1">
-            Phones and small tablets. Separate video saves bandwidth; off improves performance.
+            Phones and small tablets. Separate video saves bandwidth; &quot;No video&quot; skips video
+            and uses the background image as fallback (desktop video can stay on).
           </p>
         </div>
         <RadioGroupPrimitive.Root
@@ -329,7 +330,7 @@ export function BackgroundConfigEditor({ currentValue }: BackgroundConfigEditorP
             [
               { value: 'same', label: 'Same as desktop' },
               { value: 'separate', label: 'Different video' },
-              { value: 'off', label: 'No video on mobile' },
+              { value: 'off', label: 'No video on mobile (use image)' },
             ] as const
           ).map(({ value, label }) => (
             <label key={value} className="flex items-center gap-2 cursor-pointer">

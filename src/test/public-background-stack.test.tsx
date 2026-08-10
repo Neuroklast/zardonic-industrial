@@ -123,6 +123,52 @@ describe('public BackgroundStack', () => {
     expect(container.querySelector('video')).toBeNull()
   })
 
+  it('hides background image when video is active so image opacity cannot stack', () => {
+    const { container } = render(
+      <BackgroundStack
+        imageUrl="https://example.com/bg.jpg"
+        videoUrl="https://example.com/bg.mp4"
+        imageOpacity={0.55}
+        backgroundType="minimal"
+      />,
+    )
+
+    expect(container.querySelector('[data-draft-target="bg-image"]')).toBeNull()
+    expect(container.querySelector('video')).toBeTruthy()
+  })
+
+  it('shows background image when video master switch is off', () => {
+    const { container } = render(
+      <BackgroundStack
+        imageUrl="https://example.com/bg.jpg"
+        videoUrl="https://example.com/bg.mp4"
+        videoEnabled={false}
+        imageOpacity={0.55}
+        backgroundType="minimal"
+      />,
+    )
+
+    expect(container.querySelector('video')).toBeNull()
+    expect(container.querySelector('[data-draft-target="bg-image"]')).toBeTruthy()
+  })
+
+  it('shows image on mobile when desktop video is on but mobile video mode is off', () => {
+    vi.mocked(useIsMobile).mockReturnValue(true)
+
+    const { container } = render(
+      <BackgroundStack
+        imageUrl="https://example.com/bg.jpg"
+        videoUrl="https://example.com/bg.mp4"
+        mobileVideoMode="off"
+        imageOpacity={0.55}
+        backgroundType="minimal"
+      />,
+    )
+
+    expect(container.querySelector('video')).toBeNull()
+    expect(container.querySelector('[data-draft-target="bg-image"]')).toBeTruthy()
+  })
+
   it('uses mobile video url when mode is separate on mobile', () => {
     vi.mocked(useIsMobile).mockReturnValue(true)
 
