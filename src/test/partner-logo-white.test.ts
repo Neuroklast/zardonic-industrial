@@ -72,6 +72,32 @@ describe('processLogoToWhiteSilhouette', () => {
     expect(out.data[center + 3]).toBeGreaterThan(150)
   })
 
+  it('kills dark plate around a light mark (SEGA-style white on black)', () => {
+    // 3×3: black corners/plate, white center mark — inverse would paint a solid white box
+    const w = 3
+    const h = 3
+    const data = new Uint8ClampedArray(w * h * 4)
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4
+        const isCenter = x === 1 && y === 1
+        data[i] = isCenter ? 255 : 8
+        data[i + 1] = isCenter ? 255 : 8
+        data[i + 2] = isCenter ? 255 : 8
+        data[i + 3] = 255
+      }
+    }
+    const out = processLogoToWhiteSilhouette({ data, width: w, height: h })
+    // Corners (dark plate) must be fully transparent — no solid white rectangle
+    expect(out.data[3]).toBe(0)
+    // Center (light mark) must remain visible as white
+    const center = (1 * 3 + 1) * 4
+    expect(out.data[center]).toBe(255)
+    expect(out.data[center + 1]).toBe(255)
+    expect(out.data[center + 2]).toBe(255)
+    expect(out.data[center + 3]).toBeGreaterThan(150)
+  })
+
   it('preserves partial alpha on non-white pixels', () => {
     // Soft alpha path: varied alpha in buffer
     const data = new Uint8ClampedArray(8)

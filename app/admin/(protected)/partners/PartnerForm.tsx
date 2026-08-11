@@ -76,7 +76,7 @@ export default function PartnerForm() {
           defaultChecked
           className="rounded border-zinc-600"
         />
-        White logo fill (default — hover uses chromatic aberration only)
+        White logo fill (default — silhouette to white; uncheck for colour or pre-whitened logos)
       </label>
       {error && <p className="text-red-400 text-xs">{error}</p>}
       <button

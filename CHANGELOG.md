@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
 
 ### Fixed
+- **Partner / credits logos (white fill + hover)**: white-fill no longer turns light-on-dark assets (e.g. white SEGA on black) into solid white rectangles — dark plates use direct luminance alpha. Chromatic aberration on hover works again for both white-fill and native colour logos (removed inline `filter: none` that blocked CSS hover; shared `.partner-logo-cell` group-hover).
 - **`/api/geo` production 503**: removed legacy `api/geo.ts` (Upstash rate-limit fail-closed). Canonical handler is App Router `app/api/geo/route.ts` (Vercel country header only, no Redis). Root cause of logs: dead `UPSTASH_REDIS_REST_URL` host `prepared-corgi-90453.upstash.io` (DNS ENOTFOUND).
 - **Public content vs admin JWT**: homepage + browse fetches use cookie-less `createPublicClient()` so admin session clock skew (`JWT issued at future`) cannot empty bio/gigs/site_config on the public site.
 - **Homepage gigs invisible**: `GigsSection` no longer relies on `whileInView` (opacity 0 forever with Lenis/IO); cards use `animate` like `/gigs`, with reduced-motion safe initial.

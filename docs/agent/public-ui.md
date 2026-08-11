@@ -61,18 +61,23 @@ Rules:
 Pipeline for white-mode logos (`logo_white !== false`):
 
 1. `loadLogoImageForCanvas(url)` — fetch via wsrv (`partnerLogoCanvasSrc`) → blob → `Image` (avoids CORS-tainted canvas).
-2. `processLogoToWhiteSilhouette` — pure white RGB; strip light plates; keep / recover alpha.
-3. Render `data:image/png` with **`filter: none`** (class `partner-logo-white` must not re-apply invert).
+2. `processLogoToWhiteSilhouette` — pure white RGB; strip light **or dark** plates; keep / recover alpha.
+3. Render `data:image/png` via class `partner-logo-white` — rest state `filter: none` in **CSS only**.
+
+When white fill is **off** (`logo_white === false`): class `partner-logo-native` (original colours). Same chromatic hover as white mode.
 
 | Do | Don't |
 |----|--------|
 | Canvas process white logos | CSS `mask-image: url(cross-origin)` (CORS → solid white fill) |
-| Detect light corner plate → inverse-luminance alpha | `brightness(0) invert(1)` on white-bg PNGs (→ solid white box) |
+| Light plate → inverse-luminance alpha; dark plate + light mark → **direct** luminance alpha | `brightness(0) invert(1)` on white-bg PNGs (→ solid white box) |
+| Chromatic hover via CSS (`.partner-logo-white` / `.partner-logo-native` + `.partner-logo-cell:hover`) | Inline `style={{ filter: 'none' }}` — beats `:hover` and kills RGB fringe |
 | Fail open: original image, no invert | Fail closed: white rectangle “placeholder” |
+
+**Upload tips (admin):** Prefer transparent PNGs. White-on-black marketing plates are OK (canvas strips the plate). Multi-colour brand marks that should keep colour: uncheck **White logo fill**. Pre-whitened transparent uploads work with fill off and still get chromatic hover.
 
 Files: `lib/partner-logo-white.ts`, `app/_components/public/CreditsSection.tsx`, `styles/effects.css`.
 
-Tests: `src/test/partner-logo-white.test.ts` (includes white-plate / QUESTEC-style case).
+Tests: `src/test/partner-logo-white.test.ts` (white-plate / QUESTEC + dark-plate / SEGA-style).
 
 ---
 

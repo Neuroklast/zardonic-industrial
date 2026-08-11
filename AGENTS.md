@@ -87,10 +87,12 @@ Skipping docs because “the task was only code” is a process failure.
 
 ### Partner / credit logos (PNG alpha)
 
-1. White logos: `PartnerLogoWhite` → `loadLogoImageForCanvas` + `processLogoToWhiteSilhouette`.
-2. **Forbidden:** CSS `mask-image` on cross-origin R2 URLs (CORS → solid white box).
-3. **Forbidden:** `filter: brightness(0) invert(1)` on logos that may have a baked white background (→ solid white box, e.g. QUESTEC).
-4. Fallback if canvas fails: show original **without** invert — never invent a white plate.
+1. White logos: `PartnerLogoWhite` → `loadLogoImageForCanvas` + `processLogoToWhiteSilhouette` (light plate → inverse α; dark plate + light mark → direct α).
+2. Native colour: class `partner-logo-native` — same CSS chromatic hover as white mode.
+3. **Forbidden:** CSS `mask-image` on cross-origin R2 URLs (CORS → solid white box).
+4. **Forbidden:** `filter: brightness(0) invert(1)` on logos that may have a baked white background (→ solid white box, e.g. QUESTEC).
+5. **Forbidden:** inline `style.filter` on partner logos (blocks hover chromatic).
+6. Fallback if canvas fails: show original **without** invert — never invent a white plate.
 
 ### Footer
 

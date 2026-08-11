@@ -1,6 +1,6 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-08-10  
+> **Last Updated:** 2026-08-11  
 > **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
@@ -36,6 +36,7 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-08-11 | grok/partner-logo-white-hover | Grok | Partner white-fill must branch plate detection: light plate → inverse luminance, dark plate + light mark → direct luminance. Inverse-only turns white-on-black logos into solid white boxes. Also: never set `filter` inline on logo `<img>` — it wins over CSS `:hover` and silently kills chromatic aberration; put rest-state `filter: none` in the stylesheet and hover on `.partner-logo-cell:hover img`. | UX/a11y | 🟠 High |
 | 2026-08-10 | grok/geo-upstash-enotfound | Grok | Production `/api/geo` 503 with `getaddrinfo ENOTFOUND …upstash.io` is not a Next bug: root `api/geo.ts` still ran, hit fail-closed rate limiting, and **shadowed** the healthy App Router `app/api/geo/route.ts`. Never keep both paths for the same route. Dead Upstash hostnames stay in Vercel env forever after DB delete — validate DNS when rate-limit 503s spike. | DevOps | 🔴 Critical |
 | 2026-08-10 | grok/public-gigs-bio-resilience | Grok | Public SSR must not use cookie-bound Supabase clients: a skewed admin JWT (`issued at future`) empties homepage bio/gigs while `/gigs` or other paths can look fine after revalidate. Use cookie-less `createPublicClient()`. Separately: homepage cards that start at `opacity: 0` + `whileInView` can stay invisible under Lenis — prefer `animate` for critical lists. | Architecture | 🔴 Critical |
 | 2026-08-10 | grok/bio-section-error-render | Grok | Public section text props from Supabase must be coerced before `.trim()` / render. A single `content.trim()` on null/non-string trips `SectionErrorBoundary` and shows “[Bio] – Failed to render” while other sections keep working — easy to misread as a full-page failure. Harden at the fetch edge **and** the client component; keep section error fallbacks i18n’d. | Debugging | 🟠 High |
