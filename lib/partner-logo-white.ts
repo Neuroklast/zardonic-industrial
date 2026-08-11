@@ -44,16 +44,19 @@ function sampleCornerLuminance(data: Uint8ClampedArray, width: number, height: n
 /**
  * Process a partner logo into a white silhouette while preserving / recovering alpha.
  *
- * Handles three common upload styles:
+ * Handles common upload styles:
  * 1. Dark mark on true transparent PNG → keep alpha, RGB white
  * 2. Dark mark on opaque white box → inverse luminance alpha (kills the white box)
  * 3. Already-white mark on transparent → keep alpha, RGB white
+ * 4. Light mark on opaque dark plate (e.g. white SEGA on black) → direct luminance
+ *    alpha (kills the dark plate). Inverse would paint a solid white rectangle.
  */
 export function processLogoToWhiteSilhouette(
   imageData: RgbaBuffer,
   options?: { whiteThreshold?: number },
 ): RgbaBuffer {
   const whiteThreshold = options?.whiteThreshold ?? 232
+  const darkThreshold = 255 - whiteThreshold
   const { data, width, height } = imageData
   const out = new Uint8ClampedArray(data.length)
 
@@ -72,6 +75,24 @@ export function processLogoToWhiteSilhouette(
     corners.avgLum >= whiteThreshold - 12 &&
     corners.transparentSamples < corners.opaqueSamples
 
+  // Only treat as dark plate when corners are dark AND a light mark exists in-frame.
+  // Pure black marks (no light content) must still use inverse luminance, not go transparent.
+  let hasLightContent = false
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 12) continue
+    const lum = (data[i] + data[i + 1] + data[i + 2]) / 3
+    if (lum >= whiteThreshold - 40) {
+      hasLightContent = true
+      break
+    }
+  }
+  const darkBackground =
+    !lightBackground &&
+    hasLightContent &&
+    corners.opaqueSamples > 0 &&
+    corners.avgLum <= darkThreshold + 12 &&
+    corners.transparentSamples < corners.opaqueSamples
+
   for (let i = 0; i < data.length; i += 4) {
     const r = data[i]
     const g = data[i + 1]
@@ -84,9 +105,21 @@ export function processLogoToWhiteSilhouette(
 
     if (srcA < 0.02) {
       outA = 0
-    } else if (lightBackground || !hasSoftAlpha) {
-      // Opaque plate (often white): darkness becomes white logo alpha
-      // Soft knee so light-gray plate disappears, dark mark stays solid
+    } else if (lightBackground) {
+      // Opaque light plate: darkness becomes white logo alpha
+      const knee = whiteThreshold
+      const darkness = Math.max(0, (knee - lum) / knee)
+      outA = Math.pow(darkness, 0.9) * srcA
+      if (lum >= knee) outA = 0
+    } else if (darkBackground) {
+      // Opaque dark plate + light mark (SEGA-style): brightness becomes alpha
+      // Inverse here would paint a solid white rectangle with logo-shaped holes.
+      const span = Math.max(1, 255 - darkThreshold)
+      const brightness = Math.max(0, (lum - darkThreshold) / span)
+      outA = Math.pow(brightness, 0.9) * srcA
+      if (lum <= darkThreshold) outA = 0
+    } else if (!hasSoftAlpha) {
+      // Opaque dark mark without a light plate — classic inverse silhouette
       const knee = whiteThreshold
       const darkness = Math.max(0, (knee - lum) / knee)
       outA = Math.pow(darkness, 0.9) * srcA

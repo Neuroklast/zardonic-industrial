@@ -87,12 +87,13 @@ function PartnerLogoWhite({
   if (failed) {
     // Last-resort: native img, NO invert filter (invert on white-bg PNGs = solid white box).
     // Show original at reduced opacity so layout still works.
+    // filter stays in CSS only — inline filter:none would block hover chromatic.
     return (
       <m.img
         src={src}
         alt={name}
         className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain opacity-80 md:h-16 md:max-w-[10rem]"
-        style={{ opacity: brightness, filter: 'none', background: 'transparent' }}
+        style={{ opacity: brightness, background: 'transparent' }}
         initial={{ opacity: 0, y: 10 }}
         whileInView={{ opacity: brightness, y: 0 }}
         whileHover={{ opacity: 1 }}
@@ -119,7 +120,7 @@ function PartnerLogoWhite({
       src={processedSrc}
       alt={name}
       className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain md:h-16 md:max-w-[10rem]"
-      style={{ opacity: brightness, background: 'transparent', filter: 'none' }}
+      style={{ opacity: brightness, background: 'transparent' }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: brightness, y: 0 }}
       whileHover={{ opacity: 1 }}
@@ -159,12 +160,14 @@ function PartnerLogo({
     return <PartnerLogoWhite src={item.logoUrl} name={item.name} brightness={brightness} />
   }
 
+  // logo_white off: show original colours; same chromatic hover as white-fill path
+  // (partner-logo-native shares drop-shadow strength so pre-whitened uploads still fringe)
   return (
     <m.img
       src={item.logoUrl}
       alt={item.name}
-      className="chromatic-hover h-12 w-auto max-w-[8.5rem] object-contain transition-opacity hover:opacity-100 md:h-16 md:max-w-[10rem]"
-      style={{ opacity: brightness }}
+      className="partner-logo-native h-12 w-auto max-w-[8.5rem] object-contain transition-opacity hover:opacity-100 md:h-16 md:max-w-[10rem]"
+      style={{ opacity: brightness, background: 'transparent' }}
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: brightness, y: 0 }}
       whileHover={{ opacity: 1 }}
@@ -204,7 +207,9 @@ function LogoGrid({
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
         {items.map((item) => {
           const content = <PartnerLogo item={item} logoBrightness={logoBrightness} />
-          const wrapperClassName = 'flex min-h-28 items-center justify-center bg-transparent p-3'
+          // group so chromatic hover fires for the full cell hit-area, not only the img pixels
+          const wrapperClassName =
+            'partner-logo-cell group flex min-h-28 items-center justify-center bg-transparent p-3'
 
           return item.url ? (
             <a

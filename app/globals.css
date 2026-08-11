@@ -34,6 +34,8 @@
 }
 
 /* ── Chromatic aberration on logo hover ─────────────────────────────────── */
+/* Generic (weak) fringe. Partner logos use .partner-logo-white / .partner-logo-native
+   in styles/effects.css for a stronger, cell-wide group-hover effect. */
 .chromatic-hover {
   filter: none;
   transition: filter 0.15s ease;

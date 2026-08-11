@@ -101,7 +101,7 @@ export function EditPartnerForm({ partner, resolvedLogoUrl }: EditPartnerFormPro
           defaultChecked={partner.logo_white !== false}
           className="rounded border-zinc-600"
         />
-        White logo fill (default — hover uses chromatic aberration only)
+        White logo fill (default — silhouette to white; uncheck for colour or pre-whitened logos)
       </label>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">

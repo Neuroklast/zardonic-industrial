@@ -19,7 +19,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Events/gigs: same overlay system as releases
 - [ ] Gallery: open image → **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
-- [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles**
+- [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
+- [ ] Partner logos: hover shows RGB chromatic fringe whether **White logo fill** is on or off (pre-whitened PNG with fill unchecked still fringes)
 - [ ] Footer: social icons readable size; legal links not micro-type; wrap on narrow screens
 - [ ] Cookie banner / preferences still reachable; Reject focuses first action; Escape closes customize
 - [ ] Legal Notice + Privacy Policy routes render from Supabase legal config (EN + DE via language switcher)

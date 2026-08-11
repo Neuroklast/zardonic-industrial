@@ -512,10 +512,15 @@
  * Do NOT use mask-image with remote URLs (CORS → failed mask → solid white box).
  */
 /*
- * Partner logos are canvas-processed to pure white + alpha.
- * NEVER apply brightness/invert here — that turns white-bg PNGs into solid white boxes.
+ * Partner logos:
+ * - .partner-logo-white → canvas-processed pure white + alpha (never brightness/invert)
+ * - .partner-logo-native → original upload colours (white-fill unchecked)
+ * Both share the same chromatic drop-shadow hover. Use group-hover on .partner-logo-cell
+ * so the fringe works over the full grid cell, not only the image bounding box.
+ * NEVER put filter in inline styles — that beats :hover and kills aberration.
  */
 .partner-logo-white,
+.partner-logo-native,
 .logo-white,
 .logo-white-mask {
   filter: none;
@@ -524,11 +529,17 @@
 }
 
 .partner-logo-white:hover,
+.partner-logo-native:hover,
 .logo-white:hover,
-.logo-white-mask:hover {
+.logo-white-mask:hover,
+.partner-logo-cell:hover .partner-logo-white,
+.partner-logo-cell:hover .partner-logo-native,
+.partner-logo-cell:hover .logo-white,
+.partner-logo-cell:hover .logo-white-mask {
+  /* strength 0.5 → ~2px / 0.5 alpha (legacy defaults); scales with Appearance slider */
   filter:
-    drop-shadow(2px 0 0 rgba(255, 0, 100, 0.5))
-    drop-shadow(-2px 0 0 rgba(0, 255, 255, 0.5));
+    drop-shadow(calc(4px * var(--chromatic-strength, 0.5)) 0 0 rgba(255, 0, 100, calc(var(--chromatic-strength, 0.5))))
+    drop-shadow(calc(-4px * var(--chromatic-strength, 0.5)) 0 0 rgba(0, 255, 255, calc(var(--chromatic-strength, 0.5))));
   animation: chromatic-pulse-logo-processed 0.15s ease;
 }
 
@@ -546,8 +557,13 @@
 }
 
 .no-chromatic .partner-logo-white:hover,
+.no-chromatic .partner-logo-native:hover,
 .no-chromatic .logo-white:hover,
-.no-chromatic .logo-white-mask:hover {
+.no-chromatic .logo-white-mask:hover,
+.no-chromatic .partner-logo-cell:hover .partner-logo-white,
+.no-chromatic .partner-logo-cell:hover .partner-logo-native,
+.no-chromatic .partner-logo-cell:hover .logo-white,
+.no-chromatic .partner-logo-cell:hover .logo-white-mask {
   filter: none;
   animation: none;
 }
