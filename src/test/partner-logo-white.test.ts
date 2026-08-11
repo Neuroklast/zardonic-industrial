@@ -116,6 +116,54 @@ describe('processLogoToWhiteSilhouette', () => {
     expect(out.data[3]).toBe(128)
     expect(out.data[7]).toBe(0)
   })
+
+  it('keeps already-white ink on transparent (must not disappear)', () => {
+    // Pre-whitened / white-fill brand mark on real alpha — used to be killed as "leftover plate"
+    const input = makeImageData([
+      [255, 255, 255, 255],
+      [0, 0, 0, 0],
+    ])
+    const out = processLogoToWhiteSilhouette(input)
+    expect(out.data[0]).toBe(255)
+    expect(out.data[1]).toBe(255)
+    expect(out.data[2]).toBe(255)
+    expect(out.data[3]).toBe(255)
+    expect(out.data[7]).toBe(0)
+  })
+
+  it('whitens multi-colour true-alpha logos (AEW-style white + gold + gray)', () => {
+    // 3×3: transparent corners (real SVG plate), multi-colour mark in the centre row
+    // AEW simplified: white ink + gold A/W (#c5ab57) + gray brackets (#7f7f7f)
+    const w = 3
+    const h = 3
+    const data = new Uint8ClampedArray(w * h * 4)
+    const set = (x: number, y: number, r: number, g: number, b: number, a: number) => {
+      const i = (y * w + x) * 4
+      data[i] = r
+      data[i + 1] = g
+      data[i + 2] = b
+      data[i + 3] = a
+    }
+    // transparent frame
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) set(x, y, 0, 0, 0, 0)
+    }
+    set(0, 1, 255, 255, 255, 255) // white ink
+    set(1, 1, 197, 171, 87, 255) // gold A/W
+    set(2, 1, 127, 127, 127, 255) // gray brackets
+
+    const out = processLogoToWhiteSilhouette({ data, width: w, height: h })
+    // Corners stay transparent
+    expect(out.data[3]).toBe(0)
+    // All three brand colours → solid white
+    for (const x of [0, 1, 2]) {
+      const i = (1 * w + x) * 4
+      expect(out.data[i]).toBe(255)
+      expect(out.data[i + 1]).toBe(255)
+      expect(out.data[i + 2]).toBe(255)
+      expect(out.data[i + 3]).toBe(255)
+    }
+  })
 })
 
 describe('partnerLogoCanvasSrc', () => {

@@ -20,6 +20,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Gallery: open image → **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
 - [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
+- [ ] Multi-colour transparent logos (e.g. AEW white + gold A/W + gray): with **White logo fill** on, **all** ink is solid white — only transparency stays transparent (no gold leftover, no missing white text)
 - [ ] Partner logos: hover shows RGB chromatic fringe whether **White logo fill** is on or off (pre-whitened PNG with fill unchecked still fringes)
 - [ ] Footer: social icons readable size; legal links not micro-type; wrap on narrow screens
 - [ ] Cookie banner / preferences still reachable; Reject focuses first action; Escape closes customize
