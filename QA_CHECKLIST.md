@@ -9,6 +9,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 
 - [ ] Hero loads; primary CTAs visible and tappable (min 44px)
 - [ ] Hero wordmark boot (~1s scan + mini bar under logo) plays when hero is on-screen; not a full-page loader
+- [ ] Boot HUD text is plain **LOADING** / Loading… / Ready — no fake terminal or cosplay status lines
 - [ ] Boot load bar does **not** shift the logo upward (HUD absolute under logo)
 - [ ] Hero width sliders (desktop + mobile, 15–100%): desktop-tuned size does not shrink mobile; phone logo near full content width when mobile ~90%; aspect ratio kept; centered; no height cap
 - [ ] Nav logo full size; every section has a desktop **icon** (BIO not missing)

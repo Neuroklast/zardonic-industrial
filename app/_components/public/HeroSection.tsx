@@ -39,7 +39,7 @@ interface HeroSectionProps {
   logoWidthPercentMobile?: number
   showTourDatesCta?: boolean
   /**
-   * Short filmic terminal boot for the wordmark (scan, mini bar, micro code).
+   * Short boot for the wordmark (scan, mini bar, LOADING label).
    * Starts when the hero stage is in view — not a page-level loader.
    * Default true. When false, logo shows immediately with no entrance gimmicks.
    */
@@ -238,7 +238,7 @@ export function HeroSection({
           {playing ? (
             <div className="hero-boot-hud" aria-hidden="true">
               <div className="hero-boot-hud__row">
-                <span className="hero-boot-hud__label">SYS // WORDMARK</span>
+                <span className="hero-boot-hud__label">LOADING</span>
                 <span className="hero-boot-hud__pct">
                   <span className="hero-boot-hud__pct-fill" />
                 </span>
@@ -247,8 +247,8 @@ export function HeroSection({
                 <span className="hero-boot-hud__bar-fill" />
               </div>
               <div className="hero-boot-hud__code">
-                <span className="hero-boot-hud__line hero-boot-hud__line--1">&gt; decode · rgba</span>
-                <span className="hero-boot-hud__line hero-boot-hud__line--2">&gt; lock // ok</span>
+                <span className="hero-boot-hud__line hero-boot-hud__line--1">Loading…</span>
+                <span className="hero-boot-hud__line hero-boot-hud__line--2">Ready</span>
               </div>
             </div>
           ) : null}
