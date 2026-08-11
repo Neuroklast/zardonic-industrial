@@ -45,11 +45,14 @@ function sampleCornerLuminance(data: Uint8ClampedArray, width: number, height: n
  * Process a partner logo into a white silhouette while preserving / recovering alpha.
  *
  * Handles common upload styles:
- * 1. Dark mark on true transparent PNG → keep alpha, RGB white
+ * 1. Any mark on true transparent PNG/SVG → keep alpha, RGB white
+ *    (white, gold, gray, multi-colour — only transparent stays transparent)
  * 2. Dark mark on opaque white box → inverse luminance alpha (kills the white box)
- * 3. Already-white mark on transparent → keep alpha, RGB white
- * 4. Light mark on opaque dark plate (e.g. white SEGA on black) → direct luminance
+ * 3. Light mark on opaque dark plate (e.g. white SEGA on black) → direct luminance
  *    alpha (kills the dark plate). Inverse would paint a solid white rectangle.
+ *
+ * Never kill near-white pixels on soft-alpha assets: white ink on transparent
+ * (AEW white text, pre-whitened uploads) is the logo, not a plate.
  */
 export function processLogoToWhiteSilhouette(
   imageData: RgbaBuffer,
@@ -104,30 +107,25 @@ export function processLogoToWhiteSilhouette(
     let outA: number
 
     if (srcA < 0.02) {
+      // Only true transparency stays transparent
       outA = 0
     } else if (lightBackground) {
-      // Opaque light plate: darkness becomes white logo alpha
-      const knee = whiteThreshold
-      const darkness = Math.max(0, (knee - lum) / knee)
-      outA = Math.pow(darkness, 0.9) * srcA
-      if (lum >= knee) outA = 0
+      // Opaque light plate: plate → transparent; every other colour (black, gold, gray…) → solid white.
+      // Soft inverse would leave gold A/W half-faded; brand multi-colour must read as one white mark.
+      outA = lum >= whiteThreshold ? 0 : srcA
     } else if (darkBackground) {
-      // Opaque dark plate + light mark (SEGA-style): brightness becomes alpha
+      // Opaque dark plate + light mark (SEGA-style): plate → transparent; marks → solid white.
       // Inverse here would paint a solid white rectangle with logo-shaped holes.
-      const span = Math.max(1, 255 - darkThreshold)
-      const brightness = Math.max(0, (lum - darkThreshold) / span)
-      outA = Math.pow(brightness, 0.9) * srcA
-      if (lum <= darkThreshold) outA = 0
+      outA = lum <= darkThreshold ? 0 : srcA
     } else if (!hasSoftAlpha) {
-      // Opaque dark mark without a light plate — classic inverse silhouette
+      // Fully opaque, no clear plate — inverse luminance recovers a dark mark on unknown fill
       const knee = whiteThreshold
       const darkness = Math.max(0, (knee - lum) / knee)
       outA = Math.pow(darkness, 0.9) * srcA
       if (lum >= knee) outA = 0
-    } else if (lum >= whiteThreshold && srcA > 0.9) {
-      // True-alpha asset with leftover near-white pixels
-      outA = 0
     } else {
+      // True alpha (transparent PNG/SVG): every non-transparent pixel → pure white.
+      // White, gold, gray brand colours all keep their alpha — do not strip white ink.
       outA = srcA
     }
 
