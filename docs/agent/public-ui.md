@@ -108,6 +108,7 @@ File: `app/_components/public/SiteFooter.tsx`.
 | Center in stage (`flex` + margin auto on glitch box) | Absolute logo over the nav |
 | Boot HUD **`position: absolute`** under the logo box | In-flow HUD that shifts/pushes the logo when the bar appears |
 | Boot sequence: short filmic one-shot (~1.1s) when **stage is in view** | Page-level loader for the wordmark |
+| Boot HUD copy: plain **LOADING** / Loading… / Ready only — no fake terminal or cosplay status lines | Fantasy strings (`SYS // WORDMARK`, `decode · rgba`, etc.) that do not match the image |
 | Toggle: Look & Feel → Hero → `bootSequenceEnabled` | RGB ghost layers over the mark |
 
 **Defaults:** desktop ~55%; mobile unset → `max(desktop, 90)` so existing desktop-only saves still nearly fill the phone column. Admin: Look & Feel → Hero has two sliders.
