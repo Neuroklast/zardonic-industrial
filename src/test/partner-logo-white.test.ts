@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isSvgLogoUrl,
+  logoRasterSize,
   partnerLogoCanvasSrc,
   processLogoToWhiteSilhouette,
+  rewriteSvgForHiResRaster,
 } from '@/lib/partner-logo-white'
 
 function makeImageData(
@@ -167,13 +170,51 @@ describe('processLogoToWhiteSilhouette', () => {
 })
 
 describe('partnerLogoCanvasSrc', () => {
-  it('proxies remote URLs through wsrv for CORS canvas access', () => {
+  it('proxies remote URLs through wsrv for CORS canvas access at high res', () => {
     const src = partnerLogoCanvasSrc('https://cdn.example.com/logo.png')
     expect(src).toContain('https://wsrv.nl/?url=')
     expect(src).toContain('output=png')
+    expect(src).toContain('w=1024')
   })
 
   it('leaves relative paths alone', () => {
     expect(partnerLogoCanvasSrc('/assets/logo.png')).toBe('/assets/logo.png')
+  })
+
+  it('does not wrap public R2 URLs (keeps SVG vector, avoids tiny wsrv raster)', () => {
+    const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
+    expect(partnerLogoCanvasSrc(r2)).toBe(r2)
+  })
+})
+
+describe('logo raster helpers', () => {
+  it('detects svg urls', () => {
+    expect(isSvgLogoUrl('https://cdn.example.com/a.svg')).toBe(true)
+    expect(isSvgLogoUrl('https://cdn.example.com/a.SVG?x=1')).toBe(true)
+    expect(isSvgLogoUrl('https://cdn.example.com/a.png')).toBe(false)
+    expect(isSvgLogoUrl('data:image/svg+xml,<svg></svg>')).toBe(true)
+  })
+
+  it('upsizes tiny rasters and caps huge ones', () => {
+    expect(logoRasterSize(155, 18)).toEqual({ width: 512, height: 59 })
+    expect(logoRasterSize(4000, 1000)).toEqual({ width: 1024, height: 256 })
+    expect(logoRasterSize(800, 200)).toEqual({ width: 800, height: 200 })
+  })
+
+  it('rewrites tiny SVG width/height so rasterization is sharp', () => {
+    const src =
+      '<svg width="155" height="18" viewBox="0 0 155 18" xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>'
+    const out = rewriteSvgForHiResRaster(src)
+    expect(out).toContain('width="1024"')
+    expect(out).toMatch(/height="119"/)
+    expect(out).toContain('viewBox="0 0 155 18"')
+  })
+
+  it('assigns size from viewBox when width/height are missing', () => {
+    const src =
+      '<svg viewBox="0 0 6714 1642.2" xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>'
+    const out = rewriteSvgForHiResRaster(src)
+    expect(out).toContain('width="1024"')
+    expect(out).toContain('height="250"')
   })
 })

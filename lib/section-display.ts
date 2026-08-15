@@ -29,9 +29,17 @@ export const SECTION_TITLE_I18N_KEYS: Record<string, string> = {
   contact: 'section.contact',
 }
 
+function headingUpper(value: string, locale?: string): string {
+  try {
+    return locale ? value.toLocaleUpperCase(locale) : value.toLocaleUpperCase()
+  } catch {
+    return value.toUpperCase()
+  }
+}
+
 export function formatSectionHeading(label: string | undefined, sectionId: string): string {
   const raw = label?.trim() || SECTION_DEFAULT_HEADINGS[sectionId] || sectionId
-  return raw.toUpperCase()
+  return headingUpper(raw)
 }
 
 /**
@@ -43,17 +51,18 @@ export function resolveSectionHeading(
   label: string | undefined,
   sectionId: string,
   translate: (key: string) => string,
+  locale?: string,
 ): string {
   const defaultEn = SECTION_DEFAULT_HEADINGS[sectionId] ?? sectionId
   const raw = label?.trim()
-  const isDefault = !raw || raw.toUpperCase() === defaultEn.toUpperCase()
+  const isDefault = !raw || headingUpper(raw, locale) === headingUpper(defaultEn, locale)
   if (isDefault) {
     const key = SECTION_TITLE_I18N_KEYS[sectionId]
     if (key) {
       const translated = translate(key)
-      if (translated && translated !== key) return translated.toUpperCase()
+      if (translated && translated !== key) return headingUpper(translated, locale)
     }
-    return defaultEn.toUpperCase()
+    return headingUpper(defaultEn, locale)
   }
-  return raw.toUpperCase()
+  return headingUpper(raw, locale)
 }

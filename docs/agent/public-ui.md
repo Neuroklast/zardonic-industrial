@@ -60,9 +60,12 @@ Rules:
 
 Pipeline for white-mode logos (`logo_white !== false`):
 
-1. `loadLogoImageForCanvas(url)` — fetch via wsrv (`partnerLogoCanvasSrc`) → blob → `Image` (avoids CORS-tainted canvas).
-2. `processLogoToWhiteSilhouette` — pure white RGB; **only transparent stays transparent**; strip opaque light/dark plates when present.
-3. Render `data:image/png` via class `partner-logo-white` — rest state `filter: none` in **CSS only**.
+1. `loadLogoImageForCanvas(url)` — R2/SVG fetch direct (CORS); other remotes via wsrv (`partnerLogoCanvasSrc`) → blob → `Image`.
+2. SVGs: `rewriteSvgForHiResRaster` so tiny `width` / missing size (browser default 300) are drawn at 1024px before canvas. Never let wsrv `output=png` rasterize an SVG at its intrinsic 155×18.
+3. `processLogoToWhiteSilhouette` — pure white RGB; **only transparent stays transparent**; strip opaque light/dark plates when present.
+4. Raster size: `logoRasterSize` **upsizes** below 512 and **caps** at 1024. Do not only downscale.
+5. Render `data:image/png` via class `partner-logo-white` — rest state `filter: none` in **CSS only**.
+6. Native logos (`logo_white === false`): same SVG rewrite for display; **eager** load (no `loading="lazy"` — Lenis + native lazy never starts the request); no `whileInView` + `opacity: 0` (can stay invisible).
 
 Soft-alpha rule (transparent PNG/SVG, e.g. AEW white + gold + gray): every non-transparent pixel → solid white at source alpha. **Never** kill near-white ink on soft-alpha assets (that made white text vanish and multi-colour marks look wrong).
 
@@ -135,8 +138,8 @@ Regression: `src/test/public-component-restoration.test.tsx` (desktop + mobile C
 | Animation styles | `lib/public-background-types.ts` — matrix, circuit, **terminal**, **data-stream**, glitch-grid, stars, minimal |
 | Admin | Look & Feel → Background; do not hardcode only matrix/circuit |
 | Modal glow | Appearance → **Modal glow** (`theme.modalGlowColor` → CSS `--modal-glow`). Must be in theme parse keys so it persists |
-| Scroll video | Use `attachScrollVideoSync` — never set `currentTime` on every React `scrollY` state update |
-| Perf | Canvas effects: DPR cap, pause on `visibilitychange`, respect `prefers-reduced-motion`, lower density when image/video present |
+| Scroll video | Use `attachScrollVideoSync` — never set `currentTime` on every React `scrollY` state update. Seek floor ~1/24s. `preload="metadata"`. |
+| Perf | Canvas effects: DPR cap, pause on `visibilitychange`, respect `prefers-reduced-motion`. **Do not mount** animated canvas while a scroll-synced background video is active (1080p seek + full canvas janks Lenis). |
 
 ---
 

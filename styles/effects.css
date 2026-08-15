@@ -526,6 +526,7 @@
   filter: none;
   transition: filter 0.08s ease, opacity 0.2s ease;
   background: transparent !important;
+  image-rendering: auto;
 }
 
 .partner-logo-white:hover,

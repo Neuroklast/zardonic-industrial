@@ -6,6 +6,8 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import {
   loadLogoImageForCanvas,
+  logoRasterSize,
+  preparePartnerLogoSrc,
   processLogoToWhiteSilhouette,
 } from '@/lib/partner-logo-white'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
@@ -51,11 +53,8 @@ function PartnerLogoWhite({
         const h = img.naturalHeight || img.height
         if (!w || !h) throw new Error('empty logo')
 
-        // Cap huge assets so getImageData stays cheap
-        const maxDim = 512
-        const scale = Math.min(1, maxDim / Math.max(w, h))
-        const cw = Math.max(1, Math.round(w * scale))
-        const ch = Math.max(1, Math.round(h * scale))
+        // Upscale tiny SVG defaults (155×18) and cap huge assets
+        const { width: cw, height: ch } = logoRasterSize(w, h)
 
         const canvas = document.createElement('canvas')
         canvas.width = cw
@@ -92,14 +91,12 @@ function PartnerLogoWhite({
       <m.img
         src={src}
         alt={name}
-        className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain opacity-80 md:h-16 md:max-w-[10rem]"
+        className="partner-logo-white h-12 w-auto min-w-[4rem] max-w-[8.5rem] object-contain opacity-80 md:h-16 md:max-w-[10rem]"
         style={{ opacity: brightness, background: 'transparent' }}
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: brightness, y: 0 }}
+        initial={false}
+        animate={{ opacity: brightness }}
         whileHover={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        loading="lazy"
+        transition={{ duration: 0.35 }}
         decoding="async"
       />
     )
@@ -119,14 +116,75 @@ function PartnerLogoWhite({
     <m.img
       src={processedSrc}
       alt={name}
-      className="partner-logo-white h-12 w-auto max-w-[8.5rem] object-contain md:h-16 md:max-w-[10rem]"
+      className="partner-logo-white h-12 w-auto min-w-[4rem] max-w-[8.5rem] object-contain md:h-16 md:max-w-[10rem]"
       style={{ opacity: brightness, background: 'transparent' }}
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: brightness, y: 0 }}
+      initial={false}
+      animate={{ opacity: brightness }}
       whileHover={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.35 }}
       decoding="async"
+    />
+  )
+}
+
+function PartnerNameFallback({ name }: { name: string }) {
+  return (
+    <m.span
+      className="font-mono text-sm uppercase tracking-[0.2em] text-muted-foreground"
+      initial={false}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+    >
+      {name}
+    </m.span>
+  )
+}
+
+function PartnerLogoNative({
+  src,
+  name,
+  brightness,
+}: {
+  src: string
+  name: string
+  brightness: number
+}) {
+  const [displaySrc, setDisplaySrc] = useState(src)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    let blobUrl: string | null = null
+    void preparePartnerLogoSrc(src).then((next) => {
+      if (cancelled) {
+        if (next.startsWith('blob:')) URL.revokeObjectURL(next)
+        return
+      }
+      if (next && next !== src) {
+        blobUrl = next
+        setDisplaySrc(next)
+      }
+    })
+    return () => {
+      cancelled = true
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
+  }, [src])
+
+  if (failed) return <PartnerNameFallback name={name} />
+
+  return (
+    <m.img
+      src={displaySrc}
+      alt={name}
+      className="partner-logo-native h-12 w-auto min-w-[4rem] max-w-[8.5rem] object-contain transition-opacity hover:opacity-100 md:h-16 md:max-w-[10rem]"
+      style={{ opacity: brightness, background: 'transparent' }}
+      initial={false}
+      animate={{ opacity: brightness }}
+      whileHover={{ opacity: 1 }}
+      transition={{ duration: 0.35 }}
+      decoding="async"
+      onError={() => setFailed(true)}
     />
   )
 }
@@ -139,17 +197,7 @@ function PartnerLogo({
   logoBrightness?: number
 }) {
   if (!item.logoUrl) {
-    return (
-      <m.span
-        className="font-mono text-sm uppercase tracking-[0.2em] text-muted-foreground"
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-      >
-        {item.name}
-      </m.span>
-    )
+    return <PartnerNameFallback name={item.name} />
   }
 
   const useWhite = item.logoWhite !== false
@@ -160,21 +208,13 @@ function PartnerLogo({
     return <PartnerLogoWhite src={item.logoUrl} name={item.name} brightness={brightness} />
   }
 
-  // logo_white off: show original colours; same chromatic hover as white-fill path
-  // (partner-logo-native shares drop-shadow strength so pre-whitened uploads still fringe)
+  // logo_white off: original colours; SVG rewritten to a large view size so it stays sharp
   return (
-    <m.img
+    <PartnerLogoNative
+      key={item.logoUrl}
       src={item.logoUrl}
-      alt={item.name}
-      className="partner-logo-native h-12 w-auto max-w-[8.5rem] object-contain transition-opacity hover:opacity-100 md:h-16 md:max-w-[10rem]"
-      style={{ opacity: brightness, background: 'transparent' }}
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: brightness, y: 0 }}
-      whileHover={{ opacity: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      loading="lazy"
-      decoding="async"
+      name={item.name}
+      brightness={brightness}
     />
   )
 }
@@ -241,8 +281,8 @@ export function CreditsSection({
   intro,
   logoBrightness,
 }: CreditsAndEndorsementsProps) {
-  const { t } = useLocale()
-  const title = resolveSectionHeading(heading, 'credits', t)
+  const { t, locale } = useLocale()
+  const title = resolveSectionHeading(heading, 'credits', t, locale)
   const hasAny = credits.length > 0 || endorsements.length > 0 || partners.length > 0
 
   return (
@@ -254,9 +294,9 @@ export function CreditsSection({
 
       {hasAny ? (
         <div className="space-y-12">
-          <LogoGrid items={credits} heading={t('credits.groupCredits').toUpperCase()} logoBrightness={logoBrightness} />
-          <LogoGrid items={endorsements} heading={t('credits.groupEndorsements').toUpperCase()} logoBrightness={logoBrightness} />
-          <LogoGrid items={partners} heading={t('credits.groupPartners').toUpperCase()} logoBrightness={logoBrightness} />
+          <LogoGrid items={credits} heading={t('credits.groupCredits').toLocaleUpperCase(locale)} logoBrightness={logoBrightness} />
+          <LogoGrid items={endorsements} heading={t('credits.groupEndorsements').toLocaleUpperCase(locale)} logoBrightness={logoBrightness} />
+          <LogoGrid items={partners} heading={t('credits.groupPartners').toLocaleUpperCase(locale)} logoBrightness={logoBrightness} />
         </div>
       ) : (
         <SectionEmpty label={t('credits.empty')} />
