@@ -184,7 +184,13 @@ function PartnerLogoNative({
       whileHover={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
       decoding="async"
-      onError={() => setFailed(true)}
+      onError={() => {
+        if (displaySrc !== src) {
+          setDisplaySrc(src)
+          return
+        }
+        setFailed(true)
+      }}
     />
   )
 }

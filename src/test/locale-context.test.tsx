@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { LocaleProvider, useLocale } from '@/contexts/LocaleContext'
 import type { Locale } from '@/lib/i18n'
 
@@ -70,14 +71,28 @@ describe('LocaleContext', () => {
     expect(localStorage.getItem('zd-locale')).toBe('de')
   })
 
-  it('should restore locale from localStorage', () => {
+  it('SSR markup uses default locale even when localStorage is set (React #418)', () => {
+    localStorage.setItem('zd-locale', 'de')
+    const html = renderToStaticMarkup(
+      <LocaleProvider>
+        <TestConsumer />
+      </LocaleProvider>,
+    )
+    expect(html).toContain('data-testid="locale"')
+    expect(html).toMatch(/data-testid="locale">en</)
+    expect(html).not.toMatch(/data-testid="locale">de</)
+  })
+
+  it('should restore locale from localStorage after mount', async () => {
     localStorage.setItem('zd-locale', 'de')
     render(
       <LocaleProvider>
         <TestConsumer />
       </LocaleProvider>
     )
-    expect(screen.getByTestId('locale').textContent).toBe('de')
+    await waitFor(() => {
+      expect(screen.getByTestId('locale').textContent).toBe('de')
+    })
   })
 
   it('should throw when useLocale is used outside provider', () => {
@@ -91,7 +106,7 @@ describe('LocaleContext', () => {
     }
   })
 
-  it('should switch to all 8 locales', () => {
+  it('should switch to all 8 locales', async () => {
     const locales: Locale[] = ['en', 'de', 'ru', 'it', 'es', 'pt', 'ja', 'ko']
     for (const locale of locales) {
       localStorage.setItem('zd-locale', locale)
@@ -100,12 +115,14 @@ describe('LocaleContext', () => {
           <TestConsumer />
         </LocaleProvider>
       )
-      expect(screen.getByTestId('locale').textContent).toBe(locale)
+      await waitFor(() => {
+        expect(screen.getByTestId('locale').textContent).toBe(locale)
+      })
       unmount()
     }
   })
 
-  it('should restore all supported locales from localStorage', () => {
+  it('should restore all supported locales from localStorage', async () => {
     const locales: Locale[] = ['en', 'de', 'ru', 'it', 'es', 'pt', 'ja', 'ko']
     for (const locale of locales) {
       localStorage.setItem('zd-locale', locale)
@@ -114,7 +131,9 @@ describe('LocaleContext', () => {
           <TestConsumer />
         </LocaleProvider>
       )
-      expect(screen.getByTestId('locale').textContent).toBe(locale)
+      await waitFor(() => {
+        expect(screen.getByTestId('locale').textContent).toBe(locale)
+      })
       unmount()
     }
   })

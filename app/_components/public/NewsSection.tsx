@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { formatIsoDateLong } from '@/lib/format-display-date'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 export interface NewsPostCard {
@@ -23,15 +24,7 @@ interface NewsSectionProps {
 
 function formatDate(iso: string | null): string {
   if (!iso) return ''
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  } catch {
-    return ''
-  }
+  return formatIsoDateLong(iso)
 }
 
 export function NewsSection({ posts, heading, intro }: NewsSectionProps) {

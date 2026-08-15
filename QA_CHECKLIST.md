@@ -22,6 +22,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
 - [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
 - [ ] Partner SVGs (HOFA, Baby Audio, SUPERHOT, …) look sharp at desktop size — not a 150px-wide smear
+- [ ] Console: no CORS on `*.r2.dev` partner SVGs; logos load via `/api/partner-logo` (or wsrv for rasters)
+- [ ] Hard refresh with a stored non-English locale (`zd-locale`): no React #418 hydration text error; chrome stays English for a beat then switches
 - [ ] Native (white-fill off) PNG/WebP/SVG logos actually appear (not empty cells); broken files show the partner name
 - [ ] Language switch DE/JA/RU: section titles stay readable (no mixed smeared sans-serif, no overflow); CJK titles are not force-latinized
 - [ ] Multi-colour transparent logos (e.g. AEW white + gold A/W + gray): with **White logo fill** on, **all** ink is solid white — only transparency stays transparent (no gold leftover, no missing white text)
@@ -69,4 +71,5 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | `…ography` / BIO under logo | Flex logo + compact nav labels |
 | Gallery “different” modal | `type: 'gallery'` → `CyberpunkOverlay` |
 | White PNG box (e.g. QUESTEC) | Canvas silhouette; no CSS invert on plates |
+| React #418 text + R2 SVG CORS | Locale after mount; `/api/partner-logo` for R2 SVGs |
 | Tiny footer | Icons ≥28px; legal ≥ text-sm |

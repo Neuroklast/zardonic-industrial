@@ -114,15 +114,24 @@ export function localeFromCountry(country: string | null | undefined, supported:
 }
 
 /**
+ * Locale for SSR and the first client render. Must not read localStorage or
+ * navigator — those differ from the server and cause React #418 text mismatches.
+ */
+export function initialPublicLocale(supported: string[]): string {
+  const codes = supported.length > 0 ? supported : [DEFAULT_LOCALE]
+  return codes.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : codes[0]
+}
+
+/**
  * Synchronous best-effort detect (storage → browser → en).
- * Geo is applied asynchronously by LocaleProvider after /api/geo.
+ * Apply only after mount. Geo is applied asynchronously by LocaleProvider after /api/geo.
  */
 export function detectLocaleSync(supported: string[]): string {
   const codes = supported.length > 0 ? supported : [DEFAULT_LOCALE]
   return (
     readStoredLocale(codes) ??
     localeFromBrowser(codes) ??
-    (codes.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : codes[0])
+    initialPublicLocale(codes)
   )
 }
 
