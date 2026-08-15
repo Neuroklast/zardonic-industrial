@@ -72,4 +72,5 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | Gallery “different” modal | `type: 'gallery'` → `CyberpunkOverlay` |
 | White PNG box (e.g. QUESTEC) | Canvas silhouette; no CSS invert on plates |
 | React #418 text + R2 SVG CORS | Locale after mount; `/api/partner-logo` for R2 SVGs |
+| PWM / white wordmark missing | White-on-transparent logos stay visible (not stripped as a plate) |
 | Tiny footer | Icons ≥28px; legal ≥ text-sm |

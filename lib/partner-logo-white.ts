@@ -73,22 +73,25 @@ export function processLogoToWhiteSilhouette(
   const hasSoftAlpha = alphaMax - alphaMin > 24 && alphaMin < 240
 
   const corners = sampleCornerLuminance(data, width, height)
+
+  // Plate detection needs a contrasting mark. A white wordmark that touches
+  // corners (PWM) is not a light plate — stripping white would erase the logo.
+  let hasLightContent = false
+  let hasDarkContent = false
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 12) continue
+    const lum = (data[i] + data[i + 1] + data[i + 2]) / 3
+    if (lum >= whiteThreshold - 40) hasLightContent = true
+    else hasDarkContent = true
+    if (hasLightContent && hasDarkContent) break
+  }
+
   const lightBackground =
+    hasDarkContent &&
     corners.opaqueSamples > 0 &&
     corners.avgLum >= whiteThreshold - 12 &&
     corners.transparentSamples < corners.opaqueSamples
 
-  // Only treat as dark plate when corners are dark AND a light mark exists in-frame.
-  // Pure black marks (no light content) must still use inverse luminance, not go transparent.
-  let hasLightContent = false
-  for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] < 12) continue
-    const lum = (data[i] + data[i + 1] + data[i + 2]) / 3
-    if (lum >= whiteThreshold - 40) {
-      hasLightContent = true
-      break
-    }
-  }
   const darkBackground =
     !lightBackground &&
     hasLightContent &&

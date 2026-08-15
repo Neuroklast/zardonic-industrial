@@ -67,7 +67,7 @@ Pipeline for white-mode logos (`logo_white !== false`):
 5. Render `data:image/png` via class `partner-logo-white` — rest state `filter: none` in **CSS only**.
 6. Native logos (`logo_white === false`): same SVG rewrite for display; **eager** load (no `loading="lazy"` — Lenis + native lazy never starts the request); no `whileInView` + `opacity: 0` (can stay invisible).
 
-Soft-alpha rule (transparent PNG/SVG, e.g. AEW white + gold + gray): every non-transparent pixel → solid white at source alpha. **Never** kill near-white ink on soft-alpha assets (that made white text vanish and multi-colour marks look wrong).
+Soft-alpha rule (transparent PNG/SVG, e.g. AEW white + gold + gray): every non-transparent pixel → solid white at source alpha. **Never** kill near-white ink on true-alpha logos (that made white text vanish and multi-colour marks look wrong). Light-plate stripping requires a **dark mark** in-frame — a white wordmark that touches corners (PWM) is the logo, not a plate.
 
 When white fill is **off** (`logo_white === false`): class `partner-logo-native` (original colours). Same chromatic hover as white mode.
 
