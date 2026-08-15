@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   isSvgLogoUrl,
   logoRasterSize,
+  parsePartnerLogoProxyUrl,
   partnerLogoCanvasSrc,
+  partnerLogoProxyPath,
   processLogoToWhiteSilhouette,
   rewriteSvgForHiResRaster,
+  shouldProxyPartnerLogo,
 } from '@/lib/partner-logo-white'
 
 function makeImageData(
@@ -181,9 +184,34 @@ describe('partnerLogoCanvasSrc', () => {
     expect(partnerLogoCanvasSrc('/assets/logo.png')).toBe('/assets/logo.png')
   })
 
-  it('does not wrap public R2 URLs (keeps SVG vector, avoids tiny wsrv raster)', () => {
+  it('proxies public R2 SVGs through same-origin rewrite (r2.dev has no CORS)', () => {
     const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
-    expect(partnerLogoCanvasSrc(r2)).toBe(r2)
+    expect(shouldProxyPartnerLogo(r2)).toBe(true)
+    expect(partnerLogoCanvasSrc(r2)).toBe(partnerLogoProxyPath(r2))
+    expect(partnerLogoCanvasSrc(r2)).toMatch(/^\/api\/partner-logo\?url=/)
+  })
+
+  it('sends public R2 rasters through wsrv (fetch/canvas need CORS)', () => {
+    const r2 = 'https://pub-example.r2.dev/partners/logos/questec.png'
+    expect(shouldProxyPartnerLogo(r2)).toBe(false)
+    const src = partnerLogoCanvasSrc(r2)
+    expect(src).toContain('https://wsrv.nl/?url=')
+    expect(src).toContain('output=png')
+  })
+
+  it('does not proxy relative or data SVGs', () => {
+    expect(shouldProxyPartnerLogo('/logos/a.svg')).toBe(false)
+    expect(shouldProxyPartnerLogo('data:image/svg+xml,<svg></svg>')).toBe(false)
+    expect(shouldProxyPartnerLogo('https://cdn.example.com/a.svg')).toBe(false)
+  })
+
+  it('parsePartnerLogoProxyUrl only allows https R2/Supabase SVGs', () => {
+    const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
+    expect(parsePartnerLogoProxyUrl(r2)).toBe(r2)
+    expect(parsePartnerLogoProxyUrl('https://cdn.example.com/a.svg')).toBeNull()
+    expect(parsePartnerLogoProxyUrl('https://pub-example.r2.dev/logo.png')).toBeNull()
+    expect(parsePartnerLogoProxyUrl('http://pub-example.r2.dev/a.svg')).toBeNull()
+    expect(parsePartnerLogoProxyUrl(null)).toBeNull()
   })
 })
 

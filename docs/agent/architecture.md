@@ -4,7 +4,7 @@
 
 Next.js App Router (public + admin), Supabase (`site_config`, content tables, auth), Cloudflare R2, Resend. Legacy root `api/` remains for some proxies (rate-limited via Upstash) — prefer `app/api/**` for new routes.
 
-**Never dual-mount the same path:** root `api/<name>.ts` can shadow `app/api/<name>/route.ts` on Vercel. Public `/api/geo` is App Router only.
+**Never dual-mount the same path:** root `api/<name>.ts` can shadow `app/api/<name>/route.ts` on Vercel. Public `/api/geo` is App Router only. Partner SVG rewrite is `/api/partner-logo` (R2/Supabase SVGs only + SSRF guard) — public `*.r2.dev` has no CORS.
 
 **Public Supabase reads:** use `createPublicClient()` from `lib/supabaseServer.ts` (cookie-less anon). Do not use `createClient()` (cookie session) for homepage/browse content — admin JWT skew must not blank the public site.
 

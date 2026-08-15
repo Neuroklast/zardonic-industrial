@@ -223,13 +223,41 @@ export function rewriteSvgForHiResRaster(
   })
 }
 
+/** Same-origin rewrite so the browser never fetch()es r2.dev (no CORS headers). */
+export function partnerLogoProxyPath(url: string): string {
+  return `/api/partner-logo?url=${encodeURIComponent(url)}`
+}
+
+/** Remote SVG on R2 / Supabase — must be rewritten via our origin, not fetched cross-origin. */
+export function shouldProxyPartnerLogo(url: string): boolean {
+  if (!url || !isSvgLogoUrl(url)) return false
+  if (url.startsWith('/') || url.startsWith('.') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return false
+  }
+  return isDirectCanvasHost(url)
+}
+
+/** Validate `?url=` for `/api/partner-logo`. Rejects anything we would not proxy. */
+export function parsePartnerLogoProxyUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'https:') return null
+    if (!shouldProxyPartnerLogo(parsed.toString())) return null
+    return parsed.toString()
+  } catch {
+    return null
+  }
+}
+
 /** Force CORS-safe load URL via wsrv so canvas / fetch is not tainted. */
 export function partnerLogoCanvasSrc(url: string): string {
   if (!url) return ''
   if (url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/') || url.startsWith('.')) return url
-  // Public R2 already sends CORS — keep SVG as SVG (wsrv output=png rasterizes at intrinsic size).
-  if (isDirectCanvasHost(url)) return url
+  // Public r2.dev does not send Access-Control-Allow-Origin. SVGs stay vectors via
+  // same-origin rewrite; rasters go through wsrv (output=png at 1024 would smash SVG).
+  if (shouldProxyPartnerLogo(url)) return partnerLogoProxyPath(url)
 
   if (url.startsWith('https://wsrv.nl/')) {
     const joiner = url.includes('?') ? '&' : '?'
@@ -252,9 +280,8 @@ async function fetchLogoResource(url: string): Promise<Response> {
 /** SVG as a high-res blob URL so <img> stays a vector at display × DPR. */
 export async function preparePartnerLogoSrc(url: string): Promise<string> {
   if (!url || !isSvgLogoUrl(url)) return url
-  const fetchUrl = isDirectCanvasHost(url) || url.startsWith('https://wsrv.nl/')
-    ? url
-    : url
+  if (shouldProxyPartnerLogo(url)) return partnerLogoProxyPath(url)
+  const fetchUrl = url
   try {
     const res = await fetchLogoResource(fetchUrl)
     const text = await res.text()

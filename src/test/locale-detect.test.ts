@@ -2,6 +2,7 @@ import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest'
 import {
   COUNTRY_TO_LOCALE,
   detectLocaleSync,
+  initialPublicLocale,
   localeFromBrowser,
   localeFromCountry,
   matchSupportedLocale,
@@ -76,5 +77,12 @@ describe('locale-detect', () => {
   it('localeFromBrowser returns null without navigator match', () => {
     vi.stubGlobal('navigator', { language: 'sv-SE', languages: ['sv-SE'] })
     expect(localeFromBrowser(supported)).toBeNull()
+  })
+
+  it('initialPublicLocale ignores storage and browser (SSR/hydration-safe)', () => {
+    localStorage.setItem('zd-locale', 'de')
+    vi.stubGlobal('navigator', { language: 'ja-JP', languages: ['ja-JP'] })
+    expect(initialPublicLocale(supported)).toBe('en')
+    expect(initialPublicLocale(['de', 'ja'])).toBe('de')
   })
 })

@@ -1,11 +1,12 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useSyncExternalStore, type ReactNode } from 'react'
 import { type Locale, type SiteLanguage, t as translate, BUILTIN_LOCALES } from '@/lib/i18n'
 import {
   DEFAULT_LOCALE,
   detectLocaleSync,
   fetchGeoCountry,
+  initialPublicLocale,
   localeFromCountry,
   readStoredLocale,
   writeStoredLocale,
@@ -23,6 +24,10 @@ interface LocaleContextValue {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null)
 
+const subscribeHydrated = () => () => {}
+const getHydratedSnapshot = () => true
+const getServerHydratedSnapshot = () => false
+
 export function LocaleProvider({
   children,
   customTranslations,
@@ -38,11 +43,16 @@ export function LocaleProvider({
   )
   const supportedCodes = useMemo(() => languages.map((l) => l.code), [languages])
 
-  const [locale, setLocaleState] = useState<Locale>(() => detectLocaleSync(supportedCodes))
+  // false during SSR + hydration (matches server HTML), true after — avoids React #418 text.
+  const hydrated = useSyncExternalStore(subscribeHydrated, getHydratedSnapshot, getServerHydratedSnapshot)
+  const [explicitLocale, setExplicitLocale] = useState<Locale | null>(null)
+  const detected = hydrated ? detectLocaleSync(supportedCodes) : initialPublicLocale(supportedCodes)
+  const locale = explicitLocale ?? detected
   const resolvedLocale = supportedCodes.includes(locale) ? locale : (supportedCodes.includes(DEFAULT_LOCALE) ? DEFAULT_LOCALE : (supportedCodes[0] ?? DEFAULT_LOCALE))
 
-  // Geo: only when user has no stored preference — apply country locale if supported, else keep browser/en
+  // Geo: only when user has no stored preference — apply country locale if supported
   useEffect(() => {
+    if (!hydrated) return
     if (readStoredLocale(supportedCodes)) return
     let cancelled = false
     void (async () => {
@@ -50,14 +60,13 @@ export function LocaleProvider({
       if (cancelled) return
       const fromGeo = localeFromCountry(country, supportedCodes)
       if (!fromGeo) return
-      // Do not override if user already picked a language this session
       if (readStoredLocale(supportedCodes)) return
-      setLocaleState(fromGeo)
+      setExplicitLocale(fromGeo)
     })()
     return () => {
       cancelled = true
     }
-  }, [supportedCodes])
+  }, [hydrated, supportedCodes])
 
   useEffect(() => {
     document.documentElement.lang = resolvedLocale
@@ -66,7 +75,7 @@ export function LocaleProvider({
   const setLocale = useCallback(
     (newLocale: Locale) => {
       if (!supportedCodes.includes(newLocale)) return
-      setLocaleState(newLocale)
+      setExplicitLocale(newLocale)
       writeStoredLocale(newLocale)
     },
     [supportedCodes],

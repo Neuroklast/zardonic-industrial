@@ -59,6 +59,8 @@ Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Req
 
 `api/image-proxy.ts` and `api/image-proxy-protected.ts` use `lib/ssrf-guard.ts`: block private/metadata hosts, resolve DNS before fetch, re-check redirect targets. `lib/remote-image-url.ts` shares host blocklist for client-side URL validation.
 
+`app/api/partner-logo/route.ts` is allowlisted to R2 / Supabase **HTTPS SVGs** (`parsePartnerLogoProxyUrl`) **and** `assertSafeRemoteUrl` before fetch. Do not widen to arbitrary hosts.
+
 ## Legacy auth
 
 `api/auth.ts` and `x-session-token` header flow **removed**. Admin auth is Supabase SSR only (`app/admin/login/submit/route.ts`).
