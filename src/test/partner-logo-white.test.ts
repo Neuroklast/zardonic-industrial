@@ -123,6 +123,34 @@ describe('processLogoToWhiteSilhouette', () => {
     expect(out.data[7]).toBe(0)
   })
 
+  it('keeps a white wordmark that touches corners (PWM-style, no dark plate)', () => {
+    // White PWM-style mark: transparency only in one corner counter-space.
+    // Corner sampler sees mostly white and used to classify this as a light plate,
+    // then strip every white pixel — the logo vanished on the dark site.
+    const w = 3
+    const h = 3
+    const data = new Uint8ClampedArray(w * h * 4)
+    const set = (x: number, y: number, r: number, g: number, b: number, a: number) => {
+      const i = (y * w + x) * 4
+      data[i] = r
+      data[i + 1] = g
+      data[i + 2] = b
+      data[i + 3] = a
+    }
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) set(x, y, 255, 255, 255, 255)
+    }
+    set(0, 0, 0, 0, 0, 0)
+
+    const out = processLogoToWhiteSilhouette({ data, width: w, height: h })
+    expect(out.data[3]).toBe(0)
+    const center = (1 * w + 1) * 4
+    expect(out.data[center]).toBe(255)
+    expect(out.data[center + 1]).toBe(255)
+    expect(out.data[center + 2]).toBe(255)
+    expect(out.data[center + 3]).toBe(255)
+  })
+
   it('keeps already-white ink on transparent (must not disappear)', () => {
     // Pre-whitened / white-fill brand mark on real alpha — used to be killed as "leftover plate"
     const input = makeImageData([

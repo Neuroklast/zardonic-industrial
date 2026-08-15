@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
 
 ### Fixed
+- **PWM partner logo invisible**: white-on-transparent wordmarks that touch the frame corners were classified as a light plate; every white pixel was stripped (empty black cell). Light-plate mode now requires a dark mark in-frame.
 - **React #418 hydration text**: public locale no longer reads `localStorage` / `navigator` on the first client render (SSR was always English). Locale applies after mount. Homepage news dates use UTC-stable `formatIsoDateLong` instead of `toLocaleDateString(undefined)`.
 - **Partner SVG CORS**: public `*.r2.dev` does not send `Access-Control-Allow-Origin`. Browser `fetch()` of partner SVGs is gone — `/api/partner-logo` rewrites R2/Supabase SVGs same-origin; R2 rasters go through wsrv for canvas.
 - **Partner / credits SVG + PNG logos**: white-fill no longer rasterizes SVGs at their tiny intrinsic size (e.g. Baby Audio 155×18 → blurry). SVGs are rewritten to 1024px before canvas. Native logos load eagerly (Lenis + `loading="lazy"` never started the request) and no longer start at `opacity: 0` + `whileInView` (could stay invisible). Failed images fall back to the partner name.
