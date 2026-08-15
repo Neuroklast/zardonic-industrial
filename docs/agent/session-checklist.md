@@ -38,6 +38,8 @@
 | Supabase admin auth | `app/admin/login/submit/route.ts`, `proxy.ts`, `lib/supabaseServer.ts` | Native POST login; pass cookie `options` unchanged; forward SSR cache headers; copy cookies on all proxy redirects |
 | Redis short-circuit | `api/auth.ts` / session helpers | Return false if Redis not configured |
 | WebGL cleanup | `ModelBackground.tsx` / circuit backgrounds | Dispose geometry/material/texture before renderer |
+| Partner SVG/PNG | `lib/partner-logo-white.ts`, `CreditsSection.tsx` | Rewrite SVG to 1024px before canvas; R2 direct (no wsrv PNG); eager load; no `whileInView`+`opacity:0` |
+| Background video | `BackgroundStack.tsx` | No canvas animation while scroll video is active; seek ≥ 1/24s |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
 | Odesli dual API | `lib/odesli.ts` | Server: `fetchOdesliLinksFromApi`; client editor: `fetchOdesliLinks` via `/api/odesli` queue |
 | Nav logo vs BIO | `SiteNav.tsx` | Flex `shrink-0` logo; never absolute over links |

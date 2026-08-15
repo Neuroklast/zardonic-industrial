@@ -156,7 +156,7 @@ export function BackgroundStack({
             getProgress: () => lenis.progress,
           }
         : null,
-      minDeltaSec: 1 / 48,
+      minDeltaSec: 1 / 24,
     })
   }, [activeVideoUrl, lenis])
 
@@ -194,29 +194,32 @@ export function BackgroundStack({
           <video
             key={activeVideoUrl}
             ref={videoRef}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover [transform:translateZ(0)]"
             data-draft-target="bg-video"
             src={activeVideoUrl}
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             aria-hidden="true"
           />
           <div className="absolute inset-0 bg-black/45 pointer-events-none" aria-hidden="true" />
         </div>
       ) : null}
 
-      <AnimatedLayer
-        backgroundType={effectiveBackgroundType}
-        hasImage={hasMedia}
-        /* Shared policy: mobile / media / heavy types → frame-budgeted canvas layers */
-        perfMode={resolveBackgroundPerfMode({
-          isMobile,
-          hasVideo: Boolean(activeVideoUrl),
-          hasImage: showBackgroundImage,
-          backgroundType: effectiveBackgroundType,
-        })}
-      />
+      {/* Scroll-scrubbed 1080p video + full-size canvas together janks Lenis.
+          Video is the background when active; keep canvas for still/image modes. */}
+      {!activeVideoUrl ? (
+        <AnimatedLayer
+          backgroundType={effectiveBackgroundType}
+          hasImage={hasMedia}
+          perfMode={resolveBackgroundPerfMode({
+            isMobile,
+            hasVideo: false,
+            hasImage: showBackgroundImage,
+            backgroundType: effectiveBackgroundType,
+          })}
+        />
+      ) : null}
     </>
   )
 }

@@ -138,21 +138,133 @@ export function processLogoToWhiteSilhouette(
   return { data: out, width, height }
 }
 
+/** Raster size for white-fill canvas: upscale tiny SVG defaults, cap huge assets. */
+export const PARTNER_LOGO_RASTER_MIN = 512
+export const PARTNER_LOGO_RASTER_MAX = 1024
+
+export function isSvgLogoUrl(url: string): boolean {
+  if (!url) return false
+  if (url.startsWith('data:image/svg+xml')) return true
+  try {
+    const path = url.startsWith('data:') || url.startsWith('blob:')
+      ? url
+      : new URL(url, 'https://local.test').pathname
+    return /\.svg$/i.test(path)
+  } catch {
+    return /\.svg(\?|#|$)/i.test(url)
+  }
+}
+
+export function isDirectCanvasHost(url: string): boolean {
+  if (!url) return false
+  if (url.startsWith('/') || url.startsWith('.') || url.startsWith('data:') || url.startsWith('blob:')) {
+    return true
+  }
+  try {
+    const hostname = new URL(url).hostname
+    return (
+      hostname.endsWith('.r2.dev') ||
+      hostname.endsWith('.r2.cloudflarestorage.com') ||
+      hostname.endsWith('.supabase.co')
+    )
+  } catch {
+    return false
+  }
+}
+
+export function logoRasterSize(
+  width: number,
+  height: number,
+  minSide = PARTNER_LOGO_RASTER_MIN,
+  maxSide = PARTNER_LOGO_RASTER_MAX,
+): { width: number; height: number } {
+  const w = Math.max(1, width)
+  const h = Math.max(1, height)
+  const longest = Math.max(w, h)
+  let scale = 1
+  if (longest < minSide) scale = minSide / longest
+  else if (longest > maxSide) scale = maxSide / longest
+  return {
+    width: Math.max(1, Math.round(w * scale)),
+    height: Math.max(1, Math.round(h * scale)),
+  }
+}
+
+/**
+ * Force an SVG to a large explicit width/height so <img> / canvas rasterize
+ * at retina size. Tiny width="155" (Baby Audio) or missing size (default 300)
+ * is what made partner SVGs look blurry after white-fill.
+ */
+export function rewriteSvgForHiResRaster(
+  svgText: string,
+  targetMaxSide = PARTNER_LOGO_RASTER_MAX,
+): string {
+  const viewBox = svgText.match(
+    /viewBox\s*=\s*["']\s*([+-]?[\d.]+(?:[eE][+-]?\d+)?)\s+([+-]?[\d.]+(?:[eE][+-]?\d+)?)\s+([+-]?[\d.]+(?:[eE][+-]?\d+)?)\s+([+-]?[\d.]+(?:[eE][+-]?\d+)?)\s*["']/i,
+  )
+  const widthAttr = svgText.match(/<svg\b[^>]*\bwidth\s*=\s*["']([\d.]+)(?:px)?["']/i)
+  const heightAttr = svgText.match(/<svg\b[^>]*\bheight\s*=\s*["']([\d.]+)(?:px)?["']/i)
+
+  const vbW = viewBox ? Math.abs(parseFloat(viewBox[3])) : 0
+  const vbH = viewBox ? Math.abs(parseFloat(viewBox[4])) : 0
+  const srcW = (vbW || (widthAttr ? parseFloat(widthAttr[1]) : 0) || targetMaxSide)
+  const srcH = (vbH || (heightAttr ? parseFloat(heightAttr[1]) : 0) || targetMaxSide)
+  const { width, height } = logoRasterSize(srcW, srcH, targetMaxSide, targetMaxSide)
+
+  return svgText.replace(/(<svg\b)([^>]*)(>)/i, (_m, open: string, attrs: string, close: string) => {
+    let next = attrs
+      .replace(/\swidth\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/\sheight\s*=\s*["'][^"']*["']/gi, '')
+    if (!/viewBox\s*=/i.test(next) && srcW && srcH) {
+      next += ` viewBox="0 0 ${srcW} ${srcH}"`
+    }
+    next += ` width="${width}" height="${height}"`
+    return `${open}${next}${close}`
+  })
+}
+
 /** Force CORS-safe load URL via wsrv so canvas / fetch is not tainted. */
 export function partnerLogoCanvasSrc(url: string): string {
   if (!url) return ''
   if (url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/') || url.startsWith('.')) return url
+  // Public R2 already sends CORS — keep SVG as SVG (wsrv output=png rasterizes at intrinsic size).
+  if (isDirectCanvasHost(url)) return url
 
   if (url.startsWith('https://wsrv.nl/')) {
     const joiner = url.includes('?') ? '&' : '?'
     let next = url
     if (!/[?&]output=/.test(next)) next += `${joiner}output=png`
     if (!/[?&]n=/.test(next)) next += '&n=-1'
+    if (!/[?&]w=/.test(next)) next += `&w=${PARTNER_LOGO_RASTER_MAX}`
     return next
   }
 
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&output=png&n=-1`
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&output=png&n=-1&w=${PARTNER_LOGO_RASTER_MAX}`
+}
+
+async function fetchLogoResource(url: string): Promise<Response> {
+  const res = await fetch(url, { mode: 'cors', credentials: 'omit' })
+  if (!res.ok) throw new Error(`logo fetch ${res.status}`)
+  return res
+}
+
+/** SVG as a high-res blob URL so <img> stays a vector at display × DPR. */
+export async function preparePartnerLogoSrc(url: string): Promise<string> {
+  if (!url || !isSvgLogoUrl(url)) return url
+  const fetchUrl = isDirectCanvasHost(url) || url.startsWith('https://wsrv.nl/')
+    ? url
+    : url
+  try {
+    const res = await fetchLogoResource(fetchUrl)
+    const text = await res.text()
+    if (!/<svg/i.test(text)) return url
+    const rewritten = rewriteSvgForHiResRaster(text)
+    const blob = new Blob([rewritten], { type: 'image/svg+xml' })
+    return URL.createObjectURL(blob)
+  } catch {
+    return url
+  }
 }
 
 /**
@@ -160,6 +272,15 @@ export function partnerLogoCanvasSrc(url: string): string {
  * (more reliable than Image.crossOrigin for third-party CDNs).
  */
 export async function loadLogoImageForCanvas(url: string): Promise<HTMLImageElement> {
+  if (isSvgLogoUrl(url)) {
+    try {
+      const hiRes = await preparePartnerLogoSrc(url)
+      return await loadImageElement(hiRes, false)
+    } catch {
+      // fall through to raster proxy
+    }
+  }
+
   const src = partnerLogoCanvasSrc(url)
 
   // Relative / same-origin can load directly
@@ -168,8 +289,7 @@ export async function loadLogoImageForCanvas(url: string): Promise<HTMLImageElem
   }
 
   try {
-    const res = await fetch(src, { mode: 'cors', credentials: 'omit' })
-    if (!res.ok) throw new Error(`logo fetch ${res.status}`)
+    const res = await fetchLogoResource(src)
     const blob = await res.blob()
     const objectUrl = URL.createObjectURL(blob)
     try {

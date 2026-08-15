@@ -19,6 +19,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - README, Admin Guide, DEVELOPMENT_STATUS, agent session checklist, and docs index updated for dual hero width + Desktop/Mobile live preview (2026-08-10 session closeout).
 
 ### Fixed
+- **Partner / credits SVG + PNG logos**: white-fill no longer rasterizes SVGs at their tiny intrinsic size (e.g. Baby Audio 155×18 → blurry). SVGs are rewritten to 1024px before canvas; R2 URLs stay direct (no wsrv `output=png`). Native logos load eagerly (Lenis + `loading="lazy"` never started the request) and no longer start at `opacity: 0` + `whileInView` (could stay invisible). Failed images fall back to the partner name.
+- **Background video jank**: scroll-synced 1080p video no longer runs a full-size canvas animation at the same time. Seek floor is 1/24s; video uses `preload="metadata"` and a compositor layer.
+- **Section headings + locale**: titles use `toLocaleUpperCase` (ß / CJK stay intact); heading CSS uses `optimizeLegibility`, `font-synthesis: none`, and `overflow-wrap` so Orbitron’s sans-serif fallback does not smear or overflow.
 - **Partner / credits logos (white fill multi-colour)**: transparent logos with mixed brand colours (e.g. AEW white + gold A/W + gray) no longer lose white ink or leave gold/gray un-whitened. Soft-alpha path: only transparent stays transparent; every other pixel → pure white. Opaque light/dark plates still strip the plate but keep mid-tone marks solid white (not faded).
 - **Partner / credits logos (white fill + hover)**: white-fill no longer turns light-on-dark assets (e.g. white SEGA on black) into solid white rectangles — dark plates use direct luminance alpha. Chromatic aberration on hover works again for both white-fill and native colour logos (removed inline `filter: none` that blocked CSS hover; shared `.partner-logo-cell` group-hover).
 - **`/api/geo` production 503**: removed legacy `api/geo.ts` (Upstash rate-limit fail-closed). Canonical handler is App Router `app/api/geo/route.ts` (Vercel country header only, no Redis). Root cause of logs: dead `UPSTASH_REDIS_REST_URL` host `prepared-corgi-90453.upstash.io` (DNS ENOTFOUND).
@@ -37,7 +40,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Performance
 - **Canvas frame budget** (`lib/canvas-perf.ts`): shared DPR cap, scroll-activity throttle (≈12–15 FPS while scrolling), idle 24–30 FPS, pause when tab hidden. Wired into Matrix, Terminal, DataStream, CloudChamber, Glitch-grid, ModelBackground (3D).
-- **BackgroundStack policy**: mobile / image / video / heavy types → `perfMode`; stars/minimal stay full quality on desktop without media. Both public + `components/BackgroundStack` parity.
+- **BackgroundStack policy**: mobile / image / heavy types → `perfMode`; **video active → no animated canvas**. stars/minimal stay full quality on desktop without media.
 - **CircuitBackground**: `perfMode` zeros parallax range, thins depth-3 nodes, slows pulse spawn.
 - **Global FX mobile-lite**: quieter noise/chroma; no periodic noise glitch class on mobile (`global-fx-lite`).
 - **Hero mobile sizing**: use separate mobile width % (not a max-height cap); large square logos are controlled by width on phones.

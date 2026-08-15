@@ -64,7 +64,16 @@ describe('public BackgroundStack', () => {
     expect(video.loop).toBe(false)
     expect(video.muted).toBe(true)
     expect(video.playsInline).toBe(true)
-    expect(video.preload).toBe('auto')
+    expect(video.preload).toBe('metadata')
+  })
+
+  it('does not mount canvas animation while a background video is active', () => {
+    const { container } = render(
+      <BackgroundStack videoUrl="https://example.com/bg.mp4" backgroundType="matrix" />,
+    )
+
+    expect(container.querySelector('video')).toBeTruthy()
+    expect(container.querySelector('[data-draft-bg-type]')).toBeNull()
   })
 
   it('scrubs video currentTime from page scroll progress', () => {
