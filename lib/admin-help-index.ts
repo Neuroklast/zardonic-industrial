@@ -268,13 +268,23 @@ const HOWTO_ENTRIES: AdminHelpEntry[] = [
     priority: 67,
   },
   {
+    id: 'help-r2-host-rewrite',
+    title: 'Images 404 after moving R2 / Vercel / Supabase?',
+    description:
+      'JSON import does not copy R2 files. After the files are in the new bucket, use Data → Rewrite media URLs to current R2 so leftover pub-….r2.dev and wsrv.nl URLs match R2_PUBLIC_HOST. Confirm the new host on API Health first, then hard-refresh.',
+    href: '/admin/data',
+    group: 'Help',
+    keywords: ['r2', 'wsrv', '404', 'bucket', 'migration', 'images', 'background', 'partners', 'rewrite'],
+    priority: 67,
+  },
+  {
     id: 'help-data-maintenance',
     title: 'What does data maintenance do?',
     description:
-      'Import/Export page: enrich all tracklists, reset tracklists, purge+sync releases (Spotify), purge+sync gigs (Bandsintown). Expert actions need confirmation.',
+      'Import/Export page: rewrite media URLs after an R2 bucket move, enrich all tracklists, reset tracklists, purge+sync releases (Spotify), purge+sync gigs (Bandsintown). Expert actions need confirmation.',
     href: '/admin/data',
     group: 'Help',
-    keywords: ['maintenance', 'purge', 'enrich', 'reset', 'import', 'export', 'backup', 'data'],
+    keywords: ['maintenance', 'purge', 'enrich', 'reset', 'import', 'export', 'backup', 'data', 'r2', 'wsrv', 'rewrite', 'bucket'],
     priority: 66,
   },
   {

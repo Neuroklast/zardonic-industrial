@@ -38,6 +38,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Network: no request to fonts.googleapis.com / fonts.gstatic.com on cold load
 - [ ] Analytics Reject → no POST /api/analytics; Accept → events only after consent
 - [ ] Background: video ON → no static bg image layer under video; video OFF → image with opacity
+- [ ] After an R2 bucket move: Network has no `wsrv.nl/?url=https://pub-<OLD>.r2.dev`; partner rasters may still use wsrv but the inner host is the current `R2_PUBLIC_HOST`
 - [ ] Background video: scroll scrub stays smooth; no matrix/circuit canvas running on top of the video
 - [ ] Background: desktop video ON + mobile “No video” → video on desktop, image fallback on phone
 - [ ] Biography section renders text (or “coming soon”); **no** red “[Bio] – Failed to render” box

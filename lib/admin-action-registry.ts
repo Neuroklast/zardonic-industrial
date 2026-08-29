@@ -780,6 +780,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
       return { ok: true }
     },
   }),
+
+  rewrite_media_hosts: register({
+    id: 'rewrite_media_hosts',
+    label: 'Rewrite Media Hosts to Current R2',
+    schema: z.object({ dryRun: z.boolean() }),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
