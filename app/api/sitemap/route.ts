@@ -12,6 +12,7 @@ const STATIC_URLS: SitemapUrl[] = [
   { loc: `${BASE_URL}/`, changefreq: 'weekly', priority: '1.0' },
   { loc: `${BASE_URL}/releases`, changefreq: 'weekly', priority: '0.8' },
   { loc: `${BASE_URL}/gigs`, changefreq: 'weekly', priority: '0.8' },
+  { loc: `${BASE_URL}/media`, changefreq: 'weekly', priority: '0.7' },
   { loc: `${BASE_URL}/legal-notice`, changefreq: 'monthly', priority: '0.3' },
   { loc: `${BASE_URL}/privacy-policy`, changefreq: 'monthly', priority: '0.3' },
   { loc: `${BASE_URL}/newsletter/unsubscribe`, changefreq: 'yearly', priority: '0.2' },

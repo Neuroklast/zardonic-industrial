@@ -20,6 +20,9 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Events/gigs: same overlay system as releases
 - [ ] Gallery: open image → **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
+- [ ] Media: homepage teaser + `/media` browse; image cards open overlay preview + download; audio has inline player (no autoplay); PDF/ZIP download
+- [ ] Media logos/photos are original colours (no partner white-silhouette pipeline)
+- [ ] Events: only past gigs → homepage shows “No upcoming events.” (not the past list); `/gigs` still has Past filter
 - [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
 - [ ] Partner SVGs (HOFA, Baby Audio, SUPERHOT, …) look sharp at desktop size — not a 150px-wide smear
 - [ ] Console: no CORS on `*.r2.dev` partner SVGs; logos load via `/api/partner-logo` (or wsrv for rasters)
@@ -71,6 +74,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 |-----|--------------------|
 | `…ography` / BIO under logo | Flex logo + compact nav labels |
 | Gallery “different” modal | `type: 'gallery'` → `CyberpunkOverlay` |
+| Media image preview | `type: 'media'` → `CyberpunkOverlay` + `MediaOverlayContent` |
 | White PNG box (e.g. QUESTEC) | Canvas silhouette; no CSS invert on plates |
 | React #418 text + R2 SVG CORS | Locale after mount; `/api/partner-logo` for R2 SVGs |
 | PWM / white wordmark missing | White-on-transparent logos stay visible (not stripped as a plate) |

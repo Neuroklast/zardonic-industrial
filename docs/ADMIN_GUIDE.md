@@ -1,6 +1,6 @@
 # Admin Guide
 
-> **Last updated:** 2026-08-10
+> **Last updated:** 2026-08-29
 
 The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabase user that has `profiles.role = 'admin'`.
 
@@ -17,12 +17,22 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Legal & Privacy | `/admin/legal` | Operator details, privacy policy override |
 | Biography | `/admin/bio` | Bio text |
 | Gallery | `/admin/gallery` | Images |
+| Media Downloads | `/admin/media` | Press photos, logos, PDFs, ZIPs, audio |
 | Discography | `/admin/releases` | Releases + sync |
 | Events | `/admin/gigs` | Gigs + Bandsintown sync |
 | Newsletter | `/admin/newsletter` | Subscribers |
 | Data | `/admin/data` | Import/export + **data maintenance** |
 
 Full nav is in `app/admin/_config/nav-groups.ts`.
+
+## Media downloads
+
+`/admin/media` publishes files on the homepage **Media** section and `/media`.
+
+- Allowed: JPEG, PNG, WebP, GIF (preview + overlay), PDF/ZIP (direct download), MP3/WAV (inline player).
+- Files are stored **as uploaded** in R2 — no crop/WebP conversion.
+- Category (`photo` / `logo` / `document` / `audio` / `other`) is a filter on `/media`; click behaviour follows the file type.
+- After adding the `media_downloads` table in Supabase (`supabase/schema.sql`), new section `media` appears in Look & Feel → Sections (existing sites: at the end of the list until you reorder).
 
 ## Look & Feel live preview
 

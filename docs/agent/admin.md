@@ -19,6 +19,8 @@ Revalidate paths include `/`, `/legal-notice`, `/privacy-policy` after saves.
 
 Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOptimizedImage` → R2.
 
+**Downloadable media** (`/admin/media`) is the exception: `FileSourcePicker` uploads **originals** (JPEG/PNG/WebP/GIF, PDF, ZIP, MP3/WAV) via signed PUT or multipart. Do not run press-kit files through the crop→WebP path.
+
 - Next `experimental.serverActions.bodySizeLimit` = **4mb** (default is **1mb** — full-res PNG crops hit this and show production **React #441** / 413).
 - Client guard: `SERVER_ACTION_IMAGE_UPLOAD_MAX_BYTES` (~3.5 MB) in `lib/optimize-image-constants.ts`.
 - Do **not** export crop as raw full-res PNG for upload.
@@ -53,7 +55,7 @@ Authenticated admin dispatches use `dispatchAdminActionAsAdmin()` (`expert` disc
 
 Full-site JSON backup of **editorial** tables via `lib/site-data-backup.ts`:
 
-- **Included:** `releases` (all rows, including `manually_edited` and inactive), `news_posts`, `gigs`, `gallery`, `bio`, `partners`, `social_links`, `music_highlights`, `merchandise`, `soundpacks`, every `site_config` key.
+- **Included:** `releases` (all rows, including `manually_edited` and inactive), `news_posts`, `gigs`, `gallery`, `media_downloads`, `bio`, `partners`, `social_links`, `music_highlights`, `merchandise`, `soundpacks`, every `site_config` key.
 - **Excluded:** `api_secrets`, `profiles`, `analytics_events`, `sync_jobs`, `newsletter_subscribers` (PII). R2 media is referenced by URL, not packed into the JSON.
 - **Export:** `GET /admin/data/export` (admin session). Service-role client + paginated `select('*')` so the dump is not capped at 1000 rows and is **not** inlined into the admin HTML (old `data-export-json` embedding truncated large catalogues).
 - **Import:** upsert by `id` / `site_config.key`. Accepts v1 aliases (`social`, `config`, `musicHighlights`, lone `bio` object). Empty unique IDs (`itunes_id`, …) are stored as `NULL`. Does **not** delete rows missing from the file.

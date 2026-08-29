@@ -36,6 +36,10 @@ describe('ADMIN_ACTION_REGISTRY', () => {
     expect(ids).toContain('update_style_override')
     expect(ids).toContain('reset_section_styles')
     expect(ids).toContain('update_site_data_field')
+    expect(ids).toContain('create_media_download')
+    expect(ids).toContain('update_media_download')
+    expect(ids).toContain('delete_media_download')
+    expect(ids).toContain('update_media_download_visibility')
   })
 
   it('every action has id, label, schema, minDisclosure, execute', () => {

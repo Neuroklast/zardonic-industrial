@@ -26,7 +26,7 @@ Public pages use [`layouts/PageLayout.tsx`](../layouts/PageLayout.tsx): backgrou
 
 | Area | Tables / keys |
 |------|----------------|
-| Content | `bio`, `releases`, `gigs`, `gallery`, `partners`, `merchandise`, `soundpacks`, `music_highlights`, `social_links`, `newsletter_subscribers` |
+| Content | `bio`, `releases`, `gigs`, `gallery`, `media_downloads`, `partners`, `merchandise`, `soundpacks`, `music_highlights`, `social_links`, `newsletter_subscribers` |
 | Configuration | `site_config` (JSON per key: `hero`, `appearance`, `sections`, `legal`, `footer`, …) |
 | Auth | `auth.users`, `profiles` (admin role) |
 

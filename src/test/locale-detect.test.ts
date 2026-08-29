@@ -54,6 +54,7 @@ describe('locale-detect', () => {
       'bio',
       'credits',
       'gallery',
+      'media',
       'music-highlights',
       'releases',
       'merchandise',

@@ -99,6 +99,16 @@ const ACTION_ENTRIES: AdminHelpEntry[] = [
     priority: 55,
   },
   {
+    id: 'media-new',
+    title: 'Add Media Download',
+    description:
+      'Upload a photo, logo, PDF, ZIP or audio file for the public Media section. Stored as the original file in R2.',
+    href: '/admin/media/new',
+    group: 'Content',
+    keywords: ['media', 'download', 'press', 'kit', 'logo', 'pdf', 'zip', 'audio', 'new', 'upload', 'add'],
+    priority: 55,
+  },
+  {
     id: 'releases-new',
     title: 'Add Release Manually',
     description:
@@ -327,6 +337,7 @@ function navDescription(href: string, label: string): string {
     '/admin/translations': 'Override public UI strings per locale.',
     '/admin/bio': 'Artist biography shown on the homepage bio section.',
     '/admin/gallery': 'Manage public gallery images — upload, reorder and delete.',
+    '/admin/media': 'Downloadable press photos, logos, PDFs, ZIPs and audio stored as originals in R2.',
     '/admin/partners': 'Credits, endorsements and partner logos with inline add form.',
     '/admin/music-highlights': 'Featured tracks or playlists on the homepage.',
     '/admin/releases': 'Full discography — edit, hide, delete or open per-release sync.',
@@ -351,6 +362,7 @@ function navKeywords(href: string, label: string): string[] {
     '/admin/releases': ['album', 'single', 'ep', 'discography', 'music'],
     '/admin/releases/sync': ['spotify', 'itunes', 'discogs', 'import', 'catalogue'],
     '/admin/gigs': ['bandsintown', 'concert', 'tour', 'live'],
+    '/admin/media': ['press kit', 'download', 'pdf', 'zip', 'audio', 'logo'],
     '/admin/partners': ['credits', 'endorsement', 'collaboration', 'logo'],
     '/admin/data': ['backup', 'export', 'import', 'maintenance', 'enrich'],
   }

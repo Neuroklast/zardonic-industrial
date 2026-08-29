@@ -72,6 +72,7 @@ describe('SITE_BACKUP_SECTIONS', () => {
     expect(tables).toContain('gigs')
     expect(tables).toContain('site_config')
     expect(tables).toContain('bio')
+    expect(tables).toContain('media_downloads')
     expect(tables).not.toContain('api_secrets')
     expect(tables).not.toContain('newsletter_subscribers')
   })
@@ -179,6 +180,7 @@ describe('buildSiteBackup + applySiteBackup', () => {
       music_highlights: [],
       merchandise: [],
       soundpacks: [],
+      media_downloads: [],
       site_config: [{ key: 'hero', value: { headline: 'ZARDONIC' } }],
     })
 
@@ -200,6 +202,7 @@ describe('buildSiteBackup + applySiteBackup', () => {
       music_highlights: [],
       merchandise: [],
       soundpacks: [],
+      media_downloads: [],
       site_config: [],
     }
     const imported = await applySiteBackup(makeClient(dest), backup)

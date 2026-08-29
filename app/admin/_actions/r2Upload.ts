@@ -27,6 +27,17 @@ function buildPublicUrl(objectPath: string): string {
   return `${host.replace(/\/$/, '')}/${objectPath}`
 }
 
+export async function publicUrlForR2Object(
+  objectPath: string,
+): Promise<{ publicUrl: string }> {
+  await requireAdmin()
+  const path = objectPath.trim().replace(/^\/+/, '')
+  if (!path || path.includes('..') || path.includes('\\')) {
+    throw new Error('Invalid storage path')
+  }
+  return { publicUrl: buildPublicUrl(path) }
+}
+
 export async function createSignedUploadUrl(
   bucket: string,
   path: string,

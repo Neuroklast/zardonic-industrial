@@ -41,6 +41,7 @@ Public content SSR: `createPublicClient()` (cookie-less), not session `createCli
 | `release` | Releases section / browse | `ReleaseOverlayContent` |
 | `gig` | Gigs / browse | `GigOverlayContent` |
 | `gallery` | Gallery section | `GalleryOverlayContent` |
+| `media` | Media downloads (image preview) | `MediaOverlayContent` |
 | `contact` | Contact | `ContactOverlayContent` |
 | `member` | Bio / members | `MemberOverlayContent` |
 
@@ -51,6 +52,7 @@ Rules:
 3. Shell owns: backdrop, corners, scanlines, loading/glitch/reveal phases, close button, glow, **Lenis + body scroll lock**.
 4. Content components own **only** inner body (no second fixed fullscreen chrome).
 5. Gallery: swipe/dots/arrows in `GalleryOverlayContent` — not a parallel lightbox component for production UI.
+6. Media download images use overlay type `media` (preview + download). Do **not** run those files through the partner white-silhouette pipeline — they are download originals.
 
 **Forbidden:** shipping a one-off `fixed inset-0` lightbox that only “sort of” matches releases/events.
 

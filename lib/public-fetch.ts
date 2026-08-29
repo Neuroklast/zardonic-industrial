@@ -1,6 +1,7 @@
 import { createPublicClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import type { PublicGigRow } from '@/lib/gig-public-mapper'
+import { mapMediaDownloadRow, type MediaDownloadDbRow, type MediaDownloadItem } from '@/lib/media-download'
 import {
   mapReleaseRowToOverlayRelease,
   parseStreamingLinks,
@@ -100,6 +101,28 @@ export async function fetchPublicGigs(): Promise<PublicGigRow[]> {
   }
 
   return (data ?? []) as PublicGigRow[]
+}
+
+export async function fetchPublicMediaDownloads(): Promise<MediaDownloadItem[]> {
+  try {
+    const supabase = createPublicClient()
+    const { data, error } = await supabase
+      .from('media_downloads')
+      .select(
+        'id, title, description, category, file_storage_path, file_url, file_mime, file_size_bytes, original_filename, display_order',
+      )
+      .eq('active', true)
+      .order('display_order', { ascending: true })
+
+    if (error) {
+      console.error('[fetchPublicMediaDownloads] query failed:', error.message)
+      return []
+    }
+
+    return ((data ?? []) as MediaDownloadDbRow[]).map(mapMediaDownloadRow)
+  } catch {
+    return []
+  }
 }
 
 export async function fetchPublicArtistName(): Promise<string> {

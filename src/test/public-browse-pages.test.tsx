@@ -64,9 +64,10 @@ beforeAll(() => {
 })
 
 describe('public browse pages', () => {
-  it('exposes dedicated /releases and /gigs routes', () => {
+  it('exposes dedicated /releases, /gigs and /media routes', () => {
     expect(readSource('app/releases/page.tsx')).toMatch(/ReleasesBrowseClient/)
     expect(readSource('app/gigs/page.tsx')).toMatch(/GigsBrowseClient/)
+    expect(readSource('app/media/page.tsx')).toMatch(/MediaBrowseClient/)
   })
 
   it('uses swipe layout on mobile and grid on desktop for releases browse', () => {
@@ -142,6 +143,26 @@ describe('public browse pages', () => {
     }))
 
     renderWithLocale(<GigsSection upcoming={upcoming} past={[]} />)
+    expect(screen.getByRole('link', { name: /view all events/i })).toHaveAttribute('href', '/gigs')
+  })
+
+  it('hides past gigs on the homepage when none are upcoming', () => {
+    const past: PublicGigRow[] = [
+      {
+        id: 'gig-past',
+        title: 'Madrid Show',
+        venue: 'Arena',
+        city: 'Madrid',
+        country: 'Spain',
+        event_date: '2020-01-01',
+        ticket_url: null,
+        festival_name: null,
+      },
+    ]
+
+    renderWithLocale(<GigsSection upcoming={[]} past={past} />)
+    expect(screen.getByText(/no upcoming events/i)).toBeInTheDocument()
+    expect(screen.queryByText(/madrid show/i)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /view all events/i })).toHaveAttribute('href', '/gigs')
   })
 })

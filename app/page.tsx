@@ -7,6 +7,7 @@ import { CookieConsent } from '@/components/CookieConsent'
 import KonamiListener from '@/components/KonamiListener'
 import { BackgroundStack } from './_components/public/BackgroundStack'
 import { GallerySection } from './_components/public/GallerySection'
+import { MediaSection } from './_components/public/MediaSection'
 import { GlobalEffects } from './_components/public/GlobalEffects'
 import { SiteNav } from './_components/public/SiteNav'
 import { HeroSection } from './_components/public/HeroSection'
@@ -27,6 +28,10 @@ import { SiteFooter } from './_components/public/SiteFooter'
 import { SectionDivider } from './_components/public/SectionWrapper'
 import { SectionErrorBoundary } from '@/components/SectionErrorBoundary'
 import { SocialSection } from './_components/public/SocialSection'
+import {
+  mapMediaDownloadRow,
+  type MediaDownloadDbRow,
+} from '@/lib/media-download'
 import {
   mapReleaseRowToOverlayRelease,
   type ReleaseDbRow,
@@ -74,6 +79,7 @@ interface GalleryItemRow {
   id: string; alt: string | null
   storage_path: string | null; image_url: string | null
 }
+type MediaDownloadRow = MediaDownloadDbRow
 interface SocialRow {
   id: string
   platform: string
@@ -150,6 +156,7 @@ async function fetchAll() {
       merchResult,
       soundpackResult,
       galleryResult,
+      mediaResult,
       socialResult,
       newsResult,
     ] = await Promise.all([
@@ -162,6 +169,7 @@ async function fetchAll() {
       supabase.from('merchandise').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('soundpacks').select('id, title, image_storage_path, image_url, external_url').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('gallery').select('id, alt, storage_path, image_url').eq('active', true).order('display_order', { ascending: true }),
+      supabase.from('media_downloads').select('id, title, description, category, file_storage_path, file_url, file_mime, file_size_bytes, original_filename, display_order').eq('active', true).order('display_order', { ascending: true }),
       supabase.from('social_links').select('id, platform, url, label, logo_storage_path, logo_url').order('display_order', { ascending: true }),
       supabase
         .from('news_posts')
@@ -183,6 +191,7 @@ async function fetchAll() {
     logQueryError('merchandise', merchResult.error)
     logQueryError('soundpacks', soundpackResult.error)
     logQueryError('gallery', galleryResult.error)
+    logQueryError('media_downloads', mediaResult.error)
     logQueryError('social_links', socialResult.error)
     logQueryError('news_posts', newsResult.error)
 
@@ -198,6 +207,7 @@ async function fetchAll() {
       merch: (merchResult.data ?? []) as CommerceItemRow[],
       soundpacks: (soundpackResult.data ?? []) as CommerceItemRow[],
       gallery: (galleryResult.data ?? []) as GalleryItemRow[],
+      mediaDownloads: ((mediaResult.data ?? []) as MediaDownloadRow[]).map(mapMediaDownloadRow),
       social: (socialResult.data ?? []) as SocialRow[],
       newsPosts: (newsResult.data ?? []) as NewsPostRow[],
     }
@@ -213,6 +223,7 @@ async function fetchAll() {
       merch: [] as CommerceItemRow[],
       soundpacks: [] as CommerceItemRow[],
       gallery: [] as GalleryItemRow[],
+      mediaDownloads: [],
       social: [] as SocialRow[],
       newsPosts: [] as NewsPostRow[],
     }
@@ -237,7 +248,7 @@ export default async function HomePage({
   const isAdminPreview = adminPreview === '1'
   const {
     configRows, bio, gigs, releases, partners,
-    musicHighlights, merch, soundpacks, gallery, social, newsPosts,
+    musicHighlights, merch, soundpacks, gallery, mediaDownloads, social, newsPosts,
   } = await fetchAll()
 
   const heroConfig = getConfig(configRows, 'hero')
@@ -570,6 +581,18 @@ export default async function HomePage({
                   aspectRatio={typeof galleryOverrides.aspectRatio === 'string' ? galleryOverrides.aspectRatio : undefined}
                   gap={typeof galleryOverrides.gap === 'string' ? galleryOverrides.gap : undefined}
                   lightbox={galleryOverrides.lightbox !== false}
+                />
+              </SectionErrorBoundary>,
+              section,
+            )
+          case 'media':
+            return wrapForPreview(
+              <SectionErrorBoundary key="media" sectionName="Media">
+                {divider}
+                <MediaSection
+                  items={mediaDownloads}
+                  heading={section.label}
+                  intro={section.intro}
                 />
               </SectionErrorBoundary>,
               section,
