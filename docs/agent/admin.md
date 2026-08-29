@@ -49,6 +49,17 @@ Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance
 
 Authenticated admin dispatches use `dispatchAdminActionAsAdmin()` (`expert` disclosure). Real auth is `requireAdmin()`.
 
+## Data import / export (`/admin/data`)
+
+Full-site JSON backup of **editorial** tables via `lib/site-data-backup.ts`:
+
+- **Included:** `releases` (all rows, including `manually_edited` and inactive), `news_posts`, `gigs`, `gallery`, `bio`, `partners`, `social_links`, `music_highlights`, `merchandise`, `soundpacks`, every `site_config` key.
+- **Excluded:** `api_secrets`, `profiles`, `analytics_events`, `sync_jobs`, `newsletter_subscribers` (PII). R2 media is referenced by URL, not packed into the JSON.
+- **Export:** `GET /admin/data/export` (admin session). Service-role client + paginated `select('*')` so the dump is not capped at 1000 rows and is **not** inlined into the admin HTML (old `data-export-json` embedding truncated large catalogues).
+- **Import:** upsert by `id` / `site_config.key`. Accepts v1 aliases (`social`, `config`, `musicHighlights`, lone `bio` object). Empty unique IDs (`itunes_id`, …) are stored as `NULL`. Does **not** delete rows missing from the file.
+
+Do not add a second backup format; extend `SITE_BACKUP_SECTIONS` when a new content table appears.
+
 ### Async sync jobs
 
 Long catalogue / maintenance syncs use `sync_jobs` (Supabase) + API workers:

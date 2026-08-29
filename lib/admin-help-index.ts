@@ -339,7 +339,7 @@ function navDescription(href: string, label: string): string {
     '/admin/analytics': 'Site traffic and visitor statistics.',
     '/admin/api-keys': 'API keys for integrations and secured cron routes.',
     '/admin/health': 'External API connectivity status for sync jobs.',
-    '/admin/data': 'JSON import/export plus data maintenance (enrich, purge, sync).',
+    '/admin/data': 'Full JSON backup of all content (releases, news, config, …) plus restore and a link to catalogue sync.',
   }
   return map[href] ?? `Open ${label} in the admin panel.`
 }

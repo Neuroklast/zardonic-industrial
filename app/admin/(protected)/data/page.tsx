@@ -1,54 +1,31 @@
-import { createClient } from '@/lib/supabaseServer'
 import { Export } from '@phosphor-icons/react/dist/ssr'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { createAdminClient } from '@/lib/supabaseAdmin'
+import { buildSiteBackupCounts, SITE_BACKUP_EXCLUDED } from '@/lib/site-data-backup'
+import type { SiteBackupClient } from '@/lib/site-data-backup'
 import { DataImportClient } from './DataImportClient'
 import { DataMaintenanceClient } from './DataMaintenanceClient'
 
-// Server action: build a JSON export of all site data
-async function buildExportData() {
-  const supabase = await createClient()
-  const [
-    { data: releases },
-    { data: gigs },
-    { data: gallery },
-    { data: bio },
-    { data: partners },
-    { data: social },
-    { data: musicHighlights },
-    { data: merchandise },
-    { data: soundpacks },
-    { data: config },
-  ] = await Promise.all([
-    supabase.from('releases').select('*').order('display_order'),
-    supabase.from('gigs').select('*').order('event_date'),
-    supabase.from('gallery').select('*').order('display_order'),
-    supabase.from('bio').select('*').limit(1).single(),
-    supabase.from('partners').select('*').order('display_order'),
-    supabase.from('social_links').select('*').order('display_order'),
-    supabase.from('music_highlights').select('*').order('display_order'),
-    supabase.from('merchandise').select('*').order('display_order'),
-    supabase.from('soundpacks').select('*').order('display_order'),
-    supabase.from('site_config').select('key, value'),
-  ])
-  return { releases, gigs, gallery, bio, partners, social, musicHighlights, merchandise, soundpacks, config }
-}
+export const dynamic = 'force-dynamic'
 
 export default async function DataPage() {
-  let exportData: Record<string, unknown> = {}
+  let counts: Record<string, number> = {}
+  let warnings: string[] = []
   let fetchError = ''
+
   try {
-    exportData = await buildExportData()
+    const result = await buildSiteBackupCounts(createAdminClient() as unknown as SiteBackupClient)
+    counts = result.counts
+    warnings = result.warnings
   } catch (e) {
     fetchError = e instanceof Error ? e.message : 'Unknown error'
   }
-
-  const exportJson = JSON.stringify(exportData, null, 2)
 
   return (
     <div>
       <AdminPageHeader
         title="Data Export & Import"
-        description="Download a full JSON backup of all site content or restore from an export file."
+        description="Download a full JSON backup of all site content (including manually edited releases, news, drafts, and site config) or restore from an export file."
       />
 
       {fetchError && (
@@ -57,80 +34,53 @@ export default async function DataPage() {
         </div>
       )}
 
+      {warnings.length > 0 && (
+        <div className="mb-4 bg-amber-900/20 border border-amber-700/40 rounded p-3 text-amber-200 text-sm space-y-1">
+          {warnings.map((warning) => (
+            <div key={warning}>{warning}</div>
+          ))}
+        </div>
+      )}
+
       <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-5 space-y-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h2 className="text-sm font-semibold text-white">Full Site Export</h2>
             <p className="text-xs text-zinc-400 mt-1">
-              Includes releases, gigs, gallery, bio, partners, social links,
-              music highlights, merchandise, soundpacks, and site config.
+              All content tables: releases (including <code className="text-zinc-300">manually_edited</code>),
+              news, gigs, gallery, bio, partners, social links, music highlights, merchandise,
+              soundpacks, and every <code className="text-zinc-300">site_config</code> key. Inactive/draft
+              rows are included. Media files in R2 are referenced by URL, not bundled.
             </p>
           </div>
 
-          {/* Client-side download button */}
-          <form
-            onSubmit={undefined}
-            action="#"
-            className="shrink-0"
+          <a
+            href="/admin/data/export"
+            download
+            aria-label="Download JSON export"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm rounded font-medium transition-colors shrink-0 min-h-[44px]"
           >
-            <button
-              type="button"
-              aria-label="Download JSON export"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-700 hover:bg-red-600 text-white text-sm rounded font-medium transition-colors"
-              onClick={undefined}
-              // Rendered as a data attribute for the client-side download script below
-              data-export-json={exportJson}
-              id="export-download-btn"
-            >
-              <Export className="h-4 w-4" aria-hidden="true" />
-              Download JSON
-            </button>
-          </form>
+            <Export className="h-4 w-4" aria-hidden="true" />
+            Download JSON
+          </a>
         </div>
 
         <div className="text-xs text-zinc-500 font-mono">
-          {Object.entries(exportData).map(([key, val]) => (
+          {Object.entries(counts).map(([key, count]) => (
             <div key={key}>
-              {key}: {Array.isArray(val) ? `${val.length} records` : val ? '1 record' : '—'}
+              {key}: {count} {count === 1 ? 'record' : 'records'}
             </div>
           ))}
         </div>
+        <p className="text-xs text-zinc-600">
+          Not included (on purpose): {SITE_BACKUP_EXCLUDED.join(', ')}.
+        </p>
       </div>
-
-      {/* Client-side script for the download button */}
-      <DataExportButton exportJson={exportJson} />
 
       <div className="mt-6 space-y-6">
         <DataMaintenanceClient />
         <DataImportClient />
       </div>
     </div>
-  )
-}
-
-// Thin client component just for the download interaction
-function DataExportButton({ exportJson }: { exportJson: string }) {
-  return (
-    <script
-      dangerouslySetInnerHTML={{
-        __html: `
-(function() {
-  var btn = document.getElementById('export-download-btn');
-  if (!btn) return;
-  btn.addEventListener('click', function() {
-    var blob = new Blob([${JSON.stringify(exportJson)}], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = 'zardonic-export-' + new Date().toISOString().slice(0,10) + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-})();
-`,
-      }}
-    />
   )
 }

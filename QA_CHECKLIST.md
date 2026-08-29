@@ -55,6 +55,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Partner edit: logo upload + white-logo toggle
 - [ ] Media replace: upload a second image/video → previous R2 object removed (status mentions previous file removed); failed upload must not delete the old file
 - [ ] Legal admin saves and public pages reflect changes after revalidate
+- [ ] Data export JSON includes news posts, manually edited releases (tracks/copy), and site_config keys; import restores them without wiping extra rows
 
 ## After deploy
 

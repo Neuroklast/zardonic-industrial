@@ -41,7 +41,7 @@
 - [x] Hero dual width sliders + high-res WebP crop export
 - [x] CRUD for releases, gigs, gallery, partners, etc.
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
-- [x] Data import/export + **data maintenance** (purge/sync, track enrichment)
+- [x] Data import/export (full editorial JSON backup incl. news + manually edited releases) + **data maintenance** (purge/sync, track enrichment)
 - [x] Odesli cross-platform links on releases (sync + enrichment + public modal)
 - [x] Full retirement of legacy KV `AdminPanel` / CMS shell (`cms/`, `src/cms/`, `components/admin/` removed)
 
