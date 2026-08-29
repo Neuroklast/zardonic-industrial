@@ -35,6 +35,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     items: [
       { href: '/admin/bio', label: 'Biography' },
       { href: '/admin/gallery', label: 'Gallery', countKey: 'gallery' },
+      { href: '/admin/media', label: 'Media Downloads', countKey: 'media' },
       { href: '/admin/partners', label: 'Credits & Partners', countKey: 'partners' },
       { href: '/admin/music-highlights', label: 'Music Highlights', countKey: 'musicHighlights' },
       { href: '/admin/releases', label: 'Discography', countKey: 'releases' },

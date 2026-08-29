@@ -136,6 +136,16 @@ export interface GalleryOverlayData {
   alts?: string[]
 }
 
+/** Single-file image preview + download (media section). */
+export interface MediaOverlayData {
+  id: string
+  title: string
+  description?: string | null
+  imageUrl: string
+  fileUrl: string
+  filename?: string | null
+}
+
 /** Discriminated union so TypeScript narrows `data` to the correct type per overlay variant. */
 export type CyberpunkOverlayState =
   | { type: 'contact'; data?: never }
@@ -143,3 +153,4 @@ export type CyberpunkOverlayState =
   | { type: 'release'; data: Release }
   | { type: 'member'; data: Member }
   | { type: 'gallery'; data: GalleryOverlayData }
+  | { type: 'media'; data: MediaOverlayData }

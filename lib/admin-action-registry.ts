@@ -321,6 +321,53 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  create_media_download: register({
+    id: 'create_media_download',
+    label: 'Create Media Download',
+    schema: z.object({
+      title: z.string().min(1),
+      file_storage_path: z.string().min(1),
+    }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  update_media_download: register({
+    id: 'update_media_download',
+    label: 'Update Media Download',
+    schema: z.object({ id: z.string().min(1) }).passthrough(),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  delete_media_download: register({
+    id: 'delete_media_download',
+    label: 'Delete Media Download',
+    schema: z.object({ id: z.string().min(1) }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  update_media_download_visibility: register({
+    id: 'update_media_download_visibility',
+    label: 'Update Media Download Visibility',
+    schema: z.object({ id: z.string().min(1), active: z.boolean() }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   update_music_highlight: register({
     id: 'update_music_highlight',
     label: 'Update Music Highlight',

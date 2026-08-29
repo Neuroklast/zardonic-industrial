@@ -129,12 +129,28 @@ function GigList({
 export function GigsSection({ upcoming, past, artistName = '', heading, intro }: GigsSectionProps) {
   const { t } = useLocale()
   const [overlay, setOverlay] = useState<CyberpunkOverlayState | null>(null)
-  const hasGigs = upcoming.length > 0 || past.length > 0
+  const hasUpcoming = upcoming.length > 0
   const title = resolveSectionHeading(heading, 'gigs', t)
+  const showViewAll =
+    upcoming.length > HOMEPAGE_GIG_LIMIT ||
+    (hasUpcoming && past.length > HOMEPAGE_GIG_LIMIT) ||
+    (!hasUpcoming && past.length > 0)
 
   const handleGigClick = (gig: PublicGigRow) => {
     setOverlay({ type: 'gig', data: mapGigRowToOverlayGig(gig) })
   }
+
+  const viewAllLink = showViewAll ? (
+    <m.div initial={false} animate={{ opacity: 1 }} className="flex justify-center pt-2">
+      <Link
+        href="/gigs"
+        className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
+      >
+        {t('gigs.viewAll').replace('{0}', String(upcoming.length + past.length))}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    </m.div>
+  ) : null
 
   return (
     <>
@@ -142,28 +158,17 @@ export function GigsSection({ upcoming, past, artistName = '', heading, intro }:
         <SectionHeading sectionId="gigs" dataText={title}>{title}</SectionHeading>
         <SectionIntro sectionId="gigs">{intro}</SectionIntro>
 
-        {hasGigs ? (
+        {hasUpcoming ? (
           <div className="space-y-10">
             <GigList gigs={upcoming} heading={t('gigs.upcoming').toUpperCase()} onGigClick={handleGigClick} />
             <GigList gigs={past} heading={t('gigs.past').toUpperCase()} onGigClick={handleGigClick} />
-            {upcoming.length > HOMEPAGE_GIG_LIMIT || past.length > HOMEPAGE_GIG_LIMIT ? (
-              <m.div
-                initial={false}
-                animate={{ opacity: 1 }}
-                className="flex justify-center pt-2"
-              >
-                <Link
-                  href="/gigs"
-                  className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
-                >
-                  {t('gigs.viewAll').replace('{0}', String(upcoming.length + past.length))}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </m.div>
-            ) : null}
+            {viewAllLink}
           </div>
         ) : (
-          <SectionEmpty label={t('gigs.empty')} />
+          <div className="space-y-8">
+            <SectionEmpty label={t('gigs.noEvents')} />
+            {viewAllLink}
+          </div>
         )}
       </SectionWrapper>
 

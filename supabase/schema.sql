@@ -146,6 +146,25 @@ CREATE TABLE IF NOT EXISTS public.soundpacks (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- ─── media_downloads (press kit / downloadable assets) ───────
+CREATE TABLE IF NOT EXISTS public.media_downloads (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text,
+  category text NOT NULL DEFAULT 'other',
+  file_storage_path text,
+  file_url text,
+  file_mime text,
+  file_size_bytes bigint,
+  original_filename text,
+  display_order integer NOT NULL DEFAULT 0,
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT media_downloads_category_check CHECK (
+    category IN ('photo', 'logo', 'document', 'audio', 'other')
+  )
+);
+
 -- ─── sync_jobs (async catalogue / maintenance workers) ───────
 CREATE TABLE IF NOT EXISTS public.sync_jobs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -525,6 +544,7 @@ ALTER TABLE public.api_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.music_highlights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.merchandise ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.soundpacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media_downloads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.newsletter_subscribers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.news_posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.analytics_events ENABLE ROW LEVEL SECURITY;
@@ -644,6 +664,17 @@ DO $$ BEGIN
 END; $$;
 
 DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='media_downloads' AND policyname='Public read media_downloads') THEN
+    EXECUTE 'CREATE POLICY "Public read media_downloads" ON public.media_downloads FOR SELECT USING (active = true)';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='media_downloads' AND policyname='Admin all media_downloads') THEN
+    EXECUTE $p$CREATE POLICY "Admin all media_downloads" ON public.media_downloads USING (
+      EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+    )$p$;
+  END IF;
+END; $$;
+
+DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='site_config' AND policyname='Public read config') THEN
     EXECUTE 'CREATE POLICY "Public read config" ON public.site_config FOR SELECT USING (true)';
   END IF;
@@ -717,7 +748,7 @@ INSERT INTO public.site_config (key, value) VALUES
   ('legal',       '{"operatorName":"","street":"","zipCity":"","country":"Germany","email":""}'::jsonb),
   ('background',  '{}'::jsonb),
   ('appearance',  '{"crtEnabled":true,"scanlineEnabled":true,"noiseEnabled":true,"accentColor":"#dc2626","accentColorSecondary":"#7c3aed","vignetteOpacity":0.3,"chromaticStrength":0.5}'::jsonb),
-  ('sections',    '[{"id":"hero","label":"Hero","visible":true,"order":0},{"id":"bio","label":"Biography","visible":true,"order":1},{"id":"credits","label":"Credits & Partners","visible":true,"order":2},{"id":"gallery","label":"Gallery","visible":true,"order":3},{"id":"music-highlights","label":"Music Highlights","visible":true,"order":4},{"id":"releases","label":"Discography","visible":true,"order":5},{"id":"social","label":"Connect","visible":true,"order":6},{"id":"spotify","label":"Music Stream","visible":true,"order":7},{"id":"merchandise","label":"Merchandise","visible":true,"order":8},{"id":"soundpacks","label":"Soundpacks","visible":true,"order":9},{"id":"gigs","label":"Events","visible":true,"order":10},{"id":"newsletter","label":"Newsletter","visible":true,"order":11},{"id":"contact","label":"Contact","visible":true,"order":12}]'::jsonb),
+  ('sections',    '[{"id":"hero","label":"Hero","visible":true,"order":0},{"id":"bio","label":"Biography","visible":true,"order":1},{"id":"credits","label":"Credits & Partners","visible":true,"order":2},{"id":"gallery","label":"Gallery","visible":true,"order":3},{"id":"media","label":"Media","visible":true,"order":4},{"id":"music-highlights","label":"Music Highlights","visible":true,"order":5},{"id":"releases","label":"Discography","visible":true,"order":6},{"id":"social","label":"Connect","visible":true,"order":7},{"id":"spotify","label":"Music Stream","visible":true,"order":8},{"id":"merchandise","label":"Merchandise","visible":true,"order":9},{"id":"soundpacks","label":"Soundpacks","visible":true,"order":10},{"id":"gigs","label":"Events","visible":true,"order":11},{"id":"newsletter","label":"Newsletter","visible":true,"order":12},{"id":"contact","label":"Contact","visible":true,"order":13}]'::jsonb),
   ('social',      '{"spotify":"","instagram":"","facebook":"","youtube":"","soundcloud":"","tiktok":""}'::jsonb),
   ('analytics',   '{"enabled":false,"trackPageViews":false,"trackEvents":false}'::jsonb),
   ('translations', '{}'::jsonb),

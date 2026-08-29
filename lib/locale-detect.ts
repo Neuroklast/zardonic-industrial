@@ -54,6 +54,7 @@ export const NAV_LABEL_I18N_KEYS: Record<string, string> = {
   bio: 'nav.bio',
   credits: 'nav.credits',
   gallery: 'nav.gallery',
+  media: 'nav.media',
   'music-highlights': 'nav.music',
   releases: 'nav.releases',
   merchandise: 'nav.merch',

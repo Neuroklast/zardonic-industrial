@@ -1,6 +1,6 @@
 # Development Status
 
-> **Last updated:** 2026-08-10  
+> **Last updated:** 2026-08-29  
 > **Phase:** Pre-launch — App Router + Supabase; public UI polish + Look & Feel preview
 
 ## Quick status
@@ -23,7 +23,7 @@
 
 ## Public features
 
-- [x] Hero, bio, releases, gigs, gallery, merch, soundpacks, partners
+- [x] Hero, bio, releases, gigs, gallery, media downloads, merch, soundpacks, partners
 - [x] Hero wordmark: separate desktop/mobile width, aspect-preserving, boot HUD absolute
 - [x] Music highlights, contact (Resend server action), newsletter (Supabase)
 - [x] Cookie consent + privacy policy link
@@ -39,7 +39,7 @@
 - [x] Site config, sections, appearance, legal editor
 - [x] Look & Feel split preview with Desktop / Mobile iframe width toggle
 - [x] Hero dual width sliders + high-res WebP crop export
-- [x] CRUD for releases, gigs, gallery, partners, etc.
+- [x] CRUD for releases, gigs, gallery, media downloads, partners, etc.
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
 - [x] Data import/export (full editorial JSON backup incl. news + manually edited releases) + **data maintenance** (purge/sync, track enrichment)
 - [x] Odesli cross-platform links on releases (sync + enrichment + public modal)

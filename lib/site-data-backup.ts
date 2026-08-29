@@ -129,6 +129,13 @@ export const SITE_BACKUP_SECTIONS: readonly SiteBackupSection[] = [
     orderColumn: 'id',
   },
   {
+    table: 'media_downloads',
+    exportKey: 'media_downloads',
+    importKeys: ['media_downloads'],
+    onConflict: 'id',
+    orderColumn: 'id',
+  },
+  {
     table: 'site_config',
     exportKey: 'site_config',
     importKeys: ['site_config', 'config'],

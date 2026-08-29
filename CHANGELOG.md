@@ -8,7 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Media downloads**: public `#media` section + `/media` browse page (search, category filter, pagination). Images open `CyberpunkOverlay` type `media` with preview + download; audio plays inline; PDF/ZIP download. Admin CRUD at `/admin/media` stores originals in R2 (JPEG/PNG/WebP/GIF, PDF, ZIP, MP3/WAV).
+
 ### Changed
+- **Events homepage**: if there are no upcoming gigs, past events are hidden and the section shows **No upcoming events.** (`gigs.noEvents`). `/gigs` still lists past events; “View all” remains when an archive exists.
 - **Data import/export**: `/admin/data` now dumps **all editorial tables** (releases including `manually_edited` + tracks, news posts, gigs, gallery, bio, partners, social, merch, soundpacks, music highlights, every `site_config` key). Download is `GET /admin/data/export` (no JSON stuffed into the admin HTML). Import upserts by id/key in chunks and still accepts older backup aliases.
 - **Hero boot HUD copy**: wordmark boot no longer shows fake terminal/cosplay lines (`SYS // WORDMARK`, `decode · rgba`, `lock // ok`). HUD now uses plain **LOADING** / Loading… / Ready so the text matches a real image load.
 - **R2 media replace auto-cleanup**: after a successful image/video upload or remote cache in `MediaSourcePicker` / `VideoSourcePicker`, the previous R2 object is deleted automatically (`deletePreviousR2ObjectIfReplaced`). Failed deletes do not undo the new upload.

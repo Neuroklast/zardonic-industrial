@@ -52,6 +52,20 @@ describe('getOverlaySessionKey', () => {
     expect(getOverlaySessionKey({ type: 'contact' })).toBe('contact')
   })
 
+  it('returns media-scoped key', () => {
+    expect(
+      getOverlaySessionKey({
+        type: 'media',
+        data: {
+          id: 'md-1',
+          title: 'Press',
+          imageUrl: 'https://cdn.example/a.jpg',
+          fileUrl: 'https://cdn.example/a.jpg',
+        },
+      }),
+    ).toBe('media:md-1')
+  })
+
   it('returns gallery-scoped key with count and index', () => {
     expect(
       getOverlaySessionKey({

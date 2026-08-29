@@ -20,6 +20,7 @@ import { MemberOverlayContent } from '@/components/overlays/MemberOverlayContent
 import { GigOverlayContent } from '@/components/overlays/GigOverlayContent'
 import { ReleaseOverlayContent } from '@/components/overlays/ReleaseOverlayContent'
 import { GalleryOverlayContent } from '@/components/overlays/GalleryOverlayContent'
+import { MediaOverlayContent } from '@/components/overlays/MediaOverlayContent'
 import { useLenisContext } from '@/contexts/LenisContext'
 
 const OVERLAY_LOADING_TEXTS = [
@@ -60,7 +61,7 @@ interface CyberpunkOverlayProps {
 
 /** Content types that skip progressive-reveal scramble (direct content fade). */
 function isDirectRevealType(type: string | undefined): boolean {
-  return type === 'release' || type === 'gig' || type === 'gallery'
+  return type === 'release' || type === 'gig' || type === 'gallery' || type === 'media'
 }
 
 export default function CyberpunkOverlay({ overlay, onClose, adminSettings, artistName = '' }: CyberpunkOverlayProps) {
@@ -324,6 +325,10 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
 
                           {overlay.type === 'gallery' && overlay.data && (
                             <GalleryOverlayContent data={overlay.data} />
+                          )}
+
+                          {overlay.type === 'media' && overlay.data && (
+                            <MediaOverlayContent data={overlay.data} />
                           )}
                         </motion.div>
                       )}

@@ -7,6 +7,7 @@ type CountKey =
   | 'releases'
   | 'gigs'
   | 'gallery'
+  | 'media'
   | 'bio'
   | 'social'
   | 'partners'
@@ -18,11 +19,12 @@ type CountKey =
 async function getCounts(): Promise<Record<CountKey, number>> {
   try {
     const supabase = await createClient()
-    const [releases, gigs, gallery, bio, social, partners, soundpacks, merchandise, musicHighlights, news] =
+    const [releases, gigs, gallery, media, bio, social, partners, soundpacks, merchandise, musicHighlights, news] =
       await Promise.all([
         supabase.from('releases').select('id', { count: 'exact', head: true }),
         supabase.from('gigs').select('id', { count: 'exact', head: true }),
         supabase.from('gallery').select('id', { count: 'exact', head: true }),
+        supabase.from('media_downloads').select('id', { count: 'exact', head: true }),
         supabase.from('bio').select('id', { count: 'exact', head: true }),
         supabase.from('social_links').select('id', { count: 'exact', head: true }),
         supabase.from('partners').select('id', { count: 'exact', head: true }),
@@ -35,6 +37,7 @@ async function getCounts(): Promise<Record<CountKey, number>> {
       releases: releases.count ?? 0,
       gigs: gigs.count ?? 0,
       gallery: gallery.count ?? 0,
+      media: media.count ?? 0,
       bio: bio.count ?? 0,
       social: social.count ?? 0,
       partners: partners.count ?? 0,
@@ -48,6 +51,7 @@ async function getCounts(): Promise<Record<CountKey, number>> {
       releases: 0,
       gigs: 0,
       gallery: 0,
+      media: 0,
       bio: 0,
       social: 0,
       partners: 0,

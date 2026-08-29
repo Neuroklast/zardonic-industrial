@@ -17,6 +17,8 @@ export function getOverlaySessionKey(overlay: CyberpunkOverlayState | null): str
       // Include index so reopening a different photo restarts the session animation
       return `gallery:${count}:${idx}`
     }
+    case 'media':
+      return overlay.data?.id ? `media:${overlay.data.id}` : 'media:unknown'
     default:
       return overlay.type
   }
