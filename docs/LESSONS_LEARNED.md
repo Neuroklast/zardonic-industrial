@@ -1,6 +1,6 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-08-15  
+> **Last Updated:** 2026-08-29  
 > **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
@@ -36,6 +36,7 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-08-29 | grok/full-site-backup | Grok | A “full JSON export” inlined into admin HTML (`data-export-json` + script) will silently drop rows once the catalogue is large, and `select('*')` without the service-role client + pagination misses `news_posts`, inactive drafts, and anything past Supabase’s 1000-row cap. Backup must be a dedicated download route, paginated, service-role, and a single section registry so new content tables cannot be forgotten. | Architecture | 🟠 High |
 | 2026-08-15 | grok/partner-pwm-white-plate | Grok | White-on-transparent wordmarks that touch the frame corners (PWM) look like a “light plate” to the corner sampler. Stripping lum ≥ 232 then erases the entire mark (0 opaque pixels → empty black cell). Light-plate mode requires a dark mark in-frame — same symmetry as dark-plate needing light content. | UX/a11y | 🔴 Critical |
 | 2026-08-15 | grok/partner-svg-cors-hydration | Grok | Public `*.r2.dev` does **not** send CORS. `fetch()` / `crossOrigin` from the Vercel origin fails (console CORS + React follow-on). Do not assume R2 “already sends CORS”; rewrite SVGs via same-origin `/api/partner-logo` and send rasters through wsrv. Separately: React #418 `args[]=text` on this site is locale first-paint — `useState(detectLocaleSync)` reads `localStorage`/`navigator` on hydrate while SSR is `en`. Initialize with `initialPublicLocale` only; detect after mount. | Debugging | 🔴 Critical |
 | 2026-08-15 | grok/partner-svg-video-locale | Grok | White-fill must not rasterize SVG at intrinsic size: wsrv `output=png` without `w=` (or `<img>` default 300) turns a 155×18 logo into mush. Rewrite SVG width/height from viewBox to ≥1024 first. Separately: `loading="lazy"` + Lenis never starts the request; `whileInView` + `opacity: 0` can hide logos forever. Scroll-synced 1080p video + full canvas = jank — pick one background. | UX/a11y | 🟠 High |

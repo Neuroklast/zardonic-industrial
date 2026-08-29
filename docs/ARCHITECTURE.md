@@ -58,7 +58,7 @@ Rate limiting for remaining root `api/*` serverless handlers (`image-proxy`, Ode
 | Site design | `/admin/site-config` |
 | Legal & privacy | `/admin/legal` |
 | Content | `/admin/bio`, `/admin/releases`, `/admin/gigs`, … |
-| Data | `/admin/data` (import/export + maintenance: enrich, purge/sync) |
+| Data | `/admin/data` (full JSON backup/restore of content tables + `site_config`; catalogue sync lives under `/admin/releases/sync`) |
 
 `site_config` updates go through `app/admin/_actions/siteConfig.ts` → `update_site_config` in `lib/admin-action-registry.ts`.
 

@@ -49,7 +49,7 @@ Access the admin at `/admin/login` using Supabase Auth; protected routes require
 - **Animation Controls** — Toggle glitch, scanline, chromatic, CRT, noise, and circuit effects
 - **Legal & Privacy** — Structured operator fields and optional privacy policy override (`site_config.legal`)
 - **Contact Inbox & Subscribers** — View/manage contact submissions and newsletter subscribers
-- **Data Export/Import** — Export and restore site data as JSON
+- **Data Export/Import** — Full JSON backup/restore of content tables (releases, news, config, …)
 - **Security Dashboard** — Incident log, attacker profiles, blocklist (legacy `api/` stack)
 
 ### Backend

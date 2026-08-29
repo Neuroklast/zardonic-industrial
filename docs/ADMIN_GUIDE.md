@@ -84,9 +84,13 @@ Images and video upload to **Cloudflare R2** via admin upload actions. URLs are 
 
 **Images (crop → upload):** The crop editor exports **WebP** (not full-res PNG) and the Server Action body limit is **4 MB** (`next.config` `experimental.serverActions.bodySizeLimit`). Source files may be up to 10 MB before crop; after export the payload must stay under ~3.5 MB. If upload fails with React error **#441** or **413**, the crop export was almost certainly too large for the previous 1 MB default — retry after deploy, or use a smaller source. Hero crops export at **source resolution** (up to 4096px), not the editor viewport size.
 
-## Data maintenance (`/admin/data`)
+## Data export / import (`/admin/data`)
 
-**Data Maintenance** panel (below export/import):
+**Download JSON** saves a full editorial backup: every release (including manually edited tracklists and copy), news posts (drafts included), gigs, gallery, bio, partners, social links, merch, soundpacks, music highlights, and all Look & Feel / legal / translation keys in `site_config`. Inactive rows are included. API secrets and newsletter subscribers are not.
+
+**Import JSON** upserts that file by id/key. It does not delete extra rows already in the database. Export before a purge or catalogue re-sync.
+
+**Data Maintenance** panel (below export/import) links to Catalogue Sync:
 
 | Action | Effect |
 |--------|--------|
