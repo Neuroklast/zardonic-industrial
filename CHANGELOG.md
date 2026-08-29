@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **R2 media host rewrite**: `/admin/data` can preview and rewrite stored `*.r2.dev` / `wsrv.nl/?url=…` URLs onto the current `R2_PUBLIC_HOST` after a bucket migration (tables + `site_config`). Does not copy files.
 - **Media downloads**: public `#media` section + `/media` browse page (search, category filter, pagination). Images open `CyberpunkOverlay` type `media` with preview + download; audio plays inline; PDF/ZIP download. Admin CRUD at `/admin/media` stores originals in R2 (JPEG/PNG/WebP/GIF, PDF, ZIP, MP3/WAV).
 
 ### Changed

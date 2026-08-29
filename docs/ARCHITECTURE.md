@@ -34,7 +34,7 @@ Public pages read via `lib/supabaseServer.ts`. Admin writes via server actions +
 
 ### Cloudflare R2
 
-Admin uploads (images, video, favicon). URLs resolved through `lib/r2.ts` (`resolveImageUrl`).
+Admin uploads (images, video, favicon). URLs resolved through `lib/r2.ts` (`resolveImageUrl`). After a bucket move, leftover `*_url` / `wsrv.nl` hosts are rewritten on `/admin/data` (`lib/r2-url-rewrite.ts`) onto `R2_PUBLIC_HOST`.
 
 ### Browser
 

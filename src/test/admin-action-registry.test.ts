@@ -40,6 +40,7 @@ describe('ADMIN_ACTION_REGISTRY', () => {
     expect(ids).toContain('update_media_download')
     expect(ids).toContain('delete_media_download')
     expect(ids).toContain('update_media_download_visibility')
+    expect(ids).toContain('rewrite_media_hosts')
   })
 
   it('every action has id, label, schema, minDisclosure, execute', () => {

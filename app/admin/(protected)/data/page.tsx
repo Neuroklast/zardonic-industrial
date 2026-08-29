@@ -5,6 +5,7 @@ import { buildSiteBackupCounts, SITE_BACKUP_EXCLUDED } from '@/lib/site-data-bac
 import type { SiteBackupClient } from '@/lib/site-data-backup'
 import { DataImportClient } from './DataImportClient'
 import { DataMaintenanceClient } from './DataMaintenanceClient'
+import { MediaHostRewriteClient } from './MediaHostRewriteClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,6 +79,7 @@ export default async function DataPage() {
       </div>
 
       <div className="mt-6 space-y-6">
+        <MediaHostRewriteClient />
         <DataMaintenanceClient />
         <DataImportClient />
       </div>

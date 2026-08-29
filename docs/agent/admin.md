@@ -44,6 +44,7 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 | `reset_release_tracklists` | expert | Clear tracks on auto-synced releases |
 | `purge_and_sync_releases` | expert | Purge + Spotify sync + enrichment |
 | `purge_and_sync_gigs` | expert | Purge + Bandsintown sync |
+| `rewrite_media_hosts` | expert | Rewrite stored R2 / `wsrv.nl` URLs onto current `R2_PUBLIC_HOST` (preview + apply on `/admin/data`) |
 | `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
 | `release_external_sync` | basic | Per-release ID sync |
 
@@ -61,6 +62,10 @@ Full-site JSON backup of **editorial** tables via `lib/site-data-backup.ts`:
 - **Import:** upsert by `id` / `site_config.key`. Accepts v1 aliases (`social`, `config`, `musicHighlights`, lone `bio` object). Empty unique IDs (`itunes_id`, …) are stored as `NULL`. Does **not** delete rows missing from the file.
 
 Do not add a second backup format; extend `SITE_BACKUP_SECTIONS` when a new content table appears.
+
+### R2 host rewrite (bucket migration)
+
+JSON import copies `storage_path` + leftover `*_url` values — not R2 objects. After copying files to a new bucket, old `pub-….r2.dev` URLs (often wrapped as `wsrv.nl/?url=…`) 404. `/admin/data` → **Rewrite media URLs to current R2** walks editorial tables + `site_config` JSON and rewrites those hosts to `R2_PUBLIC_HOST`. It does not copy bytes. Confirm `R2_PUBLIC_HOST` is the **new** public origin first (`/admin/health`). Logic: `lib/r2-url-rewrite.ts`.
 
 ### Async sync jobs
 

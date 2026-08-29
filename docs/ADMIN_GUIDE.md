@@ -100,6 +100,8 @@ Images and video upload to **Cloudflare R2** via admin upload actions. URLs are 
 
 **Import JSON** upserts that file by id/key. It does not delete extra rows already in the database. Export before a purge or catalogue re-sync.
 
+**Rewrite media URLs to current R2** (after a Vercel / Supabase / R2 account move): Preview then apply. Rewrites stored `*.r2.dev` and `wsrv.nl/?url=…` values (covers, gallery, partners, background, hero, …) to the current `R2_PUBLIC_HOST`. Does **not** copy files — the new bucket must already contain the same keys. Confirm `/admin/health` shows the new host. Hard-refresh the public site afterwards.
+
 **Data Maintenance** panel (below export/import) links to Catalogue Sync:
 
 | Action | Effect |
