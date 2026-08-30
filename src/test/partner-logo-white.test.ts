@@ -219,12 +219,23 @@ describe('partnerLogoCanvasSrc', () => {
     expect(partnerLogoCanvasSrc(r2)).toMatch(/^\/api\/partner-logo\?url=/)
   })
 
-  it('sends public R2 rasters through wsrv (fetch/canvas need CORS)', () => {
+  it('sends public R2 rasters through same-origin proxy (r2.dev has no CORS)', () => {
     const r2 = 'https://pub-example.r2.dev/partners/logos/questec.png'
-    expect(shouldProxyPartnerLogo(r2)).toBe(false)
-    const src = partnerLogoCanvasSrc(r2)
-    expect(src).toContain('https://wsrv.nl/?url=')
-    expect(src).toContain('output=png')
+    expect(shouldProxyPartnerLogo(r2)).toBe(true)
+    expect(partnerLogoCanvasSrc(r2)).toBe(partnerLogoProxyPath(r2))
+  })
+
+  it('unwraps stale wsrv wrappers of old r2.dev and proxies same-origin', () => {
+    const stale =
+      'https://wsrv.nl/?url=' +
+      encodeURIComponent(
+        'https://pub-0f758eac6e4d4b2dbbaedd819e15f764.r2.dev/partners/logos/cf05c662-b21e-4132-b97e-de2cd80f151e/1782297715641.png-1782297716760',
+      ) +
+      '&output=png&n=-1&w=1024'
+    const src = partnerLogoCanvasSrc(stale)
+    expect(src.startsWith('/api/partner-logo?url=')).toBe(true)
+    expect(src).not.toContain('wsrv.nl')
+    expect(decodeURIComponent(src)).toContain('partners/logos/')
   })
 
   it('does not proxy relative or data SVGs', () => {
@@ -233,11 +244,13 @@ describe('partnerLogoCanvasSrc', () => {
     expect(shouldProxyPartnerLogo('https://cdn.example.com/a.svg')).toBe(false)
   })
 
-  it('parsePartnerLogoProxyUrl only allows https R2/Supabase SVGs', () => {
+  it('parsePartnerLogoProxyUrl only allows https R2/Supabase logos', () => {
     const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
     expect(parsePartnerLogoProxyUrl(r2)).toBe(r2)
+    expect(parsePartnerLogoProxyUrl('https://pub-example.r2.dev/logo.png')).toBe(
+      'https://pub-example.r2.dev/logo.png',
+    )
     expect(parsePartnerLogoProxyUrl('https://cdn.example.com/a.svg')).toBeNull()
-    expect(parsePartnerLogoProxyUrl('https://pub-example.r2.dev/logo.png')).toBeNull()
     expect(parsePartnerLogoProxyUrl('http://pub-example.r2.dev/a.svg')).toBeNull()
     expect(parsePartnerLogoProxyUrl(null)).toBeNull()
   })

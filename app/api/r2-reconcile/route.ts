@@ -17,6 +17,10 @@ export const maxDuration = 60
  * POST /api/r2-reconcile?dryRun=1 preview
  * Authorization: Bearer CRON_SECRET
  */
+export async function GET(request: Request) {
+  return POST(request)
+}
+
 export async function POST(request: Request) {
   const bearer = readBearerToken(request.headers.get('authorization'))
   if (!verifyCronSecret(bearer)) {

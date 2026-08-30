@@ -1,3 +1,5 @@
+import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
+
 /** Minimal pixel buffer — avoids relying on the browser ImageData constructor in tests. */
 export interface RgbaBuffer {
   data: Uint8ClampedArray
@@ -231,9 +233,9 @@ export function partnerLogoProxyPath(url: string): string {
   return `/api/partner-logo?url=${encodeURIComponent(url)}`
 }
 
-/** Remote SVG on R2 / Supabase — must be rewritten via our origin, not fetched cross-origin. */
+/** R2 / Supabase logos load same-origin — public r2.dev has no CORS. */
 export function shouldProxyPartnerLogo(url: string): boolean {
-  if (!url || !isSvgLogoUrl(url)) return false
+  if (!url) return false
   if (url.startsWith('/') || url.startsWith('.') || url.startsWith('data:') || url.startsWith('blob:')) {
     return false
   }
@@ -253,25 +255,28 @@ export function parsePartnerLogoProxyUrl(raw: string | null | undefined): string
   }
 }
 
-/** Force CORS-safe load URL via wsrv so canvas / fetch is not tainted. */
+/**
+ * CORS-safe canvas src. Stale wsrv wrappers of old `pub-*.r2.dev` are unwrapped
+ * and sent through `/api/partner-logo`, which rewrites the host using R2_PUBLIC_HOST.
+ */
 export function partnerLogoCanvasSrc(url: string): string {
   if (!url) return ''
   if (url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/') || url.startsWith('.')) return url
-  // Public r2.dev does not send Access-Control-Allow-Origin. SVGs stay vectors via
-  // same-origin rewrite; rasters go through wsrv (output=png at 1024 would smash SVG).
-  if (shouldProxyPartnerLogo(url)) return partnerLogoProxyPath(url)
 
-  if (url.startsWith('https://wsrv.nl/')) {
-    const joiner = url.includes('?') ? '&' : '?'
-    let next = url
+  const canonical = canonicalizeR2MediaUrl(url)
+  if (shouldProxyPartnerLogo(canonical)) return partnerLogoProxyPath(canonical)
+
+  if (canonical.startsWith('https://wsrv.nl/')) {
+    const joiner = canonical.includes('?') ? '&' : '?'
+    let next = canonical
     if (!/[?&]output=/.test(next)) next += `${joiner}output=png`
     if (!/[?&]n=/.test(next)) next += '&n=-1'
     if (!/[?&]w=/.test(next)) next += `&w=${PARTNER_LOGO_RASTER_MAX}`
     return next
   }
 
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&output=png&n=-1&w=${PARTNER_LOGO_RASTER_MAX}`
+  return `https://wsrv.nl/?url=${encodeURIComponent(canonical)}&output=png&n=-1&w=${PARTNER_LOGO_RASTER_MAX}`
 }
 
 async function fetchLogoResource(url: string): Promise<Response> {

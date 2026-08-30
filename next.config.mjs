@@ -44,6 +44,10 @@ const SECURITY_HEADERS = [
 ]
 
 const nextConfig = {
+  // Expose the public R2 origin to client code (stale pub-*.r2.dev rewrite).
+  env: {
+    NEXT_PUBLIC_R2_PUBLIC_HOST: process.env.R2_PUBLIC_HOST ?? '',
+  },
   // Image crop export + FormData uploads go through Server Actions.
   // Default is 1 MB; hero/logo full-res exports often exceed that after PNG inflate.
   // Keep under Vercel serverless request body (~4.5 MB).

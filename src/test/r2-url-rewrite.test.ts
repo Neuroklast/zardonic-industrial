@@ -3,6 +3,7 @@ import { resolveImageUrl } from '@/lib/r2'
 import {
   applyMediaHostRewrite,
   MEDIA_HOST_REWRITE_TABLES,
+  canonicalizeR2MediaUrl,
   normalizeR2PublicHost,
   rewriteR2MediaJson,
   rewriteR2MediaString,
@@ -66,6 +67,16 @@ describe('rewriteR2MediaUrl', () => {
   it('strips the bucket name from r2.cloudflarestorage.com paths', () => {
     const s3 = `https://abc.r2.cloudflarestorage.com/zardonic-media/${OBJECT_KEY}`
     expect(rewriteR2MediaUrl(s3, NEW_HOST, { mediaBucket: 'zardonic-media' })).toBe(NEW_DIRECT)
+  })
+})
+
+describe('canonicalizeR2MediaUrl', () => {
+  it('unwraps the production 404 wsrv URL onto the current public host', () => {
+    expect(canonicalizeR2MediaUrl(USER_WSRV, NEW_HOST)).toBe(NEW_DIRECT)
+  })
+
+  it('unwraps wsrv to the inner r2 URL when no public host is configured', () => {
+    expect(canonicalizeR2MediaUrl(USER_WSRV, null)).toBe(OLD_DIRECT)
   })
 })
 

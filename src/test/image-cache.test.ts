@@ -87,6 +87,14 @@ describe('toDirectImageUrl', () => {
     expect(toDirectImageUrl(url)).toBe(url + '&q=80&output=webp')
   })
 
+  it('unwraps wsrv wrappers of R2 instead of keeping the stale proxy', () => {
+    const inner = 'https://pub-0f758eac6e4d4b2dbbaedd819e15f764.r2.dev/partners/logos/x.png'
+    const wrapped = `https://wsrv.nl/?url=${encodeURIComponent(inner)}&output=png&n=-1&w=1024`
+    const direct = toDirectImageUrl(wrapped)
+    expect(direct).not.toContain('wsrv.nl')
+    expect(direct).toContain('.r2.dev/partners/logos/x.png')
+  })
+
   it('serves R2 and Bandcamp URLs directly without wsrv.nl', () => {
     const r2 = 'https://pub-c862cb6925c84a63a9bf41ce3bf1d671.r2.dev/cover-art/test.jpeg'
     const bandcamp = 'https://f4.bcbits.com/img/a2732111435_1x1_700.avif'

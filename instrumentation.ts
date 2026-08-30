@@ -7,5 +7,6 @@ export async function register(): Promise<void> {
   if (process.env.VERCEL_ENV !== 'production') return
 
   const { runProductionDeployR2Reconcile } = await import('@/lib/r2-reconcile-on-deploy')
-  await runProductionDeployR2Reconcile()
+  // Do not await: a long R2 list would time out the first serverless isolate.
+  void runProductionDeployR2Reconcile()
 }
