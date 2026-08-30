@@ -44,7 +44,8 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 | `reset_release_tracklists` | expert | Clear tracks on auto-synced releases |
 | `purge_and_sync_releases` | expert | Purge + Spotify sync + enrichment |
 | `purge_and_sync_gigs` | expert | Purge + Bandsintown sync |
-| `rewrite_media_hosts` | expert | Rewrite stored R2 / `wsrv.nl` URLs onto current `R2_PUBLIC_HOST` (preview + apply on `/admin/data`) |
+| `rewrite_media_hosts` | expert | Rewrite stored R2 / `wsrv.nl` URLs onto current `R2_PUBLIC_HOST` (host-only; keys unchanged) |
+| `reconcile_r2_media` | expert | List live R2 objects and rewrite DB URLs when the **filename** uniquely matches (re-uploads / prefix changes) |
 | `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
 | `release_external_sync` | basic | Per-release ID sync |
 
@@ -63,9 +64,15 @@ Full-site JSON backup of **editorial** tables via `lib/site-data-backup.ts`:
 
 Do not add a second backup format; extend `SITE_BACKUP_SECTIONS` when a new content table appears.
 
-### R2 host rewrite (bucket migration)
+### R2 host rewrite + bucket reconcile (migration)
 
-JSON import copies `storage_path` + leftover `*_url` values — not R2 objects. After copying files to a new bucket, old `pub-….r2.dev` URLs (often wrapped as `wsrv.nl/?url=…`) 404. `/admin/data` → **Rewrite media URLs to current R2** walks editorial tables + `site_config` JSON and rewrites those hosts to `R2_PUBLIC_HOST`. It does not copy bytes. Confirm `R2_PUBLIC_HOST` is the **new** public origin first (`/admin/health`). Logic: `lib/r2-url-rewrite.ts`.
+JSON import copies `storage_path` + leftover `*_url` values — not R2 objects. After a re-upload, **keys often change** (dropped prefixes, new timestamps), so swapping only the `pub-….r2.dev` host still 404s.
+
+`/admin/data` → **Match files in current R2 bucket** lists the live bucket, then updates rows when the filename uniquely matches (exact key → suffix → unique basename). Ambiguous names are skipped. Host-only rewrite remains as a fallback when keys did not change.
+
+Runs **automatically on each Vercel Production deploy** (once per git SHA) via `instrumentation.ts` + `lib/r2-reconcile-on-deploy.ts`. Preview / local / CI builds skip it. GitHub `deployment_status` also `POST`s `/api/r2-reconcile` when `CRON_SECRET` is set as a GitHub secret. Manual: `/admin/data` → Match files. Confirm `R2_PUBLIC_HOST` is the new origin on `/admin/health` first.
+
+Logic: `lib/r2-inventory.ts`, `lib/r2-reconcile.ts`.
 
 ### Async sync jobs
 

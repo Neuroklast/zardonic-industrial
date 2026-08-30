@@ -156,7 +156,7 @@ export function objectKeyFromR2Url(url: URL, mediaBucket?: string): string | nul
   return path
 }
 
-function parseHttpUrl(raw: string): URL | null {
+export function parseHttpUrl(raw: string): URL | null {
   try {
     const parsed = new URL(raw)
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
@@ -166,10 +166,43 @@ function parseHttpUrl(raw: string): URL | null {
   }
 }
 
-function innerUrlFromWsrv(url: URL): string | null {
+export function innerUrlFromWsrv(url: URL): string | null {
   if (!WSRV_HOSTS.has(url.hostname.toLowerCase())) return null
   const inner = url.searchParams.get('url')
   return inner?.trim() ? inner.trim() : null
+}
+
+/**
+ * Object key (or pathname) stored in a URL, wsrv wrapper, or raw storage path.
+ * Percent-decoding happens via URL parsing (`%3A` / `%2F` in `wsrv.nl/?url=`).
+ */
+export function extractStoredObjectPath(
+  raw: string,
+  mediaBucket?: string,
+): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('/assets/') ||
+    trimmed.startsWith('.')
+  ) {
+    return null
+  }
+
+  const parsed = parseHttpUrl(trimmed)
+  if (parsed) {
+    const innerRaw = innerUrlFromWsrv(parsed)
+    const mediaUrl = innerRaw ? parseHttpUrl(innerRaw) : parsed
+    if (!mediaUrl) return null
+    return objectKeyFromR2Url(mediaUrl, mediaBucket)
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) return null
+  if (trimmed.includes('..') || trimmed.includes('\\') || /\s/.test(trimmed)) return null
+  if (trimmed.length > 500) return null
+  return trimmed.replace(/^\/+/, '') || null
 }
 
 function stripTrailingUrlJunk(raw: string): { url: string; trailing: string } {

@@ -1,0 +1,31 @@
+name: Reconcile R2 after production deploy
+
+on:
+  deployment_status:
+
+jobs:
+  reconcile:
+    if: >
+      github.event.deployment_status.state == 'success' &&
+      (github.event.deployment.environment == 'Production' ||
+       github.event.deployment.environment == 'production')
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/r2-reconcile on the production deployment
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          DEPLOY_URL: ${{ github.event.deployment_status.environment_url }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET is not set in GitHub secrets; runtime instrumentation still runs on Vercel Production."
+            exit 0
+          fi
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "No deployment environment_url; runtime instrumentation still runs on Vercel Production."
+            exit 0
+          fi
+          BASE="${DEPLOY_URL%/}"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            "${BASE}/api/r2-reconcile"

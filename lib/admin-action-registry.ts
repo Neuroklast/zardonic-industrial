@@ -791,6 +791,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
       return { ok: true }
     },
   }),
+
+  reconcile_r2_media: register({
+    id: 'reconcile_r2_media',
+    label: 'Reconcile Media URLs with Current R2 Bucket',
+    schema: z.object({ dryRun: z.boolean() }),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
 }
 
 // ─── Dispatcher ───────────────────────────────────────────────────────────────
