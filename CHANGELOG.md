@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Partner logos 404 via wsrv + old R2 host**: canvas src no longer wraps `pub-*.r2.dev` in `wsrv.nl`. Logos go through `/api/partner-logo`, which rewrites the host to `R2_PUBLIC_HOST` at request time.
+
 ### Added
 - **R2 bucket reconcile on production deploy**: each Vercel Production boot/deploy lists the live bucket and rewrites stale DB URLs when the filename uniquely matches (once per git SHA). Manual preview remains on `/admin/data`. Optional: `POST /api/r2-reconcile` (`CRON_SECRET`) from GitHub `deployment_status`.
 - **R2 media host rewrite**: `/admin/data` can preview and rewrite stored `*.r2.dev` / `wsrv.nl/?url=…` URLs onto the current `R2_PUBLIC_HOST` after a bucket migration (tables + `site_config`). Does not copy files.

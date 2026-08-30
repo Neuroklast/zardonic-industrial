@@ -1,3 +1,5 @@
+import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
+
 const DB_NAME = 'zardonic-image-cache'
 const STORE_NAME = 'images'
 const DB_VERSION = 1
@@ -115,6 +117,8 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
 
   // Data URLs and relative paths — return as-is
   if (url.startsWith('data:') || url.startsWith('/') || url.startsWith('.')) return url
+
+  url = canonicalizeR2MediaUrl(url)
 
   // Self-hosted / trusted CDNs — load directly (no wsrv.nl hop)
   if (url.startsWith('http://') || url.startsWith('https://')) {

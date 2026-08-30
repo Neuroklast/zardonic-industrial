@@ -1,4 +1,4 @@
-import { normalizeR2PublicHost, rewriteR2MediaUrl } from '@/lib/r2-url-rewrite'
+import { canonicalizeR2MediaUrl, currentR2PublicOrigin } from '@/lib/r2-url-rewrite'
 
 /**
  * Builds a public Cloudflare R2 URL from a storage object path.
@@ -6,9 +6,9 @@ import { normalizeR2PublicHost, rewriteR2MediaUrl } from '@/lib/r2-url-rewrite'
  */
 export function r2Url(storagePath: string | null | undefined): string | null {
   if (!storagePath) return null
-  const host = process.env.R2_PUBLIC_HOST
-  if (!host) return null
-  return `${host.replace(/\/$/, '')}/${storagePath}`
+  const origin = currentR2PublicOrigin()
+  if (!origin) return null
+  return `${origin}/${storagePath.replace(/^\/+/, '')}`
 }
 
 /**
@@ -25,9 +25,5 @@ export function resolveImageUrl(
   const fromPath = r2Url(storagePath)
   if (fromPath) return fromPath
   if (!fallbackUrl) return null
-  const origin = normalizeR2PublicHost(process.env.R2_PUBLIC_HOST ?? '')
-  if (!origin) return fallbackUrl
-  return rewriteR2MediaUrl(fallbackUrl, origin, {
-    mediaBucket: process.env.R2_BUCKET_MEDIA,
-  }) ?? fallbackUrl
+  return canonicalizeR2MediaUrl(fallbackUrl)
 }

@@ -205,6 +205,31 @@ export function extractStoredObjectPath(
   return trimmed.replace(/^\/+/, '') || null
 }
 
+/** Public origin from server `R2_PUBLIC_HOST` or the build-inlined Next public copy. */
+export function currentR2PublicOrigin(): string | null {
+  return normalizeR2PublicHost(
+    process.env.NEXT_PUBLIC_R2_PUBLIC_HOST || process.env.R2_PUBLIC_HOST || '',
+  )
+}
+
+/**
+ * Unwrap wsrv and point `*.r2.dev` URLs at the current public host when known.
+ * Used at render time so stale DB values do not keep hitting a deleted bucket.
+ */
+export function canonicalizeR2MediaUrl(raw: string, publicOrigin?: string | null): string {
+  const trimmed = raw.trim()
+  if (!trimmed) return ''
+  const origin = publicOrigin === undefined ? currentR2PublicOrigin() : publicOrigin
+  if (origin) {
+    const rewritten = rewriteR2MediaUrl(trimmed, origin)
+    if (rewritten) return rewritten
+  }
+  const parsed = parseHttpUrl(trimmed)
+  if (!parsed) return trimmed
+  const inner = innerUrlFromWsrv(parsed)
+  return inner ?? trimmed
+}
+
 function stripTrailingUrlJunk(raw: string): { url: string; trailing: string } {
   const match = raw.match(/^(.*?)([),.;:!?]+)$/)
   if (!match) return { url: raw, trailing: '' }

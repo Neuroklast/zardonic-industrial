@@ -38,7 +38,7 @@
 | Supabase admin auth | `app/admin/login/submit/route.ts`, `proxy.ts`, `lib/supabaseServer.ts` | Native POST login; pass cookie `options` unchanged; forward SSR cache headers; copy cookies on all proxy redirects |
 | Redis short-circuit | `api/auth.ts` / session helpers | Return false if Redis not configured |
 | WebGL cleanup | `ModelBackground.tsx` / circuit backgrounds | Dispose geometry/material/texture before renderer |
-| Partner SVG/PNG | `lib/partner-logo-white.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | Rewrite SVG to 1024px before canvas; R2 SVGs via `/api/partner-logo` (r2.dev has no CORS); R2 rasters via wsrv; light plate only if a dark mark exists (PWM white wordmark); eager load; no `whileInView`+`opacity:0` |
+| Partner SVG/PNG | `lib/partner-logo-white.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | Rewrite SVG to 1024px before canvas; **all** R2 logos via `/api/partner-logo` (never wsrv for R2 — stale inner hosts 404); light plate only if a dark mark exists (PWM white wordmark); eager load; no `whileInView`+`opacity:0` |
 | Background video | `BackgroundStack.tsx` | No canvas animation while scroll video is active; seek ≥ 1/24s |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
 | Odesli dual API | `lib/odesli.ts` | Server: `fetchOdesliLinksFromApi`; client editor: `fetchOdesliLinks` via `/api/odesli` queue |

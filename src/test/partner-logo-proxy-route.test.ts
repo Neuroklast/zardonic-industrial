@@ -60,4 +60,20 @@ describe('GET /api/partner-logo', () => {
     )
     expect(res.status).toBe(415)
   })
+
+  it('passes through R2 rasters', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(new Uint8Array([137, 80, 78, 71]), {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      })),
+    )
+    const target = 'https://pub-example.r2.dev/partners/logos/questec.png'
+    const res = await GET(
+      new Request(`http://local.test/api/partner-logo?url=${encodeURIComponent(target)}`),
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+  })
 })

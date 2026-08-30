@@ -62,7 +62,7 @@ Rules:
 
 Pipeline for white-mode logos (`logo_white !== false`):
 
-1. `loadLogoImageForCanvas(url)` — R2/Supabase **SVGs** via same-origin `/api/partner-logo` (rewrite to 1024px); R2 **rasters** and other remotes via wsrv (`partnerLogoCanvasSrc`) → blob → `Image`. Public `*.r2.dev` does **not** send CORS — never `fetch()` it from the browser.
+1. `loadLogoImageForCanvas(url)` — R2/Supabase **SVGs and rasters** via same-origin `/api/partner-logo` (the route rewrites leftover `pub-*.r2.dev` onto `R2_PUBLIC_HOST` before fetch). Other remotes via wsrv. Public `*.r2.dev` does **not** send CORS — never `fetch()` it from the browser. Never send R2 through `wsrv.nl` (stale inner hosts 404).
 2. SVGs: `rewriteSvgForHiResRaster` so tiny `width` / missing size (browser default 300) are drawn at 1024px before canvas. Never let wsrv `output=png` rasterize an SVG at its intrinsic 155×18.
 3. `processLogoToWhiteSilhouette` — pure white RGB; **only transparent stays transparent**; strip opaque light/dark plates when present.
 4. Raster size: `logoRasterSize` **upsizes** below 512 and **caps** at 1024. Do not only downscale.

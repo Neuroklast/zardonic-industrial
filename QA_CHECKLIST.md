@@ -25,7 +25,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Events: only past gigs → homepage shows “No upcoming events.” (not the past list); `/gigs` still has Past filter
 - [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
 - [ ] Partner SVGs (HOFA, Baby Audio, SUPERHOT, …) look sharp at desktop size — not a 150px-wide smear
-- [ ] Console: no CORS on `*.r2.dev` partner SVGs; logos load via `/api/partner-logo` (or wsrv for rasters)
+- [ ] Console: no CORS on `*.r2.dev` partner logos; **no** `wsrv.nl/?url=https://pub-*.r2.dev`; SVGs and rasters load via `/api/partner-logo`
 - [ ] Hard refresh with a stored non-English locale (`zd-locale`): no React #418 hydration text error; chrome stays English for a beat then switches
 - [ ] Native (white-fill off) PNG/WebP/SVG logos actually appear (not empty cells); broken files show the partner name
 - [ ] Language switch DE/JA/RU: section titles stay readable (no mixed smeared sans-serif, no overflow); CJK titles are not force-latinized
