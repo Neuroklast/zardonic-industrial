@@ -271,7 +271,7 @@ const HOWTO_ENTRIES: AdminHelpEntry[] = [
     id: 'help-r2-host-rewrite',
     title: 'Images 404 after moving R2 / Vercel / Supabase?',
     description:
-      'JSON import does not copy R2 files. After the files are in the new bucket, use Data → Rewrite media URLs to current R2 so leftover pub-….r2.dev and wsrv.nl URLs match R2_PUBLIC_HOST. Confirm the new host on API Health first, then hard-refresh.',
+      'JSON import does not copy R2 files. After files are in the new bucket, use Data → Match files in current R2 bucket so leftover pub-….r2.dev / wsrv.nl URLs map to the live object with the same filename. Confirm the new host on API Health first, then hard-refresh.',
     href: '/admin/data',
     group: 'Help',
     keywords: ['r2', 'wsrv', '404', 'bucket', 'migration', 'images', 'background', 'partners', 'rewrite'],
