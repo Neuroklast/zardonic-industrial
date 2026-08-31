@@ -260,6 +260,15 @@ function scoreImportItem(item: CatalogueImportItem): number {
   return score
 }
 
+/** True when two staged items share any non-null external platform id. */
+function itemsShareExternalId(a: ReleaseConsolidationRow, b: ReleaseConsolidationRow): boolean {
+  return (
+    (Boolean(a.spotify_id) && a.spotify_id === b.spotify_id) ||
+    (Boolean(a.itunes_id) && a.itunes_id === b.itunes_id) ||
+    (Boolean(a.discogs_id) && a.discogs_id === b.discogs_id)
+  )
+}
+
 /** Collapse duplicate staged catalogue items before import (e.g. Spotify album groups). */
 export function dedupeCatalogueImportItems(
   items: CatalogueImportItem[],
@@ -282,7 +291,15 @@ export function dedupeCatalogueImportItems(
 
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
-      if (releasesAreDuplicates(probes[i], probes[j], options)) union(i, j)
+      if (releasesAreDuplicates(probes[i], probes[j], options)) {
+        union(i, j)
+      } else if (itemsShareExternalId(probes[i], probes[j])) {
+        // Distinct titles that resolve to the same external id (via Odesli /
+        // cross-source linking) would both be inserted with that id and hit the
+        // UNIQUE constraint on spotify_id / itunes_id / discogs_id. Treat them
+        // as one catalogue entry regardless of title.
+        union(i, j)
+      }
     }
   }
 
