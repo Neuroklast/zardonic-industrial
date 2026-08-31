@@ -285,6 +285,40 @@ describe('dedupeCatalogueImportItems', () => {
     expect(deduped).toHaveLength(1)
     expect(deduped[0].externalId).toBe('b')
   })
+
+  it('collapses distinct titles that share the same external platform id', () => {
+    const deduped = dedupeCatalogueImportItems([
+      {
+        externalId: 'spotify-1',
+        metadata: {
+          title: 'Become',
+          type: 'album',
+          release_date: '2020-01-01',
+          description: null,
+          artists: [],
+          coverUrl: null,
+          streaming_links: [],
+          spotify_id: 'shared-spotify-id',
+        },
+      },
+      {
+        externalId: 'spotify-2',
+        metadata: {
+          title: 'The Become Remix Album',
+          type: 'album',
+          release_date: '2020-01-01',
+          description: null,
+          artists: [],
+          coverUrl: null,
+          streaming_links: [],
+          spotify_id: 'shared-spotify-id',
+        },
+      },
+    ])
+
+    // Same spotify_id → one catalogue entry, keeps the richer/first item.
+    expect(deduped).toHaveLength(1)
+  })
 })
 
 describe('groupDuplicateReleases', () => {
