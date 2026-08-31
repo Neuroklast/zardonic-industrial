@@ -60,6 +60,8 @@ export interface MediaHostRewriteTableTarget {
   textColumns?: readonly string[]
   /** Optional storage-path column filled from a rewritten URL when empty. */
   pathColumn?: string
+  /** Optional content-hash column backfilled from a content-addressed key. */
+  hashColumn?: string
 }
 
 export const MEDIA_HOST_REWRITE_TABLES: readonly MediaHostRewriteTableTarget[] = [
@@ -68,42 +70,49 @@ export const MEDIA_HOST_REWRITE_TABLES: readonly MediaHostRewriteTableTarget[] =
     idColumn: 'id',
     urlColumns: ['cover_url'],
     pathColumn: 'cover_storage_path',
+    hashColumn: 'cover_content_hash',
   },
   {
     table: 'gallery',
     idColumn: 'id',
     urlColumns: ['image_url'],
     pathColumn: 'storage_path',
+    hashColumn: 'content_hash',
   },
   {
     table: 'partners',
     idColumn: 'id',
     urlColumns: ['logo_url'],
     pathColumn: 'logo_storage_path',
+    hashColumn: 'logo_content_hash',
   },
   {
     table: 'social_links',
     idColumn: 'id',
     urlColumns: ['logo_url'],
     pathColumn: 'logo_storage_path',
+    hashColumn: 'logo_content_hash',
   },
   {
     table: 'merchandise',
     idColumn: 'id',
     urlColumns: ['image_url'],
     pathColumn: 'image_storage_path',
+    hashColumn: 'image_content_hash',
   },
   {
     table: 'soundpacks',
     idColumn: 'id',
     urlColumns: ['image_url'],
     pathColumn: 'image_storage_path',
+    hashColumn: 'image_content_hash',
   },
   {
     table: 'media_downloads',
     idColumn: 'id',
     urlColumns: ['file_url'],
     pathColumn: 'file_storage_path',
+    hashColumn: 'file_content_hash',
   },
   {
     table: 'news_posts',
@@ -111,6 +120,7 @@ export const MEDIA_HOST_REWRITE_TABLES: readonly MediaHostRewriteTableTarget[] =
     urlColumns: ['cover_url'],
     textColumns: ['body'],
     pathColumn: 'cover_storage_path',
+    hashColumn: 'cover_content_hash',
   },
   {
     table: 'bio',
@@ -339,6 +349,7 @@ function selectColumnsFor(target: MediaHostRewriteTableTarget): string {
   for (const column of target.urlColumns ?? []) columns.add(column)
   for (const column of target.textColumns ?? []) columns.add(column)
   if (target.pathColumn) columns.add(target.pathColumn)
+  if (target.hashColumn) columns.add(target.hashColumn)
   return [...columns].join(', ')
 }
 

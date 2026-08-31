@@ -21,6 +21,7 @@ import {
   type InventoryMatch,
   type R2Inventory,
 } from '@/lib/r2-inventory'
+import { contentHashFromKey } from '@/lib/r2-object-key'
 
 const URL_IN_TEXT = /https?:\/\/[^\s"'<>\\]+/gi
 
@@ -290,6 +291,17 @@ async function reconcileTable(
             from: currentPath,
             to: `ambiguous: ${match.candidates.join(', ')}`,
           })
+        }
+
+        // Backfill the content hash from a content-addressed key regardless of
+        // whether the path itself had to be rewritten, so the 404 self-heal can
+        // look the object up deterministically later.
+        if (target.hashColumn && !(match.status === 'missing' || match.status === 'ambiguous')) {
+          const matchedKey = match.status === 'matched' ? match.key : currentPath
+          const hash = contentHashFromKey(matchedKey.trim())
+          if (hash && row[target.hashColumn] !== hash) {
+            patch[target.hashColumn] = hash
+          }
         }
       }
     }

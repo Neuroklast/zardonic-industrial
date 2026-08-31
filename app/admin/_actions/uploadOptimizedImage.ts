@@ -3,6 +3,7 @@
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { contentObjectKey } from '@/lib/r2-object-key'
 import {
   DEFAULT_MAX_IMAGE_HEIGHT,
   DEFAULT_MAX_IMAGE_WIDTH,
@@ -43,7 +44,11 @@ export async function uploadOptimizedImage(formData: FormData): Promise<UploadOp
     const buffer = Buffer.from(await file.arrayBuffer())
     const optimized = await optimizeImageBuffer(buffer, mimeType, { maxWidth, maxHeight })
 
-    const objectPath = `${prefix}/${Date.now()}.${optimized.extension}`
+    const objectPath = await contentObjectKey({
+      prefix,
+      data: optimized.buffer,
+      extension: optimized.extension,
+    })
     const { publicUrl, objectPath: storedPath } = await uploadBufferToR2(
       MEDIA_BUCKET,
       objectPath,

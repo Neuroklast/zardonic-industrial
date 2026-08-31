@@ -9,6 +9,8 @@ import {
   validateMediaUpload,
 } from '@/lib/media-download'
 import { useR2MultipartUpload } from '@/hooks/useR2MultipartUpload'
+import { contentObjectKey } from '@/lib/r2-object-key'
+import { describeR2UploadError } from '@/lib/r2-upload-error'
 import { deletePreviousR2ObjectIfReplaced } from '@/app/admin/_lib/deletePreviousR2Object'
 
 export interface FileSourceResolved {
@@ -98,8 +100,12 @@ export function FileSourcePicker({
         publicUrl = (await publicUrlForR2Object(key)).publicUrl
       } else {
         const { createSignedUploadUrl } = await import('@/app/admin/_actions/r2Upload')
-        const path = `${safePrefix}/${Date.now()}.${ext}`
-        const signed = await createSignedUploadUrl(MEDIA_BUCKET, path)
+        const objectKey = await contentObjectKey({
+          prefix: safePrefix,
+          data: await file.arrayBuffer(),
+          extension: ext,
+        })
+        const signed = await createSignedUploadUrl(MEDIA_BUCKET, objectKey)
         const uploadRes = await fetch(signed.url, {
           method: 'PUT',
           body: file,
@@ -121,7 +127,7 @@ export function FileSourcePicker({
         'File uploaded to R2',
       )
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
+      const msg = describeR2UploadError(err, 'File upload')
       setStatus(msg)
       onError?.(msg)
     } finally {

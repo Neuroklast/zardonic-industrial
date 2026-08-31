@@ -7,6 +7,7 @@ import { useLenisContext } from '@/contexts/LenisContext'
 import { useAdminDraftListener } from '@/hooks/use-admin-draft'
 import type { AdminDraftKey } from '@/lib/admin-draft-channel'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import {
   DEFAULT_BACKGROUND_VIDEO_OPACITY,
   parseMobileVideoMode,
@@ -181,6 +182,7 @@ export function BackgroundStack({
             loading="eager"
             fetchPriority="high"
             decoding="async"
+            onError={(e) => void onMediaImageError(e)}
           />
         </div>
       ) : null}

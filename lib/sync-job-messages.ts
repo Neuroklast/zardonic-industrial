@@ -6,7 +6,7 @@ const JOB_LABELS: Record<SyncJobType, string> = {
   itunes_sync: 'iTunes import',
   track_enrichment: 'Track enrichment',
   bandsintown_sync: 'Bandsintown events',
-  purge_and_sync_releases: 'Purge + Spotify re-sync',
+  purge_and_sync_releases: 'Purge all + Spotify re-sync',
   purge_and_sync_gigs: 'Purge + Bandsintown re-sync',
 }
 

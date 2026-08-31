@@ -3,6 +3,7 @@
 import { m, useReducedMotion } from 'framer-motion'
 import { DownloadSimple, FilePdf, FileZip, FileAudio, File as FileIcon } from '@phosphor-icons/react'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import { useLocale } from '@/contexts/LocaleContext'
 import {
   formatFileSize,
@@ -61,6 +62,7 @@ export function MediaDownloadGrid({ items, onImageClick }: MediaDownloadGridProp
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => void onMediaImageError(e)}
                   />
                 </div>
                 <h3 className="font-mono text-sm font-bold uppercase tracking-wide hover-chromatic">

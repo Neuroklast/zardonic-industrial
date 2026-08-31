@@ -6,6 +6,7 @@ import type { SiteBackupClient } from '@/lib/site-data-backup'
 import { DataImportClient } from './DataImportClient'
 import { DataMaintenanceClient } from './DataMaintenanceClient'
 import { MediaHostRewriteClient } from './MediaHostRewriteClient'
+import { FactoryResetClient } from './FactoryResetClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -82,6 +83,7 @@ export default async function DataPage() {
         <MediaHostRewriteClient />
         <DataMaintenanceClient />
         <DataImportClient />
+        <FactoryResetClient />
       </div>
     </div>
   )

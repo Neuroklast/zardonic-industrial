@@ -1,9 +1,9 @@
 'use server'
 
-import { createHash } from 'node:crypto'
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { contentObjectKey } from '@/lib/r2-object-key'
 import {
   assertRemoteVideoSize,
   extensionFromVideoContentType,
@@ -17,12 +17,6 @@ export interface CacheRemoteVideoResult {
   publicUrl?: string
   source?: 'direct' | 'google_drive'
   error?: string
-}
-
-function buildObjectPath(prefix: string, ext: string, sourceUrl: string): string {
-  const hash = createHash('sha256').update(sourceUrl).digest('hex').slice(0, 12)
-  const safePrefix = prefix.replace(/[^a-z0-9/_-]/gi, '').replace(/^\/+|\/+$/g, '') || 'imports'
-  return `${safePrefix}/${Date.now()}-${hash}.${ext}`
 }
 
 export async function cacheRemoteVideoToR2(
@@ -66,7 +60,11 @@ export async function cacheRemoteVideoToR2(
 
       const ext = extensionFromVideoContentType(contentType)
       const prefix = options?.prefix ?? 'imports/videos'
-      const objectPath = buildObjectPath(prefix, ext, resolved.url)
+      const objectPath = await contentObjectKey({
+        prefix,
+        data: buffer,
+        extension: ext,
+      })
 
       const { publicUrl, objectPath: storedPath } = await uploadBufferToR2(
         MEDIA_BUCKET,

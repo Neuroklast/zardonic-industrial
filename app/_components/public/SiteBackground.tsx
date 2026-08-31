@@ -12,6 +12,7 @@
 
 import { Suspense, lazy } from 'react'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 
 const CircuitBackground = lazy(() =>
   import('./CircuitBackground').then(m => ({ default: m.CircuitBackground }))
@@ -39,6 +40,7 @@ export function SiteBackground({ imageUrl, videoUrl, alt = 'Background' }: SiteB
           loading="eager"
           fetchPriority="high"
           decoding="async"
+          onError={(e) => void onMediaImageError(e)}
         />
 
         {/* Video background (looping, muted, no controls) */}

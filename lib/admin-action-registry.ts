@@ -728,8 +728,8 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
 
   purge_releases: register({
     id: 'purge_releases',
-    label: 'Purge Auto-Synced Releases',
-    schema: z.object({ scope: z.literal('auto_synced') }),
+    label: 'Purge All Releases',
+    schema: z.object({ scope: z.literal('all') }),
     minDisclosure: 'expert',
     execute(_input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
@@ -761,7 +761,7 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
 
   purge_and_sync_releases: register({
     id: 'purge_and_sync_releases',
-    label: 'Purge and Sync Releases',
+    label: 'Purge All and Resync Releases',
     schema: z.object({}),
     minDisclosure: 'expert',
     execute(_input, { supabaseAdmin }) {
@@ -774,6 +774,20 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     id: 'purge_and_sync_gigs',
     label: 'Purge and Sync Gigs',
     schema: z.object({}),
+    minDisclosure: 'expert',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
+  factory_reset: register({
+    id: 'factory_reset',
+    label: 'Factory Reset',
+    schema: z.object({
+      confirm: z.string().min(1).max(128),
+      deleteR2Media: z.boolean(),
+    }),
     minDisclosure: 'expert',
     execute(_input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }

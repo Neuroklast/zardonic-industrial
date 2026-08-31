@@ -12,6 +12,7 @@ import {
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
@@ -168,6 +169,7 @@ export function ReleasesSection({
                           className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
                           decoding="async"
+                          onError={(e) => void onMediaImageError(e)}
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center">

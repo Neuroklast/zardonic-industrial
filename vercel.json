@@ -78,10 +78,6 @@
     {
       "path": "/api/sync-jobs/reap",
       "schedule": "*/2 * * * *"
-    },
-    {
-      "path": "/api/r2-reconcile",
-      "schedule": "20 * * * *"
     }
   ]
 }
