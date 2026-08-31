@@ -38,6 +38,7 @@ async function checkR2(): Promise<CheckResult> {
       region: 'auto',
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: { accessKeyId, secretAccessKey },
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     })
 
     await client.send(new ListObjectsV2Command({ Bucket: bucket, MaxKeys: 1 }))
@@ -64,6 +65,7 @@ async function checkR2Cors(): Promise<CheckResult> {
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
       credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: true,
+      requestChecksumCalculation: 'WHEN_REQUIRED',
     })
 
     const res = await client.send(new GetBucketCorsCommand({ Bucket: bucket }))

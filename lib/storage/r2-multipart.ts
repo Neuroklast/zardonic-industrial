@@ -24,6 +24,7 @@ function getR2Client(): S3Client {
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
+    requestChecksumCalculation: 'WHEN_REQUIRED',
   })
 }
 

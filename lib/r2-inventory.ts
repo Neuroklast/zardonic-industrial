@@ -134,6 +134,7 @@ export async function listAllR2ObjectKeys(options?: {
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
+    requestChecksumCalculation: 'WHEN_REQUIRED',
   })
 
   const keys: string[] = []
@@ -175,6 +176,7 @@ export async function deleteAllR2Objects(bucket?: string): Promise<{ deleted: nu
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
+    requestChecksumCalculation: 'WHEN_REQUIRED',
   })
 
   let deleted = 0

@@ -18,6 +18,9 @@ function buildR2Client(): S3Client {
     endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
+    // Cloudflare R2 does not support the AWS flexible CRC32 checksum that the
+    // SDK adds to presigned PutObject URLs by default; it breaks browser PUTs.
+    requestChecksumCalculation: 'WHEN_REQUIRED',
   })
 }
 

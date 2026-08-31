@@ -23,6 +23,8 @@ Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOp
 
 **Downloadable media** (`/admin/media`) is the exception: `FileSourcePicker` uploads **originals** (JPEG/PNG/WebP/GIF, PDF, ZIP, MP3/WAV) via signed PUT or multipart. Do not run press-kit files through the crop→WebP path.
 
+Always pass `requestChecksumCalculation: 'WHEN_REQUIRED'` to every R2 `S3Client`. `@aws-sdk/client-s3` ≥ v3.609 appends a flexible CRC32 checksum (`x-amz-checksum-crc32` / `x-amz-sdk-checksum-algorithm`) to presigned `PutObject` URLs by default; Cloudflare R2 does not accept it, so browser PUTs fail with `net::ERR_FAILED` / "failed to fetch" *even after* the bucket CORS preflight passes. The flag only suppresses the checksum — set it on `r2Upload.ts`, `lib/storage/r2.ts`, `r2-multipart.ts`, `r2-inventory.ts` and `/admin/health`. The R2 bucket CORS policy must still allow `PUT` + `Content-Type` (and expose `ETag`) from the admin origin or the preflight `OPTIONS` is blocked before R2 is ever reached.
+
 - Next `experimental.serverActions.bodySizeLimit` = **4mb** (default is **1mb** — full-res PNG crops hit this and show production **React #441** / 413).
 - Client guard: `SERVER_ACTION_IMAGE_UPLOAD_MAX_BYTES` (~3.5 MB) in `lib/optimize-image-constants.ts`.
 - Do **not** export crop as raw full-res PNG for upload.
