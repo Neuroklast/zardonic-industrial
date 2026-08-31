@@ -1,10 +1,13 @@
-import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
+import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
+import { contentHashFromKey } from '@/lib/r2-object-key'
 
-export const R2_INVENTORY_MAX_KEYS = 20_000
+export const R2_INVENTORY_MAX_KEYS = 100_000
+export const R2_INVENTORY_PAGE_SIZE = 1000
 
 export interface R2Inventory {
   keys: Set<string>
   byFilename: Map<string, string[]>
+  byContentHash: Map<string, string[]>
 }
 
 export function objectFilename(objectKey: string): string {
@@ -26,6 +29,7 @@ export function filenameMatchKeys(objectKey: string): string[] {
 export function buildR2Inventory(keys: readonly string[]): R2Inventory {
   const keySet = new Set<string>()
   const byFilename = new Map<string, string[]>()
+  const byContentHash = new Map<string, string[]>()
 
   for (const raw of keys) {
     const key = raw.trim()
@@ -36,13 +40,19 @@ export function buildR2Inventory(keys: readonly string[]): R2Inventory {
       list.push(key)
       byFilename.set(name, list)
     }
+    const hash = contentHashFromKey(key)
+    if (hash) {
+      const hashList = byContentHash.get(hash) ?? []
+      hashList.push(key)
+      byContentHash.set(hash, hashList)
+    }
   }
 
-  return { keys: keySet, byFilename }
+  return { keys: keySet, byFilename, byContentHash }
 }
 
 export type InventoryMatch =
-  | { status: 'matched'; key: string; via: 'exact' | 'suffix' | 'filename' }
+  | { status: 'matched'; key: string; via: 'exact' | 'suffix' | 'filename' | 'hash' }
   | { status: 'missing' }
   | { status: 'ambiguous'; candidates: string[] }
 
@@ -85,6 +95,21 @@ export function matchInventoryKey(
     }
   }
 
+  // Last resort: a content-addressed key embeds the object's sha256. If the
+  // stored path is itself content-addressed, match by hash regardless of prefix
+  // or filename. This also lets us repair a stale path that differs only by host
+  // or prefix, which filename matching cannot.
+  const storedHash = storedPath ? contentHashFromKey(storedPath) : null
+  if (storedHash) {
+    const hashHits = inventory.byContentHash.get(storedHash) ?? []
+    if (hashHits.length === 1) {
+      return { status: 'matched', key: hashHits[0], via: 'hash' }
+    }
+    if (hashHits.length > 1) {
+      return { status: 'ambiguous', candidates: hashHits.slice(0, 8) }
+    }
+  }
+
   return { status: 'missing' }
 }
 
@@ -118,7 +143,7 @@ export async function listAllR2ObjectKeys(options?: {
       new ListObjectsV2Command({
         Bucket: bucket,
         ContinuationToken: token,
-        MaxKeys: 1000,
+        MaxKeys: R2_INVENTORY_PAGE_SIZE,
       }),
     )
     for (const item of response.Contents ?? []) {
@@ -129,4 +154,53 @@ export async function listAllR2ObjectKeys(options?: {
   } while (token)
 
   return keys
+}
+
+/**
+ * Delete every object in the R2 media bucket. Admin-only destructive utility
+ * used by the factory reset. Returns the number of objects deleted.
+ */
+export async function deleteAllR2Objects(bucket?: string): Promise<{ deleted: number }> {
+  const accountId = process.env.R2_ACCOUNT_ID
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
+  const target = bucket ?? process.env.R2_BUCKET_MEDIA
+
+  if (!accountId || !accessKeyId || !secretAccessKey || !target) {
+    throw new Error('Missing R2 credentials / bucket')
+  }
+
+  const client = new S3Client({
+    region: 'auto',
+    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+    credentials: { accessKeyId, secretAccessKey },
+    forcePathStyle: true,
+  })
+
+  let deleted = 0
+  let token: string | undefined
+  do {
+    const page = await client.send(
+      new ListObjectsV2Command({
+        Bucket: target,
+        ContinuationToken: token,
+        MaxKeys: R2_INVENTORY_PAGE_SIZE,
+      }),
+    )
+    const keys = (page.Contents ?? [])
+      .map((item) => item.Key)
+      .filter((key): key is string => Boolean(key))
+    if (keys.length > 0) {
+      await client.send(
+        new DeleteObjectsCommand({
+          Bucket: target,
+          Delete: { Objects: keys.map((key) => ({ Key: key })), Quiet: false },
+        }),
+      )
+      deleted += keys.length
+    }
+    token = page.IsTruncated ? page.NextContinuationToken : undefined
+  } while (token)
+
+  return { deleted }
 }

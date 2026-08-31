@@ -41,6 +41,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] After an R2 bucket move / Production deploy: Vercel logs show `[r2-reconcile] run for <sha>` then `done`; `/admin/data` preview can confirm. Network has no `wsrv.nl/?url=https://pub-<OLD>.r2.dev`; partner rasters may still use wsrv but the inner host is the current `R2_PUBLIC_HOST`
 - [ ] Background video: scroll scrub stays smooth; no matrix/circuit canvas running on top of the video
 - [ ] Background: desktop video ON + mobile “No video” → video on desktop, image fallback on phone
+- [ ] Background video and `/admin/media` uploads succeed on a fresh origin; if they fail with `net::ERR_FAILED` / "failed to fetch", confirm the **R2 bucket CORS** row in Admin → API Health is OK (browser presigned PUT needs a bucket CORS rule — see `r2-cors.json`)
 - [ ] Biography section renders text (or “coming soon”); **no** red “[Bio] – Failed to render” box
 - [ ] Language switch (ES/DE/…): section error fallback strings localize if a section ever crashes; Retry remounts
 
@@ -58,8 +59,12 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
 - [ ] Media replace: upload a second image/video → previous R2 object removed (status mentions previous file removed); failed upload must not delete the old file
+- [ ] R2 keys are content-addressed: uploading the same file twice lands on the same object key (no orphaned duplicate); replacing with different bytes creates a new key and deletes the old one
+- [ ] After an R2 bucket move / Production deploy: `[r2-reconcile] done objects=… rows=… urls=…` in Vercel logs; `/admin/data` preview shows corrected URLs; `content_hash` backfilled on media rows. A deliberately-broken old URL is auto-repaired by the `<img onError>` → `/api/media-fix` path (the image swaps to the corrected URL)
 - [ ] Legal admin saves and public pages reflect changes after revalidate
 - [ ] Data export JSON includes news posts, manually edited releases (tracks/copy), and site_config keys; import restores them without wiping extra rows
+- [ ] Advances: “Purge all releases” / “Purge all + re-sync” confirm dialog warns that **manually edited** releases are deleted too; after re-sync the releases list matches the Spotify catalogue (no leftover manual rows)
+- [ ] Factory reset: button disabled until backup checkbox ticked + phrase typed; wrong phrase is rejected server-side (nothing deleted); correct phrase + cleanup restores default site config; R2 media left intact unless the “delete media” box is checked
 
 ## After deploy
 

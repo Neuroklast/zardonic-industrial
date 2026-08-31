@@ -1,6 +1,6 @@
 import { getApiSecret, getApiSecretsStatus } from '@/lib/api-secrets'
 import { createClient } from '@/lib/supabaseServer'
-import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3'
+import { S3Client, ListObjectsV2Command, GetBucketCorsCommand } from '@aws-sdk/client-s3'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { RefreshButton } from './RefreshButton'
 
@@ -44,6 +44,47 @@ async function checkR2(): Promise<CheckResult> {
     return { name: 'Cloudflare R2', ok: true, ms: Date.now() - start }
   } catch (e) {
     return { name: 'Cloudflare R2', ok: false, ms: Date.now() - start, detail: e instanceof Error ? e.message : 'Unknown error' }
+  }
+}
+
+async function checkR2Cors(): Promise<CheckResult> {
+  const start = Date.now()
+  try {
+    const accountId = process.env.R2_ACCOUNT_ID
+    const accessKeyId = process.env.R2_ACCESS_KEY_ID
+    const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY
+    const bucket = process.env.R2_BUCKET_MEDIA
+
+    if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
+      return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail: 'Missing R2 environment variables' }
+    }
+
+    const client = new S3Client({
+      region: 'auto',
+      endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
+      credentials: { accessKeyId, secretAccessKey },
+      forcePathStyle: true,
+    })
+
+    const res = await client.send(new GetBucketCorsCommand({ Bucket: bucket }))
+    const rules = res.CORSRules ?? []
+    if (rules.length === 0) {
+      return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail: 'No CORS policy — browser PUT uploads (video / media download) will be blocked' }
+    }
+    const hasPut = rules.some((r) => r.AllowedMethods?.includes('PUT'))
+    const origins = rules.flatMap((r) => r.AllowedOrigins ?? [])
+    const wildcard = origins.includes('*')
+    const localhost = origins.some((o) => /localhost|127\.0\.0\.1/.test(o))
+    const detail = [
+      `${rules.length} rule(s)`,
+      hasPut ? 'PUT ok' : 'PUT missing',
+      wildcard ? 'origins *' : `${origins.length} origin(s)`,
+      localhost ? 'localhost ok' : 'no localhost',
+    ].join(' · ')
+    return { name: 'R2 bucket CORS', ok: hasPut && (wildcard || origins.length > 0), ms: Date.now() - start, detail }
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : 'Unknown error'
+    return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail }
   }
 }
 
@@ -105,15 +146,16 @@ function StatusBadge({ ok }: { ok: boolean }) {
 }
 
 export default async function HealthPage() {
-  const [supabaseResult, r2Result, resendResult, itunesResult, apiSecretsStatus] = await Promise.all([
+  const [supabaseResult, r2Result, r2CorsResult, resendResult, itunesResult, apiSecretsStatus] = await Promise.all([
     checkSupabase(),
     checkR2(),
+    checkR2Cors(),
     checkResend(),
     checkItunes(),
     getApiSecretsStatus(),
   ])
 
-  const checks: CheckResult[] = [supabaseResult, r2Result, resendResult, itunesResult]
+  const checks: CheckResult[] = [supabaseResult, r2Result, r2CorsResult, resendResult, itunesResult]
 
   const integrationKeys = [
     { label: 'Spotify', ok: apiSecretsStatus.spotify_client_id && apiSecretsStatus.spotify_client_secret },

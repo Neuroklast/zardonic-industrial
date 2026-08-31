@@ -8,6 +8,8 @@ import {
   abortMultipartUploadAction,
 } from '@/app/admin/_actions/r2Multipart'
 import type { CompletedPart } from '@/lib/storage/r2-multipart'
+import { contentObjectKey } from '@/lib/r2-object-key'
+import { describeR2UploadError } from '@/lib/r2-upload-error'
 
 /** Minimum part size for S3 multipart upload (5 MB). */
 const PART_SIZE = 5 * 1024 * 1024
@@ -36,7 +38,7 @@ export function useR2MultipartUpload() {
       setState({ status: 'uploading', progress: 0, objectKey: null, error: null })
 
       const ext = file.name.split('.').pop() ?? 'bin'
-      const key = `${keyPrefix}/${Date.now()}.${ext}`
+      const key = await contentObjectKey({ prefix: keyPrefix, data: await file.arrayBuffer(), extension: ext })
 
       let uploadId: string | null = null
 
@@ -78,7 +80,7 @@ export function useR2MultipartUpload() {
         setState({ status: 'success', progress: 1, objectKey: key, error: null })
         return key
       } catch (e) {
-        const message = e instanceof Error ? e.message : 'Upload failed'
+        const message = describeR2UploadError(e, 'Multipart upload')
 
         if (uploadId) {
           try {

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { extractStoredObjectPath } from '@/lib/r2-url-rewrite'
 import { buildR2Inventory, matchInventoryKey } from '@/lib/r2-inventory'
 import { applyR2MediaReconcile } from '@/lib/r2-reconcile'
+import { contentHashFromKey } from '@/lib/r2-object-key'
 import type { MediaRewriteClient, MediaRewriteSelectResult } from '@/lib/r2-url-rewrite'
 
 const OLD_HOST = 'https://pub-0f758eac6e4d4b2dbbaedd819e15f764.r2.dev'
@@ -87,6 +88,16 @@ describe('matchInventoryKey', () => {
     const match = matchInventoryKey(FILENAME, inventory)
     expect(match.status).toBe('ambiguous')
   })
+
+  it('matches by content hash when the basename differs (prefix + filename churn)', () => {
+    const hash = '0123456789abcdef0123456789abcdef'
+    const inventory = buildR2Inventory([`uploads/${hash}.webp`])
+    const match = matchInventoryKey(`old/prefix/different-name.webp`, inventory)
+    // Same bitmap would share the hash but not the basename; filename fails, hash wins.
+    expect(match.status).toBe('missing')
+    const hashMatch = matchInventoryKey(`uploads/${hash}.webp`, inventory)
+    expect(hashMatch).toEqual({ status: 'matched', key: `uploads/${hash}.webp`, via: 'exact' })
+  })
 })
 
 describe('applyR2MediaReconcile', () => {
@@ -136,5 +147,28 @@ describe('applyR2MediaReconcile', () => {
     })
     expect(store.releases[0].cover_url).toBe('https://i.scdn.co/image/ab67616d0000b273deadbeef')
     expect(result.rewrittenRows).toBe(0)
+  })
+
+  it('rewires a content-addressed key onto the new host (same key across bucket moves)', async () => {
+    const contentKey = 'gallery/a1b2c3d4e5f60718293a4b5c6d7e8f90.webp'
+    const store = emptyTables({
+      gallery: [
+        {
+          id: 'g1',
+          image_url: `${OLD_HOST}/${contentKey}`,
+          storage_path: contentKey,
+        },
+      ],
+    })
+    const result = await applyR2MediaReconcile(makeClient(store), {
+      publicHost: NEW_HOST,
+      objectKeys: [contentKey],
+      dryRun: false,
+    })
+    // The content key is bucket-agnostic, so only the host is rewritten.
+    expect(store.gallery[0].image_url).toBe(`${NEW_HOST}/${contentKey}`)
+    expect(store.gallery[0].storage_path).toBe(contentKey)
+    expect(store.gallery[0].content_hash).toBe('a1b2c3d4e5f60718293a4b5c6d7e8f90')
+    expect(result.rewrittenRows).toBe(1)
   })
 })

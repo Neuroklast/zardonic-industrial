@@ -62,6 +62,16 @@ If production logs show `Rate limit check failed` + `ENOTFOUND …upstash.io`:
 2. Hard refresh (Ctrl+Shift+R)
 3. Run through `QA_CHECKLIST.md` public smoke
 
+## 7. R2 bucket CORS (browser uploads)
+
+Admin **video uploads** and `/admin/media` press-kit downloads PUT to R2 **from the browser**, which needs a bucket CORS policy — otherwise uploads fail with `net::ERR_FAILED` / "failed to fetch" even though the presigned URL is valid.
+
+1. Cloudflare Dashboard → **R2 → bucket → Settings → CORS Policy**
+2. Ensure methods include `PUT` and headers allow `Content-Type` (+ `ETag` exposed for multipart). See [`r2-cors.json`](../r2-cors.json)
+3. Add the admin origin: `http://localhost:3000` for local dev, your Vercel/preview origins, or `*` for a private presigned-only media bucket
+4. Confirm `Admin → API Health` shows **R2 bucket CORS** OK (read-only check)
+5. If you serve via an R2 **custom domain**, purge its cache after editing CORS
+
 ## Disclaimer
 
 Built-in DE/EN legal templates are **operational drafts**, not a substitute for lawyer review for your specific entity (sole trader vs. company, VAT, MStV, etc.).

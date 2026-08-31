@@ -765,3 +765,20 @@ DO $$ BEGIN
   END IF;
 END; $$;
 
+-- ============================================================
+-- Media content hashes (idempotent) — used by R2 reconcile + 404 self-heal
+-- ============================================================
+-- Content-addressed object keys are `${prefix}/<sha256>.${ext}`. The reconcile
+-- backfills `content_hash` from the storage path's filename so DB queries and the
+-- runtime self-heal could match a stale reference to the live object without
+-- relying only on filename/prefix heuristics.
+ALTER TABLE public.releases          ADD COLUMN IF NOT EXISTS cover_content_hash text;
+ALTER TABLE public.gallery           ADD COLUMN IF NOT EXISTS content_hash text;
+ALTER TABLE public.social_links      ADD COLUMN IF NOT EXISTS logo_content_hash text;
+ALTER TABLE public.partners          ADD COLUMN IF NOT EXISTS logo_content_hash text;
+ALTER TABLE public.merchandise       ADD COLUMN IF NOT EXISTS image_content_hash text;
+ALTER TABLE public.soundpacks        ADD COLUMN IF NOT EXISTS image_content_hash text;
+ALTER TABLE public.media_downloads   ADD COLUMN IF NOT EXISTS file_content_hash text;
+ALTER TABLE public.news_posts        ADD COLUMN IF NOT EXISTS cover_content_hash text;
+
+

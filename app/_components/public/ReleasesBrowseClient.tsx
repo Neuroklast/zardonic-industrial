@@ -25,6 +25,7 @@ import {
 } from '@/lib/release-browse'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import type { PublicReleaseCardItem } from '@/lib/public-fetch'
 import { BrowsePagination } from './BrowsePagination'
 import { BrowseToolbar } from './BrowseToolbar'
@@ -93,6 +94,7 @@ function ReleaseBrowseCard({
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             decoding="async"
+            onError={(e) => void onMediaImageError(e)}
           />
         ) : (
           <div className="flex h-full items-center justify-center">
@@ -164,6 +166,7 @@ function SwipeReleaseCard({ release, onClick }: { release: PublicReleaseCardItem
             alt={release.title}
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            onError={(e) => void onMediaImageError(e)}
           />
         ) : (
           <div className="flex h-full items-center justify-center font-mono text-xs text-muted-foreground">

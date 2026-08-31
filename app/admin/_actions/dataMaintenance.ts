@@ -26,12 +26,9 @@ export interface ConsolidateReleasesResult {
   errors: string[]
 }
 
-async function purgeAutoSyncedReleases(): Promise<PurgeResult> {
+async function purgeAllReleases(): Promise<PurgeResult> {
   const supabase = createAdminClient()
-  const { count, error } = await supabase
-    .from('releases')
-    .delete({ count: 'exact' })
-    .eq('manually_edited', false)
+  const { count, error } = await supabase.from('releases').delete({ count: 'exact' })
 
   if (error) throw new Error(error.message)
   return { deleted: count ?? 0 }
@@ -65,13 +62,13 @@ export async function consolidateReleases(): Promise<ConsolidateReleasesResult |
 export async function purgeReleases(): Promise<PurgeResult | { error: string }> {
   const dispatchResult = dispatchAdminActionAsAdmin(
     'purge_releases',
-    { scope: 'auto_synced' },
+    { scope: 'all' },
     createSupabaseActionContext(createAdminClient()),
   )
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const result = await purgeAutoSyncedReleases()
+    const result = await purgeAllReleases()
     revalidatePath('/admin/releases')
     revalidatePath('/')
     return result
@@ -131,7 +128,7 @@ export async function purgeAndSyncReleases(): Promise<MaintenanceSyncResult | { 
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const purge = await purgeAutoSyncedReleases()
+    const purge = await purgeAllReleases()
     const sync = await syncReleasesFromSpotify()
     const enrich = await enrichAllReleasesTracks({ limit: 50 })
 

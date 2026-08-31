@@ -60,10 +60,10 @@ const ACTION_COPY: Record<
     confirmLabel: 'Consolidate duplicates',
   },
   purgeReleases: {
-    title: 'Purge auto-synced releases?',
+    title: 'Purge ALL releases?',
     description:
-      'Deletes all releases where manually_edited is false. Manually edited releases are kept.',
-    confirmLabel: 'Purge releases',
+      'Deletes every release from Supabase, including manually edited ones. This cannot be undone. Export a backup first if you need to restore the current catalogue.',
+    confirmLabel: 'Purge all releases',
     destructive: true,
   },
   purgeGigs: {
@@ -73,10 +73,10 @@ const ACTION_COPY: Record<
     destructive: true,
   },
   purgeAndSyncReleases: {
-    title: 'Purge releases and re-sync?',
+    title: 'Purge ALL releases and re-sync?',
     description:
-      'Removes auto-synced releases, imports the Spotify catalogue, then enriches tracklists in batches.',
-    confirmLabel: 'Purge + sync releases',
+      'Deletes every release (manually edited included), then imports the Spotify catalogue fresh so the list matches Spotify exactly. Manual edits are lost.',
+    confirmLabel: 'Purge all + resync releases',
     destructive: true,
   },
   purgeAndSyncGigs: {
@@ -194,7 +194,7 @@ export function CatalogueSyncClient({
           case 'purgeReleases': {
             const result = await purgeReleases()
             if ('error' in result) throw new Error(result.error)
-            setMessage(`Purged ${result.deleted} auto-synced release(s).`)
+            setMessage(`Purged ${result.deleted} release(s).`)
             break
           }
           case 'purgeGigs': {
@@ -429,11 +429,11 @@ export function CatalogueSyncClient({
         <div className="flex flex-wrap gap-2">
           <ActionButton
             action="purgeAndSyncReleases"
-            label="Purge + re-sync releases"
+            label="Purge all + re-sync releases"
             icon={Trash}
             variant="danger"
           />
-          <ActionButton action="purgeReleases" label="Purge releases" icon={Trash} variant="danger" />
+          <ActionButton action="purgeReleases" label="Purge all releases" icon={Trash} variant="danger" />
           <ActionButton action="purgeGigs" label="Purge gigs" icon={Trash} variant="danger" />
         </div>
         <p className="text-xs text-zinc-500">

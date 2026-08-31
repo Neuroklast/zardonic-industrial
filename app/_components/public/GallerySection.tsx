@@ -10,6 +10,7 @@ import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState } from '@/lib/app-types'
 import { resolveGalleryTileAspect } from '@/lib/gallery-aspect-ratio'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 
 interface GalleryItem {
   id: string
@@ -131,6 +132,7 @@ export function GallerySection({
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                       decoding="async"
+                      onError={(e) => void onMediaImageError(e)}
                     />
                     {lightbox ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">

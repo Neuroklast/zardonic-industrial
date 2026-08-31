@@ -19,6 +19,8 @@ Revalidate paths include `/`, `/legal-notice`, `/privacy-policy` after saves.
 
 Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOptimizedImage` → R2.
 
+**Object keys are content-addressed** (`lib/r2-object-key.ts`): the key is the sha256 of the exact stored bytes, `${prefix}/${HASH}.${ext}` — not `Date.now()`. Same content → same key, so after an R2 bucket move the DB reference stays valid and only the host changes (`canonicalizeR2MediaUrl` rewrites it at render time). Different content → different key, so the "replace deletes the previous R2 object" logic still works. Browser-signed PUT and multipart uploads hash client-side via Web Crypto; server actions hash the optimized buffer. `createSignedUploadUrl` no longer appends a timestamp — the caller supplies the full content key.
+
 **Downloadable media** (`/admin/media`) is the exception: `FileSourcePicker` uploads **originals** (JPEG/PNG/WebP/GIF, PDF, ZIP, MP3/WAV) via signed PUT or multipart. Do not run press-kit files through the crop→WebP path.
 
 - Next `experimental.serverActions.bodySizeLimit` = **4mb** (default is **1mb** — full-res PNG crops hit this and show production **React #441** / 413).
@@ -39,13 +41,14 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 |----|------------|---------|
 | `enrich_release_tracks` | basic | Single-release tracklist + Odesli enrichment |
 | `enrich_all_release_tracks` | basic | Batch enrichment (limit param) |
-| `purge_releases` | expert | Delete `manually_edited = false` releases |
+| `purge_releases` | expert | Delete **all** releases, including manually edited (hard reset) |
 | `purge_gigs` | expert | Delete all gigs |
+| `factory_reset` | expert | Hard wipe of all editorial tables + restore default `site_config`; requires echoing `zardonic-factory-reset` (client) and optional R2 media wipe (`lib/factory-reset.ts`) |
 | `reset_release_tracklists` | expert | Clear tracks on auto-synced releases |
-| `purge_and_sync_releases` | expert | Purge + Spotify sync + enrichment |
+| `purge_and_sync_releases` | expert | **Hard reset**: delete **all** releases (incl. manual), Spotify sync + enrichment |
 | `purge_and_sync_gigs` | expert | Purge + Bandsintown sync |
 | `rewrite_media_hosts` | expert | Rewrite stored R2 / `wsrv.nl` URLs onto current `R2_PUBLIC_HOST` (host-only; keys unchanged) |
-| `reconcile_r2_media` | expert | List live R2 objects and rewrite DB URLs when the **filename** uniquely matches (re-uploads / prefix changes) |
+| `reconcile_r2_media` | expert | List live R2 objects and rewrite DB URLs when the **filename** or **content hash** uniquely matches (re-uploads / prefix changes); backfills `content_hash` columns |
 | `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
 | `release_external_sync` | basic | Per-release ID sync |
 
@@ -68,11 +71,15 @@ Do not add a second backup format; extend `SITE_BACKUP_SECTIONS` when a new cont
 
 JSON import copies `storage_path` + leftover `*_url` values — not R2 objects. After a re-upload, **keys often change** (dropped prefixes, new timestamps), so swapping only the `pub-….r2.dev` host still 404s.
 
-`/admin/data` → **Match files in current R2 bucket** lists the live bucket, then updates rows when the filename uniquely matches (exact key → suffix → unique basename). Ambiguous names are skipped. Host-only rewrite remains as a fallback when keys did not change.
+`/admin/data` → **Match files in current R2 bucket** lists the live bucket, then updates rows when the filename **or content hash** uniquely matches (exact key → suffix → unique basename → content hash). Content-hash matching reconnects rows that changed prefix **and** basename; ambiguous names are skipped. Host-only rewrite remains as a fallback when keys did not change. The reconcile also **backfills the `content_hash` columns** on media tables so future lookups are O(1) by hash.
 
-Runs **automatically on each Vercel Production deploy** (once per git SHA) via `instrumentation.ts` + `lib/r2-reconcile-on-deploy.ts`. Preview / local / CI builds skip it. GitHub `deployment_status` also `POST`s `/api/r2-reconcile` when `CRON_SECRET` is set as a GitHub secret. Manual: `/admin/data` → Match files. Confirm `R2_PUBLIC_HOST` is the new origin on `/admin/health` first.
+Runs **automatically on each Vercel Production deploy** (once per git SHA) via `instrumentation.ts` + `lib/r2-reconcile-on-deploy.ts`. Preview / local / CI builds skip it. Manual: `/admin/data` → Match files. Confirm `R2_PUBLIC_HOST` is the new origin on `/admin/health` first.
 
-Logic: `lib/r2-inventory.ts`, `lib/r2-reconcile.ts`.
+**No cron required (Vercel free tier).** Deploys run the reconcile at serverless boot; `/api/media-fix` (called by the client `<img onError>` fallback) self-heals a miss on the fly. The old `*/20 * * * *` cron was removed because Vercel Cron Jobs require Pro. `CRON_SECRET` only matters if you keep the optional GitHub `deployment_status` → `POST /api/r2-reconcile` hook.
+
+Logic: `lib/r2-inventory.ts`, `lib/r2-reconcile.ts`, `lib/media-fallback.ts`, `app/api/media-fix/route.ts`.
+
+`runProductionDeployR2Reconcile` needs `R2_PUBLIC_HOST`, `R2_BUCKET_MEDIA`, `R2_ACCOUNT_ID` **and** `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as **server** env vars (not `NEXT_PUBLIC_*`, which are baked at build).
 
 ### Async sync jobs
 

@@ -442,10 +442,7 @@ async function tickEnrichPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
 
 async function tickPurgeAndSyncReleases(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const supabase = createAdminClient()
-  const { count, error } = await supabase
-    .from('releases')
-    .delete({ count: 'exact' })
-    .eq('manually_edited', false)
+  const { count, error } = await supabase.from('releases').delete({ count: 'exact' })
 
   if (error) throw new Error(error.message)
 
@@ -464,7 +461,7 @@ async function tickPurgeAndSyncReleases(job: SyncJobRow): Promise<AdvanceSyncJob
     phase: 'fetch',
     payload: nextPayload,
     progress: mergeProgress(job.progress, {
-      errors: [`Purged ${count ?? 0} auto-synced release(s)`],
+      errors: [`Purged ${count ?? 0} release(s)`],
     }),
   })
   return { job: updated, done: false }

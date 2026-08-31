@@ -4,7 +4,6 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { requireAdmin } from '@/app/admin/_actions/auth'
 import { MEDIA_BUCKET } from '@/lib/constants'
-
 function buildR2Client(): S3Client {
   const accountId = process.env.R2_ACCOUNT_ID
   const accessKeyId = process.env.R2_ACCESS_KEY_ID
@@ -40,11 +39,14 @@ export async function publicUrlForR2Object(
 
 export async function createSignedUploadUrl(
   bucket: string,
-  path: string,
+  objectKey: string,
 ): Promise<{ url: string; objectPath: string; publicUrl: string }> {
   await requireAdmin()
   const client = buildR2Client()
-  const objectPath = `${path}-${Date.now()}`
+  const objectPath = objectKey.trim().replace(/^\/+/, '')
+  if (!objectPath || objectPath.includes('..') || objectPath.includes('\\')) {
+    throw new Error('Invalid storage path')
+  }
   const command = new PutObjectCommand({ Bucket: bucket, Key: objectPath })
   const url = await getSignedUrl(client, command, { expiresIn: 3600 })
   return { url, objectPath, publicUrl: buildPublicUrl(objectPath) }

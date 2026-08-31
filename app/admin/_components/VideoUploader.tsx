@@ -2,6 +2,8 @@
 
 import { useState, useRef } from 'react'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { contentObjectKey } from '@/lib/r2-object-key'
+import { describeR2UploadError } from '@/lib/r2-upload-error'
 import { REMOTE_VIDEO_MAX_BYTES } from '@/lib/remote-video-url'
 
 const ALLOWED_UPLOAD_MIME = new Set([
@@ -53,8 +55,8 @@ export function VideoUploader({
       const { createSignedUploadUrl } = await import('@/app/admin/_actions/r2Upload')
       const ext = file.name.split('.').pop()?.toLowerCase() ?? 'mp4'
       const safePrefix = storagePrefix.replace(/[^a-z0-9/_-]/gi, '').replace(/^\/+|\/+$/g, '') || 'uploads/videos'
-      const path = `${safePrefix}/${Date.now()}.${ext}`
-      const { url, objectPath, publicUrl } = await createSignedUploadUrl(MEDIA_BUCKET, path)
+      const objectKey = await contentObjectKey({ prefix: safePrefix, data: await file.arrayBuffer(), extension: ext })
+      const { url, objectPath, publicUrl } = await createSignedUploadUrl(MEDIA_BUCKET, objectKey)
 
       const uploadRes = await fetch(url, {
         method: 'PUT',
@@ -69,7 +71,7 @@ export function VideoUploader({
       if (publicUrl) setPreview(publicUrl)
       onUpload(objectPath, publicUrl)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed'
+      const msg = describeR2UploadError(err, 'Video upload')
       onError?.(msg)
     } finally {
       setUploading(false)
