@@ -100,6 +100,8 @@ Images and video upload to **Cloudflare R2** via admin upload actions. URLs are 
 
 **Video, and downloadable media** (`/admin/media`, press-kit), upload **from the browser** to a presigned R2 PUT URL (`createSignedUploadUrl` / `useR2MultipartUpload`). A cross-origin `PUT` with a `Content-Type` header triggers a browser **preflight OPTIONS** to `*.r2.cloudflarestorage.com`. If the bucket has no matching CORS rule the upload fails with `net::ERR_FAILED` / "failed to fetch", **even though the presigned URL is valid.**
 
+The target bucket is **resolved server-side** from `R2_BUCKET_MEDIA` inside `createSignedUploadUrl(objectKey)` — the client never dictates the bucket, and must not be trusted to (client components read `MEDIA_BUCKET = process.env.R2_BUCKET_MEDIA ?? 'zardonic-media'`, and `process.env` is unavailable in the browser bundle, so it always falls back to the hardcoded default — which typically has no CORS rule). If browser PUTs report a CORS/`Access-Control-Allow-Origin` failure, confirm the running deployment's `R2_BUCKET_MEDIA` actually points at the bucket that has the CORS policy; changing the env var requires a **new build** (Vercel applies env changes only on the next deploy).
+
 **Object keys are content-addressed** (`lib/r2-object-key.ts`): `${prefix}/<sha256>.${ext}`. Same content → same key, so media survives an R2 bucket move (only the host changes, rewritten at render time). Replacing a file with different bytes yields a different key and the previous object is deleted; re-uploading the same bytes is idempotent (nothing orphaned).
 
 **After a bucket move, references self-repair automatically (no Pro tier needed):**

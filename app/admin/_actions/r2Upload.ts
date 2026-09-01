@@ -41,7 +41,6 @@ export async function publicUrlForR2Object(
 }
 
 export async function createSignedUploadUrl(
-  bucket: string,
   objectKey: string,
 ): Promise<{ url: string; objectPath: string; publicUrl: string }> {
   await requireAdmin()
@@ -50,7 +49,10 @@ export async function createSignedUploadUrl(
   if (!objectPath || objectPath.includes('..') || objectPath.includes('\\')) {
     throw new Error('Invalid storage path')
   }
-  const command = new PutObjectCommand({ Bucket: bucket, Key: objectPath })
+  // The bucket is resolved server-side: the browser cannot be trusted to
+  // dictate which R2 bucket a presigned PUT targets (it would fall back to
+  // MEDIA_BUCKET's default when process.env is unavailable in the bundle).
+  const command = new PutObjectCommand({ Bucket: MEDIA_BUCKET, Key: objectPath })
   const url = await getSignedUrl(client, command, { expiresIn: 3600 })
   return { url, objectPath, publicUrl: buildPublicUrl(objectPath) }
 }

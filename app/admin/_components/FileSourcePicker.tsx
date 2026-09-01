@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { MEDIA_BUCKET } from '@/lib/constants'
 import {
   MEDIA_ACCEPT,
   MEDIA_MULTIPART_THRESHOLD_BYTES,
@@ -105,7 +104,7 @@ export function FileSourcePicker({
           data: await file.arrayBuffer(),
           extension: ext,
         })
-        const signed = await createSignedUploadUrl(MEDIA_BUCKET, objectKey)
+        const signed = await createSignedUploadUrl(objectKey)
         const uploadRes = await fetch(signed.url, {
           method: 'PUT',
           body: file,
