@@ -7,10 +7,10 @@ import {
 } from '@/lib/release-cover-art'
 
 describe('release-cover-art', () => {
-  it('only allows iTunes as automatic cover source', () => {
+  it('allows iTunes, Spotify and Discogs as automatic cover sources', () => {
     expect(shouldImportCoverFromSource('itunes')).toBe(true)
-    expect(shouldImportCoverFromSource('spotify')).toBe(false)
-    expect(shouldImportCoverFromSource('discogs')).toBe(false)
+    expect(shouldImportCoverFromSource('spotify')).toBe(true)
+    expect(shouldImportCoverFromSource('discogs')).toBe(true)
   })
 
   it('detects iTunes and Spotify cover origins', () => {

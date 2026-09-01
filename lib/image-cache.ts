@@ -1,4 +1,4 @@
-import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
+import { canonicalizeR2MediaUrl, currentR2PublicOrigin } from '@/lib/r2-url-rewrite'
 
 const DB_NAME = 'zardonic-image-cache'
 const STORE_NAME = 'images'
@@ -120,16 +120,24 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
 
   url = canonicalizeR2MediaUrl(url)
 
-  // Self-hosted / trusted CDNs — load directly (no wsrv.nl hop)
+  // Self-hosted / trusted CDNs — load directly (no wsrv.nl hop). Include the
+  // configured R2_PUBLIC_HOST domain (so stored covers are NOT re-proxied) and
+  // the Spotify/Discogs artwork hosts used by imported covers.
   if (url.startsWith('http://') || url.startsWith('https://')) {
     try {
       const hostname = new URL(url).hostname
+      const r2Origin = currentR2PublicOrigin()
+      const r2OriginHost = r2Origin ? new URL(r2Origin).hostname : ''
       if (
+        hostname === r2OriginHost ||
         hostname.endsWith('.r2.dev') ||
         hostname.endsWith('.r2.cloudflarestorage.com') ||
         hostname.endsWith('.bcbits.com') ||
         hostname.endsWith('.mzstatic.com') ||
         hostname.endsWith('.supabase.co') ||
+        hostname.endsWith('.scdn.co') ||
+        hostname.endsWith('.spotifycdn.com') ||
+        hostname.endsWith('.discogs.com') ||
         hostname === 'img.youtube.com'
       ) {
         return url

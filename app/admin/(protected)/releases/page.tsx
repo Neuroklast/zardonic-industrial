@@ -10,7 +10,7 @@ export default async function ReleasesPage() {
     type: string
     release_date: string | null
     active: boolean
-    display_order: number
+    display_order: number | null
   }> = []
 
   try {
@@ -33,7 +33,7 @@ export default async function ReleasesPage() {
         type: row.type,
         release_date: row.release_date,
         active: row.active,
-        display_order: typeof row.display_order === 'number' ? row.display_order : 0,
+        display_order: row.display_order,
       }),
     )
   } catch {

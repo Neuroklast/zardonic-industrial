@@ -24,6 +24,7 @@ import {
   type ReleaseTitleMatchOptions,
 } from '@/lib/release-consolidation'
 import { fetchDiscogsArtistReleasesPage, searchDiscogsArtistId } from '@/lib/discogs-sync'
+import { cacheReleaseCoverToR2 } from '@/lib/release-cover-r2'
 import { runCatalogueEnrichmentBatch } from '@/lib/release-enrichment'
 import {
   normalizeDiscogsArtistId,
@@ -57,7 +58,9 @@ const CATALOGUE_IMPORT_JOB_TYPES = new Set<SyncJobType>([
 function shouldEnrichAfterCatalogueImport(type: SyncJobType): boolean {
   return CATALOGUE_IMPORT_JOB_TYPES.has(type)
 }
-const PROCESSING_STALE_MS = 120_000
+// A catalogue tick can span many network fetches + a full consolidation pass,
+// so 120s was far shorter than real work and let a second tick start mid-run.
+const PROCESSING_STALE_MS = 15 * 60 * 1000
 
 export interface AdvanceSyncJobResult {
   job: SyncJobRow
@@ -292,6 +295,19 @@ async function loadReleaseMatchIndex(
   return buildReleaseMatchIndex((data ?? []) as ReleaseConsolidationRow[], matchOptions)
 }
 
+async function loadExistingExternalIds(
+  supabase: ReturnType<typeof createAdminClient>,
+  idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
+): Promise<Set<string>> {
+  const { data, error } = await supabase.from('releases').select(idField).not(idField, 'is', null)
+  if (error) throw new Error(`Failed to load existing ${idField} ids: ${error.message}`)
+  return new Set(
+    (data ?? [])
+      .map((row: Record<string, string | null>) => row[idField])
+      .filter((value: string | null | undefined): value is string => Boolean(value)),
+  )
+}
+
 async function runPostImportConsolidation(
   supabase: ReturnType<typeof createAdminClient>,
 ): Promise<{ updated: number; errors: string[] }> {
@@ -318,9 +334,14 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
   const supabase = createAdminClient()
   const config = await loadCatalogueSyncConfig()
   const matchOptions = buildTitleMatchOptions(config)
+  // Seed existingIds from the DB whenever the job doesn't carry one, so the
+  // import never re-inserts ids that already exist and stays correct when the
+  // job resumes across ticks. importCatalogueBatch mutates this Set in place
+  // with only the ids it actually handled, so a failed insert is not marked
+  // existing and stays retryable within the same run.
   const existingIds = payload.existingIds
     ? new Set(payload.existingIds)
-    : undefined
+    : await loadExistingExternalIds(supabase, idField)
   const releaseMatchIndex = await loadReleaseMatchIndex(supabase, matchOptions)
 
   const batch = await importCatalogueBatch(supabase, {
@@ -335,17 +356,14 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
     existingIds,
     releaseMatchIndex,
     displayOrderStart: payload.displayOrderStart,
+    cacheCover: (coverUrl, coverSource, externalId) =>
+      cacheReleaseCoverToR2(coverUrl, coverSource, externalId),
   })
-
-  const nextExistingIds = existingIds ?? new Set<string>()
-  for (const item of items.slice(cursor, batch.nextCursor)) {
-    nextExistingIds.add(item.externalId)
-  }
 
   const nextPayload: SyncJobPayload = {
     ...payload,
     importCursor: batch.nextCursor,
-    existingIds: [...nextExistingIds],
+    existingIds: [...existingIds],
     displayOrderStart: batch.nextDisplayOrder,
   }
 
@@ -370,7 +388,7 @@ async function tickImportPhase(job: SyncJobRow): Promise<AdvanceSyncJobResult> {
 
   const consolidation = await runPostImportConsolidation(supabase)
   const progressAfterConsolidation = mergeProgress(nextProgress, {
-    updated: nextProgress.updated + consolidation.updated,
+    updated: consolidation.updated,
     errors: consolidation.errors,
   })
 
@@ -571,18 +589,33 @@ function isProcessingStale(payload: SyncJobPayload): boolean {
   return Date.now() - since > PROCESSING_STALE_MS
 }
 
+/**
+ * Atomically claim a job tick. The conditional UPDATE only matches rows that
+ * are not freshly processing (never started, explicitly idle, or stale), so a
+ * second concurrent tick cannot start while the first is still running.
+ */
 async function acquireProcessingLock(job: SyncJobRow): Promise<SyncJobRow | null> {
   if (!isProcessingStale(job.payload)) {
     return null
   }
 
-  return updateSyncJob(job.id, {
-    payload: {
-      ...job.payload,
-      processing: true,
-      processingSince: Date.now(),
-    },
-  })
+  const supabase = createAdminClient()
+  const staleCutoff = Date.now() - PROCESSING_STALE_MS
+  const { data, error } = await supabase
+    .from('sync_jobs')
+    .update({
+      payload: { ...job.payload, processing: true, processingSince: Date.now() },
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', job.id)
+    .or(
+      `payload->>processing.is.null,payload->>processing.eq.false,and(payload->>processing.eq.true,payload->>processingSince.lt.${staleCutoff})`,
+    )
+    .select('*')
+    .maybeSingle()
+
+  if (error) throw new Error(error.message)
+  return (data as SyncJobRow | null) ?? null
 }
 
 async function releaseProcessingLock(job: SyncJobRow): Promise<void> {

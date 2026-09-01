@@ -102,3 +102,7 @@ Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited
 - Editor: `/admin/legal`
 
 Do not reintroduce impressum overlays or `admin:settings.legal` KV paths.
+
+### Release cover priority (2026-09-01)
+
+Cover source priority is **iTunes > Spotify > Discogs** (`coverSourceScore` 100/60/40 in `lib/release-cover-art.ts`). `resolveMergedCoverUpdate` adopts the higher-priority cover and discards the losing R2 object. `shouldImportCoverFromSource` allows all three sources. All covers are cached to R2 via `lib/release-cover-r2.ts` (`cacheReleaseCoverToR2`), which both server actions and the async job runner use. When a release has multiple ids, enrichment tries iTunes first, then Spotify, then Discogs (`resolveBestCoverSource` in `lib/release-cover-r2.ts`, invoked during the `lib/release-enrichment.ts` pass).

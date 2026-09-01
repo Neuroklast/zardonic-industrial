@@ -152,5 +152,12 @@ After public UI changes:
 - [ ] Desktop nav: logo full size; **BIO** (or first item) fully visible
 - [ ] Open a release and a gallery image — same overlay chrome
 - [ ] Credits/endorsements: no white rectangles; marks readable on dark bg
-- [ ] Footer: icons and legal text not “micro” type
+- [ ] Footer: icons and legal text not �?omicro�?? type
 - [ ] Production deploy SHA matches merge; hard-refresh tested
+
+### Cover art (releases) — priority + pipeline (2026-09-01)
+
+- Import persists cover art from **all** sources: `shouldImportCoverFromSource` = iTunes/Spotify/Discogs. Consolidation prefers iTunes > Spotify > Discogs (`coverSourceScore` 100/60/40); a lower-priority cover is adopted onto a no-cover canonical (`lib/release-cover-art.ts`).
+- All covers are cached to R2 via `cacheReleaseCoverToR2` (`lib/release-cover-r2.ts`) — used by BOTH the server actions and the browser-less async job runner (no `requireAdmin`). Extension/content-type come from the actual response.
+- `toDirectImageUrl` (`lib/image-cache.ts`) trusts the configured `R2_PUBLIC_HOST` domain + `*.scdn.co` / `*.spotifycdn.com` / `*.discogs.com` / `*.mzstatic.com`, so stored and imported covers load directly without an unnecessary wsrv.nl hop. `media-fallback` self-heal unwraps wsrv.nl and recognises the custom R2 host.
+- Every release `<img>` (grid, browse, swipe/3D card, overlay) must attach `onMediaImageError`; overlay art runs through `toDirectImageUrl`. Missing art imports in the discography are usually stale ISR — sync actions now `revalidatePath('/releases')` too.

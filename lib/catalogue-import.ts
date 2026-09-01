@@ -139,6 +139,7 @@ function buildBulkBackfillUpdate(
   }
 
   if (
+    !existingRow.manually_edited &&
     releaseTracksAreEmpty(existingRow.tracks) &&
     metadata.tracks &&
     metadata.tracks.length > 0 &&
@@ -178,6 +179,16 @@ async function applyBulkBackfillToExistingRelease(
   }
 
   result.updated++
+}
+
+const ID_FIELD_UNIQUE_CONSTRAINTS: Record<ImportCatalogueBatchOptions['idField'], string> = {
+  itunes_id: 'releases_itunes_id_key',
+  spotify_id: 'releases_spotify_id_key',
+  discogs_id: 'releases_discogs_id_key',
+}
+
+function isIdUniqueViolation(message: string, idField: ImportCatalogueBatchOptions['idField']): boolean {
+  return message.includes(ID_FIELD_UNIQUE_CONSTRAINTS[idField])
 }
 
 async function enrichMetadataForBulkImport(
@@ -371,9 +382,12 @@ export async function importCatalogueBatch(
 
   let displayOrder = options.displayOrderStart
   if (displayOrder === undefined) {
+    // Postgres sorts NULLs FIRST on DESC, so exclude NULL display_order rows —
+    // otherwise a single NULL would reset the whole catalogue to order 0.
     const { data: maxRow } = await supabase
       .from('releases')
       .select('display_order')
+      .not('display_order', 'is', null)
       .order('display_order', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -524,6 +538,35 @@ export async function importCatalogueBatch(
       .maybeSingle()
 
     if (insertError) {
+      // An id that was already reserved (e.g. re-imported across a prior run
+      // or a parallel tick) should never fail the whole job. Resolve the row
+      // and backfill it instead of recording a unique-constraint error.
+      if (isIdUniqueViolation(insertError.message, idField)) {
+        const { data: existingRow, error: reloadError } = await supabase
+          .from('releases')
+          .select(existingSelect)
+          .eq(idField, externalId)
+          .maybeSingle()
+
+        if (!reloadError && existingRow) {
+          metadata = await linkCrossSourceMetadata(source, metadata, existingRow as ExistingReleaseBackfillRow, {
+            lightImport,
+            linkCrossSource,
+          })
+          await applyBulkBackfillToExistingRelease(
+            supabase,
+            existingRow as ExistingReleaseBackfillRow,
+            metadata,
+            source,
+            idField,
+            externalId,
+            result,
+          )
+          existingIds.add(externalId)
+          continue
+        }
+      }
+
       result.errors.push(`Failed to insert "${metadata.title}": ${insertError.message}`)
     } else {
       result.synced++

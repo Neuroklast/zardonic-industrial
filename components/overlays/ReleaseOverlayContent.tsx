@@ -2,6 +2,8 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import type { Release } from '@/lib/app-types'
 import type { SectionLabels } from '@/lib/types'
+import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { parseTrackTitle } from '@/lib/track-parser'
 import { displayReleaseType } from '@/lib/release-type'
@@ -136,9 +138,14 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
         >
           {data.artwork && (
             <img
-              src={data.artwork}
+              src={toDirectImageUrl(data.artwork) || data.artwork}
               alt={data.title}
               className="w-full h-full object-cover glitch-image"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                void onMediaImageError(e)
+              }}
             />
           )}
         </motion.div>
