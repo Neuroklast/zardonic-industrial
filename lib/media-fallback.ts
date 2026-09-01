@@ -6,6 +6,8 @@
  * or when the lookup finds no better match.
  */
 
+import { currentR2PublicOrigin, innerUrlFromWsrv, parseHttpUrl } from '@/lib/r2-url-rewrite'
+
 export interface MediaImageFallbackOptions {
   /** Only attempt repair when the URL belongs to the R2 public host. Default true. */
   r2Only?: boolean
@@ -13,16 +15,32 @@ export interface MediaImageFallbackOptions {
 
 const R2_HOST_RE = /^([a-z0-9-]+\.)*r2\.(cloudflarestorage\.com|dev)$/i
 
+/** Unwrap a wsrv.nl wrapper back to the inner media URL. */
+function unwrapUrl(url: string): string {
+  const parsed = parseHttpUrl(url)
+  if (!parsed) return url
+  return innerUrlFromWsrv(parsed) ?? url
+}
+
 export function isR2Url(url: string): boolean {
   try {
-    return R2_HOST_RE.test(new URL(url).hostname)
+    const unwrapped = unwrapUrl(url)
+    const u = new URL(unwrapped)
+    if (R2_HOST_RE.test(u.hostname)) return true
+    const origin = currentR2PublicOrigin()
+    if (origin && u.hostname === new URL(origin).hostname) return true
+    return false
   } catch {
     return false
   }
 }
 
 export function objectPathFromUrl(url: string): string | null {
-  const u = new URL(url)
+  const u = new URL(unwrapUrl(url))
+  const origin = currentR2PublicOrigin()
+  if (origin && u.hostname === new URL(origin).hostname) {
+    return u.pathname.replace(/^\/+/, '').split('/').map(encodeURIComponent).join('/')
+  }
   if (u.hostname.endsWith('.r2.cloudflarestorage.com')) {
     // <bucket>/<key> — drop the bucket prefix.
     const segments = u.pathname.split('/').filter(Boolean)

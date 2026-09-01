@@ -2,9 +2,8 @@
 
 import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext, dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
-import { uploadBufferToR2 } from '@/app/admin/_actions/r2Upload'
 import { createAdminClient } from '@/lib/supabaseAdmin'
-import { MEDIA_BUCKET } from '@/lib/constants'
+import { cacheReleaseCoverToR2 } from '@/lib/release-cover-r2'
 import {
   buildReleaseUpdateFromMetadata,
   fetchReleaseMetadataByExternalId,
@@ -25,7 +24,7 @@ import {
 } from '@/lib/release-external-ids'
 import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
 import { runFullCatalogueEnrichment } from '@/lib/release-enrichment'
-import { mergeStreamingLinks, type ReleaseMetadata, type StreamingLink } from '@/lib/release-metadata'
+import type { ReleaseMetadata, StreamingLink } from '@/lib/release-metadata'
 import {
   fetchDiscogsArtistReleases,
   searchDiscogsArtistId,
@@ -42,8 +41,6 @@ import {
 import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
 import { revalidatePath } from 'next/cache'
 
-const R2_BUCKET = MEDIA_BUCKET
-
 export interface ReleaseExternalPreviewResult {
   ok: boolean
   metadata?: ReleaseMetadata
@@ -59,23 +56,6 @@ export interface ReleaseExternalSyncResult {
 }
 
 export type { BulkExternalSyncResult } from '@/lib/catalogue-import'
-
-async function cacheCoverToR2(
-  coverUrl: string,
-  objectPath: string,
-): Promise<{ coverStoragePath: string; coverUrl: string } | null> {
-  if (!process.env.R2_ACCOUNT_ID) return null
-  try {
-    const artRes = await fetch(coverUrl, { cache: 'no-store' })
-    if (!artRes.ok) return null
-    const contentType = artRes.headers.get('content-type') ?? 'image/jpeg'
-    const buffer = Buffer.from(await artRes.arrayBuffer())
-    const { publicUrl } = await uploadBufferToR2(R2_BUCKET, objectPath, buffer, contentType)
-    return { coverStoragePath: objectPath, coverUrl: publicUrl }
-  } catch {
-    return null
-  }
-}
 
 export async function previewReleaseFromExternalId(
   source: ExternalReleaseSource,
@@ -145,12 +125,10 @@ export async function syncReleaseFromExternalId(
     }
 
     if (shouldImportCoverFromSource(source) && metadata.coverUrl) {
-      const ext = metadata.coverUrl.includes('.png') ? 'png' : 'jpg'
-      const objectPath = `releases/${source}-${normalized}.${ext}`
-      const cached = await cacheCoverToR2(metadata.coverUrl, objectPath)
+      const cached = await cacheReleaseCoverToR2(metadata.coverUrl, source, normalized)
       if (cached) {
-        update.cover_storage_path = cached.coverStoragePath
-        update.cover_url = cached.coverUrl
+        update.cover_storage_path = cached.cover_storage_path
+        update.cover_url = cached.cover_url
       } else {
         update.cover_url = metadata.coverUrl
       }
@@ -162,6 +140,7 @@ export async function syncReleaseFromExternalId(
     revalidatePath('/admin/releases')
     revalidatePath(`/admin/releases/${releaseId}`)
     revalidatePath('/')
+    revalidatePath('/releases')
 
     return {
       ok: true,
@@ -202,13 +181,7 @@ async function bulkImportMetadata(
       matchOptions: { artistNames: [config.artistName] },
       cacheCover: async (coverUrl, coverSource, externalId) => {
         if (!shouldImportCoverFromSource(coverSource)) return null
-        const objectPath = `releases/${coverSource}-${externalId}.jpg`
-        const cached = await cacheCoverToR2(coverUrl, objectPath)
-        if (!cached) return null
-        return {
-          cover_storage_path: cached.coverStoragePath,
-          cover_url: cached.coverUrl,
-        }
+        return cacheReleaseCoverToR2(coverUrl, coverSource, externalId)
       },
     })
 
@@ -229,6 +202,7 @@ async function bulkImportMetadata(
 
     revalidatePath('/admin/releases')
     revalidatePath('/')
+    revalidatePath('/releases')
     return {
       synced: importResult.synced,
       updated: importResult.updated + consolidation.merged + enrichment.enriched,

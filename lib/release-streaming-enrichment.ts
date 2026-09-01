@@ -1,7 +1,7 @@
 import { fetchOdesliLinksFromApi, cleanAppleMusicUrl } from '@/lib/odesli'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 import { mergeStreamingLinks, type StreamingLink } from '@/lib/release-metadata'
-import { normalizeDiscogsId, normalizeItunesId, normalizeSpotifyId } from '@/lib/release-external-ids'
+import { normalizeDiscogsId, normalizeItunesId } from '@/lib/release-external-ids'
 import { normalizeStreamingPlatform } from '@/lib/streaming-platforms'
 
 export interface ReleaseStreamingRow {
@@ -45,6 +45,12 @@ export function buildOdesliLookupUrl(row: ReleaseStreamingRow): string | null {
     return `https://open.spotify.com/album/${row.spotify_id}`
   }
 
+  // Last resort: let Odesli attempt resolution from a Discogs release anchor.
+  // Unsupported anchors return an empty link set (harmless, no throw).
+  if (row.discogs_id) {
+    return `https://www.discogs.com/release/${row.discogs_id}`
+  }
+
   return null
 }
 
@@ -62,17 +68,28 @@ export function mergeOdesliIntoReleaseLinks(
   return mergeStreamingLinks(parseStreamingLinks(existing), odesliLinks)
 }
 
-/** Extract a Spotify album id from stored streaming links. */
+/**
+ * Extract a Spotify ALBUM id from stored streaming links.
+ * Only release-level (album/single) entities are accepted — never a track or
+ * episode id, which would collide across many releases in `spotify_id`.
+ */
 export function extractSpotifyAlbumIdFromLinks(links: StreamingLink[]): string | null {
   for (const link of links) {
     if (!link.url) continue
     const isSpotify =
       normalizeStreamingPlatform(link.platform) === 'spotify' || /spotify/i.test(link.url)
     if (!isSpotify) continue
-    const id = normalizeSpotifyId(link.url)
+    const id = extractSpotifyAlbumId(link.url)
     if (id) return id
   }
   return null
+}
+
+function extractSpotifyAlbumId(url: string): string | null {
+  const uri = url.match(/spotify:(?:album|single):([0-9A-Za-z]{22})/i)
+  if (uri) return uri[1]
+  const path = url.match(/\/(?:album|single)\/([0-9A-Za-z]{22})(?:[/?#]|$)/i)
+  return path?.[1] ?? null
 }
 
 /** Extract an iTunes/Apple Music album id from stored streaming links. */

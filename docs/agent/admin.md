@@ -121,3 +121,10 @@ Footer URL fields: Site Config → Footer & Legal tab.
 ## Undo / analytics (legacy)
 
 `AdminPanel.tsx`: undo stack (max 50). Analytics gated by `adminSettings.analytics.*` + cookie consent.
+
+## Catalogue import — idempotency (2026-09-01)
+
+- The async job runner seeds `existingIds` from the DB every import tick and reuses the mutated Set, so re-imported `itunes_id`/`spotify_id`/`discogs_id` never re-`INSERT` (`lib/sync-job-runner.ts`). An `INSERT` that still hits the unique constraint is resolved as a backfill in `importCatalogueBatch`, never an error (`lib/catalogue-import.ts`).
+- The job lock is an atomic conditional UPDATE (15 min stale window), so a long tick or a redundant tick cannot run the import twice.
+- Track backfill is skipped for `manually_edited` releases.
+- Every catalogue import's enrichment phase also backfills missing cover art (iTunes → Spotify → Discogs) onto R2 automatically — no separate backfill button/job exists (`lib/release-enrichment.ts` + `lib/release-cover-r2.ts`). The manual "Enrich / Consolidate / Reset / Backfill" repair buttons were removed from the Catalogue Sync screen; imports now self-heal.

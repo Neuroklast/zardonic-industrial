@@ -9,10 +9,13 @@ describe('isR2Url', () => {
   })
 
   it('rejects unrelated hosts and junk', () => {
-    expect(isR2Url('https://wsrv.nl/?url=https://pub-abc.r2.dev/x.webp')).toBe(false)
     expect(isR2Url('https://i.scdn.co/image/deadbeef')).toBe(false)
     expect(isR2Url('not a url')).toBe(false)
     expect(isR2Url('')).toBe(false)
+  })
+
+  it('recognizes a wsrv-wrapped R2 object for self-heal', () => {
+    expect(isR2Url('https://wsrv.nl/?url=https%3A%2F%2Fpub-abc.r2.dev%2Fx.webp')).toBe(true)
   })
 })
 

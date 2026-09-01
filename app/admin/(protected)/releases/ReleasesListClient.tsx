@@ -14,7 +14,7 @@ export interface AdminReleaseRow {
   type: string
   release_date: string | null
   active: boolean
-  display_order: number
+  display_order: number | null
 }
 
 type TypeFilter = 'all' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
@@ -65,7 +65,10 @@ function compareReleases(a: AdminReleaseRow, b: AdminReleaseRow, sort: SortKey):
       return a.type.localeCompare(b.type) || a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
     case 'display_order':
     default:
-      return a.display_order - b.display_order || a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+      return (
+        (a.display_order ?? Number.MAX_SAFE_INTEGER) - (b.display_order ?? Number.MAX_SAFE_INTEGER) ||
+        a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+      )
   }
 }
 

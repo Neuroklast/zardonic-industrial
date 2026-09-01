@@ -4,8 +4,7 @@ import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
-import { uploadBufferToR2 } from './r2Upload'
-import { MEDIA_BUCKET } from '@/lib/constants'
+import { cacheReleaseCoverToR2 } from '@/lib/release-cover-r2'
 import {
   buildItunesCatalogueImportItems,
   parseItunesItem,
@@ -22,7 +21,6 @@ import { runFullCatalogueEnrichment } from '@/lib/release-enrichment'
 import { revalidatePath } from 'next/cache'
 
 const ITUNES_SEARCH_URL = 'https://itunes.apple.com/search'
-const R2_BUCKET = MEDIA_BUCKET
 
 export interface ItunesSyncResult {
   synced: number
@@ -45,17 +43,7 @@ async function cacheItunesCover(
   coverUrl: string,
   externalId: string,
 ): Promise<{ cover_storage_path: string; cover_url: string } | null> {
-  if (!process.env.R2_ACCOUNT_ID) return null
-  try {
-    const artRes = await fetch(coverUrl, { cache: 'no-store' })
-    if (!artRes.ok) return null
-    const buffer = Buffer.from(await artRes.arrayBuffer())
-    const objectPath = `releases/itunes-${externalId}.jpg`
-    const { publicUrl } = await uploadBufferToR2(R2_BUCKET, objectPath, buffer, 'image/jpeg')
-    return { cover_storage_path: objectPath, cover_url: publicUrl }
-  } catch {
-    return null
-  }
+  return cacheReleaseCoverToR2(coverUrl, 'itunes', externalId)
 }
 
 export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyncResult> {
@@ -122,6 +110,7 @@ export async function syncReleasesFromItunes(artist?: string): Promise<ItunesSyn
 
     revalidatePath('/admin/releases')
     revalidatePath('/')
+    revalidatePath('/releases')
 
     return {
       synced: importResult.synced + importResult.updated + consolidation.merged + enrichment.enriched,
@@ -195,6 +184,7 @@ export async function fetchItunesCoverForRelease(releaseId: string): Promise<Itu
     revalidatePath('/admin/releases')
     revalidatePath(`/admin/releases/${releaseId}`)
     revalidatePath('/')
+    revalidatePath('/releases')
 
     return {
       ok: true,

@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { onMediaImageError } from '@/lib/media-fallback'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { ReleasesSection } from './ReleasesSection'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
@@ -60,6 +61,10 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
             alt={item.title}
             className="glitch-image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              void onMediaImageError(e)
+            }}
           />
         ) : (
           <div className="h-full w-full flex items-center justify-center text-muted-foreground font-mono text-xs">NO ART</div>

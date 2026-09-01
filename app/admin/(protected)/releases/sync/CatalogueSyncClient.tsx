@@ -3,12 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { ArrowsClockwise, CalendarBlank, MusicNotes, Trash, Warning } from '@phosphor-icons/react'
-import {
-  consolidateReleases,
-  purgeGigs,
-  purgeReleases,
-  resetReleaseTracklists,
-} from '@/app/admin/_actions/dataMaintenance'
+import { purgeGigs, purgeReleases } from '@/app/admin/_actions/dataMaintenance'
 import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
 import { CatalogueSyncSettings } from '@/app/admin/_components/CatalogueSyncSettings'
 import {
@@ -30,13 +25,10 @@ import type { SyncJobRow } from '@/lib/sync-jobs'
 type SyncSource = 'itunes' | 'spotify' | 'discogs'
 
 type MaintenanceAction =
-  | 'consolidateReleases'
   | 'purgeReleases'
   | 'purgeGigs'
   | 'purgeAndSyncReleases'
   | 'purgeAndSyncGigs'
-  | 'resetTracklists'
-  | 'enrichTracks'
   | 'bandsintownSync'
 
 const ALL_CATALOGUE_JOB_TYPES = [
@@ -53,12 +45,6 @@ const ACTION_COPY: Record<
   MaintenanceAction,
   { title: string; description: string; confirmLabel: string; destructive?: boolean }
 > = {
-  consolidateReleases: {
-    title: 'Consolidate duplicate releases?',
-    description:
-      'Merges duplicate catalogue entries by title, release date, and external IDs. Keeps the richest row and fills in missing Spotify/iTunes/Discogs IDs and tracklists.',
-    confirmLabel: 'Consolidate duplicates',
-  },
   purgeReleases: {
     title: 'Purge ALL releases?',
     description:
@@ -84,19 +70,6 @@ const ACTION_COPY: Record<
     description: 'Deletes all gigs, then runs a fresh Bandsintown sync.',
     confirmLabel: 'Purge + sync gigs',
     destructive: true,
-  },
-  resetTracklists: {
-    title: 'Reset tracklists?',
-    description:
-      'Clears tracks for all non-manual releases so they can be re-fetched from Spotify/Discogs/iTunes.',
-    confirmLabel: 'Reset tracklists',
-    destructive: true,
-  },
-  enrichTracks: {
-    title: 'Enrich all release tracklists?',
-    description:
-      'Fetches missing or stale tracklists from Spotify (preferred), Discogs, or iTunes. Skips manually edited releases.',
-    confirmLabel: 'Start enrichment',
   },
   bandsintownSync: {
     title: 'Sync events from Bandsintown?',
@@ -181,16 +154,6 @@ export function CatalogueSyncClient({
     startTransition(async () => {
       try {
         switch (action) {
-          case 'consolidateReleases': {
-            const result = await consolidateReleases()
-            if ('error' in result) throw new Error(result.error)
-            setMessage(
-              result.deleted > 0
-                ? `Consolidated ${result.deleted} duplicate release(s).`
-                : 'No duplicate releases found.',
-            )
-            break
-          }
           case 'purgeReleases': {
             const result = await purgeReleases()
             if ('error' in result) throw new Error(result.error)
@@ -213,18 +176,6 @@ export function CatalogueSyncClient({
             const { jobId } = await startSyncJob('purge_and_sync_gigs')
             startPolling(jobId)
             setMessage('Purge + Bandsintown re-sync started — progress below.')
-            break
-          }
-          case 'resetTracklists': {
-            const result = await resetReleaseTracklists()
-            if ('error' in result) throw new Error(result.error)
-            setMessage(`Reset tracklists on ${result.deleted} release(s).`)
-            break
-          }
-          case 'enrichTracks': {
-            const { jobId } = await startSyncJob('track_enrichment')
-            startPolling(jobId)
-            setMessage('Track enrichment started — progress below.')
             break
           }
           case 'bandsintownSync': {
@@ -377,26 +328,14 @@ export function CatalogueSyncClient({
 
       <SectionCard
         icon={ArrowsClockwise}
-        title="Track enrichment"
-        description="Fetch missing or stale tracklists and streaming links from external APIs. Manually edited releases are never overwritten."
+        title="Automatic maintenance"
+        description="Every catalogue import below automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). No manual repair buttons needed."
       >
         {needsEnrichment != null ? (
           <p className="text-xs text-zinc-500 font-mono">
-            Releases needing enrichment: {needsEnrichment}
+            Releases awaiting automatic enrichment: {needsEnrichment}
           </p>
         ) : null}
-        <ActionButton
-          action="enrichTracks"
-          label={pending && openAction === 'enrichTracks' ? 'Starting…' : 'Enrich all tracklists'}
-          icon={ArrowsClockwise}
-          variant="primary"
-        />
-        <ActionButton action="resetTracklists" label="Reset tracklists" icon={Trash} variant="danger" />
-        <ActionButton
-          action="consolidateReleases"
-          label="Consolidate duplicates"
-          icon={ArrowsClockwise}
-        />
       </SectionCard>
 
       <SectionCard

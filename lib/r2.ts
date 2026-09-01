@@ -25,5 +25,11 @@ export function resolveImageUrl(
   const fromPath = r2Url(storagePath)
   if (fromPath) return fromPath
   if (!fallbackUrl) return null
-  return canonicalizeR2MediaUrl(fallbackUrl)
+
+  // Ignore bare relative paths — a relative `src` resolves against the current
+  // route and yields a broken image, never a working cover.
+  const trimmed = fallbackUrl.trim()
+  if (!/^(https?:)?\/\//i.test(trimmed) && !trimmed.startsWith('data:')) return null
+
+  return canonicalizeR2MediaUrl(trimmed)
 }

@@ -8,6 +8,8 @@ import {
   externalIdsFromStreamingLinks,
   type ReleaseStreamingRow,
 } from '@/lib/release-streaming-enrichment'
+import { hasCoverArt } from '@/lib/release-cover-art'
+import { cacheReleaseCoverToR2, resolveBestCoverSource } from '@/lib/release-cover-r2'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 import { fetchReleaseMetadataFromSpotify } from '@/lib/spotify-sync'
 import type { ReleaseTrackMetadata } from '@/lib/release-metadata'
@@ -24,7 +26,29 @@ export interface ReleaseEnrichmentRow extends ReleaseStreamingRow {
   itunes_id: string | null
   tracks_source: string | null
   last_enriched_at: string | null
+  cover_storage_path?: string | null
+  cover_url?: string | null
   streaming_links?: unknown
+}
+
+/** Fill a release's missing cover (iTunes → Spotify → Discogs) onto R2. */
+async function fillMissingReleaseCover(
+  release: ReleaseEnrichmentRow,
+): Promise<Record<string, unknown> | null> {
+  if (release.manually_edited) return null
+  if (hasCoverArt(release)) return null
+  if (!release.itunes_id && !release.spotify_id && !release.discogs_id) return null
+
+  const best = await resolveBestCoverSource(release)
+  if (!best) return null
+
+  const cached = await cacheReleaseCoverToR2(best.url, best.source, best.externalId)
+  if (!cached) return null
+
+  return {
+    cover_storage_path: cached.cover_storage_path,
+    cover_url: cached.cover_url,
+  }
 }
 
 /** Days after which a non-manual tracklist is considered stale and may be refreshed. */
@@ -203,10 +227,11 @@ export async function runCatalogueEnrichmentBatch(
   const { data: rows, error: listError } = await supabase
     .from('releases')
     .select(
-      'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links',
+      'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, cover_storage_path, cover_url, streaming_links',
     )
     .eq('manually_edited', false)
     .order('display_order', { ascending: true })
+    .order('id', { ascending: true })
 
   if (listError) {
     return {
@@ -219,23 +244,38 @@ export async function runCatalogueEnrichmentBatch(
     }
   }
 
-  const candidates = (rows ?? []).filter((row: ReleaseEnrichmentRow) =>
-    releaseNeedsEnrichment(row, { force: options.force }),
-  )
-  const batch = candidates.slice(cursor, cursor + limit)
+  // Cursor indexes a STABLE, fully-ordered row list — never a shrinking
+  // candidate array. Releases that are already fresh (or not enrichable) are
+  // skipped cheaply in place, so the cursor advances monotonically and every
+  // release is visited exactly once across ticks.
+  const all = (rows ?? []) as ReleaseEnrichmentRow[]
+  const slice = all.slice(cursor, cursor + limit)
 
   let enriched = 0
   let skipped = 0
   const errors: string[] = []
 
-  for (const row of batch) {
-    const release = row as ReleaseEnrichmentRow
-    const update = await buildReleaseEnrichmentUpdate(release, options.artistName, {
-      force: options.force,
-    })
+  for (const release of slice) {
+    const needsEnrich = releaseNeedsEnrichment(release, { force: options.force })
+
+    let update: Record<string, unknown> | null = null
+    if (needsEnrich) {
+      update = await buildReleaseEnrichmentUpdate(release, options.artistName, {
+        force: options.force,
+      })
+    }
+
+    // Every sync passes also backfills missing cover art on R2 (idempotent).
+    const coverUpdate = await fillMissingReleaseCover(release)
+    if (coverUpdate) {
+      update = { ...(update ?? {}), ...coverUpdate }
+    }
+
     if (!update) {
-      skipped++
-      errors.push(`"${release.title}": no enrichment data from APIs`)
+      if (needsEnrich) {
+        skipped++
+        errors.push(`"${release.title}": no enrichment data from APIs`)
+      }
       continue
     }
 
@@ -248,14 +288,14 @@ export async function runCatalogueEnrichmentBatch(
     enriched++
   }
 
-  const nextCursor = cursor + batch.length
+  const nextCursor = cursor + slice.length
   return {
     enriched,
     skipped,
     errors,
     nextCursor,
-    total: candidates.length,
-    done: nextCursor >= candidates.length,
+    total: all.length,
+    done: nextCursor >= all.length,
   }
 }
 

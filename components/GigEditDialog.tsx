@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -15,6 +15,9 @@ interface GigEditDialogProps {
 }
 
 export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogProps) {
+  // Unique per instance so ids never collide when the dialog is mounted twice
+  // (e.g. an edit dialog alongside a "new" dialog).
+  const uid = useId()
   const [formData, setFormData] = useState({
     date: '',
     venue: '',
@@ -114,9 +117,9 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
-              <Label htmlFor="date">{formData.allDay ? 'Date' : 'Date & Time'}</Label>
+              <Label htmlFor={`${uid}-date`}>{formData.allDay ? 'Date' : 'Date & Time'}</Label>
               <Input
-                id="date"
+                id={`${uid}-date`}
                 type={formData.allDay ? 'date' : 'datetime-local'}
                 value={formData.allDay ? formData.date.split('T')[0] : formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -126,7 +129,7 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
             </div>
             <div className="flex items-end gap-2 pb-1">
               <input
-                id="allDay"
+                id={`${uid}-allDay`}
                 type="checkbox"
                 checked={formData.allDay}
                 onChange={(e) => {
@@ -138,14 +141,14 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
                 }}
                 className="h-4 w-4 accent-primary"
               />
-              <Label htmlFor="allDay" className="text-sm whitespace-nowrap cursor-pointer">All Day</Label>
+              <Label htmlFor={`${uid}-allDay`} className="text-sm whitespace-nowrap cursor-pointer">All Day</Label>
             </div>
           </div>
 
           <div>
-            <Label htmlFor="gigType">Gig Type (optional)</Label>
+            <Label htmlFor={`${uid}-gigType`}>Gig Type (optional)</Label>
             <select
-              id="gigType"
+              id={`${uid}-gigType`}
               value={formData.gigType}
               onChange={(e) => setFormData({ ...formData, gigType: e.target.value as '' | 'concert' | 'dj' })}
               className="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -157,9 +160,9 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
           </div>
 
           <div>
-            <Label htmlFor="status">Status (optional)</Label>
+            <Label htmlFor={`${uid}-status`}>Status (optional)</Label>
             <select
-              id="status"
+              id={`${uid}-status`}
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as '' | 'confirmed' | 'cancelled' | 'soldout' | 'announced' })}
               className="flex h-10 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -173,9 +176,9 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
           </div>
 
           <div>
-            <Label htmlFor="venue">Venue</Label>
+            <Label htmlFor={`${uid}-venue`}>Venue</Label>
             <Input
-              id="venue"
+              id={`${uid}-venue`}
               value={formData.venue}
               onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
               required
@@ -185,9 +188,9 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
           </div>
 
           <div>
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor={`${uid}-location`}>Location</Label>
             <Input
-              id="location"
+              id={`${uid}-location`}
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
               required
@@ -197,9 +200,9 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
           </div>
 
           <div>
-            <Label htmlFor="ticketUrl">Ticket URL (optional)</Label>
+            <Label htmlFor={`${uid}-ticketUrl`}>Ticket URL (optional)</Label>
             <Input
-              id="ticketUrl"
+              id={`${uid}-ticketUrl`}
               type="url"
               value={formData.ticketUrl}
               onChange={(e) => setFormData({ ...formData, ticketUrl: e.target.value })}
@@ -209,10 +212,10 @@ export default function GigEditDialog({ gig, onSave, onClose }: GigEditDialogPro
           </div>
 
           <div>
-            <Label htmlFor="photo">Photo (optional)</Label>
+            <Label htmlFor={`${uid}-photo`}>Photo (optional)</Label>
             <div className="flex gap-2">
               <Input
-                id="photo"
+                id={`${uid}-photo`}
                 type="url"
                 value={formData.photo.startsWith('data:') ? '' : formData.photo}
                 onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
