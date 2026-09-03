@@ -13,7 +13,7 @@ Next.js App Router (public + admin), Supabase (`site_config`, content tables, au
 - Pages that must stay request-dynamic (searchParams like the homepage `adminPreview`): wrap DB reads in `unstable_cache(fn, [keys], { revalidate })`.
 - Admin mutations revalidate the public tree: `revalidatePath('/', 'layout')` in `runAdminAction`.
 - Edge bot shield: `proxy.ts` returns 403 for UA matches in `lib/crawler-blocklist.ts` before render (extend the list, keep Googlebot/Bingbot/link-preview agents allowed); mirror in `public/robots.txt`.
-- `.supabase.co` is **never** a trusted direct host for images/logos (`lib/image-cache.ts`, `lib/partner-logo-white.ts`) — legacy URLs are wrapped through wsrv.nl; media downloads with legacy URLs are hidden until migrated to R2 (badge count via `lib/legacy-url-audit.ts`).
+- `.supabase.co` is **never** a trusted direct host for images/logos (`lib/image-cache.ts`, `lib/partner-logo-white.ts`) — legacy URLs are wrapped through wsrv.nl; media downloads with legacy URLs are hidden until migrated to R2 (badge count via `lib/legacy-url-audit.ts`). Migration runs **automatically once** on the first Production deploy (`lib/legacy-url-migration-on-deploy.ts` via `instrumentation.ts`; `doneOnce` flag in `site_config.legacy_url_migration_deploy` disarms it, never re-runs); core in `lib/legacy-url-migrator.ts`, helpers `lib/legacy-url-migration.ts`, manual CLI `npm run migrate-legacy` (`scripts/r2-migrate-legacy-urls.ts`).
 
 ## Import paths
 
