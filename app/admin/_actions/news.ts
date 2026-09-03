@@ -4,6 +4,7 @@ import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 function slugify(input: string): string {
@@ -21,7 +22,7 @@ const schema = z.object({
   excerpt: z.string().optional().nullable(),
   body: z.string().optional().default(''),
   cover_storage_path: z.string().optional().nullable(),
-  cover_url: z.string().url().optional().nullable().or(z.literal('')),
+  cover_url: safeExternalUrlOptional,
   published_at: z.string().optional().nullable(),
   display_order: z.coerce.number().optional().default(0),
   active: z

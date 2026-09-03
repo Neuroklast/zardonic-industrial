@@ -7,9 +7,15 @@ Spotify, YouTube, SoundCloud: **never** auto-load. Two-click consent before `<if
 ## Public forms
 
 - Contact + newsletter: honeypot (`_hp`), Zod validation, Resend delivery
-- Rate limits via `lib/server-rate-limit.ts` (Upstash, hashed IP + `RATE_LIMIT_SALT`)
-- Newsletter: double opt-in + explicit privacy consent checkbox
-- Contact: privacy-policy notice next to submit (Art. 6(1)(b)/(f))
+- Rate limits via `lib/rate-limit.ts` (Supabase Postgres, hashed IP + `RATE_LIMIT_SALT`, fail-closed)
+
+## Rate limiting (no Redis)
+
+Distributed, durable rate limiting runs on the **existing Supabase Postgres** (`lib/rate-limit.ts` → `public.rate_limits` + `consume_rate_limit()` in `supabase/schema.sql`).
+- Keys are SHA-256(`RATE_LIMIT_SALT` + IP) — never raw IPs (GDPR).
+- **Fail-closed** on infra errors; a per-instance in-memory backstop keeps the limit enforced (no silent bypass).
+- Set `RATE_LIMIT_SALT` in production — `lib/rate-limit.ts` throws if missing.
+- Throttled: admin login, analytics POST, newsletter, contact, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`.
 
 ## Storage & consent
 
@@ -19,7 +25,7 @@ Spotify, YouTube, SoundCloud: **never** auto-load. Two-click consent before `<if
 
 ## Data minimization
 
-Never log plaintext IPs — use hashed IPs (`lib/server-rate-limit.ts` / legacy `hashIp`) where server-side identification is needed. Contact form must not log email/name in production.
+Never log plaintext IPs — use hashed IPs (`lib/rate-limit.ts`) where server-side identification is needed. Contact form must not log email/name in production.
 
 ## Legal content (Supabase only)
 
@@ -43,24 +49,33 @@ Never browser `signInWithPassword` + `router.push` (cookie race / redirect loops
 
 `proxy.ts` copies refreshed cookies onto **every** redirect branch.
 
+**Login hardening:** the submit route is rate-limited per-IP (fail-closed) and adds a small delay on failed sign-in. It does **not** modify `profiles.role` — admin rows are created in Supabase, never auto-promoted.
+
 **Form gotcha:** Do not `disabled` email/password inputs during submit — only disable the submit button.
+
+Enable Supabase **Auth MFA (TOTP)** for the admin account in the dashboard.
 
 ## Environment
 
-Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`, Supabase keys, etc.).
+Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`, Supabase keys, `SECRETS_ENCRYPTION_KEY`).
 
-Legacy `api/_ratelimit.ts` **fails closed (503)** when Upstash is configured but unreachable. Production `ENOTFOUND` on `*.upstash.io` means the Redis database was deleted/renamed — update `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` (or remove both to skip rate limiting in non-prod only).
+> This project does **not** use Vercel cron triggers (Vercel Free — no `crons` block in `vercel.json`). `CRON_SECRET` is optional, used only by the internal async sync-job continuation (`lib/sync-job-chain.ts`) bearer fallback, not by any Vercel scheduler.
 
 ## CSP (`unsafe-inline` styles)
 
-Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; script-src remains restricted.
+Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; `script-src` includes `'self' 'unsafe-inline' 'unsafe-eval'` (Next runtime) — tighten when possible.
 
-## SSRF (image proxies)
+## SSRF
 
-`api/image-proxy.ts` and `api/image-proxy-protected.ts` use `lib/ssrf-guard.ts`: block private/metadata hosts, resolve DNS before fetch, re-check redirect targets. `lib/remote-image-url.ts` shares host blocklist for client-side URL validation.
+`app/api/partner-logo/route.ts` and the admin media-fetch actions use `lib/ssrf-guard.ts` (`assertSafeRemoteUrl`): block private/metadata hosts, resolve DNS before fetch, protocol allowlist. `lib/remote-image-url.ts` shares the host blocklist for client-side URL validation.
 
-`app/api/partner-logo/route.ts` is allowlisted to R2 / Supabase **HTTPS SVGs** (`parsePartnerLogoProxyUrl`) **and** `assertSafeRemoteUrl` before fetch. Do not widen to arbitrary hosts.
+## URLs — scheme hardening
 
-## Legacy auth
+User/admin-supplied URLs are constrained to `http`/`https`:
+- Write-time: a shared `safeExternalUrl`/`safeExternalUrlOptional` guard (`lib/safe-external-url.ts`) on all external-URL schemas/actions (social, partners, gigs, merchandise, soundpacks, media downloads, music highlights, release streaming/custom links, visuals, footer legal).
+- Render-time: `sanitizeExternalHref` (`lib/sanitize-href.ts`) on every DB-backed `<a href>`/download link as defense-in-depth.
+- This blocks `javascript:`/`data:`/`vbscript:` click-to-XSS.
 
-`api/auth.ts` and `x-session-token` header flow **removed**. Admin auth is Supabase SSR only (`app/admin/login/submit/route.ts`).
+## Config
+
+`env.mjs` validates server env vars and fails fast in production.

@@ -4,6 +4,7 @@ import { m, useReducedMotion } from 'framer-motion'
 import { DownloadSimple, FilePdf, FileZip, FileAudio, File as FileIcon } from '@phosphor-icons/react'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { onMediaImageError } from '@/lib/media-fallback'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { useLocale } from '@/contexts/LocaleContext'
 import {
   formatFileSize,
@@ -99,7 +100,7 @@ export function MediaDownloadGrid({ items, onImageClick }: MediaDownloadGridProp
                 ) : null}
                 {item.fileUrl ? (
                   <a
-                    href={item.fileUrl}
+                      href={sanitizeExternalHref(item.fileUrl)}
                     download={item.originalFilename ?? undefined}
                     className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-3 py-2 font-mono text-xs uppercase tracking-[0.2em]"
                   >

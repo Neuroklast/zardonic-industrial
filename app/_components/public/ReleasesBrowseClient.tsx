@@ -14,6 +14,7 @@ import {
   YoutubeLogo,
 } from '@phosphor-icons/react'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
 import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { paginateItems } from '@/lib/browse-pagination'
@@ -126,7 +127,7 @@ function ReleaseBrowseCard({
               return (
                 <a
                   key={`${release.id}-${link.platform}-${link.url}`}
-                  href={link.url}
+                  href={sanitizeExternalHref(link.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={`${release.title} on ${link.platform}`}

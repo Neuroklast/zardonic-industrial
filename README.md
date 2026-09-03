@@ -50,7 +50,6 @@ Access the admin at `/admin/login` using Supabase Auth; protected routes require
 - **Legal & Privacy** — Structured operator fields and optional privacy policy override (`site_config.legal`)
 - **Contact Inbox & Subscribers** — View/manage contact submissions and newsletter subscribers
 - **Data Export/Import** — Full JSON backup/restore of content tables (releases, news, config, …)
-- **Security Dashboard** — Incident log, attacker profiles, blocklist (legacy `api/` stack)
 
 ### Backend
 - **App Router** — Server Components, Server Actions, Route Handlers under `app/`

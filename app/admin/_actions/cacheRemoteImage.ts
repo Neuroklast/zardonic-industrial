@@ -10,6 +10,7 @@ import {
   isAllowedImageContentType,
   resolveRemoteImageUrl,
 } from '@/lib/remote-image-url'
+import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
 
 export interface CacheRemoteImageResult {
   ok: boolean
@@ -33,6 +34,10 @@ export async function cacheRemoteImageToR2(
     const timeout = setTimeout(() => controller.abort(), 20_000)
 
     try {
+      // DNS-resolve + private/loopback IP blocking before the outbound fetch
+      // (prevents SSRF via raw hostname bypass or DNS rebinding).
+      await assertSafeRemoteUrl(resolved.url)
+
       const response = await fetch(resolved.url, {
         method: 'GET',
         redirect: 'follow',

@@ -10,6 +10,7 @@ import {
   isAllowedVideoContentType,
   resolveRemoteVideoUrl,
 } from '@/lib/remote-video-url'
+import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
 
 export interface CacheRemoteVideoResult {
   ok: boolean
@@ -33,6 +34,9 @@ export async function cacheRemoteVideoToR2(
     const timeout = setTimeout(() => controller.abort(), 60_000)
 
     try {
+      // DNS-resolve + private/loopback IP blocking before the outbound fetch.
+      await assertSafeRemoteUrl(resolved.url)
+
       const response = await fetch(resolved.url, {
         method: 'GET',
         redirect: 'follow',

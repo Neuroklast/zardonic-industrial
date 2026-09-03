@@ -44,17 +44,14 @@ Prefer **EU regions** where the product allows (Supabase project region, R2 loca
 - Spotify/YouTube embeds load only after two-click consent
 - SoundCloud is link-only (no auto embed)
 
-## 5. Upstash Redis (legacy rate limits)
+## 5. Rate limiting (Supabase Postgres)
 
-If production logs show `Rate limit check failed` + `ENOTFOUND …upstash.io`:
+Rate limiting runs on the existing Supabase Postgres (`lib/rate-limit.ts`, `supabase/schema.sql` `consume_rate_limit`). No Redis is required.
 
-1. Open [Upstash Console](https://console.upstash.com/) → create or restore a Redis database (free tier is enough for rate limits)
-2. Copy **REST URL** + **REST TOKEN**
-3. Vercel → Project → Settings → Environment Variables → set:
-   - `UPSTASH_REDIS_REST_URL`
-   - `UPSTASH_REDIS_REST_TOKEN`
-4. Redeploy production (env changes do not apply to the live deployment until redeploy)
-5. Confirm `GET /api/geo` returns 200 (App Router path — no Redis). Hit a remaining legacy proxy (e.g. `/api/odesli`) only after Redis is live if you still use those routes
+1. Set `RATE_LIMIT_SALT` (32-byte hex) in Vercel → Project → Settings → Environment Variables
+2. Run `supabase/schema.sql` in the Supabase SQL Editor so the `public.rate_limits` table + `consume_rate_limit()` function exist
+3. Redeploy production (env changes do not apply to the live deployment until redeploy)
+4. Confirm `GET /api/geo` returns 200 and rate-limited routes respond 429 when exceeded
 
 ## 6. Production verify
 

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getApiSecret } from '@/lib/api-secrets'
 import { fetchBandsintownEventsFromApi } from '@/lib/bandsintown-sync'
+import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,6 +23,21 @@ export async function GET(request: Request) {
 
   if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid query parameters' }, { status: 400 })
+  }
+
+  // Bound proxy cost (third-party API quota). Fail-closed.
+  try {
+    const rl = await consumeRateLimitForRequest(request, {
+      namespace: 'bandsintown',
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Rate limited' }, { status: 429 })
+    }
+  } catch (err) {
+    console.warn('[bandsintown] rate limit unavailable, rejecting (fail-closed):', err)
+    return NextResponse.json({ error: 'Rate limited' }, { status: 429 })
   }
 
   const apiKey = await getApiSecret('bandsintown_api_key')

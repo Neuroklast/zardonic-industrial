@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { safeExternalUrlNullable } from '@/lib/safe-external-url'
 
 export const gigSchema = z.object({
   id: z.string(),
@@ -7,7 +8,7 @@ export const gigSchema = z.object({
   city: z.string().nullable().optional(),
   country: z.string().nullable().optional(),
   eventDate: z.string(),
-  ticketUrl: z.string().url().nullable().optional(),
+  ticketUrl: safeExternalUrlNullable,
   festivalName: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
 })

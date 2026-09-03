@@ -1,6 +1,6 @@
 import { revalidatePath } from 'next/cache'
 import { NextResponse } from 'next/server'
-import { readBearerToken, verifyCronSecret } from '@/lib/cron-auth'
+import { isAdminSession } from '@/lib/api-admin-auth'
 import { listAllR2ObjectKeys } from '@/lib/r2-inventory'
 import { applyR2MediaReconcile } from '@/lib/r2-reconcile'
 import { createAdminClient } from '@/lib/supabaseAdmin'
@@ -10,20 +10,19 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
- * Deploy / cron hook: list the current R2 bucket and rewrite DB URLs whose
+ * Admin utility: list the current R2 bucket and rewrite DB URLs whose
  * filename matches an object but the stored host/path is stale.
  *
  * POST /api/r2-reconcile          apply
  * POST /api/r2-reconcile?dryRun=1 preview
- * Authorization: Bearer CRON_SECRET
  */
 export async function GET(request: Request) {
   return POST(request)
 }
 
 export async function POST(request: Request) {
-  const bearer = readBearerToken(request.headers.get('authorization'))
-  if (!verifyCronSecret(bearer)) {
+  const admin = await isAdminSession()
+  if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

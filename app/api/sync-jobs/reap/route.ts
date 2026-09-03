@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import { readBearerToken, verifyCronSecret } from '@/lib/cron-auth'
+import { isAdminSession } from '@/lib/api-admin-auth'
 import { continueSyncJob } from '@/lib/sync-job-continuation'
 import { listStaleRunningJobs } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
 
-export async function POST(request: Request) {
-  const bearer = readBearerToken(request.headers.get('authorization'))
-  if (!verifyCronSecret(bearer)) {
+export async function POST(_request: Request) {
+  const admin = await isAdminSession()
+  if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

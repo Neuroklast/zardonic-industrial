@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { createAdminClient } from '@/lib/supabaseAdmin'
+import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 
 /**
@@ -23,6 +23,30 @@ export async function POST(request: Request) {
 
   if (!supabaseUrl || !supabaseAnonKey) {
     const url = new URL('/admin/login?error=config', request.url)
+    return NextResponse.redirect(url, 303)
+  }
+
+  // Brute-force throttle per client IP (fail-closed). Avoids unbounded
+  // credential-guessing against Supabase Auth.
+  try {
+    const rl = await consumeRateLimitForRequest(request, {
+      namespace: 'login',
+      limit: 10,
+      windowSeconds: 10 * 60,
+    })
+    if (!rl.allowed) {
+      const url = new URL('/admin/login', request.url)
+      url.searchParams.set('msg', 'Too many attempts. Please try again in a few minutes.')
+      if (redirectTo && redirectTo !== '/admin/releases') {
+        url.searchParams.set('redirect', redirectTo)
+      }
+      return NextResponse.redirect(url, 303)
+    }
+  } catch (err) {
+    // Fail closed: if the limiter cannot be consulted, refuse the login attempt.
+    console.error('[admin login] rate limit error:', err)
+    const url = new URL('/admin/login', request.url)
+    url.searchParams.set('msg', 'Login temporarily unavailable. Please try again shortly.')
     return NextResponse.redirect(url, 303)
   }
 
@@ -51,13 +75,13 @@ export async function POST(request: Request) {
     ? { email: rawIdentifier, password }
     : { phone: rawIdentifier, password }
 
-  // Note: even if SERVICE_ROLE_KEY is missing, the profile upsert below is wrapped in try/catch
-  // so login itself can still succeed (user gets HttpOnly cookies).
-
   // Prepare the final redirect response FIRST so setAll can attach cookies to it.
   const finalRedirectUrl = redirectTo.startsWith('/') ? redirectTo : '/admin/releases'
   const response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
 
+  // Register the attempt with Supabase (writes cookies on success). We create the
+  // client directly so cookies are attached to the SAME 303 response the browser
+  // follows — the canonical flow per AGENTS.md.
   const cookieStore = await cookies()
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
@@ -87,9 +111,12 @@ export async function POST(request: Request) {
     },
   })
 
-  const { data, error } = await supabase.auth.signInWithPassword(signInPayload)
+  const { error } = await supabase.auth.signInWithPassword(signInPayload)
 
   if (error) {
+    // Small constant-time-ish delay to slow credential stuffing / brute force.
+    await new Promise((resolve) => setTimeout(resolve, 450))
+
     // On failure, redirect back to login with the real error message.
     // Improve common confusing Supabase messages.
     let friendlyMessage = error.message || 'Login failed'
@@ -105,25 +132,6 @@ export async function POST(request: Request) {
     }
     // For error path we can return a fresh redirect (no valid session cookies to propagate).
     return NextResponse.redirect(errorUrl, 303)
-  }
-
-  // Success path: ensure this user has an admin profile row.
-  // This solves the common "login succeeds but immediately kicked out because no profile / wrong role" locally and on first setup.
-  // Uses service role (if SUPABASE_SERVICE_ROLE_KEY is present). Non-fatal if missing.
-  try {
-    if (data?.user?.id) {
-      const adminClient = createAdminClient();
-      await adminClient
-        .from('profiles')
-        .upsert(
-          { id: data.user.id, role: 'admin' },
-          { onConflict: 'id' }
-        );
-    }
-  } catch (profileErr) {
-    // Don't fail the login if profile bootstrap fails (e.g. no service key in local env)
-    // User can still manually ensure the profiles row if needed.
-    console.warn('[admin login] could not auto-upsert profiles row:', profileErr);
   }
 
   // Success: response already has the Set-Cookie(s) attached by the setAll callback during signIn.

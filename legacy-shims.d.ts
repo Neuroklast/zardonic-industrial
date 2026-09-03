@@ -1,28 +1,7 @@
-declare module '@upstash/redis' {
-  export class Redis {
-    constructor(...args: any[])
-    static fromEnv(...args: any[]): Redis
-    [key: string]: any
-  }
-}
-
-declare module '@upstash/ratelimit' {
-  export class Ratelimit {
-    constructor(...args: any[])
-    static slidingWindow(...args: any[]): any
-    limit(...args: any[]): Promise<any>
-  }
-}
-
 declare module '@vercel/blob/client' {
   export type HandleUploadBody = any
   export function handleUpload(...args: any[]): Promise<any>
   export function upload(...args: any[]): Promise<any>
-}
-
-declare module 'otpauth' {
-  const OTPAuth: any
-  export = OTPAuth
 }
 
 declare module 'i18next' {

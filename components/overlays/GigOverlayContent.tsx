@@ -9,6 +9,7 @@ import type { DecorativeTexts } from '@/lib/types'
 import { formatIsoDateLong } from '@/lib/format-display-date'
 import { downloadGigIcs } from '@/lib/gig-ics'
 import { shareGigEvent } from '@/lib/gig-share'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface GigOverlayContentProps {
   data: Gig
@@ -180,7 +181,7 @@ export function GigOverlayContent({ data, artistName = '', decorativeTexts }: Gi
             size="lg"
             className={`min-h-[44px] w-full font-mono uppercase tracking-wider sm:w-auto ${data.soldOut ? 'pointer-events-none opacity-50' : ''}`}
           >
-            <a href={data.ticketUrl} target="_blank" rel="noopener noreferrer">
+            <a href={sanitizeExternalHref(data.ticketUrl)} target="_blank" rel="noopener noreferrer">
               <Ticket className="mr-2 h-5 w-5" />
               <span className="hover-chromatic">{data.soldOut ? 'Sold Out' : 'Get Tickets'}</span>
             </a>

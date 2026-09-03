@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { parsePartnerLogoProxyUrl, rewriteSvgForHiResRaster } from '@/lib/partner-logo-white'
 import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
 import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
+import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 
 const MAX_LOGO_BYTES = 8 * 1024 * 1024
 const RASTER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -27,6 +28,21 @@ export async function GET(request: Request) {
   const requested = parsePartnerLogoProxyUrl(new URL(request.url).searchParams.get('url'))
   if (!requested) {
     return new NextResponse('Bad request', { status: 400 })
+  }
+
+  // Bound the outbound-fetch cost / bandwidth abuse.
+  try {
+    const rl = await consumeRateLimitForRequest(request, {
+      namespace: 'partner-logo',
+      limit: 60,
+      windowSeconds: 60,
+    })
+    if (!rl.allowed) {
+      return new NextResponse('Rate limited', { status: 429 })
+    }
+  } catch (err) {
+    console.warn('[partner-logo] rate limit unavailable, rejecting (fail-closed):', err)
+    return new NextResponse('Rate limited', { status: 429 })
   }
 
   const target = canonicalizeR2MediaUrl(requested)

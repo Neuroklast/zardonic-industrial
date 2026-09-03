@@ -4,6 +4,7 @@ import { DownloadSimple } from '@phosphor-icons/react'
 import type { MediaOverlayData } from '@/lib/app-types'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { useLocale } from '@/contexts/LocaleContext'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface MediaOverlayContentProps {
   data: MediaOverlayData
@@ -29,7 +30,7 @@ export function MediaOverlayContent({ data }: MediaOverlayContentProps) {
         ) : null}
       </div>
       <a
-        href={data.fileUrl}
+                  href={sanitizeExternalHref(data.fileUrl)}
         download={data.filename ?? undefined}
         className="cyber-border hover-glitch inline-flex min-h-[44px] items-center gap-2 px-4 py-2 font-mono text-xs uppercase tracking-[0.2em]"
       >

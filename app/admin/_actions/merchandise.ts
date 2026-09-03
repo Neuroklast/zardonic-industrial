@@ -6,13 +6,14 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const schema = z.object({
   title: z.string().min(1),
   image_storage_path: z.string().optional().nullable(),
-  image_url: z.string().url().optional().nullable().or(z.literal('')),
-  external_url: z.string().url().optional().nullable().or(z.literal('')),
+  image_url: safeExternalUrlOptional,
+  external_url: safeExternalUrlOptional,
   display_order: z.coerce.number().optional().default(0),
 })
 

@@ -13,6 +13,7 @@ import {
 } from '@/lib/release-browse'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { onMediaImageError } from '@/lib/media-fallback'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
@@ -203,7 +204,7 @@ export function ReleasesSection({
                             return (
                               <a
                                 key={`${release.id}-${link.platform}-${link.url}`}
-                                href={link.url}
+                                href={sanitizeExternalHref(link.url)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={`${release.title} on ${link.platform}`}

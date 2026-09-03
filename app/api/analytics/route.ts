@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { analyticsPostSchema } from '@/api/_schemas'
 import { createPublicClient } from '@/lib/supabaseServer'
-import { createAdminClient } from '@/lib/supabaseAdmin'
+import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 import { isAnalyticsTrackingAllowed, parseAnalyticsConfig } from '@/lib/analytics-config'
 
 export const dynamic = 'force-dynamic'
@@ -39,14 +39,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error.message }, { status: 400 })
   }
 
+  // Throttle anonymous event submissions (fail-closed).
+  try {
+    const rl = await consumeRateLimitForRequest(request, {
+      namespace: 'analytics',
+      limit: 30,
+      windowSeconds: 60,
+    })
+    if (!rl.allowed) {
+      return new NextResponse(null, { status: 429 })
+    }
+  } catch (err) {
+    console.warn('[analytics] rate limit unavailable, rejecting (fail-closed):', err)
+    return new NextResponse(null, { status: 429 })
+  }
+
   try {
     const config = parseAnalyticsConfig(await loadAnalyticsConfig())
     if (!isAnalyticsTrackingAllowed(config, parsed.data.type)) {
       return new NextResponse(null, { status: 204 })
     }
 
-    const admin = createAdminClient()
-    const { error } = await admin.from('analytics_events').insert({
+    // Anon client + RLS INSERT policy (consent-gated), NOT the service-role client.
+    const supabase = createPublicClient()
+    const { error } = await supabase.from('analytics_events').insert({
       type: parsed.data.type,
       target: parsed.data.target ?? null,
       meta: parsed.data.meta ?? null,

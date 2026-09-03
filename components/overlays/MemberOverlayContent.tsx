@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { InstagramLogo } from '@phosphor-icons/react'
 import type { Member } from '@/lib/app-types'
 import type { DecorativeTexts } from '@/lib/types'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface MemberOverlayContentProps {
   data: Member
@@ -44,7 +45,7 @@ export function MemberOverlayContent({ data, decorativeTexts }: MemberOverlayCon
           <p className="text-foreground/90 leading-relaxed">{data.bio}</p>
           {data.instagram && (
             <Button asChild variant="outline" className="mt-4 font-mono">
-              <a href={data.instagram} target="_blank" rel="noopener noreferrer">
+              <a href={sanitizeExternalHref(data.instagram)} target="_blank" rel="noopener noreferrer">
                 <InstagramLogo className="w-5 h-5 mr-2" weight="fill" />
                 Follow
               </a>

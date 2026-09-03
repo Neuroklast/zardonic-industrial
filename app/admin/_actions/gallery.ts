@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const galleryInputSchema = z.object({
@@ -77,7 +78,7 @@ export async function saveGalleryImage(formData: FormData) {
 }
 
 const galleryUpdateSchema = galleryInputSchema.extend({
-  image_url: z.string().url().optional().nullable().or(z.literal('')),
+  image_url: safeExternalUrlOptional,
 })
 
 export async function updateGalleryImage(id: string, formData: FormData) {

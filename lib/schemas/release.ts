@@ -1,8 +1,9 @@
 import { z } from 'zod'
+import { safeExternalUrl } from '@/lib/safe-external-url'
 
 export const streamingLinkSchema = z.object({
   platform: z.string(),
-  url: z.string().url(),
+  url: safeExternalUrl,
   label: z.string().optional(),
 })
 
