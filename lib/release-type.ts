@@ -4,12 +4,23 @@ type ReleaseType = 'remix' | 'compilation' | 'ep' | 'single'
 
 /**
  * Maps an internal release type value to its user-facing display label.
- * 'compilation' is shown as 'Appears On' to reflect that the main artist
- * appears on a compilation rather than releasing it themselves.
+ * 'single' and 'ep' are grouped under the single combined label 'Single / EP'.
+ * Returns the raw value for any unknown input so callers can apply a fallback.
  */
 export function displayReleaseType(type: string): string {
-  if (type === 'compilation') return 'Appears On'
-  return type
+  switch (type) {
+    case 'album':
+      return 'Album'
+    case 'ep':
+    case 'single':
+      return 'Single / EP'
+    case 'remix':
+      return 'Remix'
+    case 'compilation':
+      return 'Compilation'
+    default:
+      return type
+  }
 }
 
 /**

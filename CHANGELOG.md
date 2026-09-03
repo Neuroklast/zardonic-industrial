@@ -9,11 +9,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Admin change-password page**: `/admin/security` now lets the signed-in admin change their own Supabase Auth password (`app/admin/_actions/changePassword.ts`, `app/admin/(protected)/security/`). Requires the current password, verifies it via `signInWithPassword` (lenient on TOTP/MFA errors since the session already passed MFA), enforces a min-8-char + match rule, then `updateUser`. Added to the admin nav under **System → Security**.
 - **Enterprise rate limiting on Supabase Postgres (no Redis)**: new `lib/rate-limit.ts` + `public.rate_limits` table and atomic `consume_rate_limit()` function (`supabase/schema.sql`). Distributed, durable, GDPR-safe (SHA-256 + `RATE_LIMIT_SALT` hashed IPs), fail-closed with a per-instance in-memory backstop. Adds throttling to admin login, analytics POST, newsletter, contact, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`. `lib/server-rate-limit.ts` now delegates to it.
 - **SSRF hardening on admin media fetch**: `cacheRemoteImage`, `fetchRemoteImageForEdit`, `cacheRemoteVideo` now run `assertSafeRemoteUrl` (DNS resolve + private/loopback IP block) before the outbound fetch.
 - **URL scheme hardening**: `lib/safe-external-url.ts` (http/https-only Zod guards) applied to all external-URL schemas/actions, and `lib/sanitize-href.ts` `sanitizeExternalHref` applied to every DB-backed link, blocking `javascript:`/`data:`/`vbscript:` click-to-XSS.
 
 ### Changed
+- **Release categories are now four (Album / Single / EP / Remix) + Compilation**: `'ep'` and `'single'` are grouped under the combined public label **Single / EP**, and `'compilation'` now displays as **Compilation** (the old `Appears On` remap was removed). Stored release values are unchanged (no DB migration); `lib/release-type.ts` `displayReleaseType`, `lib/release-browse.ts` filter matching (`matchesReleaseFilterType`, `single-ep`), the public cards/badges, and the admin release-list filter were updated. The admin editor (new/edit release) still lets you pick Single vs EP separately.
 - **Admin login no longer auto-promotes to admin**: `app/admin/login/submit/route.ts` now only authenticates (removed the `createAdminClient` `profiles.role='admin'` upsert). Admin rows must exist in Supabase. Login is also brute-force throttled and adds a delay on failed sign-in.
 - **Analytics write via anon client + consent-gated RLS INSERT policy** (`supabase/schema.sql`) instead of the service-role client; `/api/analytics` now rate-limited.
 - **Auth guard first**: `syncReleasesFromSpotify`/`syncReleasesFromDiscogs`/`syncGigsFromBandsintown`/`previewReleaseFromExternalId` now authorize before any third-party API call.

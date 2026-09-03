@@ -95,7 +95,7 @@ describe('public browse pages', () => {
     expect(screen.getByText(/\/\/ 1 result/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }))
-    fireEvent.click(screen.getByRole('button', { name: /^ep$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^single \/ ep$/i }))
     expect(screen.getByText(/\/\/ 7 results/i)).toBeInTheDocument()
   })
 

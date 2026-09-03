@@ -161,3 +161,12 @@ After public UI changes:
 - All covers are cached to R2 via `cacheReleaseCoverToR2` (`lib/release-cover-r2.ts`) — used by BOTH the server actions and the browser-less async job runner (no `requireAdmin`). Extension/content-type come from the actual response.
 - `toDirectImageUrl` (`lib/image-cache.ts`) trusts the configured `R2_PUBLIC_HOST` domain + `*.scdn.co` / `*.spotifycdn.com` / `*.discogs.com` / `*.mzstatic.com`, so stored and imported covers load directly without an unnecessary wsrv.nl hop. `media-fallback` self-heal unwraps wsrv.nl and recognises the custom R2 host.
 - Every release `<img>` (grid, browse, swipe/3D card, overlay) must attach `onMediaImageError`; overlay art runs through `toDirectImageUrl`. Missing art imports in the discography are usually stale ISR — sync actions now `revalidatePath('/releases')` too.
+
+### Release category labels (2026-09-03)
+
+Public release categories are **four**: Album, **Single / EP**, Remix, Compilation. Internal stored values are unchanged (`album | ep | single | remix | compilation`); only the user-facing label + filter matching collapsed `ep`/`single`.
+
+- Always render the label via `displayReleaseType` (`lib/release-type.ts`) — never the raw stored value or `normalizeReleaseFilterType` (it returns the filter key `single-ep`).
+- **`compilation` displays as `Compilation`** — the old `Appears On` remap is removed.
+- Filter matching uses `matchesReleaseFilterType` (`lib/release-browse.ts`); the public/admin list filters expose one **Single / EP** pill (`value: 'single-ep'`) that matches both `single` and `ep`.
+- The admin release editor (new/edit) still offers separate **Single** and **EP** options.

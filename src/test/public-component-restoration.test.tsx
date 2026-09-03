@@ -205,7 +205,7 @@ describe('restored public homepage components', () => {
 
     expect(container.querySelectorAll('.cyber-card')).toHaveLength(8)
     expect(screen.getByRole('link', { name: /view all/i })).toHaveAttribute('href', '/releases')
-    fireEvent.click(screen.getByRole('button', { name: /^ep$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^single \/ ep$/i }))
     expect(screen.getAllByRole('link', { name: /on spotify/i })).toHaveLength(4)
   })
 

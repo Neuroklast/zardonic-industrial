@@ -10,12 +10,13 @@ import { ReleasesSection } from './ReleasesSection'
 import { ReleasesSwipeLayout } from '@/components/releases/ReleasesSwipeLayout'
 import { Releases3DCarouselLayout } from '@/components/releases/Releases3DCarouselLayout'
 import {
-  normalizeReleaseFilterType,
+  matchesReleaseFilterType,
   RELEASE_TYPE_FILTERS,
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
 import { useLocale } from '@/contexts/LocaleContext'
+import { displayReleaseType } from '@/lib/release-type'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
@@ -73,7 +74,7 @@ function PublicReleaseCard({ item, onClick }: { item: PublicReleaseCardItem; onC
       <div className="p-3">
         <h3 className="truncate font-mono text-sm font-bold uppercase hover-chromatic" title={item.title}>{item.title}</h3>
         {item.type && (
-          <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">{item.type}</div>
+          <div className="mt-1 text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-mono">{displayReleaseType(item.type)}</div>
         )}
       </div>
     </div>
@@ -105,7 +106,7 @@ export function PublicPageClient({
   const filteredReleases = useMemo(() => {
     const sorted = sortReleasesByDate(releases)
     if (!activeFilter) return sorted
-    return sorted.filter((release) => normalizeReleaseFilterType(release.type) === activeFilter)
+    return sorted.filter((release) => matchesReleaseFilterType(release.type, activeFilter))
   }, [activeFilter, releases])
 
   const layoutReleases = filteredReleases.map(mapToLayoutRelease)

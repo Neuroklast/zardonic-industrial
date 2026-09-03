@@ -6,11 +6,12 @@ import { m, useReducedMotion } from 'framer-motion'
 import { formatReleaseDate } from '@/lib/format-release-date'
 import { HOMEPAGE_RELEASE_LIMIT } from '@/lib/browse-pagination'
 import {
-  normalizeReleaseFilterType,
+  matchesReleaseFilterType,
   RELEASE_TYPE_FILTERS,
   sortReleasesByDate,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
+import { displayReleaseType } from '@/lib/release-type'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { onMediaImageError } from '@/lib/media-fallback'
 import { sanitizeExternalHref } from '@/lib/sanitize-href'
@@ -88,7 +89,7 @@ export function ReleasesSection({
   const filteredReleases = useMemo(() => {
     const sorted = sortReleasesByDate(releases)
     if (!activeFilter) return sorted
-    return sorted.filter((release) => normalizeReleaseFilterType(release.type) === activeFilter)
+    return sorted.filter((release) => matchesReleaseFilterType(release.type, activeFilter))
   }, [activeFilter, releases])
 
   const visibleReleases = filteredReleases.slice(0, HOMEPAGE_RELEASE_LIMIT)
@@ -190,9 +191,7 @@ export function ReleasesSection({
                         <div className="flex flex-wrap items-center gap-2 text-xs font-mono uppercase tracking-wider text-muted-foreground">
                           <span>{formatCardReleaseDate(release.release_date)}</span>
                           <span className="border border-primary/30 px-2 py-0.5 text-primary">
-                            {normalizeReleaseFilterType(release.type) === 'album'
-                              ? 'Album'
-                              : normalizeReleaseFilterType(release.type) || 'Release'}
+                            {displayReleaseType(release.type) || 'Release'}
                           </span>
                         </div>
                       </div>
