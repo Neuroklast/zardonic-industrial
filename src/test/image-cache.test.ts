@@ -102,13 +102,20 @@ describe('toDirectImageUrl', () => {
     expect(toDirectImageUrl(bandcamp)).toBe(bandcamp)
   })
 
-  it('serves Apple Music, Supabase and YouTube thumbnail hosts directly', () => {
+  it('serves Apple Music and YouTube thumbnail hosts directly', () => {
     const mz = 'https://is1-ssl.mzstatic.com/image/thumb/Music/v4/cover.jpg'
-    const supabase = 'https://xyzabc.supabase.co/storage/v1/object/public/images/pic.png'
     const yt = 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
     expect(toDirectImageUrl(mz)).toBe(mz)
-    expect(toDirectImageUrl(supabase)).toBe(supabase)
     expect(toDirectImageUrl(yt)).toBe(yt)
+  })
+
+  it('routes legacy Supabase Storage URLs through wsrv.nl (egress guard)', () => {
+    // .supabase.co must NOT be treated as a trusted direct host anymore:
+    // direct browser fetches would move egress onto Supabase.
+    const supabase = 'https://xyzabc.supabase.co/storage/v1/object/public/images/pic.png'
+    expect(toDirectImageUrl(supabase)).toBe(
+      `https://wsrv.nl/?url=${encodeURIComponent(supabase)}&q=80&output=webp`,
+    )
   })
 
   it('applies width options to proxied URLs only', () => {

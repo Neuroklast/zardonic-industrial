@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 
 /** Rebuild periodically so new news posts appear without redeploy. */
 export const revalidate = 3600
@@ -49,7 +49,9 @@ interface NewsSitemapRow {
 
 async function fetchNewsUrls(): Promise<SitemapUrl[]> {
   try {
-    const supabase = await createClient()
+    // Cookie-less client: keeps this route cacheable (s-maxage) — crawler
+    // swarms must never re-run the DB query per request.
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('news_posts')
       .select('slug, published_at, updated_at')

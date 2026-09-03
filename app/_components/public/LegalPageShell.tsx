@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { DEFAULT_FOOTER_CONFIG, DEFAULT_LEGAL_CONFIG, loadLegalPageData } from '@/lib/legal-content'
 import { PageLayout } from '@/layouts/PageLayout'
 import { CookieConsent } from '@/components/CookieConsent'
@@ -23,7 +23,9 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
   let navLinks = buildNavLinksFromConfig(null)
 
   try {
-    const supabase = await createClient()
+    // Cookie-less client: keeps legal/browse routes statically cached (ISR)
+    // instead of running 3+ Supabase reads per request.
+    const supabase = createPublicClient()
     pageData = await loadLegalPageData(supabase)
     const { data: sectionsRow } = await supabase
       .from('site_config')

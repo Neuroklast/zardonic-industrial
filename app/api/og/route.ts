@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import {
   buildOgHtml,
   fallbackOg,
@@ -25,7 +25,9 @@ export async function GET(request: Request): Promise<NextResponse> {
     return NextResponse.redirect(origin, 302)
   }
 
-  const supabase = await createClient()
+  // Cookie-less client: social-preview swarms (Discord/Telegram/WhatsApp)
+  // must hit the CDN cache (s-maxage), not re-query Supabase per preview.
+  const supabase = createPublicClient()
   const artistName = process.env.SITE_NAME || 'Zardonic'
 
   let meta = fallbackOg(type)

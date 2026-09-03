@@ -33,3 +33,17 @@ export function resolveImageUrl(
 
   return canonicalizeR2MediaUrl(trimmed)
 }
+
+/**
+ * True when a URL still targets the legacy Supabase Storage host.
+ * Such URLs move egress onto Supabase; they must never be used as a direct
+ * browser `href`/`src` (see lib/crawler-blocklist + ADMIN_GUIDE egress chapter).
+ */
+export function isLegacySupabaseStorageUrl(url: string | null | undefined): boolean {
+  if (!url) return false
+  try {
+    return new URL(url).hostname.endsWith('.supabase.co')
+  } catch {
+    return false
+  }
+}

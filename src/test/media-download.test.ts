@@ -1,15 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, afterEach } from 'vitest'
 import {
   browseMediaDownloads,
   filterMediaByCategory,
   formatFileSize,
+  mapMediaDownloadRow,
   mediaKindFromMime,
   normalizeMime,
   parseMediaCategory,
   searchMediaDownloads,
   validateMediaUpload,
+  type MediaDownloadDbRow,
   type MediaDownloadItem,
 } from '@/lib/media-download'
+import { isLegacySupabaseStorageUrl } from '@/lib/r2'
 
 function item(overrides: Partial<MediaDownloadItem> = {}): MediaDownloadItem {
   return {
@@ -69,6 +72,62 @@ describe('parseMediaCategory', () => {
     expect(parseMediaCategory(null)).toBe('other')
   })
 })
+
+describe('mapMediaDownloadRow', () => {
+  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+  afterEach(() => {
+    warnSpy.mockClear()
+  })
+
+  function dbRow(overrides: Partial<MediaDownloadDbRow> = {}): MediaDownloadDbRow {
+    return {
+      id: 'row-1',
+      title: 'Press kit',
+      description: null,
+      category: 'document',
+      file_storage_path: null,
+      file_url: null,
+      file_mime: 'application/zip',
+      file_size_bytes: 1_000_000,
+      original_filename: 'kit.zip',
+      display_order: 0,
+      ...overrides,
+    }
+  }
+
+  it('prefers the R2 storage path and keeps legacy r2.dev URLs canonicalized', () => {
+    process.env.R2_PUBLIC_HOST = 'https://pub-test.r2.dev'
+    const row = dbRow({ file_storage_path: 'media/kit.zip' })
+    const item = mapMediaDownloadRow(row)
+    expect(item.fileUrl).toBe('https://pub-test.r2.dev/media/kit.zip')
+  })
+
+  it('hides rows whose file_url still points at Supabase Storage (egress guard)', () => {
+    const row = dbRow({ file_url: 'https://xyzabc.supabase.co/storage/v1/object/public/media/kit.zip' })
+    const item = mapMediaDownloadRow(row)
+    expect(item.fileUrl).toBeNull()
+    expect(warnSpy).toHaveBeenCalled()
+  })
+
+  it('keeps non-Supabase legacy fallback URLs', () => {
+    const row = dbRow({ file_url: 'https://files.example.com/kit.zip' })
+    const item = mapMediaDownloadRow(row)
+    expect(item.fileUrl).toBe('https://files.example.com/kit.zip')
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('isLegacySupabaseStorageUrl', () => {
+  it('detects supabase.co hosts only', () => {
+    expect(isLegacySupabaseStorageUrl('https://xyzabc.supabase.co/storage/v1/object/public/a.zip')).toBe(true)
+    expect(isLegacySupabaseStorageUrl('https://pub-example.r2.dev/media/a.zip')).toBe(false)
+    expect(isLegacySupabaseStorageUrl('https://files.example.com/a.zip')).toBe(false)
+    expect(isLegacySupabaseStorageUrl(null)).toBe(false)
+    expect(isLegacySupabaseStorageUrl('https://not-a-url.example')).toBe(false)
+  })
+})
+
 
 describe('browseMediaDownloads', () => {
   const items = [

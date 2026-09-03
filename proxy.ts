@@ -1,16 +1,26 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
+import { isBlockedCrawlerUserAgent } from '@/lib/crawler-blocklist'
 
 /**
  * Canonical admin auth "proxy" (the active protection file per this Next.js version's convention).
  * Next 16 + Turbopack in this project treats proxy.ts as the auth gate (middleware.ts deprecated).
  * Exports both a default function and named `proxy` (for tests) + `config`.
  *
+ * Also acts as an edge bot shield: blocked crawlers get 403 BEFORE any route
+ * render, so they can never touch Supabase (postgREST egress amplification).
+ *
  * See AGENTS.md for cookie rules this implements.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Edge-level crawler shield — cheap string test on every path. Blocked bots
+  // never start a function instance nor hit the database.
+  if (isBlockedCrawlerUserAgent(request.headers.get('user-agent'))) {
+    return new NextResponse(null, { status: 403 })
+  }
 
   // Always allow login/logout (and non-admin). Login form must reach the submit handler.
   if (
@@ -118,7 +128,11 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: [
+    // Shield runs on every navigable path except static assets, images,
+    // fonts and the robots file. /admin stays inside this pattern.
+    '/((?!_next|assets/|favicon.ico|robots.txt|sitemap.xml).*)',
+  ],
 }
 
 // Default export for the runtime "proxy" / middleware loader (and named via declaration)

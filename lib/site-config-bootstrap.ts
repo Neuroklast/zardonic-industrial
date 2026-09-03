@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { parseAnalyticsConfig, type AnalyticsConfig } from '@/lib/analytics-config'
 import { parseLanguagesConfig } from '@/lib/languages-config'
 import type { SiteLanguage } from '@/lib/i18n'
@@ -41,7 +41,9 @@ function parseAppearanceBootstrap(raw: unknown): AppearanceConfigInput {
 
 export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
   try {
-    const supabase = await createClient()
+    // Cookie-less client (see app/layout.tsx): keeps routes static so ISR can
+    // dedupe Supabase reads — one query per revalidate window, not per request.
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('site_config')
       .select('key, value')

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Orbitron, Share_Tech_Mono, Space_Mono } from 'next/font/google'
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 import {
   buildPublicFontCssVars,
@@ -45,7 +45,10 @@ export async function generateMetadata(): Promise<Metadata> {
   let faviconUrl: string | undefined
 
   try {
-    const supabase = await createClient()
+    // Cookie-less client: keeps the root layout static (ISR) — a cookie-based
+    // client would force every route dynamic and multiply Supabase egress per
+    // request (see docs/LESSONS_LEARNED.md: postgrest egress spike).
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('site_config')
       .select('value')

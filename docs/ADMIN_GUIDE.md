@@ -90,6 +90,7 @@ Public pages: `/legal-notice`, `/privacy-policy`.
 
 ## Media uploads
 
+
 Images and video upload to **Cloudflare R2** via admin upload actions. URLs are stored as `*_storage_path` columns with optional legacy URL fallbacks. Replacing a file (new upload or remote import) **deletes the previous R2 object** automatically once the new upload succeeds; use **Clear selection** only to drop the form field without deleting storage.
 
 **Images (crop → upload):** The crop editor exports **WebP** (not full-res PNG) and the Server Action body limit is **4 MB** (`next.config` `experimental.serverActions.bodySizeLimit`). Source files may be up to 10 MB before crop; after export the payload must stay under ~3.5 MB. If upload fails with React error **#441** or **413**, the crop export was almost certainly too large for the previous 1 MB default — retry after deploy, or use a smaller source. Hero crops export at **source resolution** (up to 4096px), not the editor viewport size.
@@ -157,6 +158,28 @@ Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 `/admin/releases/sync` — bulk iTunes / Spotify / Discogs import.
 
 Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, cover, and Odesli links.
+
+## Supabase Egress & media origin
+
+The Supabase Free plan limits egress to **5 GB per period** (hard limit — the API can be paused when exceeded). All site media is served from Cloudflare R2; Supabase is used as the database only. Keep egress low:
+
+- **What counts:** PostgREST responses (DB reads), Storage downloads, Auth requests — the sum of *uncached* traffic. Visit Supabase Dashboard → **Usage → Egress** and look at the **day breakdown** (PostgREST vs Auth vs Storage) and the **MAU** counter: a PostgREST spike with tiny MAU on a single day means an automated crawler, not visitors.
+- **How the site protects itself (2026-09):**
+  - Public routes (homepage, `/releases`, `/gigs`, `/media`, legal, `/news/[slug]`, `/api/sitemap`, `/api/og`) are **ISR-cached** (`revalidate=60`) via the cookie-less `createPublicClient()` — one upstream query per revalidate window, not per request. Admin mutations trigger `revalidatePath('/', 'layout')`, so edits appear immediately.
+  - `proxy.ts` returns **403** for known scraper/AI bots (`lib/crawler-blocklist.ts`) before any render — this also protects `/admin` at the edge. `public/robots.txt` mirrors the list for compliant bots.
+  - Media requiring R2 with a **content-addressed object key** and a **storage_path** in the DB. If a row still has only a legacy `*_url` pointing at `*.supabase.co`, the dashboard shows a red badge (`/admin`) with the row count; legacy media downloads are hidden until migrated. Fix: re-upload via the editor (or clear the URL column).
+- **Checks:** run this in the Supabase SQL Editor to find legacy URLs:
+
+  ```sql
+  SELECT 'releases' t, count(*) FROM releases WHERE cover_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'news_posts', count(*) FROM news_posts WHERE cover_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'gallery', count(*) FROM gallery WHERE image_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'media_downloads', count(*) FROM media_downloads WHERE file_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'merchandise', count(*) FROM merchandise WHERE image_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'soundpacks', count(*) FROM soundpacks WHERE image_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'partners', count(*) FROM partners WHERE logo_url ILIKE '%supabase.co%'
+  UNION ALL SELECT 'social_links', count(*) FROM social_links WHERE logo_url ILIKE '%supabase.co%';
+  ```
 
 ## Development
 

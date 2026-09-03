@@ -134,7 +134,8 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
         hostname.endsWith('.r2.cloudflarestorage.com') ||
         hostname.endsWith('.bcbits.com') ||
         hostname.endsWith('.mzstatic.com') ||
-        hostname.endsWith('.supabase.co') ||
+        // Deliberately NOT '.supabase.co': legacy storage URLs would be
+        // fetched by every visitor directly from Supabase (egress).
         hostname.endsWith('.scdn.co') ||
         hostname.endsWith('.spotifycdn.com') ||
         hostname.endsWith('.discogs.com') ||
