@@ -31,6 +31,12 @@ export function resolveImageUrl(
   const trimmed = fallbackUrl.trim()
   if (!/^(https?:)?\/\//i.test(trimmed) && !trimmed.startsWith('data:')) return null
 
+  // Policy: media is ALWAYS served from Cloudflare R2, never from Supabase
+  // Storage. A legacy `*.supabase.co` URL is invalid — return null so nothing
+  // renders from Supabase. The deploy migration (lib/legacy-url-migration-on-deploy)
+  // clears these rows; the admin badge (lib/legacy-url-audit) reports them.
+  if (isLegacySupabaseStorageUrl(trimmed)) return null
+
   return canonicalizeR2MediaUrl(trimmed)
 }
 

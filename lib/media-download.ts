@@ -1,5 +1,5 @@
 import { normalizeSearchQuery } from '@/lib/browse-pagination'
-import { isLegacySupabaseStorageUrl, resolveImageUrl } from '@/lib/r2'
+import { resolveImageUrl } from '@/lib/r2'
 
 export const MEDIA_CATEGORIES = ['photo', 'logo', 'document', 'audio', 'other'] as const
 export type MediaDownloadCategory = (typeof MEDIA_CATEGORIES)[number]
@@ -161,31 +161,14 @@ export function formatFileSize(bytes: number | null | undefined): string {
 }
 
 export function mapMediaDownloadRow(row: MediaDownloadDbRow): MediaDownloadItem {
-  const fileUrl = resolveImageUrl(row.file_storage_path, row.file_url)
-  if (fileUrl && isLegacySupabaseStorageUrl(fileUrl)) {
-    // Downloading from Supabase Storage = direct egress. Hide the download
-    // until the file is migrated to R2 (admin badge surfaces the count).
-    console.warn(
-      `[media_downloads] "${row.title}" (${row.id}) still uses Supabase Storage — hidden until migrated to R2`,
-    )
-    return {
-      id: row.id,
-      title: row.title,
-      description: row.description,
-      category: parseMediaCategory(row.category),
-      fileUrl: null,
-      fileMime: row.file_mime,
-      fileSizeBytes: row.file_size_bytes,
-      originalFilename: row.original_filename,
-      displayOrder: row.display_order,
-    }
-  }
+  // resolveImageUrl returns null for legacy `*.supabase.co` file URLs, so a
+  // download is never served from Supabase Storage (see lib/r2.ts policy).
   return {
     id: row.id,
     title: row.title,
     description: row.description,
     category: parseMediaCategory(row.category),
-    fileUrl,
+    fileUrl: resolveImageUrl(row.file_storage_path, row.file_url),
     fileMime: row.file_mime,
     fileSizeBytes: row.file_size_bytes,
     originalFilename: row.original_filename,
