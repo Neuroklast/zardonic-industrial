@@ -17,6 +17,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Hover labels are short (Bio / Releases / â€¦), not full section titles
 - [ ] Smooth scroll to sections works (Lenis); mobile hamburger works
 - [ ] Releases: open detail â†’ **CyberpunkOverlay** chrome (corners, label, close)
+- [ ] Release categories show four labels: **Album / Single / EP / Remix / Compilation**; a `compilation` release badge reads **Compilation** (never "Appears On"), and both EP and Single releases/pills read **Single / EP**
 - [ ] Events/gigs: same overlay system as releases
 - [ ] Gallery: open image â†’ **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
@@ -54,6 +55,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 ## Admin (smoke)
 
 - [ ] Login works; protected routes redirect when logged out
+- [ ] `/admin/security`: change password with current + new (min 8); wrong current password is rejected; success signs in with the new password
 - [ ] Site config / sections draft does not break public nav labels
 - [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save

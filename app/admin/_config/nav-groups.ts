@@ -54,6 +54,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
       { href: '/admin/releases/sync', label: 'Catalogue Sync' },
       { href: '/admin/analytics', label: 'Analytics' },
       { href: '/admin/api-keys', label: 'API Keys' },
+      { href: '/admin/security', label: 'Security' },
       { href: '/admin/health', label: 'API Health' },
       { href: '/admin/data', label: 'Data Import/Export' },
     ],

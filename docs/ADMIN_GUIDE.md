@@ -1,6 +1,6 @@
 # Admin Guide
 
-> **Last updated:** 2026-08-29
+> **Last updated:** 2026-09-03
 
 The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabase user that has `profiles.role = 'admin'`.
 
@@ -22,8 +22,16 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Events | `/admin/gigs` | Gigs + Bandsintown sync |
 | Newsletter | `/admin/newsletter` | Subscribers |
 | Data | `/admin/data` | Import/export + **data maintenance** |
+| Security | `/admin/security` | Change your admin password |
 
 Full nav is in `app/admin/_config/nav-groups.ts`.
+
+## Change your admin password
+
+Go to **`/admin/security`** (also under **System → Security** in the nav), enter your current password and a new one (min 8 chars, must differ from the current one), then **Change password**. It verifies your current password first and updates the Supabase Auth user directly.
+
+- If your account has **MFA (TOTP)** enabled, the change still works from a signed-in session.
+- If you've forgotten your current password and can't sign in, change it in the **Supabase dashboard → Authentication → Users → your admin user → Reset password**.
 
 ## Media downloads
 

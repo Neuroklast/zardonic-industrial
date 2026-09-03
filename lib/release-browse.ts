@@ -1,13 +1,12 @@
 import { normalizeSearchQuery } from '@/lib/browse-pagination'
 import { normalizeReleaseType } from '@/lib/release-public-mapper'
 
-export type ReleaseTypeFilter = '' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
+export type ReleaseTypeFilter = '' | 'album' | 'single-ep' | 'remix' | 'compilation'
 
 export const RELEASE_TYPE_FILTERS: Array<{ value: ReleaseTypeFilter; label: string }> = [
   { value: '', label: 'All' },
   { value: 'album', label: 'Album' },
-  { value: 'ep', label: 'EP' },
-  { value: 'single', label: 'Single' },
+  { value: 'single-ep', label: 'Single / EP' },
   { value: 'remix', label: 'Remix' },
   { value: 'compilation', label: 'Compilation' },
 ]
@@ -21,7 +20,21 @@ export interface BrowsableRelease {
 
 export function normalizeReleaseFilterType(value: string | null | undefined): ReleaseTypeFilter {
   const normalized = normalizeReleaseType(value ?? '')
-  return normalized || ''
+  if (normalized === 'ep' || normalized === 'single') return 'single-ep'
+  return (normalized as ReleaseTypeFilter) || ''
+}
+
+/**
+ * True when a release's stored type matches a filter value. The merged
+ * 'single-ep' filter matches both 'single' and 'ep'.
+ */
+export function matchesReleaseFilterType(
+  releaseType: string,
+  filter: ReleaseTypeFilter,
+): boolean {
+  const normalized = normalizeReleaseFilterType(releaseType)
+  if (filter === 'single-ep') return normalized === 'single-ep'
+  return normalized === filter
 }
 
 export function sortReleasesByDate<T extends BrowsableRelease>(releases: T[]): T[] {
@@ -37,7 +50,7 @@ export function filterReleasesByType<T extends BrowsableRelease>(
   typeFilter: ReleaseTypeFilter,
 ): T[] {
   if (!typeFilter) return releases
-  return releases.filter((release) => normalizeReleaseFilterType(release.type) === typeFilter)
+  return releases.filter((release) => matchesReleaseFilterType(release.type, typeFilter))
 }
 
 export function searchReleases<T extends BrowsableRelease>(releases: T[], query: string): T[] {

@@ -20,11 +20,11 @@ import type { CyberpunkOverlayState, Release } from '@/lib/app-types'
 import { paginateItems } from '@/lib/browse-pagination'
 import {
   browseReleases,
-  normalizeReleaseFilterType,
   RELEASE_TYPE_FILTERS,
   type ReleaseTypeFilter,
 } from '@/lib/release-browse'
 import { formatReleaseDate } from '@/lib/format-release-date'
+import { displayReleaseType } from '@/lib/release-type'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { onMediaImageError } from '@/lib/media-fallback'
 import type { PublicReleaseCardItem } from '@/lib/public-fetch'
@@ -68,8 +68,6 @@ function ReleaseBrowseCard({
   release: PublicReleaseCardItem
   onClick: () => void
 }) {
-  const typeLabel = normalizeReleaseFilterType(release.type)
-
   return (
     <article
       className="cyber-card group cursor-pointer overflow-hidden border border-border transition-all hover:border-primary/50 hover-chromatic"
@@ -115,7 +113,7 @@ function ReleaseBrowseCard({
           <div className="flex flex-wrap items-center gap-2 font-mono text-xs uppercase tracking-wider text-muted-foreground">
             <span>{formatCardReleaseDate(release.release_date)}</span>
             <span className="border border-primary/30 px-2 py-0.5 text-primary">
-              {typeLabel === 'album' ? 'Album' : typeLabel || 'Release'}
+              {displayReleaseType(release.type) || 'Release'}
             </span>
           </div>
         </div>

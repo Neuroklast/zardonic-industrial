@@ -9,9 +9,9 @@ describe('release browse helpers', () => {
   ]
 
   it('sorts, filters by type, and searches by title', () => {
-    const filtered = browseReleases(releases, { typeFilter: 'ep' })
-    expect(filtered).toHaveLength(1)
-    expect(filtered[0]?.title).toBe('Beta EP')
+    const filtered = browseReleases(releases, { typeFilter: 'single-ep' })
+    expect(filtered).toHaveLength(2)
+    expect(filtered.map((release) => release.title).sort()).toEqual(['Beta EP', 'Gamma Single'])
 
     const searched = browseReleases(releases, { query: 'alpha' })
     expect(searched).toHaveLength(1)

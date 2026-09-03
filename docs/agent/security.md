@@ -55,6 +55,8 @@ Never browser `signInWithPassword` + `router.push` (cookie race / redirect loops
 
 Enable Supabase **Auth MFA (TOTP)** for the admin account in the dashboard.
 
+**Change-password** (`/admin/security`): the admin can change their own password in-app. Server action `app/admin/_actions/changePassword.ts` → `requireAdmin()` → verifies `current` via `signInWithPassword` (session email/phone) → `auth.updateUser({ password: next })`. Enforces min-8 chars, match, and new≠current. **MFA-lenient:** if verification fails with an MFA/TOTP error, we proceed anyway because the signed-in session already passed the MFA challenge — an MFA-enabled admin is not blocked. For a change-password from a non-session context (e.g. forgotten password), use the Supabase dashboard (Auth → Users).
+
 ## Environment
 
 Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`, Supabase keys, `SECRETS_ENCRYPTION_KEY`).

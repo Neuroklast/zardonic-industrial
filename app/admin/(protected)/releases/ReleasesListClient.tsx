@@ -17,15 +17,14 @@ export interface AdminReleaseRow {
   display_order: number | null
 }
 
-type TypeFilter = 'all' | 'album' | 'ep' | 'single' | 'remix' | 'compilation'
+type TypeFilter = 'all' | 'album' | 'single-ep' | 'remix' | 'compilation'
 type StatusFilter = 'all' | 'active' | 'hidden'
 type SortKey = 'display_order' | 'title_asc' | 'title_desc' | 'date_desc' | 'date_asc' | 'type'
 
 const TYPE_FILTERS: Array<{ value: TypeFilter; label: string }> = [
   { value: 'all', label: 'All types' },
   { value: 'album', label: 'Album' },
-  { value: 'ep', label: 'EP' },
-  { value: 'single', label: 'Single' },
+  { value: 'single-ep', label: 'Single / EP' },
   { value: 'remix', label: 'Remix' },
   { value: 'compilation', label: 'Compilation' },
 ]
@@ -90,7 +89,13 @@ export function ReleasesListClient({ releases }: ReleasesListClientProps) {
     const query = searchQuery.trim().toLowerCase()
 
     const matches = releases.filter((release) => {
-      if (typeFilter !== 'all' && release.type !== typeFilter) return false
+      if (typeFilter !== 'all') {
+        if (typeFilter === 'single-ep') {
+          if (release.type !== 'single' && release.type !== 'ep') return false
+        } else if (release.type !== typeFilter) {
+          return false
+        }
+      }
       if (statusFilter === 'active' && !release.active) return false
       if (statusFilter === 'hidden' && release.active) return false
       if (!query) return true
