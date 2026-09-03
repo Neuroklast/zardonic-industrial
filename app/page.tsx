@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { unstable_cache } from 'next/cache'
 import { createPublicClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import { splitGigsByDate } from '@/lib/gig-browse'
@@ -239,6 +240,13 @@ function getConfig(rows: SiteConfigRow[], key: string): Record<string, unknown> 
 
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
+// searchParams below keep this route request-dynamic, so DB reads are wrapped
+// with unstable_cache: one Supabase fetch per 60s window, not per request.
+// (PostgREST egress amplification: every homepage hit used to cost 13 queries.)
+const fetchAllCached = unstable_cache(fetchAll, ['homepage-site-data'], {
+  revalidate: 60,
+})
+
 export default async function HomePage({
   searchParams,
 }: {
@@ -249,7 +257,7 @@ export default async function HomePage({
   const {
     configRows, bio, gigs, releases, partners,
     musicHighlights, merch, soundpacks, gallery, mediaDownloads, social, newsPosts,
-  } = await fetchAll()
+  } = await fetchAllCached()
 
   const heroConfig = getConfig(configRows, 'hero')
   const newsletterConfig = getConfig(configRows, 'newsletter')

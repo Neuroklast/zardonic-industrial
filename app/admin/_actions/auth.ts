@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { revalidatePath } from 'next/cache'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
 
@@ -93,7 +94,11 @@ export async function runAdminAction<T extends object>(
 ): Promise<T | { error: string }> {
   try {
     await requireAdmin()
-    return await action()
+    const result = await action()
+    // Public pages are ISR-cached (revalidate=60). Purge the cache on every
+    // successful admin mutation so edits appear immediately, not after a minute.
+    revalidatePath('/', 'layout')
+    return result
   } catch (error) {
     return { error: await formatAdminActionError(error, fallback) }
   }

@@ -169,8 +169,9 @@ export function isDirectCanvasHost(url: string): boolean {
     const hostname = new URL(url).hostname
     return (
       hostname.endsWith('.r2.dev') ||
-      hostname.endsWith('.r2.cloudflarestorage.com') ||
-      hostname.endsWith('.supabase.co')
+      hostname.endsWith('.r2.cloudflarestorage.com')
+      // Deliberately NOT '.supabase.co': legacy storage logos would be
+      // fetched from Supabase (egress); wsrv.nl provides the proxy instead.
     )
   } catch {
     return false

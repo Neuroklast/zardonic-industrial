@@ -8,6 +8,13 @@ Next.js App Router (public + admin), Supabase (`site_config`, content tables, au
 
 **Public Supabase reads:** use `createPublicClient()` from `lib/supabaseServer.ts` (cookie-less anon). Do not use `createClient()` (cookie session) for homepage/browse content — admin JWT skew must not blank the public site.
 
+**Caching rule (ISR, 2026-09):** `createClient()` reads `cookies()`, which silently forces **every** route dynamic and neutralises all `revalidate` exports — a pageview then costs 12-17 PostgREST queries and zero CDN cache. Rules:
+- Root layout, `site-config-bootstrap`, legal shell/pages, `news/[slug]` (+ `generateStaticParams`), `/api/sitemap`, `/api/og`, `/api/analytics` use `createPublicClient()`; public pages ship `revalidate = 60`.
+- Pages that must stay request-dynamic (searchParams like the homepage `adminPreview`): wrap DB reads in `unstable_cache(fn, [keys], { revalidate })`.
+- Admin mutations revalidate the public tree: `revalidatePath('/', 'layout')` in `runAdminAction`.
+- Edge bot shield: `proxy.ts` returns 403 for UA matches in `lib/crawler-blocklist.ts` before render (extend the list, keep Googlebot/Bingbot/link-preview agents allowed); mirror in `public/robots.txt`.
+- `.supabase.co` is **never** a trusted direct host for images/logos (`lib/image-cache.ts`, `lib/partner-logo-white.ts`) — legacy URLs are wrapped through wsrv.nl; media downloads with legacy URLs are hidden until migrated to R2 (badge count via `lib/legacy-url-audit.ts`).
+
 ## Import paths
 
 Root-level `components/`, `hooks/`, `contexts/`, `layouts/`, `lib/`, `cms/`, `app/` are canonical `@/*` targets. Mirror `src/` only where migration bridge requires it.

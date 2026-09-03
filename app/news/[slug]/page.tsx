@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabaseServer'
+import { createPublicClient } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import { toDirectImageUrl } from '@/lib/image-cache'
 import { LegalPageShell } from '@/app/_components/public/LegalPageShell'
@@ -19,7 +19,8 @@ interface NewsPostRow {
 
 async function loadPost(slug: string): Promise<NewsPostRow | null> {
   try {
-    const supabase = await createClient()
+    // Cookie-less client: keeps this route static (ISR) instead of per-request.
+    const supabase = createPublicClient()
     const { data } = await supabase
       .from('news_posts')
       .select(
@@ -49,6 +50,20 @@ export async function generateMetadata({
 }
 
 export const revalidate = 60
+
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  // Pre-render published slugs at build time; ISR covers new additions.
+  try {
+    const supabase = createPublicClient()
+    const { data } = await supabase
+      .from('news_posts')
+      .select('slug')
+      .eq('active', true)
+    return (data ?? []).map((row) => ({ slug: row.slug }))
+  } catch {
+    return []
+  }
+}
 
 export default async function NewsPostPage({
   params,
