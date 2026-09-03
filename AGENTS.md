@@ -63,6 +63,7 @@ Skipping docs because “the task was only code” is a process failure.
 - **Consent** — import from `@/lib/consent`, not UI components, in non-UI code
 - **Overlays** — gallery / release / gig detail use **`CyberpunkOverlay`** only ([public-ui](./docs/agent/public-ui.md))
 - **Partner logos** — white mode via canvas pipeline (`lib/partner-logo-white.ts`); **never** CSS `brightness(0) invert(1)` on remote PNGs ([public-ui](./docs/agent/public-ui.md))
+- **Media is ALWAYS on R2 — never Supabase Storage.** Images/videos/logos/downloads resolve via `lib/r2.ts` `resolveImageUrl` / `toDirectImageUrl`; a `*.supabase.co` asset URL is invalid and resolves to `null`/`''`. Never re-add `.supabase.co` as a trusted direct host. Legacy rows are migrated to R2 automatically (once) — see `lib/legacy-url-migration-on-deploy.ts`, badge `lib/legacy-url-audit.ts`, manual `npm run migrate-legacy`.
 - **Nav labels** — compact defaults in `lib/nav-links.ts` (`Bio`, `Releases`, …); full titles stay on section headings
 - **Nav logo** — flex flow `shrink-0`, never `position: absolute` over the link row
 - **Docs** — always update markdown at session end (see above)

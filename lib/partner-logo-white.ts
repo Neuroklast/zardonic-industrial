@@ -1,4 +1,5 @@
 import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
+import { isLegacySupabaseStorageUrl } from '@/lib/r2'
 
 /** Minimal pixel buffer — avoids relying on the browser ImageData constructor in tests. */
 export interface RgbaBuffer {
@@ -262,6 +263,8 @@ export function parsePartnerLogoProxyUrl(raw: string | null | undefined): string
  */
 export function partnerLogoCanvasSrc(url: string): string {
   if (!url) return ''
+  // Policy: partner logos are ALWAYS on R2 — never render from Supabase Storage.
+  if (isLegacySupabaseStorageUrl(url)) return ''
   if (url.startsWith('data:') || url.startsWith('blob:')) return url
   if (url.startsWith('/') || url.startsWith('.')) return url
 

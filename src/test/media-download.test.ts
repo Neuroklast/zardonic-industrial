@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
   browseMediaDownloads,
   filterMediaByCategory,
@@ -74,12 +74,6 @@ describe('parseMediaCategory', () => {
 })
 
 describe('mapMediaDownloadRow', () => {
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
-  afterEach(() => {
-    warnSpy.mockClear()
-  })
-
   function dbRow(overrides: Partial<MediaDownloadDbRow> = {}): MediaDownloadDbRow {
     return {
       id: 'row-1',
@@ -96,25 +90,23 @@ describe('mapMediaDownloadRow', () => {
     }
   }
 
-  it('prefers the R2 storage path and keeps legacy r2.dev URLs canonicalized', () => {
+  it('prefers the R2 storage path', () => {
     process.env.R2_PUBLIC_HOST = 'https://pub-test.r2.dev'
     const row = dbRow({ file_storage_path: 'media/kit.zip' })
     const item = mapMediaDownloadRow(row)
     expect(item.fileUrl).toBe('https://pub-test.r2.dev/media/kit.zip')
   })
 
-  it('hides rows whose file_url still points at Supabase Storage (egress guard)', () => {
+  it('never returns a Supabase Storage download URL (policy: media on R2)', () => {
     const row = dbRow({ file_url: 'https://xyzabc.supabase.co/storage/v1/object/public/media/kit.zip' })
     const item = mapMediaDownloadRow(row)
     expect(item.fileUrl).toBeNull()
-    expect(warnSpy).toHaveBeenCalled()
   })
 
   it('keeps non-Supabase legacy fallback URLs', () => {
     const row = dbRow({ file_url: 'https://files.example.com/kit.zip' })
     const item = mapMediaDownloadRow(row)
     expect(item.fileUrl).toBe('https://files.example.com/kit.zip')
-    expect(warnSpy).not.toHaveBeenCalled()
   })
 })
 

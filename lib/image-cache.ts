@@ -1,4 +1,5 @@
 import { canonicalizeR2MediaUrl, currentR2PublicOrigin } from '@/lib/r2-url-rewrite'
+import { isLegacySupabaseStorageUrl } from '@/lib/r2'
 
 const DB_NAME = 'zardonic-image-cache'
 const STORE_NAME = 'images'
@@ -120,6 +121,9 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
 
   url = canonicalizeR2MediaUrl(url)
 
+  // Policy: media is ALWAYS on R2 — never render/fetch from Supabase Storage.
+  if (isLegacySupabaseStorageUrl(url)) return ''
+
   // Self-hosted / trusted CDNs — load directly (no wsrv.nl hop). Include the
   // configured R2_PUBLIC_HOST domain (so stored covers are NOT re-proxied) and
   // the Spotify/Discogs artwork hosts used by imported covers.
@@ -134,8 +138,6 @@ export function toDirectImageUrl(url: string | null | undefined, options?: WsrvO
         hostname.endsWith('.r2.cloudflarestorage.com') ||
         hostname.endsWith('.bcbits.com') ||
         hostname.endsWith('.mzstatic.com') ||
-        // Deliberately NOT '.supabase.co': legacy storage URLs would be
-        // fetched by every visitor directly from Supabase (egress).
         hostname.endsWith('.scdn.co') ||
         hostname.endsWith('.spotifycdn.com') ||
         hostname.endsWith('.discogs.com') ||

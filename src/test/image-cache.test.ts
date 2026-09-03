@@ -109,13 +109,11 @@ describe('toDirectImageUrl', () => {
     expect(toDirectImageUrl(yt)).toBe(yt)
   })
 
-  it('routes legacy Supabase Storage URLs through wsrv.nl (egress guard)', () => {
-    // .supabase.co must NOT be treated as a trusted direct host anymore:
-    // direct browser fetches would move egress onto Supabase.
+  it('never renders legacy Supabase Storage URLs (policy: media always on R2)', () => {
+    // .supabase.co must be rejected outright — media is always served from R2.
     const supabase = 'https://xyzabc.supabase.co/storage/v1/object/public/images/pic.png'
-    expect(toDirectImageUrl(supabase)).toBe(
-      `https://wsrv.nl/?url=${encodeURIComponent(supabase)}&q=80&output=webp`,
-    )
+    expect(toDirectImageUrl(supabase)).toBe('')
+    expect(toDirectImageUrl('https://pub-example.r2.dev/cover.jpg')).toBe('https://pub-example.r2.dev/cover.jpg')
   })
 
   it('applies width options to proxied URLs only', () => {
