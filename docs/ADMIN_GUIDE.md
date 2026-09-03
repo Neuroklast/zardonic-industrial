@@ -167,7 +167,7 @@ The Supabase Free plan limits egress to **5 GB per period** (hard limit — the 
 - **How the site protects itself (2026-09):**
   - Public routes (homepage, `/releases`, `/gigs`, `/media`, legal, `/news/[slug]`, `/api/sitemap`, `/api/og`) are **ISR-cached** (`revalidate=60`) via the cookie-less `createPublicClient()` — one upstream query per revalidate window, not per request. Admin mutations trigger `revalidatePath('/', 'layout')`, so edits appear immediately.
   - `proxy.ts` returns **403** for known scraper/AI bots (`lib/crawler-blocklist.ts`) before any render — this also protects `/admin` at the edge. `public/robots.txt` mirrors the list for compliant bots.
-  - Media requiring R2 with a **content-addressed object key** and a **storage_path** in the DB. If a row still has only a legacy `*_url` pointing at `*.supabase.co`, the dashboard shows a red badge (`/admin`) with the row count; legacy media downloads are hidden until migrated. Fix: re-upload via the editor (or clear the URL column).
+  - Media requiring R2 with a **content-addressed object key** and a **storage_path** in the DB. If a row still has only a legacy `*_url` pointing at `*.supabase.co`, the dashboard shows a red badge (`/admin`) with the row count; legacy media downloads are hidden until migrated. The migration runs **automatically once** (on the first Production deploy — check Vercel logs for `[legacy-url-migration] done ...`; the `doneOnce` flag in `site_config.legacy_url_migration_deploy` prevents re-runs); manual dry-run/re-run: **`npm run migrate-legacy`** (see `scripts/MIGRATION.md`).
 - **Checks:** run this in the Supabase SQL Editor to find legacy URLs:
 
   ```sql
