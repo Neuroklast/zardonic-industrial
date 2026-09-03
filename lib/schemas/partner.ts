@@ -1,9 +1,10 @@
 import { z } from 'zod'
+import { safeExternalUrlNullable } from '@/lib/safe-external-url'
 
 export const partnerSchema = z.object({
   id: z.string(),
   name: z.string(),
-  url: z.string().url().nullable().optional(),
+  url: safeExternalUrlNullable,
   logoUrl: z.string().nullable().optional(),
   logoStoragePath: z.string().nullable().optional(),
   category: z.string().default('partner'),

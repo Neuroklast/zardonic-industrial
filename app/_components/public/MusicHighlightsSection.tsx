@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 
 interface MusicHighlight {
@@ -40,7 +41,7 @@ function EmbedPlayer({ title, youtubeUrl }: EmbedPlayerProps) {
   if (!videoId) {
     return (
       <a
-        href={youtubeUrl}
+              href={sanitizeExternalHref(youtubeUrl)}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex min-h-[44px] items-center font-mono text-xs text-muted-foreground underline transition-colors hover:text-foreground"

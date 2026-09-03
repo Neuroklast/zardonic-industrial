@@ -3,6 +3,7 @@ import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
 import { extractStoredObjectPath } from '@/lib/r2-url-rewrite'
 import { buildR2Inventory, listAllR2ObjectKeys, matchInventoryKey } from '@/lib/r2-inventory'
 import { currentR2PublicOrigin } from '@/lib/r2-url-rewrite'
+import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,6 +31,21 @@ let cachedKeys: readonly string[] | null = null
 export async function GET(request: Request) {
   const path = new URL(request.url).searchParams.get('path')
   if (!path) return NextResponse.json({ ok: false, error: 'Missing path' }, { status: 400 })
+
+  // Bound the bucket-listing cost and slow object-existence probing.
+  try {
+    const rl = await consumeRateLimitForRequest(request, {
+      namespace: 'media-fix',
+      limit: 90,
+      windowSeconds: 60,
+    })
+    if (!rl.allowed) {
+      return NextResponse.json({ ok: false, error: 'Rate limited' }, { status: 429 })
+    }
+  } catch (err) {
+    console.warn('[media-fix] rate limit unavailable, rejecting (fail-closed):', err)
+    return NextResponse.json({ ok: false, error: 'Rate limited' }, { status: 429 })
+  }
 
   const publicHost = currentR2PublicOrigin()
   const bucket = process.env.R2_BUCKET_MEDIA

@@ -3,6 +3,7 @@
 import { CookiePreferencesButton } from '@/components/CookieConsent'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useLocale } from '@/contexts/LocaleContext'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface SocialLink {
   id: string
@@ -99,7 +100,7 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
             {socialLinks.map((link) => (
               <a
                 key={link.id}
-                href={link.url}
+                href={sanitizeExternalHref(link.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
@@ -124,13 +125,13 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
           className="flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-5"
           aria-label={t('footer.legalNav')}
         >
-          <a href={legalNoticeUrl} data-draft-target="footer-legal" className={footerLinkClass}>
+          <a href={sanitizeExternalHref(legalNoticeUrl)} data-draft-target="footer-legal" className={footerLinkClass}>
             {t('footer.legal')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">
             ·
           </span>
-          <a href={privacyPolicyUrl} data-draft-target="footer-privacy" className={footerLinkClass}>
+          <a href={sanitizeExternalHref(privacyPolicyUrl)} data-draft-target="footer-privacy" className={footerLinkClass}>
             {t('footer.privacy')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">

@@ -58,18 +58,15 @@ Supabase region and DPA: configure in Supabase dashboard; referenced in Privacy 
 
 No admin credentials are stored in the browser. Admin auth uses Supabase SSR session cookies.
 
-### Legacy server-side data (Upstash Redis — `api/`)
+### Server-side rate-limiting data (Supabase Postgres)
 
-Still used for security and sync workers not yet migrated to App Router:
+Rate limiting uses the existing Supabase Postgres (`public.rate_limits`), not a separate store:
 
-| Key pattern | Data | Retention |
-|-------------|------|-----------|
-| `zd-rl:*` | Hashed IP rate-limit counters | ~60 s window |
-| `zd-threat:*`, `zd-blocked:*` | Hashed IP threat scores / blocks | 1 h – 7 d TTL |
-| `zd-honeytoken-alerts` | Security incident log (hashed IPs) | Rolling 500 entries |
-| `zd-profile:*` | Attacker behavioural aggregates (hashed IPs) | 30 d TTL |
+| Data | Retention |
+|------|-----------|
+| Hashed IP rate-limit counters (`SHA-256(RATE_LIMIT_SALT + IP)`) | expires after each fixed window |
 
-IP addresses are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage. Legal basis: Art. 6(1)(f) — legitimate interest in IT security.
+Client IPs are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage — no plaintext IPs are persisted. Legal basis: Art. 6(1)(f) — legitimate interest in IT security.
 
 ### External APIs (server-side)
 

@@ -8,7 +8,6 @@ import {
   resolveBandsintownArtistName,
   syncBandsintownGigsToSupabase,
 } from '@/lib/bandsintown-sync'
-import { readBearerToken, verifyCronSecret } from '@/lib/cron-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,15 +44,10 @@ async function isAdminSession(): Promise<boolean> {
   return (profile as { role?: string } | null)?.role === 'admin'
 }
 
-export async function POST(request: Request) {
-  const bearer = readBearerToken(request.headers.get('authorization'))
-  const isCron = verifyCronSecret(bearer)
-
-  if (!isCron) {
-    const admin = await isAdminSession()
-    if (!admin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+export async function POST(_request: Request) {
+  const admin = await isAdminSession()
+  if (!admin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const apiKey = await getApiSecret('bandsintown_api_key')

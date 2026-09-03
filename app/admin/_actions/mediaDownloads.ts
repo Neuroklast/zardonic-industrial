@@ -7,6 +7,7 @@ import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { parseMediaCategory, validateMediaUpload } from '@/lib/media-download'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -14,7 +15,7 @@ const schema = z.object({
   description: z.string().optional().nullable(),
   category: z.string().optional().nullable(),
   file_storage_path: z.string().min(1, 'Please upload a file first.'),
-  file_url: z.string().url().optional().nullable().or(z.literal('')),
+  file_url: safeExternalUrlOptional,
   file_mime: z.string().optional().nullable(),
   file_size_bytes: z.coerce.number().optional().nullable(),
   original_filename: z.string().optional().nullable(),

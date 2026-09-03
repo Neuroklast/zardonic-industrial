@@ -188,7 +188,6 @@ CREATE TABLE IF NOT EXISTS public.analytics_events (
   heatmap jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE INDEX IF NOT EXISTS analytics_events_created_at_idx
   ON public.analytics_events (created_at DESC);
 
@@ -719,6 +718,14 @@ DO $$ BEGIN
   END IF;
 END; $$;
 
+-- Consent-gated public analytics INSERT (App Router /api/analytics). Read and
+-- mutate remain admin-only; anon may only append an event.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='analytics_events' AND policyname='anon insert analytics') THEN
+    EXECUTE 'CREATE POLICY "anon insert analytics" ON public.analytics_events FOR INSERT TO anon WITH CHECK (true)';
+  END IF;
+END; $$;
+
 -- ============================================================
 -- Auth trigger
 -- ============================================================
@@ -780,5 +787,67 @@ ALTER TABLE public.merchandise       ADD COLUMN IF NOT EXISTS image_content_hash
 ALTER TABLE public.soundpacks        ADD COLUMN IF NOT EXISTS image_content_hash text;
 ALTER TABLE public.media_downloads   ADD COLUMN IF NOT EXISTS file_content_hash text;
 ALTER TABLE public.news_posts        ADD COLUMN IF NOT EXISTS cover_content_hash text;
+
+-- ============================================================
+-- Rate limiting (Supabase-backed distributed limiter, no Redis)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.rate_limits (
+  key text PRIMARY KEY,
+  count integer NOT NULL DEFAULT 1,
+  reset_at timestamptz NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS rate_limits_reset_at_idx
+  ON public.rate_limits (reset_at);
+
+-- Atomic fixed-window counter. SECURITY DEFINER + service-role only; the
+-- anon/authenticated roles cannot invoke it (they could otherwise hammer it).
+-- Keys are already hashed IPs (SHA-256 + RATE_LIMIT_SALT) — never raw IPs.
+CREATE OR REPLACE FUNCTION public.consume_rate_limit(
+  p_key text,
+  p_limit integer,
+  p_window_seconds integer
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_now timestamptz := now();
+  v_reset_at timestamptz;
+  v_count integer;
+BEGIN
+  IF p_limit <= 0 OR p_window_seconds <= 0 THEN
+    RETURN jsonb_build_object('count', 0, 'reset_at', 0);
+  END IF;
+
+  -- Opportunistic cleanup of expired buckets (indexed by reset_at).
+  DELETE FROM public.rate_limits WHERE reset_at <= v_now;
+
+  INSERT INTO public.rate_limits (key, count, reset_at)
+  VALUES (p_key, 1, v_now + make_interval(secs => p_window_seconds))
+  ON CONFLICT (key) DO UPDATE SET
+    count = CASE
+      WHEN public.rate_limits.reset_at <= v_now THEN 1
+      ELSE public.rate_limits.count + 1
+    END,
+    reset_at = CASE
+      WHEN public.rate_limits.reset_at <= v_now THEN v_now + make_interval(secs => p_window_seconds)
+      ELSE public.rate_limits.reset_at
+    END
+  RETURNING count, reset_at INTO v_count, v_reset_at;
+
+  RETURN jsonb_build_object(
+    'count', v_count,
+    'reset_at', (extract(epoch FROM v_reset_at) * 1000)::bigint
+  );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.consume_rate_limit(text, integer, integer)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.consume_rate_limit(text, integer, integer)
+  TO service_role, postgres;
 
 

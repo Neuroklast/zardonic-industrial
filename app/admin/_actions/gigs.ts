@@ -5,6 +5,7 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const gigInputSchema = z.object({
@@ -13,7 +14,7 @@ const gigInputSchema = z.object({
   city: z.string().optional().nullable(),
   country: z.string().optional().nullable(),
   event_date: z.string().min(1),
-  ticket_url: z.string().url().optional().nullable().or(z.literal('')).transform(v => v === '' ? null : v),
+  ticket_url: safeExternalUrlOptional.transform(v => v === '' ? null : v),
   festival_name: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
 })

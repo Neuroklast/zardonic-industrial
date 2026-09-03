@@ -29,7 +29,18 @@ export function resolvePublicFonts(theme?: AppearanceTheme | null): ResolvedPubl
 
 /** CSS text for :root — safe for SSR <style> inject. */
 export function buildPublicFontCssVars(fonts: ResolvedPublicFonts): string {
-  const esc = (s: string) => s.replace(/</g, '\\3c ')
+  // Escape characters that could break out of the `:root{...}` declaration or
+  // the surrounding <style> element (CSS-injection defense for admin-supplied
+  // font names — matches the pattern used by the CSP-note accepted style-src).
+  const esc = (s: string) =>
+    s
+      .replace(/\\/g, '\\5c ')
+      .replace(/</g, '\\3c ')
+      .replace(/>/g, '\\3e ')
+      .replace(/\{/g, '\\7b ')
+      .replace(/\}/g, '\\7d ')
+      .replace(/;/g, '\\3b ')
+      .replace(/\r?\n/g, '')
   return `:root{--font-heading:${esc(fonts.fontHeading)};--font-body:${esc(fonts.fontBody)};--font-mono:${esc(fonts.fontMono)};}`
 }
 

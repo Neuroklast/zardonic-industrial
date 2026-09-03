@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { m } from 'framer-motion'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import {
   loadLogoImageForCanvas,
   logoRasterSize,
@@ -260,7 +261,7 @@ function LogoGrid({
           return item.url ? (
             <a
               key={item.id}
-              href={item.url}
+              href={sanitizeExternalHref(item.url)}
               target="_blank"
               rel="noopener noreferrer"
               className={wrapperClassName}

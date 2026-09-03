@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { toDirectImageUrl } from '@/lib/image-cache'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface GridItem {
   id: string
@@ -57,7 +58,7 @@ function GridItemTile({
   if (item.externalUrl) {
     return (
       <a
-        href={item.externalUrl}
+              href={sanitizeExternalHref(item.externalUrl)}
         target="_blank"
         rel="noopener noreferrer"
         className="group block"
@@ -100,7 +101,7 @@ export function SquareImageGrid({
       {footerText ? (
         footerUrl ? (
           <a
-            href={footerUrl}
+              href={sanitizeExternalHref(footerUrl)}
             target="_blank"
             rel="noopener noreferrer"
             data-draft-target="merchandise-footer"

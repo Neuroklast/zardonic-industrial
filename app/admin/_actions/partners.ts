@@ -6,15 +6,16 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const partnerCategorySchema = z.enum(['credit', 'endorsement', 'partner', 'label', 'sponsor'])
 
 const partnerInputSchema = z.object({
   name: z.string().min(1),
-  url: z.string().url().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
+  url: safeExternalUrlOptional.transform((v) => (v === '' ? null : v)),
   logo_storage_path: z.string().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
-  logo_url: z.string().url().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
+  logo_url: safeExternalUrlOptional.transform((v) => (v === '' ? null : v)),
   category: partnerCategorySchema.optional().default('partner'),
   display_order: z.coerce.number().optional().default(0),
   active: z.coerce.boolean().optional(),

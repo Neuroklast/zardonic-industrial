@@ -8,6 +8,7 @@ import { formatReleaseDate } from '@/lib/format-release-date'
 import { parseTrackTitle } from '@/lib/track-parser'
 import { displayReleaseType } from '@/lib/release-type'
 import { getVisibleStreamingLinks, formatStreamingPlatformLabel } from '@/lib/streaming-platforms'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 
 interface ReleaseOverlayContentProps {
   data: Release
@@ -207,7 +208,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
               <div className="flex flex-wrap gap-4">
                 {data.customLinks.map((link, i) => (
                   <Button key={i} asChild variant="outline" className="font-mono min-h-[44px]">
-                    <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <a href={sanitizeExternalHref(link.url)} target="_blank" rel="noopener noreferrer">
                       <span className="hover-chromatic">{link.label}</span>
                     </a>
                   </Button>
@@ -232,7 +233,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
                   variant="outline"
                   className="font-mono min-h-[44px]"
                 >
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                  <a href={sanitizeExternalHref(link.url)} target="_blank" rel="noopener noreferrer">
                     <span className="hover-chromatic">{formatStreamingPlatformLabel(link.platform)}</span>
                   </a>
                 </Button>

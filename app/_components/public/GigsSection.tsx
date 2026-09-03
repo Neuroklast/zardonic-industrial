@@ -10,6 +10,7 @@ import type { CyberpunkOverlayState } from '@/lib/app-types'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
 import { ArrowRight, CalendarBlank, MapPin } from '@phosphor-icons/react'
 
@@ -107,7 +108,7 @@ function GigList({
 
                 {gig.ticket_url ? (
                   <a
-                    href={gig.ticket_url}
+                    href={sanitizeExternalHref(gig.ticket_url)}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(event) => event.stopPropagation()}

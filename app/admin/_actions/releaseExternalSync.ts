@@ -1,6 +1,6 @@
 'use server'
 
-import { runAdminAction } from '@/app/admin/_actions/auth'
+import { requireAdmin, runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext, dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { cacheReleaseCoverToR2 } from '@/lib/release-cover-r2'
@@ -64,18 +64,22 @@ export async function previewReleaseFromExternalId(
   const normalized = normalizeExternalId(source, rawId)
   if (!normalized) return { ok: false, error: 'Invalid external id or URL' }
 
-  const metadata = await fetchReleaseMetadataByExternalId(source, normalized)
-  if (!metadata) {
-    const hint =
-      source === 'spotify'
-        ? 'Check Spotify credentials in Admin → API Keys'
-        : source === 'discogs'
-          ? 'Check Discogs token in Admin → API Keys'
-          : 'ID not found on iTunes'
-    return { ok: false, error: `Could not fetch metadata from ${source}. ${hint}.` }
-  }
+  const result = await runAdminAction<ReleaseExternalPreviewResult>(async () => {
+    const metadata = await fetchReleaseMetadataByExternalId(source, normalized)
+    if (!metadata) {
+      const hint =
+        source === 'spotify'
+          ? 'Check Spotify credentials in Admin → API Keys'
+          : source === 'discogs'
+            ? 'Check Discogs token in Admin → API Keys'
+            : 'ID not found on iTunes'
+      return { ok: false, error: `Could not fetch metadata from ${source}. ${hint}.` }
+    }
 
-  return { ok: true, metadata }
+    return { ok: true, metadata }
+  }, 'Could not fetch release metadata.')
+
+  return 'ok' in result ? result : { ok: false, error: result.error }
 }
 
 export async function syncReleaseFromExternalId(
@@ -227,6 +231,8 @@ async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
 }
 
 export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExternalSyncResult> {
+  await requireAdmin()
+
   const token = await getSpotifyAccessToken()
   if (!token) {
     return {
@@ -275,6 +281,8 @@ export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExte
 }
 
 export async function syncReleasesFromDiscogs(artist?: string): Promise<BulkExternalSyncResult> {
+  await requireAdmin()
+
   const config = await loadCatalogueSyncConfig()
   const artistName = (artist?.trim() || config.artistName).trim()
   const configuredId = normalizeDiscogsArtistId(config.discogsArtistId)

@@ -14,6 +14,11 @@ const serverEnvSchema = z.object({
   NEXT_PUBLIC_HIDE_DEMO_FALLBACK: z.enum(['true', 'false']).optional().default('false'),
   NEXT_PUBLIC_SHOW_DEMO_BADGE: z.enum(['true', 'false']).optional().default('false'),
   RESEND_API_KEY: z.string().min(1).optional(),
+  // Security-critical (server-only). RATE_LIMIT_SALT is enforced at runtime
+  // (lib/rate-limit.ts) when reached in production; add to CI/Vercel env.
+  RATE_LIMIT_SALT: z.string().min(16, 'RATE_LIMIT_SALT must be a sufficiently long random string').optional(),
+  SECRETS_ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, 'SECRETS_ENCRYPTION_KEY must be 64 hex chars').optional(),
+  CRON_SECRET: z.string().min(16, 'CRON_SECRET must be a long random string').optional(),
 })
 
 const clientEnvSchema = z.object({

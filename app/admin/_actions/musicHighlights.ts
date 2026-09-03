@@ -5,11 +5,12 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
+import { safeExternalUrl } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const schema = z.object({
   title: z.string().min(1),
-  youtube_url: z.string().url(),
+  youtube_url: safeExternalUrl,
   description: z.string().optional().nullable(),
   display_order: z.coerce.number().optional().default(0),
 })

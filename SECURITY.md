@@ -36,152 +36,81 @@ We release patches for security vulnerabilities for the latest version of the pr
 ## Security Architecture
 
 ### Authentication & Access Control (App Router admin)
-- **Admin Authentication**: Supabase Auth (`/admin/login`) with SSR session cookies; `profiles.role = 'admin'` required for protected routes
-- **Session Cookies**: Managed by `@supabase/ssr`; HttpOnly cookies, no client-side session token storage
-- **Role checks**: Server Components and middleware verify admin role before rendering protected pages
+- **Admin Authentication**: Supabase Auth (`/admin/login`) with SSR session cookies; `profiles.role = 'admin'` required for protected routes.
+- **Session Cookies**: Managed by `@supabase/ssr`; HttpOnly cookies, no client-side session token storage.
+- **MFA**: Enable Supabase Auth **TOTP/MFA** for the admin account for defense-in-depth (recommended; configured in the Supabase dashboard, not in code).
+- **Role checks**: Server Components (`app/admin/_actions/auth.ts` `requireAdmin`), route handlers (`lib/api-admin-auth.ts`), and `proxy.ts` verify the admin role before rendering protected pages or mutating data.
+- **No automatic admin promotion**: `app/admin/login/submit/route.ts` never modifies `profiles.role`. The admin row must exist in Supabase (created via the service role key or dashboard); login only authenticates.
 
-### Admin auth (current)
-- **Supabase Auth only** — `app/admin/login/submit/route.ts`, HttpOnly session cookies via `@supabase/ssr`
-- Legacy `api/auth.ts`, KV session tokens, and `x-session-token` header support **removed** (2026-06-24)
+### Admin auth (canonical)
+- **Supabase Auth only** — `app/admin/login/submit/route.ts`, HttpOnly session cookies via `@supabase/ssr`.
+- Legacy `api/auth.ts`, KV session tokens, and `x-session-token` header support **removed**.
 
 ### Input Validation (Zod)
-All API inputs are validated through strict [Zod](https://zod.dev/) schemas (`api/_schemas.ts`):
-- **KV API**: Key format, length (max 200), no control characters; value presence check
-- **Auth API**: Password length/format, TOTP 6-digit format, setup token validation
-- **Blocklist API**: Hashed IP format (8–64 chars), reason string, TTL range
-- **iTunes API**: Search term bounded, entity enum validation
-- **Security Settings**: All settings type-checked and range-bounded
+All API inputs and admin mutations are validated through strict [Zod](https://zod.dev/) schemas (`api/_schemas.ts`, `lib/schemas/*`, `lib/*-schema.ts`):
+- **Analytics API** (`app/api/analytics`): type enum, bounded strings, heatmap ranges.
+- **Public forms**: Contact (`lib/contact-form.ts`) and newsletter (`lib/newsletter-schema.ts`) with honeypot fields.
+- **External URL fields**: restricted to `http`/`https` via `lib/safe-external-url.ts` — blocks `javascript:`, `data:`, `vbscript:` (prevents click-to-XSS). Applied at write-time (admin actions/schemas) AND render-time (`lib/sanitize-href.ts`).
 
-### Rate Limiting
-Legacy root `api/*` handlers use `api/_ratelimit.ts` (Upstash Redis):
-- **Algorithm**: Sliding window — 30 requests per 60 seconds per client
-- **Backend**: Upstash Redis via `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`
-- **GDPR Compliance**: Client IPs are hashed with SHA-256 + a secret salt before use as rate-limit keys. No plaintext IPs are stored. Rate-limit state auto-expires after the window period.
-- **Response**: HTTP 429 when the limit is exceeded; **HTTP 503 fail-closed** when Redis is configured but unreachable (e.g. DNS `ENOTFOUND` for a deleted database). Fix env vars — do not re-enable by removing rate limits on security-sensitive routes.
-- **Not configured**: if both Upstash env vars are absent, rate limiting is skipped (local dev).
-- **App Router**: public forms use `lib/server-rate-limit.ts` (fail-open on Redis errors). `/api/geo` has no Redis dependency (`app/api/geo/route.ts` only).
+### Rate Limiting (Supabase Postgres — no Redis)
+Rate limiting is distributed and durable via the **existing Supabase Postgres** instance — there is **no Upstash/Redis** dependency.
 
-### SSRF Protection (Image Proxy)
-Implemented in `lib/ssrf-guard.ts` (used by `api/image-proxy.ts` and `api/image-proxy-protected.ts`):
-- Blocklist for private/internal networks: `127.x`, `10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, IPv6 loopback/mapped/link-local/unique-local, metadata endpoints
-- Hex, octal, and decimal integer IP notation blocked
-- Protocol allowlist: only `http:` and `https:`
-- DNS rebinding protection: hostname resolved and pinned before fetch; redirect targets re-validated
-- Content-type restricted to raster `image/*` (SVG blocked to prevent XSS)
+- **Backend**: `public.rate_limits` table + atomic `consume_rate_limit(...)` Postgres function (`supabase/schema.sql`), invoked server-side via the service-role client (`lib/rate-limit.ts`).
+- **Privacy (GDPR)**: client IPs are hashed with **SHA-256 + `RATE_LIMIT_SALT`** before storage — no plaintext IPs are persisted, and buckets auto-expire.
+- **Fail-closed**: on any infra error the limiter denies (except a per-instance in-memory backstop that still enforces the limit). No silent bypass.
+- **Throttled endpoints**: admin login (`login`), analytics POST, newsletter subscribe, contact submit, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`.
+
+### Security HTTP Headers (vercel.json / next.config.mjs)
+All responses include defensive HTTP headers:
+- **Content-Security-Policy**: Restricts script, style, image, frame, connect sources (see the CSP note below).
+- **X-Frame-Options: SAMEORIGIN** — prevents clickjacking.
+- **X-Content-Type-Options: nosniff** — prevents MIME sniffing.
+- **Strict-Transport-Security**: HSTS with 2-year max-age and preload.
+- **Referrer-Policy**: `strict-origin-when-cross-origin`.
+- **Permissions-Policy**: disables camera, microphone, geolocation, payment.
+- **Cross-Origin-Opener-Policy** / **Cross-Origin-Resource-Policy**.
 
 ### CSP note
-`style-src 'unsafe-inline'` is required for Tailwind and dynamic theme variables. Accepted for launch (TD-004); `script-src` remains restricted and embeds use two-click consent.
+`style-src 'self' 'unsafe-inline'` is required for Tailwind and dynamic theme variables (accepted risk, tracked as TD-004). `script-src` includes `'self' 'unsafe-inline' 'unsafe-eval'` (Next.js dev/runtime); tighten this once no runtime feature requires it. Embeds use two-click consent — no auto-loading third-party scripts/frames.
 
-### Security HTTP Headers (vercel.json)
-All responses include defensive HTTP headers:
-- **Content-Security-Policy**: Restricts script, style, image, and frame sources
-- **X-Frame-Options: DENY**: Prevents clickjacking
-- **X-Content-Type-Options: nosniff**: Prevents MIME sniffing
-- **Strict-Transport-Security**: HSTS with 2-year max-age and preload
-- **Referrer-Policy**: Limits referrer information leakage
-- **Permissions-Policy**: Disables camera, microphone, geolocation, payment
+### SSRF Protection
+- `lib/ssrf-guard.ts` (`assertSafeRemoteUrl`) blocks private/internal networks (`127.x`, `10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, IPv6 loopback/mapped/link-local/unique-local, metadata endpoints), protocol allowlist (`http:`/`https:` only), and DNS pre-resolution/rebinding protection.
+- Used by `app/api/partner-logo/route.ts` (allowlisted to R2 / Supabase HTTPS assets) **and** the admin media-fetch actions (`cacheRemoteImage`, `fetchRemoteImageForEdit`, `cacheRemoteVideo`).
+- `lib/remote-image-url.ts` / `lib/remote-video-url.ts` share the hostname blocklist for client-side URL validation.
 
-### Robots.txt Trap (Security Rewrites)
-Paths that are listed as `Disallow` in robots.txt are rewarded with:
-- **Tarpit Delay**: 3–8 second random delay to limit scanner throughput
-- **Honeytoken Link Injection**: The 403 page contains links to further restricted paths to catch automated crawlers
-- **Threat Score Increment**: Access violations increment the requester's threat score
-- **Attacker Flagging**: The requesting IP is flagged for entropy injection on subsequent requests
-
-Trapped paths include: `/admin/*`, `/dashboard/*`, `/backup/*`, `/config/*`, `/debug/*`, `/staging/*`, `/internal/*`, `/private/*`, `/data/*`, `/logs/*`, `/wp-admin/*`, `/phpmyadmin/*`, `/xmlrpc.php`, `/.env`, `/.git/*`, and others.
-
-### Honeytokens (Intrusion Detection)
-Decoy records are planted in the Redis database (`api/_honeytokens.ts`):
-- Keys: `admin_backup`, `admin-backup-hash`, `db-credentials`, `api-master-key`, `backup-admin-password`
-- Any read or write to these keys triggers a **silent alarm**: logged to `stderr` and persisted to `zd-honeytoken-alerts` in Redis
-- The API returns a confrontational `403 Forbidden` taunt message to detected attackers
-
-### Threat Score System (Behavioral IDS)
-Requests are scored based on suspicious behavior patterns (`api/_threat-score.ts`):
-- **Algorithm**: Cumulative score per (hashed) IP, 1-hour TTL
-- **Score Sources**: robots.txt violations (+3), honeytoken access (+5), suspicious UA (+4), missing browser headers (+2), rate limit exceeded (+2)
-- **Escalation**: WARN (≥3) → TARPIT (≥7) → AUTO-BLOCK (≥12, configurable)
-- **Storage**: Ephemeral scores in Redis with 1-hour TTL
-- **Auto-blocking**: IPs exceeding threshold are automatically added to the hard blocklist
-
-### Hard Blocklist
-Persistent IP blocklist for confirmed attackers (`api/_blocklist.ts`, `api/blocklist.ts`):
-- Auto-populated when threat score exceeds threshold (default: 12 points)
-- Admin-manageable via dashboard (add/remove entries with reason and TTL)
-- Configurable TTL (default 7 days)
-- All API endpoints check blocklist before processing
-- Index maintained in Redis for efficient lookups
-
-### Attacker Profiling System
-Detailed per-attacker analytics aggregating behavioral data per IP hash:
-- **Threat Score History**: Timeline of score changes with reasons
-- **Attack Type Analysis**: Frequency distribution of attack patterns
-- **User-Agent Analysis**: Classification into categories with diversity metrics
-- **Behavioral Pattern Detection**: Automated identification of attack signatures
-- **Incident Timeline**: Chronological log of last 50 incidents per attacker
-- **Data Retention**: Profiles expire after 30 days
-- **Privacy**: All data uses SHA-256 hashed IPs only (GDPR compliant)
-
-### Zip Bomb (Optional, Disabled by Default)
-When enabled, serves a gzip-compressed 10 MB null-byte payload to confirmed bots (`api/_zipbomb.ts`):
-- Only triggered for IPs already flagged as attackers
-- Disabled by default — enable explicitly in Security Settings
-
-### Real-time Alerting (Optional)
-Critical security events trigger immediate Discord webhook notifications (`api/_alerting.ts`):
-- **Deduplication**: Max 1 alert per IP per 5 minutes
-- **Configuration**: Set `DISCORD_WEBHOOK_URL` environment variable to enable
-
-## KV Key Namespacing (Zardonic)
-
-Most Redis keys use the `zd-` prefix to namespace Zardonic data. Session
-tokens are an exception — they use the bare `session:*` prefix (as
-implemented in `api/auth.ts`).
-
-| Key | Purpose |
-|---|---|
-| `session:*` | Admin session tokens (4h TTL) |
-| `zd-threat:*` | Threat scores per hashed IP (1h TTL) |
-| `zd-blocked:*` | Hard-blocked IPs (7d default TTL) |
-| `zd-blocked-index` | Set index of all blocked hashes |
-| `zd-security-settings` | Persisted security configuration |
-| `zd-attacker-profiles` | Per-attacker behavioral profiles |
-| `zd-honeytoken-alerts` | Security incident log (last 500) |
-| `zd-flagged:*` | IPs flagged for entropy injection (24h TTL) |
-| `zd-admin-totp-secret` | TOTP 2FA secret (permanent) |
+### Edge Bot Shield
+`proxy.ts` returns 403 for known scraper/AI-training user agents (`lib/crawler-blocklist.ts`) before any route render — protects both the public site and `/admin`. `public/robots.txt` mirrors the list for compliant bots. No proprietary IP blocklist/honeytoken machinery is used.
 
 ## Environment Variables
 
 | Variable | Purpose | Required |
 |---|---|---|
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis endpoint | Yes |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis auth token | Yes |
-| `RATE_LIMIT_SALT` | Secret salt for IP hashing (rate limiting) | **Required in production** |
-| `ADMIN_SETUP_TOKEN` | One-time token for initial admin setup | Recommended |
-| `DISCORD_WEBHOOK_URL` | Discord webhook URL for security alerts | Optional |
-| `BANDSINTOWN_API_KEY` | Bandsintown API key | Optional |
-| `SITE_URL` | Site URL included in alert messages | Optional |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL | Yes |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon (public) key | Yes |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role (server-side, bypasses RLS) | Yes |
+| `NEXT_PUBLIC_SITE_URL` | Canonical site URL | Yes |
+| `R2_*` / `R2_BUCKET_MEDIA` | Cloudflare R2 media origin | Yes |
+| `RATE_LIMIT_SALT` | Secret salt for hashing client IPs (rate limiting) | **Required in production** |
+| `SECRETS_ENCRYPTION_KEY` | AES-256-GCM key for Admin → API Keys (64 hex chars) | When encrypted secrets are used |
+| `CONTACT_EMAIL` | Contact form recipient | Optional (default `contact@zardonic.com`) |
 
 ## Best Practices for Deployment
 
-1. **Environment Variables**: Never commit sensitive API keys or tokens
-2. **Rate Limit Salt**: Set `RATE_LIMIT_SALT` to a unique, random value in production
-3. **Supabase admin**: Create admin users in Supabase Auth with `profiles.role = 'admin'`; do not expose `SUPABASE_SERVICE_ROLE_KEY` to the client
-4. **Legacy KV admin** (if still used): Set `ADMIN_SETUP_TOKEN` and enable TOTP via legacy `api/` endpoints
-5. **HTTPS**: Always deploy behind HTTPS (HSTS header enforced via vercel.json)
-6. **Regular Updates**: Keep dependencies up to date
-7. **Log Monitoring**: Monitor `[HONEYTOKEN ALERT]` and `[ACCESS VIOLATION]` entries in server logs
-8. **CORS**: Set `ALLOWED_ORIGIN` to your production domain. If left unset, the contact, newsletter, and image-proxy endpoints will refuse cross-origin requests in production (`Access-Control-Allow-Origin: null`).
-9. **Cron Security**: Set `CRON_SECRET` to a long random string. Cron endpoints (`/api/gigs-sync`, `/api/releases-enrich`) require `Authorization: Bearer <CRON_SECRET>` from the cron scheduler. Update your `vercel.json` cron configuration accordingly if using a custom scheduler.
+1. **Environment Variables**: Never commit sensitive API keys or tokens. `env.mjs` validates required server vars and fails fast in production.
+2. **Rate Limit Salt**: Set `RATE_LIMIT_SALT` to a unique, random value in production (32-byte hex). `lib/rate-limit.ts` refuses to run in production without it.
+3. **Secrets**: Store integration keys via **Admin → API Keys** (AES-256-GCM encrypted, requires `SECRETS_ENCRYPTION_KEY`). Never expose `SUPABASE_SERVICE_ROLE_KEY` to the client.
+4. **Admin rows**: Create admin users in Supabase Auth with `profiles.role = 'admin'`; do NOT rely on any login-time auto-promotion.
+5. **HTTPS**: Always deploy behind HTTPS (HSTS enforced via vercel.json).
+6. **Regular Updates**: Keep dependencies up to date (CI runs `npm audit`).
+7. **Log Monitoring**: Monitor `[rate-limit]`, `[SECURITY]`, and R2/SSRF warnings in server logs.
+
+> Note: this project does not use Vercel cron triggers (Vercel Free). There is no `crons` block in `vercel.json`. The `/api/gigs-sync` and `/api/releases-track-enrich` routes are triggered manually by an admin; the `/api/r2-reconcile` and `/api/sync-jobs/reap` routes are admin-only utilities. A `CRON_SECRET` bearer is only used internally by the async sync-job continuation fallback and is optional.
 
 ## Third-Party Services
 
 | Service | Data | Notes |
 |---------|------|-------|
-| Supabase | Content, auth, legal config | Primary store; review RLS policies |
+| Supabase | Content, auth, legal config, analytics, rate-limit counters | Review RLS policies in `supabase/schema.sql` |
 | Cloudflare R2 | Media uploads | Public CDN URLs for site assets |
-| Vercel | Hosting, logs | Configure env vars per environment |
+| Vercel | Hosting, logs, cron, edge bot shield | Configure env vars per environment |
 | Resend | Contact/newsletter email | API key server-side only |
-| Upstash Redis | Security/sync (`api/`) | Hashed IPs only for rate limiting |
-
-Sanity CMS was evaluated but **not adopted** — no `@sanity/*` dependency in this project.

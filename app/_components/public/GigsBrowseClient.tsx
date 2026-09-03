@@ -7,6 +7,7 @@ import { ArrowLeft, CalendarBlank, MapPin } from '@phosphor-icons/react'
 import CyberpunkOverlay from '@/components/CyberpunkOverlay'
 import type { CyberpunkOverlayState } from '@/lib/app-types'
 import { paginateItems } from '@/lib/browse-pagination'
+import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import {
   browseGigs,
   GIG_TIMING_FILTERS,
@@ -86,7 +87,7 @@ function GigBrowseCard({
 
           {gig.ticket_url ? (
             <a
-              href={gig.ticket_url}
+              href={sanitizeExternalHref(gig.ticket_url)}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(event) => event.stopPropagation()}

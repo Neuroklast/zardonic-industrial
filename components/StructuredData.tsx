@@ -99,8 +99,15 @@ export function StructuredData({ artistName, siteData, canonicalUrl = '' }: Stru
         <script
           key={i}
           type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is sanitised structured data
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON.stringify output is escaped for </script>/HTML before injection
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(schema)
+              .replace(/</g, '\\u003c')
+              .replace(/>/g, '\\u003e')
+              .replace(/&/g, '\\u0026')
+              .replace(/\u2028/g, '\\u2028')
+              .replace(/\u2029/g, '\\u2029'),
+          }}
         />
       ))}
     </>
