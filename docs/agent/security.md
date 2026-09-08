@@ -73,10 +73,10 @@ Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Req
 
 ## URLs — scheme hardening
 
-User/admin-supplied URLs are constrained to `http`/`https`:
-- Write-time: a shared `safeExternalUrl`/`safeExternalUrlOptional` guard (`lib/safe-external-url.ts`) on all external-URL schemas/actions (social, partners, gigs, merchandise, soundpacks, media downloads, music highlights, release streaming/custom links, visuals, footer legal).
-- Render-time: `sanitizeExternalHref` (`lib/sanitize-href.ts`) on every DB-backed `<a href>`/download link as defense-in-depth.
-- This blocks `javascript:`/`data:`/`vbscript:` click-to-XSS.
+User/admin-supplied URLs are constrained by scheme:
+- Write-time: a shared `safeExternalUrl`/`safeExternalUrlOptional` guard (`lib/safe-external-url.ts`) on all **external**-URL schemas/actions (social, partners, gigs, merchandise, soundpacks, media downloads, music highlights, release streaming/custom links, visuals).
+- Render-time: `sanitizeExternalHref` (`lib/sanitize-href.ts`) on every DB-backed **external** `<a href>`/download link.
+- Footer Legal Notice / Privacy Policy default to **same-origin paths** (`/legal-notice`, `/privacy-policy`). Use `sanitizeHref` there — it allows `/…` plus `http`/`https`, and still blocks `javascript:`/`data:`/`vbscript:`/`//host`. Never run those links through `sanitizeExternalHref` alone (`new URL('/x')` throws → no `href` → not clickable).
 
 ## Config
 

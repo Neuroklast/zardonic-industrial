@@ -3,7 +3,7 @@
 import { CookiePreferencesButton } from '@/components/CookieConsent'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useLocale } from '@/contexts/LocaleContext'
-import { sanitizeExternalHref } from '@/lib/sanitize-href'
+import { sanitizeExternalHref, sanitizeHref } from '@/lib/sanitize-href'
 
 interface SocialLink {
   id: string
@@ -125,13 +125,13 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
           className="flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-5"
           aria-label={t('footer.legalNav')}
         >
-          <a href={sanitizeExternalHref(legalNoticeUrl)} data-draft-target="footer-legal" className={footerLinkClass}>
+          <a href={sanitizeHref(legalNoticeUrl)} data-draft-target="footer-legal" className={footerLinkClass}>
             {t('footer.legal')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">
             ·
           </span>
-          <a href={sanitizeExternalHref(privacyPolicyUrl)} data-draft-target="footer-privacy" className={footerLinkClass}>
+          <a href={sanitizeHref(privacyPolicyUrl)} data-draft-target="footer-privacy" className={footerLinkClass}>
             {t('footer.privacy')}
           </a>
           <span className="hidden text-border sm:inline" aria-hidden="true">

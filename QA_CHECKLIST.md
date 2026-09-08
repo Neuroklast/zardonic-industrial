@@ -33,6 +33,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Multi-colour transparent logos (e.g. AEW white + gold A/W + gray): with **White logo fill** on, **all** ink is solid white â€” only transparency stays transparent (no gold leftover, no missing white text)
 - [ ] Partner logos: hover shows RGB chromatic fringe whether **White logo fill** is on or off (pre-whitened PNG with fill unchecked still fringes)
 - [ ] Footer: social icons readable size; legal links not micro-type; wrap on narrow screens
+- [ ] Footer Legal Notice + Privacy Policy are real links (`href="/legal-notice"` / `href="/privacy-policy"`) and open those pages
 - [ ] Cookie banner / preferences still reachable; Reject focuses first action; Escape closes customize
 - [ ] Legal Notice + Privacy Policy routes render from Supabase legal config (EN + DE via language switcher)
 - [ ] Incomplete legal fields: admin checklist red + public notice; complete: no warning
@@ -86,6 +87,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | White PNG box (e.g. QUESTEC) | Canvas silhouette; no CSS invert on plates |
 | React #418 text + R2 SVG CORS | Locale after mount; `/api/partner-logo` for R2 SVGs |
 | PWM / white wordmark missing | White-on-transparent logos stay visible (not stripped as a plate) |
+| Footer Legal/Privacy not clickable | Same-origin paths keep `href`; `sanitizeHref` not `sanitizeExternalHref` |
 | Tiny footer | Icons â‰¥28px; legal â‰¥ text-sm |
 
 | Discography missing covers | Releases imported from Spotify/Discogs and the async import path now store cover art on R2; coverless releases show a fallback. Running any catalogue import auto-backfills coverless releases (iTunes then Spotify then Discogs). |

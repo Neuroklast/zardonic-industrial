@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Footer Legal Notice / Privacy Policy not clickable**: `sanitizeExternalHref` only allows `http`/`https`, so default same-origin paths (`/legal-notice`, `/privacy-policy`) rendered as `<a>` without `href`. Footer legal links now use `sanitizeHref` (`lib/sanitize-href.ts`), which keeps `/…` paths and still blocks `javascript:` / `data:` / protocol-relative URLs.
+
 ### Added
 - **Admin change-password page**: `/admin/security` now lets the signed-in admin change their own Supabase Auth password (`app/admin/_actions/changePassword.ts`, `app/admin/(protected)/security/`). Requires the current password, verifies it via `signInWithPassword` (lenient on TOTP/MFA errors since the session already passed MFA), enforces a min-8-char + match rule, then `updateUser`. Added to the admin nav under **System → Security**.
 - **Enterprise rate limiting on Supabase Postgres (no Redis)**: new `lib/rate-limit.ts` + `public.rate_limits` table and atomic `consume_rate_limit()` function (`supabase/schema.sql`). Distributed, durable, GDPR-safe (SHA-256 + `RATE_LIMIT_SALT` hashed IPs), fail-closed with a per-instance in-memory backstop. Adds throttling to admin login, analytics POST, newsletter, contact, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`. `lib/server-rate-limit.ts` now delegates to it.
