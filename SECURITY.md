@@ -50,7 +50,7 @@ We release patches for security vulnerabilities for the latest version of the pr
 All API inputs and admin mutations are validated through strict [Zod](https://zod.dev/) schemas (`api/_schemas.ts`, `lib/schemas/*`, `lib/*-schema.ts`):
 - **Analytics API** (`app/api/analytics`): type enum, bounded strings, heatmap ranges.
 - **Public forms**: Contact (`lib/contact-form.ts`) and newsletter (`lib/newsletter-schema.ts`) with honeypot fields.
-- **External URL fields**: restricted to `http`/`https` via `lib/safe-external-url.ts` — blocks `javascript:`, `data:`, `vbscript:` (prevents click-to-XSS). Applied at write-time (admin actions/schemas) AND render-time (`lib/sanitize-href.ts`).
+- **External URL fields**: restricted to `http`/`https` via `lib/safe-external-url.ts` — blocks `javascript:`, `data:`, `vbscript:` (prevents click-to-XSS). Applied at write-time (admin actions/schemas) AND render-time (`sanitizeExternalHref` in `lib/sanitize-href.ts`). Same-origin footer legal paths (`/legal-notice`, `/privacy-policy`) use `sanitizeHref` so they stay clickable.
 
 ### Rate Limiting (Supabase Postgres — no Redis)
 Rate limiting is distributed and durable via the **existing Supabase Postgres** instance — there is **no Upstash/Redis** dependency.

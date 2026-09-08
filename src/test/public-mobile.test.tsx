@@ -54,4 +54,12 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/aria-label=\{`Go to image/)
     expect(src).toMatch(/type="button"/)
   })
+
+  it('SiteFooter sanitizes legal links without stripping same-origin paths', () => {
+    const src = readSource('app/_components/public/SiteFooter.tsx')
+    expect(src).toMatch(/sanitizeHref\(legalNoticeUrl\)/)
+    expect(src).toMatch(/sanitizeHref\(privacyPolicyUrl\)/)
+    expect(src).not.toMatch(/sanitizeExternalHref\(legalNoticeUrl\)/)
+    expect(src).not.toMatch(/sanitizeExternalHref\(privacyPolicyUrl\)/)
+  })
 })

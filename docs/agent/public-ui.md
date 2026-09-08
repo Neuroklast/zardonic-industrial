@@ -98,7 +98,9 @@ Tests: `src/test/partner-logo-white.test.ts` (white-plate / QUESTEC, dark-plate 
 | Copyright | same type scale as legal |
 | Layout | `flex-wrap`, generous gap, `py-10+` |
 
-File: `app/_components/public/SiteFooter.tsx`.
+Legal Notice + Privacy Policy hrefs: `sanitizeHref` (same-origin `/legal-notice` / `/privacy-policy` plus http(s)). Do **not** use `sanitizeExternalHref` — it drops relative paths and the links stop being clickable.
+
+File: `app/_components/public/SiteFooter.tsx`. Regression: `src/test/site-footer.test.tsx`, `src/test/sanitize-href.test.ts`.
 
 ---
 
