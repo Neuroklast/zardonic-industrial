@@ -1,6 +1,6 @@
 # Technical Debt Register — Zardonic Industrial
 
-> **Last Updated:** 2026-08-09 (audit remediation)
+> **Last Updated:** 2026-09-09 (npm audit high/critical bumps)
 
 ---
 
@@ -33,7 +33,7 @@ Audit references point to [archive/2026-04-vite-audit/DEEP_AUDIT.md](./archive/2
 | TD-004 | CSP `'unsafe-inline'` styles | 🟠 | S | CSS injection vector | ⏸️ Accepted | Tailwind + inline theme vars require it; documented in `SECURITY.md` |
 | TD-005 | Near-zero test coverage | 🟠 | XL | Regressions undetected | ✅ Resolved | Vitest suite (700+ tests) |
 | TD-006 | `next-themes` incompatible with Vite SPA | 🟠 | S | Wrong package for Vite | ❌ Superseded | App Router uses Next.js |
-| TD-007 | Unmerged Dependabot PRs / transitive CVEs | 🟠 | M | Known vulnerabilities | 🔄 In Progress | CI `npm audit --audit-level=high`; `undici` override bumped; moderate `postcss`/`js-yaml` via Next/@vercel/node — monitor upstream |
+| TD-007 | Unmerged Dependabot PRs / transitive CVEs | 🟠 | M | Known vulnerabilities | 🔄 In Progress | CI `npm audit --audit-level=high`; 2026-09-09: `next` 16.3.4, `sharp` 0.35.4, `js-yaml` 4.3.2, `fflate` 0.8.3, `vitest` 4.1.11 — monitor new GHSA publications |
 | TD-008 | JS obfuscation in build | 🟠 | S | Bundle bloat | ❌ Superseded | Vite pipeline removed; Next.js build has no obfuscation step |
 | TD-009 | No `prefers-reduced-motion` | 🟠 | M | WCAG risk | ✅ Resolved | CSS global rule + Framer `useReducedMotion` in public sections |
 | TD-010 | ESLint ignores `api/` | 🟠 | XS | No static analysis on APIs | ✅ Resolved | `eslint.config.mjs` lints `api/` |
