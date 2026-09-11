@@ -800,6 +800,25 @@ CREATE TABLE IF NOT EXISTS public.rate_limits (
 CREATE INDEX IF NOT EXISTS rate_limits_reset_at_idx
   ON public.rate_limits (reset_at);
 
+-- Internal counters only: never exposed via PostgREST. RLS with a deny-all
+-- policy (no SELECT/INSERT for anon/authenticated). service_role bypasses RLS;
+-- consume_rate_limit() is SECURITY DEFINER (owner). Do not FORCE RLS — that
+-- would block the definer function. Fixes advisor rls_disabled_in_public.
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.rate_limits FROM PUBLIC, anon, authenticated;
+GRANT ALL ON TABLE public.rate_limits TO service_role, postgres;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'rate_limits' AND policyname = 'No direct access'
+  ) THEN
+    EXECUTE $p$CREATE POLICY "No direct access" ON public.rate_limits
+      FOR ALL TO anon, authenticated
+      USING (false) WITH CHECK (false)$p$;
+  END IF;
+END; $$;
+
 -- Atomic fixed-window counter. SECURITY DEFINER + service-role only; the
 -- anon/authenticated roles cannot invoke it (they could otherwise hammer it).
 -- Keys are already hashed IPs (SHA-256 + RATE_LIMIT_SALT) — never raw IPs.
