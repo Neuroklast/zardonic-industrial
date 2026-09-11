@@ -49,7 +49,7 @@ Prefer **EU regions** where the product allows (Supabase project region, R2 loca
 Rate limiting runs on the existing Supabase Postgres (`lib/rate-limit.ts`, `supabase/schema.sql` `consume_rate_limit`). No Redis is required.
 
 1. Set `RATE_LIMIT_SALT` (32-byte hex) in Vercel → Project → Settings → Environment Variables
-2. Run `supabase/schema.sql` in the Supabase SQL Editor so the `public.rate_limits` table + `consume_rate_limit()` function exist
+2. Run `supabase/schema.sql` in the Supabase SQL Editor so the `public.rate_limits` table + `consume_rate_limit()` function exist, **and** RLS is enabled (deny-all for `anon`/`authenticated`). If the table already existed without RLS, re-run the `ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY` + `REVOKE` + `"No direct access"` policy block from `schema.sql`, then confirm the Security Advisor no longer reports `rls_disabled_in_public`.
 3. Redeploy production (env changes do not apply to the live deployment until redeploy)
 4. Confirm `GET /api/geo` returns 200 and rate-limited routes respond 429 when exceeded
 

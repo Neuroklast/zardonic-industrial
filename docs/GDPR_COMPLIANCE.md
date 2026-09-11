@@ -66,7 +66,7 @@ Rate limiting uses the existing Supabase Postgres (`public.rate_limits`), not a 
 |------|-----------|
 | Hashed IP rate-limit counters (`SHA-256(RATE_LIMIT_SALT + IP)`) | expires after each fixed window |
 
-Client IPs are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage — no plaintext IPs are persisted. Legal basis: Art. 6(1)(f) — legitimate interest in IT security.
+Client IPs are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage — no plaintext IPs are persisted. The table has RLS enabled (deny-all for `anon`/`authenticated`); only the service-role client and `consume_rate_limit()` can read or write rows. Legal basis: Art. 6(1)(f) — legitimate interest in IT security.
 
 ### External APIs (server-side)
 

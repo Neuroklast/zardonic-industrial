@@ -1,6 +1,6 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-09-09  
+> **Last Updated:** 2026-09-11  
 > **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
@@ -36,6 +36,7 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-09-11 | opencode/rate-limits-rls | opencode | A table added **after** the `ENABLE ROW LEVEL SECURITY` block (`public.rate_limits`) is fully exposed via the anon key until RLS is on — advisor `rls_disabled_in_public`. Revoking EXECUTE on the RPC is not enough. Enable RLS + deny-all + REVOKE in the same change as `CREATE TABLE`; apply the SQL on the live project (schema.sql is not auto-migrated). Do not `FORCE ROW LEVEL SECURITY` on tables written by SECURITY DEFINER functions. | Security | 🔴 Critical |
 | 2026-09-09 | opencode/ci-npm-audit-high | opencode | A green PR can still fail **push-to-main CI** when GitHub Advisory Database publishes new high/critical CVEs after the PR ran. `npm audit --audit-level=high` is a live registry check, not a lockfile hash. Fix by bumping patched versions (`next` 16.3.4, `sharp` 0.35.4, `js-yaml` override 4.3.2) rather than relaxing the audit gate. | DevOps + Security | 🟠 High |
 | 2026-09-09 | opencode/footer-legal-href | opencode | `sanitizeExternalHref` is http(s)-only: `new URL('/legal-notice')` throws, so React omits `href` and the footer Legal Notice / Privacy Policy look like links but are not clickable. Internal routes need `sanitizeHref` (allow `/…`, still block `javascript:` / `data:` / `//host`). Never reuse an external-only sanitizer on same-origin paths. | Security + UX/a11y | 🟠 High |
 | 2026-09-03 | opencode/postgrest-egress-bot-cache | opencode | Supabase **PostgREST egress** is dominated by dynamic-render amplification, not storage: `cookies()` anywhere in the root layout (or any `createClient()` on a public route) silently flips **every** route to request-dynamic and defeats all `revalidate` exports — one pageview then costs 13-17 REST queries while the CDN serves nothing cached. A single crawler day (or robots.txt-ignoring AI bots such as Bytespider/MJ12bot/PetalBot/CCBot — robots.txt alone does not stop them) yields multi-GB days. Decisive diagnostics order: Dashboard → Egress (which meter: PostgREST vs Storage vs Auth) + **MAU count** — 2 MAU + 7.5 GB PostgREST/day proves an automated source, not visitors. Fix pattern: cookie-less `createPublicClient()` for every public read path (page/layout/legal/sitemap/og/analytics), keep `cookies()` only on admin/auth paths, wrap remaining forced-dynamic reads (searchParams pages) in `unstable_cache`, `revalidatePath('/','layout')` after admin mutations, and block known bad user agents at the edge in `proxy.ts` before the function renders. | Performance + DevOps | 🔴 Critical |

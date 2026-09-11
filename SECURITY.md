@@ -56,6 +56,7 @@ All API inputs and admin mutations are validated through strict [Zod](https://zo
 Rate limiting is distributed and durable via the **existing Supabase Postgres** instance — there is **no Upstash/Redis** dependency.
 
 - **Backend**: `public.rate_limits` table + atomic `consume_rate_limit(...)` Postgres function (`supabase/schema.sql`), invoked server-side via the service-role client (`lib/rate-limit.ts`).
+- **RLS**: `rate_limits` has RLS enabled and a deny-all policy for `anon`/`authenticated`; table privileges are revoked from those roles. Without this, the Supabase advisor `rls_disabled_in_public` is critical (anyone with the project URL could read/edit/delete hashed rate-limit keys).
 - **Privacy (GDPR)**: client IPs are hashed with **SHA-256 + `RATE_LIMIT_SALT`** before storage — no plaintext IPs are persisted, and buckets auto-expire.
 - **Fail-closed**: on any infra error the limiter denies (except a per-instance in-memory backstop that still enforces the limit). No silent bypass.
 - **Throttled endpoints**: admin login (`login`), analytics POST, newsletter subscribe, contact submit, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`.

@@ -95,4 +95,5 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | Sync job double-runs / progress sticky | The job lock is 15 min stale and atomic, so a long/running job is not superseded mid-tick. |
 | Duplicate form field id warning | Admin forms (e.g. GigEditDialog) no longer emit "Duplicate form field id in the same form" in the browser Issues panel. |
 | PostgREST egress spike (bot crawls) | Public pages are CDN-cached (`Cache-Control: s-maxage` on ISR routes): two consecutive loads in 60s produce **no** Supabase queries on the second. Request with `User-Agent: GPTBot` (or `Bytespider`) → HTTP 403, no function start, no DB hit. `/admin` shows the legacy `supabase.co` URL badge when rows still reference Supabase Storage; media rows with legacy `file_url` show no download link until migrated to R2. |
+| Supabase `rls_disabled_in_public` | Security Advisor is clean. `public.rate_limits` has RLS on + deny-all for anon; REST `GET /rest/v1/rate_limits` with the anon key returns `[]` or 401/42501, not rows. Login still 429s when the rate limit is exceeded. |
 
