@@ -159,6 +159,8 @@ Server-side, the action is `factory_reset` (expert disclosure, admin-session-gat
 
 Per-release: edit form → **Reload tracklist** (force refresh tracks + Odesli).
 
+**Catalogue Sync** (`/admin/releases/sync`) → **Automatic maintenance** → **Enrich streaming links (Odesli)** runs a streaming-only pass over the whole catalogue (admin-only `POST /api/odesli`, batched, shows how many releases remain). Use it after an import or whenever a release is missing platform links — links are merged, never overwritten.
+
 Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 
 ## Catalogue sync & external IDs

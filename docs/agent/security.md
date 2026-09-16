@@ -72,6 +72,8 @@ Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Req
 
 `app/api/partner-logo/route.ts` and the admin media-fetch actions use `lib/ssrf-guard.ts` (`assertSafeRemoteUrl`): block private/metadata hosts, resolve DNS before fetch, protocol allowlist. `lib/remote-image-url.ts` shares the host blocklist for client-side URL validation.
 
+`app/api/odesli/route.ts` is **admin-only** (`lib/api-admin-auth.ts`) and rate-limited (fail-closed). The `url` query param is only forwarded to `api.song.link` as a query parameter — it is never fetched by our server, so `assertSafeRemoteUrl` does not apply here.
+
 ## URLs — scheme hardening
 
 User/admin-supplied URLs are constrained by scheme:

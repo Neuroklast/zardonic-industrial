@@ -31,20 +31,6 @@ export interface OdesliFetchResult {
   artwork?: string
 }
 
-/** Flat client-side result used by legacy release editor dialogs. */
-export interface OdesliResult {
-  spotify?: string
-  appleMusic?: string
-  soundcloud?: string
-  youtube?: string
-  bandcamp?: string
-  deezer?: string
-  tidal?: string
-  amazonMusic?: string
-  artwork?: string
-  entityType?: string
-}
-
 /** Normalise Apple Music / iTunes URLs (geo redirects, affiliate params). */
 export function cleanAppleMusicUrl(url: string): string {
   if (!url) return url
@@ -82,71 +68,21 @@ export function extractStreamingLinksFromOdesli(data: OdesliResponse): OdesliFet
   return { links, entityType, artwork }
 }
 
-export function flattenOdesliResult(result: OdesliFetchResult): OdesliResult {
-  const flat: OdesliResult = {}
-  for (const link of result.links) {
-    const key = link.platform as keyof OdesliResult
-    if (!(key in flat) || !flat[key]) {
-      ;(flat as Record<string, string>)[link.platform] = link.url
-    }
-  }
-  if (result.entityType) flat.entityType = result.entityType
-  if (result.artwork) flat.artwork = result.artwork
-  return flat
-}
+/** Default market for Odesli link resolution. */
+export const ODESLI_DEFAULT_COUNTRY = 'US'
 
 /** Server-side Odesli fetch (song.link API). */
-export async function fetchOdesliLinksFromApi(lookupUrl: string): Promise<OdesliFetchResult> {
+export async function fetchOdesliLinksFromApi(
+  lookupUrl: string,
+  userCountry: string = ODESLI_DEFAULT_COUNTRY,
+): Promise<OdesliFetchResult> {
   if (!lookupUrl.trim()) return { links: [] }
 
-  const apiUrl = `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(lookupUrl)}&userCountry=US`
+  const country = userCountry.trim() || ODESLI_DEFAULT_COUNTRY
+  const apiUrl = `https://api.song.link/v1-alpha.1/links?url=${encodeURIComponent(lookupUrl)}&userCountry=${encodeURIComponent(country)}`
   const response = await fetchWithRetry(apiUrl, { cache: 'no-store' })
   if (!response.ok) return { links: [] }
 
   const data = (await response.json()) as OdesliResponse
   return extractStreamingLinksFromOdesli(data)
-}
-
-const ODESLI_REQUEST_DELAY_MS = 6000
-
-interface QueueEntry {
-  url: string
-  resolve: (value: OdesliResult | null) => void
-}
-
-const requestQueue: QueueEntry[] = []
-let queueRunning = false
-
-async function runQueue(): Promise<void> {
-  if (queueRunning) return
-  queueRunning = true
-  while (requestQueue.length > 0) {
-    const entry = requestQueue.shift()
-    if (!entry) break
-    entry.resolve(await fetchOdesliLinksViaProxy(entry.url))
-    if (requestQueue.length > 0) {
-      await new Promise<void>((res) => setTimeout(res, ODESLI_REQUEST_DELAY_MS))
-    }
-  }
-  queueRunning = false
-}
-
-async function fetchOdesliLinksViaProxy(streamingUrl: string): Promise<OdesliResult | null> {
-  try {
-    const response = await fetch(`/api/odesli?url=${encodeURIComponent(streamingUrl)}&userCountry=DE`)
-    if (!response.ok) return null
-
-    const data = (await response.json()) as OdesliResponse
-    return flattenOdesliResult(extractStreamingLinksFromOdesli(data))
-  } catch {
-    return null
-  }
-}
-
-/** Client-side Odesli fetch via `/api/odesli` proxy (rate-limited queue). */
-export function fetchOdesliLinks(streamingUrl: string): Promise<OdesliResult | null> {
-  return new Promise<OdesliResult | null>((resolve) => {
-    requestQueue.push({ url: streamingUrl, resolve })
-    void runQueue().catch(() => resolve(null))
-  })
 }

@@ -151,6 +151,35 @@ export function releaseNeedsEnrichment(
   return releaseNeedsTrackEnrichment(row, options) || releaseNeedsStreamingEnrichment(row, options)
 }
 
+/**
+ * Fetch Odesli platform links for one release and build the partial update that
+ * merges them into `streaming_links` (plus any newly discoverable external ids).
+ * Returns null when Odesli has no links to add.
+ */
+export async function buildStreamingEnrichmentUpdate(
+  row: ReleaseEnrichmentRow,
+  existingLinks?: unknown,
+): Promise<Record<string, unknown> | null> {
+  const odesliLinks = await fetchOdesliStreamingLinks(row)
+  if (odesliLinks.length === 0) return null
+
+  const mergedLinks = mergeOdesliIntoReleaseLinks(
+    existingLinks ?? row.streaming_links,
+    odesliLinks,
+  )
+  const update: Record<string, unknown> = {
+    streaming_links: mergedLinks,
+    last_enriched_at: new Date().toISOString(),
+  }
+
+  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), row)
+  if (linkedIds.spotify_id && !row.spotify_id) update.spotify_id = linkedIds.spotify_id
+  if (linkedIds.itunes_id && !row.itunes_id) update.itunes_id = linkedIds.itunes_id
+  if (linkedIds.discogs_id && !row.discogs_id) update.discogs_id = linkedIds.discogs_id
+
+  return update
+}
+
 /** Fetch tracklists + Odesli platform links for a non-manual release. */
 export async function buildReleaseEnrichmentUpdate(
   row: ReleaseEnrichmentRow,
@@ -181,18 +210,9 @@ export async function buildReleaseEnrichmentUpdate(
       : releaseNeedsStreamingEnrichment(row, options)
 
   if (wantsStreaming) {
-    const odesliLinks = await fetchOdesliStreamingLinks(row)
-    if (odesliLinks.length > 0) {
-      const mergedLinks = mergeOdesliIntoReleaseLinks(
-        update.streaming_links ?? row.streaming_links,
-        odesliLinks,
-      )
-      update.streaming_links = mergedLinks
-      const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), row)
-      if (linkedIds.spotify_id && !row.spotify_id) update.spotify_id = linkedIds.spotify_id
-      if (linkedIds.itunes_id && !row.itunes_id) update.itunes_id = linkedIds.itunes_id
-      if (linkedIds.discogs_id && !row.discogs_id) update.discogs_id = linkedIds.discogs_id
-      update.last_enriched_at = new Date().toISOString()
+    const streamingUpdate = await buildStreamingEnrichmentUpdate(row, update.streaming_links)
+    if (streamingUpdate) {
+      Object.assign(update, streamingUpdate)
       changed = true
     }
   }
@@ -276,6 +296,90 @@ export async function runCatalogueEnrichmentBatch(
         skipped++
         errors.push(`"${release.title}": no enrichment data from APIs`)
       }
+      continue
+    }
+
+    const { error: updateError } = await supabase.from('releases').update(update).eq('id', release.id)
+    if (updateError) {
+      skipped++
+      errors.push(`"${release.title}": ${updateError.message}`)
+      continue
+    }
+    enriched++
+  }
+
+  const nextCursor = cursor + slice.length
+  return {
+    enriched,
+    skipped,
+    errors,
+    nextCursor,
+    total: all.length,
+    done: nextCursor >= all.length,
+  }
+}
+
+export interface StreamingEnrichmentBatchResult {
+  enriched: number
+  skipped: number
+  errors: string[]
+  nextCursor: number
+  total: number
+  done: boolean
+}
+
+const DEFAULT_STREAMING_ENRICH_BATCH_SIZE = 10
+
+/**
+ * Enrich a batch of releases with Odesli streaming links only — no tracklist
+ * fetches and no cover backfill, so it can be run repeatedly and cheaply.
+ *
+ * Like `runCatalogueEnrichmentBatch`, the cursor indexes a STABLE, fully-ordered
+ * row list (never a shrinking candidate array): releases that already have
+ * enough platforms are skipped in place, so every release is visited exactly
+ * once across ticks.
+ */
+export async function runStreamingEnrichmentBatch(
+  supabase: ReturnType<typeof createAdminClient>,
+  options?: { cursor?: number; limit?: number; force?: boolean },
+): Promise<StreamingEnrichmentBatchResult> {
+  const cursor = options?.cursor ?? 0
+  const limit = options?.limit ?? DEFAULT_STREAMING_ENRICH_BATCH_SIZE
+
+  const { data: rows, error: listError } = await supabase
+    .from('releases')
+    .select(
+      'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links',
+    )
+    .eq('manually_edited', false)
+    .order('display_order', { ascending: true })
+    .order('id', { ascending: true })
+
+  if (listError) {
+    return {
+      enriched: 0,
+      skipped: 0,
+      errors: [listError.message],
+      nextCursor: cursor,
+      total: 0,
+      done: true,
+    }
+  }
+
+  const all = (rows ?? []) as ReleaseEnrichmentRow[]
+  const slice = all.slice(cursor, cursor + limit)
+
+  let enriched = 0
+  let skipped = 0
+  const errors: string[] = []
+
+  for (const release of slice) {
+    if (!releaseNeedsStreamingEnrichment(release, { force: options?.force })) continue
+
+    const update = await buildStreamingEnrichmentUpdate(release)
+    if (!update) {
+      skipped++
+      errors.push(`"${release.title}": no Odesli links`)
       continue
     }
 

@@ -105,7 +105,7 @@ All responses include defensive HTTP headers:
 6. **Regular Updates**: Keep dependencies up to date (CI runs `npm audit`).
 7. **Log Monitoring**: Monitor `[rate-limit]`, `[SECURITY]`, and R2/SSRF warnings in server logs.
 
-> Note: this project does not use Vercel cron triggers (Vercel Free). There is no `crons` block in `vercel.json`. The `/api/gigs-sync` and `/api/releases-track-enrich` routes are triggered manually by an admin; the `/api/r2-reconcile` and `/api/sync-jobs/reap` routes are admin-only utilities. A `CRON_SECRET` bearer is only used internally by the async sync-job continuation fallback and is optional.
+> Note: this project does not use Vercel cron triggers (Vercel Free). There is no `crons` block in `vercel.json`. The `/api/gigs-sync`, `/api/odesli` and `/api/releases-track-enrich` routes are triggered manually by an admin; the `/api/r2-reconcile` and `/api/sync-jobs/reap` routes are admin-only utilities. A `CRON_SECRET` bearer is only used internally by the async sync-job continuation fallback and is optional.
 
 ## Third-Party Services
 

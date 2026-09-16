@@ -23,7 +23,7 @@ const CONTENT_SECURITY_POLICY = [
   "frame-src 'self' https://open.spotify.com https://www.youtube.com https://youtube.com https://music.youtube.com https://www.youtube-nocookie.com https://embed-cdn.spotifycdn.com",
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https: data:",
-  "connect-src 'self' https://api.spotify.com https://open.spotify.com https://spclient.wg.spotify.com https://api.song.link https://rest.bandsintown.com https://itunes.apple.com https://wsrv.nl https://vercel.com https://*.public.blob.vercel-storage.com https://*.supabase.co wss://*.supabase.co https://*.r2.cloudflarestorage.com https://*.r2.dev https://fonts.googleapis.com https://fonts.gstatic.com",
+  "connect-src 'self' https://api.spotify.com https://open.spotify.com https://spclient.wg.spotify.com https://rest.bandsintown.com https://itunes.apple.com https://wsrv.nl https://vercel.com https://*.public.blob.vercel-storage.com https://*.supabase.co wss://*.supabase.co https://*.r2.cloudflarestorage.com https://*.r2.dev https://fonts.googleapis.com https://fonts.gstatic.com",
   "worker-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
