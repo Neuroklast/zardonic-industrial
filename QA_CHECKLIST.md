@@ -63,6 +63,10 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
+- [ ] Credits & Partners → **Bulk import**: dropping several logo files fills a row per file (name from file name); website URL + section editable per row
+- [ ] Bulk import → **Paste a list** parses tab/pipe/comma rows (header + `#` lines ignored) and shows per-line errors for missing names
+- [ ] Bulk import skips rows whose `name + section` already exists (marked "Already exists — skipped") and reports inserted/skipped counts
+- [ ] Bulk import: uploaded logos land in R2 (`partners/logos`), pasted logo URLs are cached to R2, and the new entries appear on the public site after revalidate
 - [ ] Media replace: upload a second image/video â†’ previous R2 object removed (status mentions previous file removed); failed upload must not delete the old file
 - [ ] R2 keys are content-addressed: uploading the same file twice lands on the same object key (no orphaned duplicate); replacing with different bytes creates a new key and deletes the old one
 - [ ] After an R2 bucket move / Production deploy: `[r2-reconcile] done objects=â€¦ rows=â€¦ urls=â€¦` in Vercel logs; `/admin/data` preview shows corrected URLs; `content_hash` backfilled on media rows. A deliberately-broken old URL is auto-repaired by the `<img onError>` â†’ `/api/media-fix` path (the image swaps to the corrected URL)

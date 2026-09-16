@@ -299,6 +299,22 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  create_partners_batch: register({
+    id: 'create_partners_batch',
+    label: 'Create Partners Batch',
+    schema: z.object({
+      rows: z
+        .array(z.object({ name: z.string().min(1) }).passthrough())
+        .min(1)
+        .max(200),
+    }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   create_merchandise: register({
     id: 'create_merchandise',
     label: 'Create Merchandise',

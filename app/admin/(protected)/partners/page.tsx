@@ -35,6 +35,14 @@ export default async function PartnersPage() {
       <AdminPageHeader
         title="Credits & Partners"
         description="Credits, endorsements and partners on the public site. Logos: upload, URL (R2 cache), or Google Drive."
+        action={
+          <Link
+            href="/admin/partners/bulk"
+            className="px-3 py-1.5 text-sm rounded border border-zinc-700 text-zinc-300 hover:text-white transition-colors"
+          >
+            Bulk import
+          </Link>
+        }
       />
       <div className="mb-8">
         <h2 className="text-sm font-medium text-zinc-400 mb-4">Add entry</h2>
