@@ -53,8 +53,22 @@ Rules:
 4. Content components own **only** inner body (no second fixed fullscreen chrome).
 5. Gallery: swipe/dots/arrows in `GalleryOverlayContent` — not a parallel lightbox component for production UI.
 6. Media download images use overlay type `media` (preview + download). Do **not** run those files through the partner white-silhouette pipeline — they are download originals.
+7. **Portal to `document.body`** — `CyberpunkOverlay` renders through `createPortal(..., document.body)` (SSR-guarded). Never render the shell inline in the page tree.
 
 **Forbidden:** shipping a one-off `fixed inset-0` lightbox that only “sort of” matches releases/events.
+
+### Why the portal is mandatory (containing-block trap)
+
+`position: fixed` resolves against the **nearest ancestor that establishes a containing block** — not the viewport. Any ancestor with `transform`, `filter`, `backdrop-filter`, `perspective`, `contain: paint` or `will-change: transform` becomes that containing block. `.surface-section-panel` (`styles/components.css`) sets `backdrop-filter`, and `BrowsePageShell` wraps browse content in it, so an inline overlay on `/releases`, `/gigs`, `/media` was sized/centered against the tall panel: the modal opened far below center and, with body scroll locked, its content was unreachable.
+
+| Do | Don't |
+|----|--------|
+| `createPortal(shell, document.body)` in `CyberpunkOverlay` | Render the overlay inside a section/panel component |
+| Keep `AnimatePresence` mounted (exit animations) | `if (!overlay) return null` before `AnimatePresence` |
+| Flex centering (`items-end md:items-center`), inner `overflow-y-auto` scroll region | `top: 50%` + `transform: translateY(-50%)` centering (clips long content) |
+| `[touch-action:pan-y_pinch-zoom]` on the overlay scroll region so body `touch-action: none` never blocks inner touch scroll | Rely on body scroll lock alone for inner scrolling |
+
+Regression guard: `src/test/public-mobile.test.tsx` (`createPortal` + `document.body`).
 
 ---
 

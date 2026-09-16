@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react'
 import type React from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { X } from '@phosphor-icons/react'
@@ -188,7 +189,18 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
     }
   }, [overlaySessionKey, onClose])
 
-  return (
+  // SSR guard: portals only exist in the browser. `overlay` is always null on
+  // the server (opened by user interaction), so this never causes a hydration
+  // mismatch — it just avoids touching `document` during server render.
+  if (typeof document === 'undefined') return null
+
+  // CRITICAL: portal to <body>. Rendering the overlay inside the page tree
+  // makes `position: fixed` resolve against any ancestor with `transform`,
+  // `filter`, `backdrop-filter` or `perspective` (e.g. `.surface-section-panel`
+  // on the browse pages) instead of the viewport — the modal then centers
+  // against that ancestor and its content becomes unreachable once the page
+  // scroll is locked. Do not move this back inline.
+  return createPortal(
     <AnimatePresence>
       {overlay && (
         <>
@@ -247,7 +259,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               <motion.div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.4, delay: 0.15 }} style={{ transformOrigin: 'right' }} />
 
               {/* Content phases */}
-              <div className="relative overflow-y-auto flex-1 min-h-0 overscroll-contain">
+              <div className="relative overflow-y-auto flex-1 min-h-0 overscroll-contain [touch-action:pan-y_pinch-zoom]">
                 {overlayPhase === 'loading' && (
                   <div className="flex items-center justify-center min-h-[min(400px,50vh)]">
                     <motion.span className="progressive-loading-label text-primary font-mono text-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -340,6 +352,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   )
 }

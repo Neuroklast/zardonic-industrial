@@ -1,6 +1,6 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-09-11  
+> **Last Updated:** 2026-09-16  
 > **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
@@ -36,6 +36,7 @@ This document records lessons learned during development sessions. Every coding 
 
 | Date | Session ID | Agent | Lesson | Category | Severity |
 |------|-----------|-------|--------|----------|----------|
+| 2026-09-16 | opencode/overlay-portal-containing-block | opencode | `position: fixed` resolves against the nearest ancestor that establishes a **containing block** — not the viewport. `transform`, `filter`, `backdrop-filter`, `perspective`, `contain: paint` and `will-change: transform` all qualify. `.surface-section-panel` sets `backdrop-filter: blur(4px)`, so a modal rendered inline inside `BrowsePageShell` on `/releases` sized itself against the tall panel: the backdrop covered only the panel, the panel-centered modal opened far below the fold, and because the shell also locks body scroll (`overflow:hidden` + `lenis.stop()`) the hidden content could not be reached — "main scroll disappears, doesn't open in the center". Fix: render shared modals through `createPortal(..., document.body)` (SSR-guarded) so no ancestor can capture the fixed box, and never center with `top:50% + translateY(-50%)`. Symptom appears only on pages whose wrapper adds a containing-block property (browse pages), not on sections that render the overlay as a sibling. | Debugging + Architecture | 🟠 High |
 | 2026-09-11 | opencode/rate-limits-rls | opencode | A table added **after** the `ENABLE ROW LEVEL SECURITY` block (`public.rate_limits`) is fully exposed via the anon key until RLS is on — advisor `rls_disabled_in_public`. Revoking EXECUTE on the RPC is not enough. Enable RLS + deny-all + REVOKE in the same change as `CREATE TABLE`; apply the SQL on the live project (schema.sql is not auto-migrated). Do not `FORCE ROW LEVEL SECURITY` on tables written by SECURITY DEFINER functions. | Security | 🔴 Critical |
 | 2026-09-09 | opencode/ci-npm-audit-high | opencode | A green PR can still fail **push-to-main CI** when GitHub Advisory Database publishes new high/critical CVEs after the PR ran. `npm audit --audit-level=high` is a live registry check, not a lockfile hash. Fix by bumping patched versions (`next` 16.3.4, `sharp` 0.35.4, `js-yaml` override 4.3.2) rather than relaxing the audit gate. | DevOps + Security | 🟠 High |
 | 2026-09-09 | opencode/footer-legal-href | opencode | `sanitizeExternalHref` is http(s)-only: `new URL('/legal-notice')` throws, so React omits `href` and the footer Legal Notice / Privacy Policy look like links but are not clickable. Internal routes need `sanitizeHref` (allow `/…`, still block `javascript:` / `data:` / `//host`). Never reuse an external-only sanitizer on same-origin paths. | Security + UX/a11y | 🟠 High |

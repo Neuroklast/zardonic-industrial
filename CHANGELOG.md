@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Release / gig / media overlay opened off-center with locked scroll**: `CyberpunkOverlay` rendered inline inside `.surface-section-panel`, whose `backdrop-filter` makes it the containing block for `position: fixed` descendants — the modal centered against the tall section panel instead of the viewport, and the locked body scroll left the rest unreachable. The shell now renders via `createPortal(..., document.body)` (SSR-guarded) and the overlay scroll region allows inner touch scrolling (`[touch-action:pan-y_pinch-zoom]`).
 - **Footer Legal Notice / Privacy Policy not clickable**: `sanitizeExternalHref` only allows `http`/`https`, so default same-origin paths (`/legal-notice`, `/privacy-policy`) rendered as `<a>` without `href`. Footer legal links now use `sanitizeHref` (`lib/sanitize-href.ts`), which keeps `/…` paths and still blocks `javascript:` / `data:` / protocol-relative URLs.
 
 ### Added

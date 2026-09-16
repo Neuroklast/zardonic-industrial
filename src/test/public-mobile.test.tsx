@@ -44,6 +44,17 @@ describe('public mobile regression guards', () => {
     expect(src).toMatch(/GalleryOverlayContent/)
   })
 
+  it('CyberpunkOverlay portals to document.body (viewport-fixed, immune to ancestor transforms)', () => {
+    const src = readSource('components/CyberpunkOverlay.tsx')
+    expect(src).toMatch(/createPortal/)
+    expect(src).toMatch(/return createPortal\(/)
+    expect(src).toMatch(/document\.body/)
+    // An inline shell inside a `transform` / `filter` / `backdrop-filter`
+    // ancestor (e.g. `.surface-section-panel`) makes `position: fixed`
+    // resolve against that ancestor — modal off-center + unreachable content.
+    expect(src).not.toMatch(/return \(\s*<AnimatePresence>/)
+  })
+
   it('SiteNav mobile links have 44px touch targets', () => {
     const src = readSource('app/_components/public/SiteNav.tsx')
     expect(src).toMatch(/min-h-\[44px\]/)
