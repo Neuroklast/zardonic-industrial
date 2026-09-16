@@ -35,6 +35,18 @@ Always pass `requestChecksumCalculation: 'WHEN_REQUIRED'` to every R2 `S3Client`
 
 `MediaSourcePicker` / `VideoSourcePicker` call `deletePreviousR2ObjectIfReplaced` **only after** a successful new upload or remote cache. The new path is committed first; delete failures do not roll back the new media (status warns). Manual **Delete upload** still available. **Clear selection** never deletes storage.
 
+## Credits & partners bulk import (`/admin/partners/bulk`)
+
+Credits, endorsements and partners are all rows in `public.partners` (`category` = `credit` / `endorsement` / `partner` / `label` / `sponsor`). The bulk page adds many at once, with text + URL per entry:
+
+- **Upload files mode:** drop multiple logos; each file becomes a row with `name` auto-filled from the file name (`lib/partner-bulk-import.ts` `nameFromFileName`). Website URL, section, order and white-fill are edited inline.
+- **Paste a list mode:** one entry per line, delimiter auto-detected (tab / pipe / comma), optional header row + `#` comments. Columns: `Name | Website URL | Logo URL | Section | Order`.
+- **Upload:** each file goes through the existing `submitOptimizedUpload` (prefix `partners/logos`, `PARTNER_BULK_UPLOAD_CONCURRENCY = 3`), so the 4 MB Server Action limit is never hit. Pasted logo URLs are cached to R2 via `cacheRemoteImageToR2`; if the fetch fails the remote `logo_url` is kept as a fallback.
+- **Insert:** rows are sent to `createPartnersBatch(rows)` (`app/admin/_actions/partners.ts`) in chunks of `PARTNER_BULK_INSERT_CHUNK = 50`. The action validates with the shared `partnerFields` Zod schema (same as `partnerInputSchema`), skips duplicates by `name + category` (case/whitespace-insensitive, via `normalizePartnerKey`) against the DB **and** within the batch, then `insert`s and revalidates `/admin/partners` + `/`.
+- Pure helpers + tests: `lib/partner-bulk-import.ts`, `src/test/partner-bulk-import.test.ts`. Registry action: `create_partners_batch`.
+
+There is **no** unique constraint on `(name, category)` in `supabase/schema.sql`, so duplicate handling is app-level only — do not rely on an upsert conflict target here.
+
 ## AdminActionRegistry
 
 Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.

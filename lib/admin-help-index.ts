@@ -337,6 +337,26 @@ const HOWTO_ENTRIES: AdminHelpEntry[] = [
     keywords: ['health', 'api', 'status', 'connectivity', 'spotify', 'discogs'],
     priority: 35,
   },
+  {
+    id: 'help-partner-bulk-import',
+    title: 'How do I bulk import credits & partners?',
+    description:
+      'On Credits & Partners choose Bulk import. Drop many logo files and fill in name, website URL and section per row, or paste a list (Name | URL | Logo URL | Section | Order). Existing names in the same section are skipped. Logos are optimized and stored in R2.',
+    href: '/admin/partners/bulk',
+    group: 'Help',
+    keywords: [
+      'bulk',
+      'batch',
+      'import',
+      'credits',
+      'partners',
+      'endorsement',
+      'logos',
+      'csv',
+      'paste',
+    ],
+    priority: 44,
+  },
 ]
 
 function navDescription(href: string, label: string): string {
@@ -348,7 +368,7 @@ function navDescription(href: string, label: string): string {
     '/admin/bio': 'Artist biography shown on the homepage bio section.',
     '/admin/gallery': 'Manage public gallery images — upload, reorder and delete.',
     '/admin/media': 'Downloadable press photos, logos, PDFs, ZIPs and audio stored as originals in R2.',
-    '/admin/partners': 'Credits, endorsements and partner logos with inline add form.',
+    '/admin/partners': 'Credits, endorsements and partner logos with inline add form or bulk import.',
     '/admin/music-highlights': 'Featured tracks or playlists on the homepage.',
     '/admin/releases': 'Full discography — edit, hide, delete or open per-release sync.',
     '/admin/releases/sync': 'Bulk import catalogue from Spotify, iTunes or Discogs.',

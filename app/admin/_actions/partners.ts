@@ -6,21 +6,30 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { normalizePartnerKey, PARTNER_BULK_MAX_ROWS } from '@/lib/partner-bulk-import'
 import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
 const partnerCategorySchema = z.enum(['credit', 'endorsement', 'partner', 'label', 'sponsor'])
 
-const partnerInputSchema = z.object({
+const partnerFields = {
   name: z.string().min(1),
   url: safeExternalUrlOptional.transform((v) => (v === '' ? null : v)),
   logo_storage_path: z.string().optional().nullable().or(z.literal('')).transform((v) => (v === '' ? null : v)),
   logo_url: safeExternalUrlOptional.transform((v) => (v === '' ? null : v)),
   category: partnerCategorySchema.optional().default('partner'),
   display_order: z.coerce.number().optional().default(0),
-  active: z.coerce.boolean().optional(),
   logo_white: z.boolean().default(true),
+}
+
+const partnerInputSchema = z.object({
+  ...partnerFields,
+  active: z.coerce.boolean().optional(),
 })
+
+const partnerBulkSchema = z.array(z.object(partnerFields)).min(1).max(PARTNER_BULK_MAX_ROWS)
+
+type PartnerBulkRow = z.infer<typeof partnerBulkSchema>[number]
 
 function parseFormData(formData: FormData) {
   return {
@@ -113,4 +122,63 @@ export async function togglePartnerVisibility(id: string, active: boolean) {
     revalidatePath('/')
     return { success: true }
   }, 'Unable to update partner visibility.')
+}
+
+export interface CreatePartnersBatchResult {
+  ok: boolean
+  inserted: number
+  skipped: number
+  error?: string
+}
+
+export async function createPartnersBatch(rows: unknown): Promise<CreatePartnersBatchResult> {
+  const parsed = partnerBulkSchema.safeParse(rows)
+  if (!parsed.success) {
+    return { ok: false, inserted: 0, skipped: 0, error: parsed.error.message }
+  }
+
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'create_partners_batch',
+    { rows: parsed.data },
+    createSupabaseActionContext(supabaseAdmin),
+  )
+  if (!dispatchResult.ok) return { ok: false, inserted: 0, skipped: 0, error: dispatchResult.error }
+
+  const result = await runAdminAction(async () => {
+    const { data: existing, error: readError } = await supabaseAdmin
+      .from('partners')
+      .select('name, category')
+    if (readError) return { ok: false as const, inserted: 0, skipped: 0, error: readError.message }
+
+    const existingRows = (existing ?? []) as Array<{ name: string; category: string }>
+    const seen = new Set(existingRows.map((row) => normalizePartnerKey(row.name, row.category)))
+    const toInsert: PartnerBulkRow[] = []
+    let skipped = 0
+
+    for (const row of parsed.data) {
+      const key = normalizePartnerKey(row.name, row.category)
+      if (seen.has(key)) {
+        skipped += 1
+        continue
+      }
+      seen.add(key)
+      toInsert.push(withR2LogoPreference(row))
+    }
+
+    if (toInsert.length > 0) {
+      const { error } = await supabaseAdmin.from('partners').insert(toInsert)
+      if (error) return { ok: false as const, inserted: 0, skipped: 0, error: error.message }
+    }
+
+    revalidatePath('/admin/partners')
+    revalidatePath('/')
+    return { ok: true as const, inserted: toInsert.length, skipped }
+  }, 'Unable to import partners.')
+
+  if ('error' in result && !('ok' in result)) {
+    return { ok: false, inserted: 0, skipped: 0, error: result.error }
+  }
+  return result
 }
