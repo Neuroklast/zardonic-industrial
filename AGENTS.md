@@ -61,7 +61,7 @@ Skipping docs because “the task was only code” is a process failure.
 - **Two-click embeds** — Spotify/YouTube never auto-load ([security](./docs/agent/security.md))
 - **Legal data** — Supabase `site_config.legal` only; pages `/legal-notice`, `/privacy-policy`; admin `/admin/legal`
 - **Consent** — import from `@/lib/consent`, not UI components, in non-UI code
-- **Overlays** — gallery / release / gig detail use **`CyberpunkOverlay`** only ([public-ui](./docs/agent/public-ui.md))
+- **Overlays** — gallery / release / gig detail use **`CyberpunkOverlay`** only ([public-ui](./docs/agent/public-ui.md)); it **portals to `document.body`** — never render it inline under a `transform` / `filter` / `backdrop-filter` ancestor
 - **Partner logos** — white mode via canvas pipeline (`lib/partner-logo-white.ts`); **never** CSS `brightness(0) invert(1)` on remote PNGs ([public-ui](./docs/agent/public-ui.md))
 - **Media is ALWAYS on R2 — never Supabase Storage.** Images/videos/logos/downloads resolve via `lib/r2.ts` `resolveImageUrl` / `toDirectImageUrl`; a `*.supabase.co` asset URL is invalid and resolves to `null`/`''`. Never re-add `.supabase.co` as a trusted direct host. Legacy rows are migrated to R2 automatically (once) — see `lib/legacy-url-migration-on-deploy.ts`, badge `lib/legacy-url-audit.ts`, manual `npm run migrate-legacy`.
 - **Nav labels** — compact defaults in `lib/nav-links.ts` (`Bio`, `Releases`, …); full titles stay on section headings
@@ -85,6 +85,7 @@ Skipping docs because “the task was only code” is a process failure.
 2. Do **not** invent a second modal shell (custom fixed panels, one-off lightboxes).
 3. Overlay open → lock body + **Lenis** (`lenis.stop()` / `start()`), same as `CyberpunkOverlay`.
 4. Gallery content lives in `components/overlays/GalleryOverlayContent.tsx` **inside** the shared shell.
+5. The shell **portals to `document.body`** and centers with flex (no `top: 50%` + `translateY(-50%)`); the inner content region scrolls. Never render it inline under `transform` / `filter` / `backdrop-filter` / `perspective` (containing-block trap → off-center + unreachable content).
 
 ### Partner / credit logos (PNG alpha)
 
