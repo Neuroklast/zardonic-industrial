@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   cleanAppleMusicUrl,
   extractStreamingLinksFromOdesli,
-  flattenOdesliResult,
 } from '@/lib/odesli'
 import { buildOdesliLookupUrl } from '@/lib/release-streaming-enrichment'
 import { formatStreamingPlatformLabel, getVisibleStreamingLinks } from '@/lib/streaming-platforms'
@@ -28,7 +27,6 @@ describe('odesli helpers', () => {
       { platform: 'youtube', url: 'https://music.youtube.com/watch?v=1' },
       { platform: 'amazonMusic', url: 'https://music.amazon.com/albums/B123' },
     ])
-    expect(flattenOdesliResult(result).amazonMusic).toBe('https://music.amazon.com/albums/B123')
   })
 
   it('builds lookup URLs from stored ids', () => {

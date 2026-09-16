@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
   releaseNeedsEnrichment,
   releaseNeedsTrackEnrichment,
   releaseTracksAreEmpty,
+  runStreamingEnrichmentBatch,
   type ReleaseEnrichmentRow,
 } from '@/lib/release-enrichment'
 
@@ -69,5 +70,81 @@ describe('release-enrichment', () => {
       ],
     })
     expect(releaseNeedsEnrichment(richLinks)).toBe(false)
+  })
+})
+
+const ODESLI_RESPONSE = {
+  entityUniqueId: '',
+  entitiesByUniqueId: {},
+  linksByPlatform: {
+    spotify: { url: 'https://open.spotify.com/album/abc' },
+    deezer: { url: 'https://www.deezer.com/album/1' },
+  },
+}
+
+function fakeSupabase(rows: unknown[]) {
+  const updateCalls: Array<Record<string, unknown>> = []
+  const client = {
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          order: () => ({
+            order: async () => ({ data: rows, error: null }),
+          }),
+        }),
+      }),
+      update: (values: Record<string, unknown>) => ({
+        eq: async () => {
+          updateCalls.push(values)
+          return { error: null }
+        },
+      }),
+    }),
+  }
+  return { client, updateCalls }
+}
+
+describe('runStreamingEnrichmentBatch', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('enriches only releases that still need streaming links', async () => {
+    const sparse = row({ id: '1', streaming_links: [] })
+    const rich = row({
+      id: '2',
+      last_enriched_at: new Date().toISOString(),
+      streaming_links: [
+        { platform: 'spotify', url: 'https://open.spotify.com/album/a' },
+        { platform: 'appleMusic', url: 'https://music.apple.com/album/id1' },
+        { platform: 'youtube', url: 'https://music.youtube.com/watch?v=1' },
+      ],
+    })
+    const { client, updateCalls } = fakeSupabase([sparse, rich])
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(ODESLI_RESPONSE), { status: 200 })))
+
+    const result = await runStreamingEnrichmentBatch(
+      client as unknown as Parameters<typeof runStreamingEnrichmentBatch>[0],
+    )
+
+    expect(result).toMatchObject({ enriched: 1, total: 2, nextCursor: 2, done: true })
+    expect(updateCalls).toHaveLength(1)
+    expect(updateCalls[0].streaming_links).toEqual(
+      expect.arrayContaining([{ platform: 'deezer', url: 'https://www.deezer.com/album/1' }]),
+    )
+  })
+
+  it('advances the cursor monotonically across bounded batches', async () => {
+    const rows = [row({ id: '1' }), row({ id: '2' }), row({ id: '3' })]
+    const { client } = fakeSupabase(rows)
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(ODESLI_RESPONSE), { status: 200 })))
+
+    const result = await runStreamingEnrichmentBatch(
+      client as unknown as Parameters<typeof runStreamingEnrichmentBatch>[0],
+      { cursor: 1, limit: 1 },
+    )
+
+    expect(result).toMatchObject({ total: 3, nextCursor: 2, done: false })
   })
 })

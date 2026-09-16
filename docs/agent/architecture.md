@@ -96,6 +96,7 @@ Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` acti
 |-------|------|------|
 | Tracklists | `lib/release-enrichment.ts` | Spotify → Discogs → iTunes; respects `manually_edited` |
 | Streaming links | `lib/release-streaming-enrichment.ts` + `lib/odesli.ts` | Odesli merge into `streaming_links` |
+| Odesli API | `app/api/odesli/route.ts` | Admin-only: `GET ?url=&userCountry=` single lookup; `POST` streaming-only batch (`runStreamingEnrichmentBatch`) — separately triggerable from Catalogue Sync |
 | Cron | `app/api/releases-track-enrich/route.ts` | Daily batch (15 releases/call) |
 | Admin | `app/admin/_actions/releaseTrackEnrichment.ts` | Manual + bulk triggers |
 | Async jobs | `sync_jobs` table + `app/api/sync-jobs/**` | Chunked Spotify/Discogs import, purge+sync |

@@ -153,6 +153,15 @@ export const itunesQuerySchema = z.object({
 /** GET /api/odesli — query params */
 export const odesliQuerySchema = z.object({
   url: z.string().min(1, 'A streaming URL is required').max(2000).url('Invalid URL'),
+  /** ISO-3166 alpha-2 market hint passed through to song.link (default: US). */
+  userCountry: z.string().length(2, 'userCountry must be a 2-letter code').optional(),
+})
+
+/** POST /api/odesli — streaming (Odesli) enrichment batch body */
+export const odesliEnrichPostSchema = z.object({
+  cursor: z.number().int().min(0).optional(),
+  limit: z.number().int().min(1).max(25).optional(),
+  force: z.boolean().optional(),
 })
 
 // ─── Image proxy API ──────────────────────────────────────────────────────────

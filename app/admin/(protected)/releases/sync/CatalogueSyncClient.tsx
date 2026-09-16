@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ArrowsClockwise, CalendarBlank, MusicNotes, Trash, Warning } from '@phosphor-icons/react'
 import { purgeGigs, purgeReleases } from '@/app/admin/_actions/dataMaintenance'
 import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
@@ -122,6 +123,8 @@ export function CatalogueSyncClient({
   const [error, setError] = useState<string | null>(null)
   const [openAction, setOpenAction] = useState<MaintenanceAction | null>(null)
   const [pending, startTransition] = useTransition()
+  const [enriching, setEnriching] = useState(false)
+  const router = useRouter()
 
   const { job, error: jobError, polling, startPolling } = useSyncJobPoll({
     storageKey: 'catalogue-sync',
@@ -191,6 +194,39 @@ export function CatalogueSyncClient({
         setOpenAction(null)
       }
     })
+  }
+
+  async function runStreamingEnrichment() {
+    setMessage(null)
+    setError(null)
+    setEnriching(true)
+    try {
+      let cursor = 0
+      let enriched = 0
+      let remaining = 0
+      // Walk the catalogue in batches until Odesli has been consulted for
+      // every release (bounded so a single click can't run unbounded).
+      for (let batch = 0; batch < 20; batch++) {
+        const res = await fetch('/api/odesli', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cursor }),
+        })
+        const data = await res.json().catch(() => null)
+        if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`)
+        enriched += data?.enriched ?? 0
+        cursor = data?.nextCursor ?? cursor
+        remaining = data?.remaining ?? 0
+        setMessage(`Odesli enrichment: ${enriched} release(s) updated — ${remaining} remaining…`)
+        if (data?.done) break
+      }
+      setMessage(`Odesli enrichment finished: ${enriched} release(s) updated.`)
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Odesli enrichment failed')
+    } finally {
+      setEnriching(false)
+    }
   }
 
   function ActionButton({
@@ -329,13 +365,22 @@ export function CatalogueSyncClient({
       <SectionCard
         icon={ArrowsClockwise}
         title="Automatic maintenance"
-        description="Every catalogue import below automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). No manual repair buttons needed."
+        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass to pull extra platform links for the whole catalogue."
       >
         {needsEnrichment != null ? (
           <p className="text-xs text-zinc-500 font-mono">
             Releases awaiting automatic enrichment: {needsEnrichment}
           </p>
         ) : null}
+        <button
+          type="button"
+          onClick={runStreamingEnrichment}
+          disabled={enriching || pending}
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors disabled:opacity-50 min-h-[44px]"
+        >
+          <ArrowsClockwise className={`h-4 w-4 ${enriching ? 'animate-spin' : ''}`} aria-hidden />
+          {enriching ? 'Enriching streaming links…' : 'Enrich streaming links (Odesli)'}
+        </button>
       </SectionCard>
 
       <SectionCard

@@ -83,7 +83,7 @@ Legacy `AdminPanel.tsx` / `cms/AdminShell.tsx` (KV-based) still exist in the rep
 
 ## App Router API routes
 
-Examples under `app/api/`: `geo`, `bandsintown`, `gigs-sync`, `releases-track-enrich` (daily cron), `og`, `sitemap`, analytics, sync-jobs.
+Examples under `app/api/`: `geo`, `bandsintown`, `gigs-sync`, `odesli` (admin lookup + streaming enrichment batch), `releases-track-enrich` (daily cron), `og`, `sitemap`, analytics, sync-jobs.
 
 **Route precedence:** On Vercel, a root `api/<name>.ts` Serverless Function can **shadow** `app/api/<name>/route.ts` for the same path. Do not keep both. Prefer App Router; delete the legacy file when a successor exists.
 

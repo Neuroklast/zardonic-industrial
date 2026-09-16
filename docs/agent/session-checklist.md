@@ -41,7 +41,7 @@
 | Partner SVG/PNG | `lib/partner-logo-white.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | Rewrite SVG to 1024px before canvas; **all** R2 logos via `/api/partner-logo` (never wsrv for R2 — stale inner hosts 404); light plate only if a dark mark exists (PWM white wordmark); eager load; no `whileInView`+`opacity:0` |
 | Background video | `BackgroundStack.tsx` | No canvas animation while scroll video is active; seek ≥ 1/24s |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
-| Odesli dual API | `lib/odesli.ts` | Server: `fetchOdesliLinksFromApi`; client editor: `fetchOdesliLinks` via `/api/odesli` queue |
+| Odesli | `lib/odesli.ts`, `app/api/odesli/route.ts` | Server enrichment calls `fetchOdesliLinksFromApi` **directly** (no HTTP hop); admin-only route `/api/odesli` = `GET ?url=` lookup + `POST` streaming-enrichment batch (`runStreamingEnrichmentBatch`, admin UI button in Catalogue Sync). No client proxy/queue. |
 | Nav logo vs BIO | `SiteNav.tsx` | Flex `shrink-0` logo; never absolute over links |
 | Compact nav labels | `lib/nav-links.ts` | Short nav labels; long titles only on section headings |
 | Gallery modal | `GallerySection` + `CyberpunkOverlay` + `GalleryOverlayContent` | Same shell as releases/events |
