@@ -22,6 +22,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Gallery: open image â†’ **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
 - [ ] `/releases`, `/gigs`, `/media` browse: opening a detail modal centers it **in the viewport** (not offset by the section panel), the modal body scrolls to the end, and the page behind stays locked
+- [ ] Release modal: **mouse wheel** scrolls the content (not only the scrollbar); on desktop only the **tracklist** has its own scrollbar (no modal-edge scrollbar)
 - [ ] Media: homepage teaser + `/media` browse; image cards open overlay preview + download; audio has inline player (no autoplay); PDF/ZIP download
 - [ ] Media logos/photos are original colours (no partner white-silhouette pipeline)
 - [ ] Events: only past gigs â†’ homepage shows â€œNo upcoming events.â€ (not the past list); `/gigs` still has Past filter

@@ -55,6 +55,19 @@ describe('public mobile regression guards', () => {
     expect(src).not.toMatch(/return \(\s*<AnimatePresence>/)
   })
 
+  it('CyberpunkOverlay opts the modal out of Lenis wheel hijacking', () => {
+    const src = readSource('components/CyberpunkOverlay.tsx')
+    // Lenis preventDefaults wheel events while stopped (lenis.stop() on open);
+    // `data-lenis-prevent` makes it bail out first so the modal can scroll.
+    expect(src).toMatch(/data-lenis-prevent/)
+  })
+
+  it('Release tracklist is the only desktop scroll region', () => {
+    const src = readSource('components/overlays/ReleaseOverlayContent.tsx')
+    expect(src).toMatch(/data-lenis-prevent/)
+    expect(src).toMatch(/md:flex-1 md:min-h-0 overflow-y-auto/)
+  })
+
   it('SiteNav mobile links have 44px touch targets', () => {
     const src = readSource('app/_components/public/SiteNav.tsx')
     expect(src).toMatch(/min-h-\[44px\]/)

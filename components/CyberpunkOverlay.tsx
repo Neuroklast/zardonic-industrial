@@ -189,6 +189,10 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
     }
   }, [overlaySessionKey, onClose])
 
+  // Release modals get a fixed desktop height so the tracklist (not the whole
+  // modal) is the only scroll region on md+. Other overlay types keep `h-auto`.
+  const isReleaseOverlay = overlay?.type === 'release'
+
   // SSR guard: portals only exist in the browser. `overlay` is always null on
   // the server (opened by user interaction), so this never causes a hydration
   // mismatch — it just avoids touching `document` during server render.
@@ -239,7 +243,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               }}
               data-theme-color="card card-foreground border"
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              className="relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[100dvh] md:max-h-[90vh] h-[100dvh] md:h-auto flex flex-col scanline-effect cyber-card rounded-none md:rounded-[var(--radius)]"
+              className={`relative max-w-4xl w-full bg-background/98 border border-primary/30 pointer-events-auto overflow-hidden max-h-[100dvh] md:max-h-[90vh] h-[100dvh] flex flex-col scanline-effect cyber-card rounded-none md:rounded-[var(--radius)] ${isReleaseOverlay ? 'md:h-[85vh]' : 'md:h-auto'}`}
               style={{ borderRadius: 'var(--radius)' } as React.CSSProperties}
               onClick={(e) => e.stopPropagation()}
             >
@@ -259,7 +263,13 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
               <motion.div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/20" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.4, delay: 0.15 }} style={{ transformOrigin: 'right' }} />
 
               {/* Content phases */}
-              <div className="relative overflow-y-auto flex-1 min-h-0 overscroll-contain [touch-action:pan-y_pinch-zoom]">
+              {/* `data-lenis-prevent`: Lenis preventDefaults wheel events while
+                  stopped (lenis.stop() on open) and would swallow scrolling
+                  inside the modal. The attribute makes Lenis bail out first. */}
+              <div
+                data-lenis-prevent
+                className={`relative overflow-y-auto flex-1 min-h-0 overscroll-contain [touch-action:pan-y_pinch-zoom] ${isReleaseOverlay ? 'md:flex md:flex-col md:overflow-hidden' : ''}`}
+              >
                 {overlayPhase === 'loading' && (
                   <div className="flex items-center justify-center min-h-[min(400px,50vh)]">
                     <motion.span className="progressive-loading-label text-primary font-mono text-lg" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -277,7 +287,7 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                 )}
 
                 {overlayPhase === 'revealed' && (
-                  <div className="p-4 pt-14 md:p-12 md:pt-12">
+                  <div className={`p-4 pt-14 md:p-12 md:pt-12 ${isReleaseOverlay ? 'md:flex md:flex-col md:min-h-0 md:flex-1' : ''}`}>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -292,9 +302,12 @@ export default function CyberpunkOverlay({ overlay, onClose, adminSettings, arti
                       {overlayPhase === 'revealed' && (
                         <motion.div
                           key={overlaySessionKey ?? overlay.type}
-                          className={
-                            isDirectRevealType(overlay.type) ? undefined : progressiveMode.className
-                          }
+                          className={[
+                            isDirectRevealType(overlay.type) ? '' : progressiveMode.className,
+                            isReleaseOverlay ? 'md:flex md:flex-col md:min-h-0 md:flex-1' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ') || undefined}
                           initial={
                             isDirectRevealType(overlay.type)
                               ? { opacity: 0, y: 8 }

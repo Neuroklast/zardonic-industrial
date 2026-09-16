@@ -54,6 +54,7 @@ Rules:
 5. Gallery: swipe/dots/arrows in `GalleryOverlayContent` — not a parallel lightbox component for production UI.
 6. Media download images use overlay type `media` (preview + download). Do **not** run those files through the partner white-silhouette pipeline — they are download originals.
 7. **Portal to `document.body`** — `CyberpunkOverlay` renders through `createPortal(..., document.body)` (SSR-guarded). Never render the shell inline in the page tree.
+8. **Scroll regions** carry `data-lenis-prevent`. Release modals use a fixed `md:h-[85vh]` and the **tracklist** is the only `md+` scroller (mobile scrolls the whole content).
 
 **Forbidden:** shipping a one-off `fixed inset-0` lightbox that only “sort of” matches releases/events.
 
@@ -67,8 +68,14 @@ Rules:
 | Keep `AnimatePresence` mounted (exit animations) | `if (!overlay) return null` before `AnimatePresence` |
 | Flex centering (`items-end md:items-center`), inner `overflow-y-auto` scroll region | `top: 50%` + `transform: translateY(-50%)` centering (clips long content) |
 | `[touch-action:pan-y_pinch-zoom]` on the overlay scroll region so body `touch-action: none` never blocks inner touch scroll | Rely on body scroll lock alone for inner scrolling |
+| `data-lenis-prevent` on the overlay scroll region | Assume native scroll works while Lenis is `stop()`ed |
+| Release modal: fixed `md:h-[85vh]`; **tracklist** is the only `md+` scroll region | Let the whole modal scroll on desktop (scrollbar on the panel edge) |
 
-Regression guard: `src/test/public-mobile.test.tsx` (`createPortal` + `document.body`).
+### Lenis `stop()` swallows wheel events
+
+`lenis.stop()` is required while an overlay is open (page scroll lock), but Lenis also runs a non-passive `wheel` listener on the window and calls `event.preventDefault()` whenever it is stopped (`node_modules/lenis/dist/lenis.mjs` → `onVirtualScroll`). The wheel event bubbles from the portaled modal to `window`, so **the modal cannot be scrolled with the mouse wheel** — dragging the scrollbar still works, which is the tell-tale symptom. Fix: put `data-lenis-prevent` on the scrollable region (Lenis checks the event's `composedPath` for it and bails out **before** the `preventDefault`). Never rely on body scroll lock alone for inner scrolling.
+
+Regression guard: `src/test/public-mobile.test.tsx` (`createPortal` + `document.body`, `data-lenis-prevent`, tracklist `md:flex-1 md:min-h-0 overflow-y-auto`).
 
 ---
 

@@ -124,15 +124,15 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
   return (
     <motion.div
       data-theme-color="card border accent"
-      className="mt-8"
+      className="mt-8 md:flex md:flex-col md:min-h-0 md:flex-1"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 md:gap-8 md:min-h-0 md:flex-1">
         <motion.div
-          className="aspect-square bg-muted relative cyber-card border border-primary/30"
+          className="aspect-square bg-muted relative cyber-card border border-primary/30 md:self-start"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1 }}
@@ -151,7 +151,7 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
           )}
         </motion.div>
 
-        <div className="space-y-6 min-w-0">
+        <div className="space-y-6 min-w-0 md:flex md:flex-col md:min-h-0">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -244,13 +244,16 @@ export function ReleaseOverlayContent({ data, sectionLabels, mainArtistName = ''
 
           {showTracks && data.tracks && data.tracks.length > 0 && (
             <motion.div
-              className="cyber-grid p-4"
+              className="cyber-grid p-4 md:flex md:flex-col md:min-h-0 md:flex-1"
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.35 }}
             >
               <div className="data-label mb-3">{tracksLabel}</div>
-              <ol className="space-y-2 md:space-y-1 max-h-[40vh] md:max-h-none overflow-y-auto overscroll-contain pr-1">
+              <ol
+                data-lenis-prevent
+                className="space-y-2 md:space-y-1 max-h-[40vh] md:max-h-none md:flex-1 md:min-h-0 overflow-y-auto overscroll-contain pr-1"
+              >
                 {data.tracks.map((track, i) => {
                   const rawTitle = typeof track?.title === 'string' ? track.title : ''
                   if (!rawTitle.trim()) return null
