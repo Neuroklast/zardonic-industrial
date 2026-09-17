@@ -12,7 +12,6 @@ interface EditPartnerFormProps {
     url: string | null
     category: string
     logo_storage_path: string | null
-    display_order: number
     active: boolean
     logo_white: boolean | null
   }
@@ -71,15 +70,6 @@ export function EditPartnerForm({ partner, resolvedLogoUrl }: EditPartnerFormPro
           name="url"
           type="url"
           defaultValue={partner.url ?? ''}
-          className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm"
-        />
-      </div>
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1">Display order</label>
-        <input
-          name="display_order"
-          type="number"
-          defaultValue={partner.display_order}
           className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm"
         />
       </div>

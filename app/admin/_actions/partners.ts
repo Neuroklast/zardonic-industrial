@@ -27,7 +27,17 @@ const partnerInputSchema = z.object({
   active: z.coerce.boolean().optional(),
 })
 
+// Update must not default display_order to 0 — editing a partner without the
+// (removed) order field would otherwise reset its position to the top.
+const partnerUpdateSchema = z.object({
+  ...partnerFields,
+  display_order: z.coerce.number().optional(),
+  active: z.coerce.boolean().optional(),
+})
+
 const partnerBulkSchema = z.array(z.object(partnerFields)).min(1).max(PARTNER_BULK_MAX_ROWS)
+
+const partnerReorderSchema = z.array(z.string().min(1)).min(1).max(500)
 
 type PartnerBulkRow = z.infer<typeof partnerBulkSchema>[number]
 
@@ -38,7 +48,7 @@ function parseFormData(formData: FormData) {
     logo_storage_path: formData.get('logo_storage_path') || null,
     logo_url: formData.get('logo_url') || null,
     category: formData.get('category') || 'partner',
-    display_order: formData.get('display_order') || 0,
+    ...(formData.has('display_order') ? { display_order: formData.get('display_order') } : {}),
     active: formData.get('active'),
     logo_white: formData.has('logo_white'),
   }
@@ -60,7 +70,22 @@ export async function createPartner(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin.from('partners').insert(withR2LogoPreference(parsed.data))
+    // New entries append to the end of their section (not display_order 0).
+    const { data: maxRow } = await supabaseAdmin
+      .from('partners')
+      .select('display_order')
+      .eq('category', parsed.data.category)
+      .not('display_order', 'is', null)
+      .order('display_order', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const nextOrder =
+      typeof maxRow?.display_order === 'number' ? maxRow.display_order + 1 : 0
+
+    const { error } = await supabaseAdmin
+      .from('partners')
+      .insert(withR2LogoPreference({ ...parsed.data, display_order: nextOrder }))
     if (error) return { error: error.message }
 
     revalidatePath('/admin/partners')
@@ -70,7 +95,7 @@ export async function createPartner(formData: FormData) {
 }
 
 export async function updatePartner(id: string, formData: FormData) {
-  const parsed = partnerInputSchema.safeParse(parseFormData(formData))
+  const parsed = partnerUpdateSchema.safeParse(parseFormData(formData))
   if (!parsed.success) return { error: parsed.error.message }
 
   const supabaseAdmin = createAdminClient()
@@ -79,9 +104,11 @@ export async function updatePartner(id: string, formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
+    const { display_order, ...rest } = parsed.data
+    const payload = display_order === undefined ? rest : { ...rest, display_order }
     const { error } = await supabaseAdmin
       .from('partners')
-      .update(withR2LogoPreference(parsed.data))
+      .update(withR2LogoPreference(payload))
       .eq('id', id)
     if (error) return { error: error.message }
 
@@ -105,6 +132,39 @@ export async function deletePartner(id: string) {
     revalidatePath('/')
     return { success: true }
   }, 'Unable to delete partner.')
+}
+
+/**
+ * Persist the drag & drop order. `orderedIds` is the full partner list in
+ * render order (grouped like the public grids), so every row gets a
+ * deterministic global display_order.
+ */
+export async function reorderPartners(orderedIds: string[]) {
+  const parsed = partnerReorderSchema.safeParse(orderedIds)
+  if (!parsed.success) return { error: parsed.error.message }
+
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'reorder_partners',
+    { orderedIds: parsed.data },
+    createSupabaseActionContext(supabaseAdmin),
+  )
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
+  return runAdminAction(async () => {
+    for (let i = 0; i < parsed.data.length; i++) {
+      const { error } = await supabaseAdmin
+        .from('partners')
+        .update({ display_order: i })
+        .eq('id', parsed.data[i])
+      if (error) return { error: error.message }
+    }
+
+    revalidatePath('/admin/partners')
+    revalidatePath('/')
+    return { success: true }
+  }, 'Unable to reorder partners.')
 }
 
 export async function togglePartnerVisibility(id: string, active: boolean) {
