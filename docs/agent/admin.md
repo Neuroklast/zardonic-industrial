@@ -47,6 +47,14 @@ Credits, endorsements and partners are all rows in `public.partners` (`category`
 
 There is **no** unique constraint on `(name, category)` in `supabase/schema.sql`, so duplicate handling is app-level only — do not rely on an upsert conflict target here.
 
+### Credits & partners drag & drop reorder (`/admin/partners`)
+
+`PartnersSortable.tsx` renders three sortable groups that mirror the public grids: **Credits** (`credit`), **Endorsements** (`endorsement`), **Partners & Friends** (`partner` / `label` / `sponsor`; any other category falls into this group so no row is hidden). dnd-kit (`DndContext` + one `SortableContext` per group); drops across groups are ignored — the section is the row's `category`, changed on the edit page.
+
+- Drop → `reorderPartners(orderedIds)` (`app/admin/_actions/partners.ts`) writes global `display_order` `0..N-1` for the full id list and revalidates `/admin/partners` + `/`. Registry action: `reorder_partners`.
+- The action is auto-saved on drop (no Save button); on error the list rolls back to the server state and shows the message. Public order comes from the same `display_order` (relative order per grid), so no public-side change is needed.
+- `createPartner` appends new rows at the end of their section (`max(display_order) + 1` per category); `updatePartner` no longer accepts `display_order` from the form (the manual number field was removed) so edits never reset a row to position 0.
+
 ## AdminActionRegistry
 
 Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in `src/test/admin-action-registry.test.ts`.

@@ -368,7 +368,7 @@ function navDescription(href: string, label: string): string {
     '/admin/bio': 'Artist biography shown on the homepage bio section.',
     '/admin/gallery': 'Manage public gallery images — upload, reorder and delete.',
     '/admin/media': 'Downloadable press photos, logos, PDFs, ZIPs and audio stored as originals in R2.',
-    '/admin/partners': 'Credits, endorsements and partner logos with inline add form or bulk import.',
+    '/admin/partners': 'Credits, endorsements and partner logos — drag rows to reorder each section, inline add form or bulk import.',
     '/admin/music-highlights': 'Featured tracks or playlists on the homepage.',
     '/admin/releases': 'Full discography — edit, hide, delete or open per-release sync.',
     '/admin/releases/sync': 'Bulk import catalogue from Spotify, iTunes or Discogs.',
@@ -393,7 +393,7 @@ function navKeywords(href: string, label: string): string[] {
     '/admin/releases/sync': ['spotify', 'itunes', 'discogs', 'import', 'catalogue'],
     '/admin/gigs': ['bandsintown', 'concert', 'tour', 'live'],
     '/admin/media': ['press kit', 'download', 'pdf', 'zip', 'audio', 'logo'],
-    '/admin/partners': ['credits', 'endorsement', 'collaboration', 'logo'],
+    '/admin/partners': ['credits', 'endorsement', 'collaboration', 'logo', 'drag', 'reorder', 'order'],
     '/admin/data': ['backup', 'export', 'import', 'maintenance', 'enrich'],
   }
   return [label.toLowerCase(), ...(extra[href] ?? [])]

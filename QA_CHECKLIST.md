@@ -63,6 +63,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
+- [ ] Credits & Partners: drag a row inside Credits / Endorsements / Partners & Friends to reorder; reload keeps the order and the public grids show it after refresh (drop across sections is ignored)
 - [ ] Credits & Partners → **Bulk import**: dropping several logo files fills a row per file (name from file name); website URL + section editable per row
 - [ ] Bulk import → **Paste a list** parses tab/pipe/comma rows (header + `#` lines ignored) and shows per-line errors for missing names
 - [ ] Bulk import skips rows whose `name + section` already exists (marked "Already exists — skipped") and reports inserted/skipped counts

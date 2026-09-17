@@ -497,6 +497,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  reorder_partners: register({
+    id: 'reorder_partners',
+    label: 'Reorder Partners',
+    schema: z.object({ orderedIds: z.array(z.string().min(1)).min(1).max(500) }),
+    minDisclosure: 'basic',
+    execute(input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   update_social_link: register({
     id: 'update_social_link',
     label: 'Update Social Link',
