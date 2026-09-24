@@ -62,7 +62,7 @@ Skipping docs because “the task was only code” is a process failure.
 - **Legal data** — Supabase `site_config.legal` only; pages `/legal-notice`, `/privacy-policy`; admin `/admin/legal`
 - **Consent** — import from `@/lib/consent`, not UI components, in non-UI code
 - **Overlays** — gallery / release / gig detail use **`CyberpunkOverlay`** only ([public-ui](./docs/agent/public-ui.md)); it **portals to `document.body`** — never render it inline under a `transform` / `filter` / `backdrop-filter` ancestor
-- **Partner logos** — white mode via canvas pipeline (`lib/partner-logo-white.ts`); **never** CSS `brightness(0) invert(1)` on remote PNGs ([public-ui](./docs/agent/public-ui.md))
+- **Partner logos** — white mode via `/api/partner-logo?white=1` (`lib/partner-logo-white.ts`); **never** CSS `brightness(0) invert(1)` on remote PNGs ([public-ui](./docs/agent/public-ui.md))
 - **Media is ALWAYS on R2 — never Supabase Storage.** Images/videos/logos/downloads resolve via `lib/r2.ts` `resolveImageUrl` / `toDirectImageUrl`; a `*.supabase.co` asset URL is invalid and resolves to `null`/`''`. Never re-add `.supabase.co` as a trusted direct host. Legacy rows are migrated to R2 automatically (once) — see `lib/legacy-url-migration-on-deploy.ts`, badge `lib/legacy-url-audit.ts`, manual `npm run migrate-legacy`.
 - **Nav labels** — compact defaults in `lib/nav-links.ts` (`Bio`, `Releases`, …); full titles stay on section headings
 - **Nav logo** — flex flow `shrink-0`, never `position: absolute` over the link row
@@ -89,12 +89,12 @@ Skipping docs because “the task was only code” is a process failure.
 
 ### Partner / credit logos (PNG alpha)
 
-1. White logos: `PartnerLogoWhite` → `loadLogoImageForCanvas` + `processLogoToWhiteSilhouette` (soft-alpha: only transparent stays transparent, all ink → white; opaque light/dark plates stripped).
+1. White logos: `PartnerLogoWhite` → `/api/partner-logo?white=1` (server silhouette); canvas only if that fails (soft-alpha: only transparent stays transparent, all ink → white; opaque light/dark plates stripped).
 2. Native colour: class `partner-logo-native` — same CSS chromatic hover as white mode.
 3. **Forbidden:** CSS `mask-image` on cross-origin R2 URLs (CORS → solid white box).
 4. **Forbidden:** `filter: brightness(0) invert(1)` on logos that may have a baked white background (→ solid white box, e.g. QUESTEC).
 5. **Forbidden:** inline `style.filter` on partner logos (blocks hover chromatic).
-6. Fallback if canvas fails: show original **without** invert — never invent a white plate.
+6. Fallback if processing fails: partner **name**, never original colours or a white plate.
 
 ### Footer
 

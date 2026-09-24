@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import sharp from 'sharp'
 
 vi.mock('@/lib/ssrf-guard', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/ssrf-guard')>()
@@ -75,5 +76,41 @@ describe('GET /api/partner-logo', () => {
     )
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toBe('image/png')
+  })
+
+  it('returns a white PNG when white=1', async () => {
+    const png = await sharp({
+      create: {
+        width: 4,
+        height: 4,
+        channels: 4,
+        background: { r: 10, g: 10, b: 10, alpha: 1 },
+      },
+    })
+      .png()
+      .toBuffer()
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(png, {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+      })),
+    )
+
+    const target = 'https://pub-example.r2.dev/partners/logos/questec.png'
+    const res = await GET(
+      new Request(
+        `http://local.test/api/partner-logo?url=${encodeURIComponent(target)}&white=1`,
+      ),
+    )
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toBe('image/png')
+    const out = Buffer.from(await res.arrayBuffer())
+    const { data } = await sharp(out).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    expect(data[0]).toBe(255)
+    expect(data[1]).toBe(255)
+    expect(data[2]).toBe(255)
+    expect(data[3]).toBeGreaterThan(200)
   })
 })

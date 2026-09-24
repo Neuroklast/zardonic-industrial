@@ -26,9 +26,9 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Media: homepage teaser + `/media` browse; image cards open overlay preview + download; audio has inline player (no autoplay); PDF/ZIP download
 - [ ] Media logos/photos are original colours (no partner white-silhouette pipeline)
 - [ ] Events: only past gigs â†’ homepage shows â€œNo upcoming events.â€ (not the past list); `/gigs` still has Past filter
-- [ ] Credits / endorsements / partners: logos white-on-dark, **no solid white rectangles** (incl. white-on-black uploads like SEGA)
+- [ ] Credits / endorsements / partners: logos white-on-dark with **White logo fill** on (not leftover brand colours); **no solid white rectangles** (incl. white-on-black uploads like SEGA); broken white-fill shows the partner **name**, not the colour original
 - [ ] Partner SVGs (HOFA, Baby Audio, SUPERHOT, â€¦) look sharp at desktop size â€” not a 150px-wide smear
-- [ ] Console: no CORS on `*.r2.dev` partner logos; **no** `wsrv.nl/?url=https://pub-*.r2.dev`; SVGs and rasters load via `/api/partner-logo`
+- [ ] Console: no CORS on `*.r2.dev` partner logos; **no** `wsrv.nl/?url=https://pub-*.r2.dev`; white-fill imgs load `/api/partner-logo?…&white=1`
 - [ ] Hard refresh with a stored non-English locale (`zd-locale`): no React #418 hydration text error; chrome stays English for a beat then switches
 - [ ] Native (white-fill off) PNG/WebP/SVG logos actually appear (not empty cells); broken files show the partner name
 - [ ] Language switch DE/JA/RU: section titles stay readable (no mixed smeared sans-serif, no overflow); CJK titles are not force-latinized
