@@ -38,7 +38,7 @@
 | Supabase admin auth | `app/admin/login/submit/route.ts`, `proxy.ts`, `lib/supabaseServer.ts` | Native POST login; pass cookie `options` unchanged; forward SSR cache headers; copy cookies on all proxy redirects |
 | Redis short-circuit | `api/auth.ts` / session helpers | Return false if Redis not configured |
 | WebGL cleanup | `ModelBackground.tsx` / circuit backgrounds | Dispose geometry/material/texture before renderer |
-| Partner SVG/PNG | `lib/partner-logo-white.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | Rewrite SVG to 1024px before canvas; **all** R2 logos via `/api/partner-logo` (never wsrv for R2 — stale inner hosts 404); light plate only if a dark mark exists (PWM white wordmark); eager load; no `whileInView`+`opacity:0` |
+| Partner SVG/PNG | `lib/partner-logo-white.ts`, `lib/partner-logo-white-server.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | White-fill: `/api/partner-logo?white=1` (sharp silhouette). Proxy allowlist includes `R2_PUBLIC_HOST`, not only `*.r2.dev`. Never wsrv for R2. Light plate only if a dark mark exists. Fail → name, not original colours / CSS invert. Native: eager load; no `whileInView`+`opacity:0` |
 | Background video | `BackgroundStack.tsx` | No canvas animation while scroll video is active; seek ≥ 1/24s |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
 | Odesli | `lib/odesli.ts`, `app/api/odesli/route.ts` | Server enrichment calls `fetchOdesliLinksFromApi` **directly** (no HTTP hop); admin-only route `/api/odesli` = `GET ?url=` lookup + `POST` streaming-enrichment batch (`runStreamingEnrichmentBatch`, admin UI button in Catalogue Sync). No client proxy/queue. |

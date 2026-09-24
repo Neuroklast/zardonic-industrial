@@ -1,4 +1,4 @@
-import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
+import { canonicalizeR2MediaUrl, currentR2PublicOrigin } from '@/lib/r2-url-rewrite'
 import { isLegacySupabaseStorageUrl } from '@/lib/r2'
 
 /** Minimal pixel buffer — avoids relying on the browser ImageData constructor in tests. */
@@ -167,13 +167,15 @@ export function isDirectCanvasHost(url: string): boolean {
     return true
   }
   try {
-    const hostname = new URL(url).hostname
-    return (
-      hostname.endsWith('.r2.dev') ||
-      hostname.endsWith('.r2.cloudflarestorage.com')
-      // Deliberately NOT '.supabase.co': legacy storage logos would be
-      // fetched from Supabase (egress); wsrv.nl provides the proxy instead.
-    )
+    const hostname = new URL(url).hostname.toLowerCase()
+    if (hostname.endsWith('.r2.dev') || hostname.endsWith('.r2.cloudflarestorage.com')) {
+      return true
+    }
+    const origin = currentR2PublicOrigin()
+    if (origin) {
+      return new URL(origin).hostname.toLowerCase() === hostname
+    }
+    return false
   } catch {
     return false
   }
@@ -233,6 +235,22 @@ export function rewriteSvgForHiResRaster(
 /** Same-origin rewrite so the browser never fetch()es r2.dev (no CORS headers). */
 export function partnerLogoProxyPath(url: string): string {
   return `/api/partner-logo?url=${encodeURIComponent(url)}`
+}
+
+/**
+ * White-fill img src. Remote logos go through `/api/partner-logo?white=1`
+ * (server silhouette). Empty string → caller uses the client canvas path
+ * (data/blob/relative).
+ */
+export function partnerLogoWhiteSrc(url: string): string {
+  if (!url) return ''
+  if (isLegacySupabaseStorageUrl(url)) return ''
+  if (url.startsWith('data:') || url.startsWith('blob:') || url.startsWith('/') || url.startsWith('.')) {
+    return ''
+  }
+  const canonical = canonicalizeR2MediaUrl(url)
+  if (!canonical.startsWith('https://')) return ''
+  return `${partnerLogoProxyPath(canonical)}&white=1`
 }
 
 /** R2 / Supabase logos load same-origin — public r2.dev has no CORS. */

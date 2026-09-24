@@ -269,6 +269,12 @@ describe('restored public homepage components', () => {
     expect(container.querySelector('.scan-line')).toBeInTheDocument()
     expect(container.querySelectorAll('.partner-logo-native')).toHaveLength(1)
     expect(container.querySelectorAll('.partner-logo-white')).toHaveLength(1)
+    expect(container.querySelector('.partner-logo-white')?.getAttribute('src') ?? '').toContain(
+      '/api/partner-logo',
+    )
+    expect(container.querySelector('.partner-logo-white')?.getAttribute('src') ?? '').toContain(
+      'white=1',
+    )
     expect(container.querySelectorAll('.partner-logo-cell')).toHaveLength(2)
     expect(screen.getByText(/credits/i)).toBeInTheDocument()
     expect(screen.getByText(/endorsements/i)).toBeInTheDocument()

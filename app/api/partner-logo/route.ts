@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
 import { parsePartnerLogoProxyUrl, rewriteSvgForHiResRaster } from '@/lib/partner-logo-white'
+import { renderPartnerLogoWhitePng } from '@/lib/partner-logo-white-server'
 import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
 import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
+
+const CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+  'X-Content-Type-Options': 'nosniff',
+} as const
 
 const MAX_LOGO_BYTES = 8 * 1024 * 1024
 const RASTER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
@@ -25,7 +31,9 @@ function sniffRasterType(buf: ArrayBuffer): string | null {
  * leftover `pub-*.r2.dev` hosts onto `R2_PUBLIC_HOST` before the upstream GET.
  */
 export async function GET(request: Request) {
-  const requested = parsePartnerLogoProxyUrl(new URL(request.url).searchParams.get('url'))
+  const requestUrl = new URL(request.url)
+  const requested = parsePartnerLogoProxyUrl(requestUrl.searchParams.get('url'))
+  const wantWhite = requestUrl.searchParams.get('white') === '1'
   if (!requested) {
     return new NextResponse('Bad request', { status: 400 })
   }
@@ -34,7 +42,7 @@ export async function GET(request: Request) {
   try {
     const rl = await consumeRateLimitForRequest(request, {
       namespace: 'partner-logo',
-      limit: 60,
+      limit: 180,
       windowSeconds: 60,
     })
     if (!rl.allowed) {
@@ -75,6 +83,21 @@ export async function GET(request: Request) {
         contentType === 'application/xml' ||
         new TextDecoder('utf-8').decode(buf.slice(0, 256)).includes('<svg'))
 
+    if (wantWhite) {
+      try {
+        const png = await renderPartnerLogoWhitePng(buf, looksSvg)
+        return new NextResponse(Uint8Array.from(png), {
+          status: 200,
+          headers: {
+            'Content-Type': 'image/png',
+            ...CACHE_HEADERS,
+          },
+        })
+      } catch {
+        return new NextResponse('White logo failed', { status: 502 })
+      }
+    }
+
     if (looksSvg) {
       const text = new TextDecoder('utf-8').decode(buf)
       if (!/<svg/i.test(text)) {
@@ -85,8 +108,7 @@ export async function GET(request: Request) {
         status: 200,
         headers: {
           'Content-Type': 'image/svg+xml; charset=utf-8',
-          'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
-          'X-Content-Type-Options': 'nosniff',
+          ...CACHE_HEADERS,
           'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
         },
       })
@@ -100,8 +122,7 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         'Content-Type': contentType === 'application/octet-stream' ? 'image/png' : contentType,
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
-        'X-Content-Type-Options': 'nosniff',
+        ...CACHE_HEADERS,
       },
     })
   } catch {

@@ -8,6 +8,7 @@ import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import {
   loadLogoImageForCanvas,
   logoRasterSize,
+  partnerLogoWhiteSrc,
   preparePartnerLogoSrc,
   processLogoToWhiteSilhouette,
 } from '@/lib/partner-logo-white'
@@ -37,10 +38,20 @@ function PartnerLogoWhite({
   name: string
   brightness: number
 }) {
+  const remoteWhiteSrc = partnerLogoWhiteSrc(src)
+  const [skipRemote, setSkipRemote] = useState(false)
   const [processedSrc, setProcessedSrc] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
+    setSkipRemote(false)
+    setFailed(false)
+    setProcessedSrc(null)
+  }, [src])
+
+  useEffect(() => {
+    if (remoteWhiteSrc && !skipRemote) return
+
     let cancelled = false
 
     const run = async () => {
@@ -54,7 +65,6 @@ function PartnerLogoWhite({
         const h = img.naturalHeight || img.height
         if (!w || !h) throw new Error('empty logo')
 
-        // Upscale tiny SVG defaults (155×18) and cap huge assets
         const { width: cw, height: ch } = logoRasterSize(w, h)
 
         const canvas = document.createElement('canvas')
@@ -82,28 +92,14 @@ function PartnerLogoWhite({
     return () => {
       cancelled = true
     }
-  }, [src])
+  }, [src, remoteWhiteSrc, skipRemote])
 
   if (failed) {
-    // Last-resort: native img, NO invert filter (invert on white-bg PNGs = solid white box).
-    // Show original at reduced opacity so layout still works.
-    // filter stays in CSS only — inline filter:none would block hover chromatic.
-    return (
-      <m.img
-        src={src}
-        alt={name}
-        className="partner-logo-white h-12 w-auto min-w-[4rem] max-w-[8.5rem] object-contain opacity-80 md:h-16 md:max-w-[10rem]"
-        style={{ opacity: brightness, background: 'transparent' }}
-        initial={false}
-        animate={{ opacity: brightness }}
-        whileHover={{ opacity: 1 }}
-        transition={{ duration: 0.35 }}
-        decoding="async"
-      />
-    )
+    return <PartnerNameFallback name={name} />
   }
 
-  if (!processedSrc) {
+  const imgSrc = remoteWhiteSrc && !skipRemote ? remoteWhiteSrc : processedSrc
+  if (!imgSrc) {
     return (
       <span
         className="partner-logo-white inline-block h-12 w-28 animate-pulse rounded-sm bg-muted/30 md:h-16 md:w-32"
@@ -115,7 +111,7 @@ function PartnerLogoWhite({
 
   return (
     <m.img
-      src={processedSrc}
+      src={imgSrc}
       alt={name}
       className="partner-logo-white h-12 w-auto min-w-[4rem] max-w-[8.5rem] object-contain md:h-16 md:max-w-[10rem]"
       style={{ opacity: brightness, background: 'transparent' }}
@@ -124,6 +120,13 @@ function PartnerLogoWhite({
       whileHover={{ opacity: 1 }}
       transition={{ duration: 0.35 }}
       decoding="async"
+      onError={() => {
+        if (remoteWhiteSrc && !skipRemote) {
+          setSkipRemote(true)
+          return
+        }
+        setFailed(true)
+      }}
     />
   )
 }

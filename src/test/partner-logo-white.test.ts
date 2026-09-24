@@ -5,6 +5,7 @@ import {
   parsePartnerLogoProxyUrl,
   partnerLogoCanvasSrc,
   partnerLogoProxyPath,
+  partnerLogoWhiteSrc,
   processLogoToWhiteSilhouette,
   rewriteSvgForHiResRaster,
   shouldProxyPartnerLogo,
@@ -244,7 +245,7 @@ describe('partnerLogoCanvasSrc', () => {
     expect(shouldProxyPartnerLogo('https://cdn.example.com/a.svg')).toBe(false)
   })
 
-  it('parsePartnerLogoProxyUrl only allows https R2/Supabase logos', () => {
+  it('parsePartnerLogoProxyUrl only allows https R2 logos', () => {
     const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
     expect(parsePartnerLogoProxyUrl(r2)).toBe(r2)
     expect(parsePartnerLogoProxyUrl('https://pub-example.r2.dev/logo.png')).toBe(
@@ -253,6 +254,36 @@ describe('partnerLogoCanvasSrc', () => {
     expect(parsePartnerLogoProxyUrl('https://cdn.example.com/a.svg')).toBeNull()
     expect(parsePartnerLogoProxyUrl('http://pub-example.r2.dev/a.svg')).toBeNull()
     expect(parsePartnerLogoProxyUrl(null)).toBeNull()
+  })
+
+  it('proxies the configured R2 public host, not only *.r2.dev', () => {
+    const prevPublic = process.env.NEXT_PUBLIC_R2_PUBLIC_HOST
+    const prevServer = process.env.R2_PUBLIC_HOST
+    process.env.NEXT_PUBLIC_R2_PUBLIC_HOST = 'https://media.zardonic.test'
+    delete process.env.R2_PUBLIC_HOST
+    try {
+      const url = 'https://media.zardonic.test/partners/logos/a.png'
+      expect(shouldProxyPartnerLogo(url)).toBe(true)
+      expect(parsePartnerLogoProxyUrl(url)).toBe(url)
+      expect(partnerLogoCanvasSrc(url)).toBe(partnerLogoProxyPath(url))
+    } finally {
+      if (prevPublic === undefined) delete process.env.NEXT_PUBLIC_R2_PUBLIC_HOST
+      else process.env.NEXT_PUBLIC_R2_PUBLIC_HOST = prevPublic
+      if (prevServer === undefined) delete process.env.R2_PUBLIC_HOST
+      else process.env.R2_PUBLIC_HOST = prevServer
+    }
+  })
+})
+
+describe('partnerLogoWhiteSrc', () => {
+  it('sends https logos through the white proxy', () => {
+    const r2 = 'https://pub-example.r2.dev/partners/logos/baby.svg'
+    expect(partnerLogoWhiteSrc(r2)).toBe(`${partnerLogoProxyPath(r2)}&white=1`)
+  })
+
+  it('leaves relative and data URLs to client canvas', () => {
+    expect(partnerLogoWhiteSrc('/logos/a.svg')).toBe('')
+    expect(partnerLogoWhiteSrc('data:image/png;base64,xx')).toBe('')
   })
 })
 

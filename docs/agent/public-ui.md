@@ -83,12 +83,13 @@ Regression guard: `src/test/public-mobile.test.tsx` (`createPortal` + `document.
 
 Pipeline for white-mode logos (`logo_white !== false`):
 
-1. `loadLogoImageForCanvas(url)` — R2/Supabase **SVGs and rasters** via same-origin `/api/partner-logo` (the route rewrites leftover `pub-*.r2.dev` onto `R2_PUBLIC_HOST` before fetch). Other remotes via wsrv. Public `*.r2.dev` does **not** send CORS — never `fetch()` it from the browser. Never send R2 through `wsrv.nl` (stale inner hosts 404).
-2. SVGs: `rewriteSvgForHiResRaster` so tiny `width` / missing size (browser default 300) are drawn at 1024px before canvas. Never let wsrv `output=png` rasterize an SVG at its intrinsic 155×18.
-3. `processLogoToWhiteSilhouette` — pure white RGB; **only transparent stays transparent**; strip opaque light/dark plates when present.
-4. Raster size: `logoRasterSize` **upsizes** below 512 and **caps** at 1024. Do not only downscale.
-5. Render `data:image/png` via class `partner-logo-white` — rest state `filter: none` in **CSS only**.
-6. Native logos (`logo_white === false`): same SVG rewrite for display; **eager** load (no `loading="lazy"` — Lenis + native lazy never starts the request); no `whileInView` + `opacity: 0` (can stay invisible).
+1. Remote logos render from same-origin `/api/partner-logo?url=…&white=1`. The route fetches R2 (rewrites leftover `pub-*.r2.dev` onto `R2_PUBLIC_HOST`, including a **custom public host**), runs `processLogoToWhiteSilhouette` via sharp, and returns a white PNG. Public `*.r2.dev` does **not** send CORS — never `fetch()` it from the browser. Never send R2 through `wsrv.nl` (stale inner hosts 404).
+2. `isDirectCanvasHost` / `shouldProxyPartnerLogo` must allow `*.r2.dev`, `*.r2.cloudflarestorage.com`, **and** `currentR2PublicOrigin()`. After canonicalize, a custom `R2_PUBLIC_HOST` used to 400 the proxy → client showed original colours.
+3. SVGs: `rewriteSvgForHiResRaster` so tiny `width` / missing size (browser default 300) are drawn at 1024px before raster. Never let wsrv `output=png` rasterize an SVG at its intrinsic 155×18.
+4. `processLogoToWhiteSilhouette` — pure white RGB; **only transparent stays transparent**; strip opaque light/dark plates when present.
+5. Raster size: `logoRasterSize` **upsizes** below 512 and **caps** at 1024. Do not only downscale.
+6. Render via class `partner-logo-white` — rest state `filter: none` in **CSS only**. If the white PNG 404s, client canvas is the fallback; if that fails, show the **partner name** — never the original-colour file (and never CSS invert).
+7. Native logos (`logo_white === false`): same SVG rewrite for display; **eager** load (no `loading="lazy"` — Lenis + native lazy never starts the request); no `whileInView` + `opacity: 0` (can stay invisible).
 
 Soft-alpha rule (transparent PNG/SVG, e.g. AEW white + gold + gray): every non-transparent pixel → solid white at source alpha. **Never** kill near-white ink on true-alpha logos (that made white text vanish and multi-colour marks look wrong). Light-plate stripping requires a **dark mark** in-frame — a white wordmark that touches corners (PWM) is the logo, not a plate.
 
@@ -96,17 +97,17 @@ When white fill is **off** (`logo_white === false`): class `partner-logo-native`
 
 | Do | Don't |
 |----|--------|
-| Canvas process white logos | CSS `mask-image: url(cross-origin)` (CORS → solid white fill) |
+| Server white PNG (`?white=1`); canvas only as fallback | CSS `mask-image: url(cross-origin)` (CORS → solid white fill) |
 | Soft-alpha → keep **all** ink (any colour) as white | Kill near-white pixels on true-alpha logos (→ missing text / holes) |
 | Light plate → non-white marks solid white; dark plate → non-black marks solid white | `brightness(0) invert(1)` on white-bg PNGs (→ solid white box) |
 | Chromatic hover via CSS (`.partner-logo-white` / `.partner-logo-native` + `.partner-logo-cell:hover`) | Inline `style={{ filter: 'none' }}` — beats `:hover` and kills RGB fringe |
-| Fail open: original image, no invert | Fail closed: white rectangle “placeholder” |
+| Fail to partner name | Fail open to original colours (looks like fill is off) |
 
 **Upload tips (admin):** Prefer **transparent** PNG/SVG (no baked white/black box). Multi-colour marks (gold A/W, gray brackets) become white automatically with fill on. Keep brand colour: uncheck **White logo fill**. Pre-whitened transparent uploads work with fill on (stay white) or off (native + chromatic hover).
 
-Files: `lib/partner-logo-white.ts`, `app/_components/public/CreditsSection.tsx`, `styles/effects.css`.
+Files: `lib/partner-logo-white.ts`, `lib/partner-logo-white-server.ts`, `app/api/partner-logo/route.ts`, `app/_components/public/CreditsSection.tsx`, `styles/effects.css`.
 
-Tests: `src/test/partner-logo-white.test.ts` (white-plate / QUESTEC, dark-plate / SEGA, multi-colour soft-alpha / AEW-style).
+Tests: `src/test/partner-logo-white.test.ts` (white-plate / QUESTEC, dark-plate / SEGA, multi-colour soft-alpha / AEW-style), `src/test/partner-logo-white-server.test.ts`, `src/test/partner-logo-proxy-route.test.ts`.
 
 ---
 
