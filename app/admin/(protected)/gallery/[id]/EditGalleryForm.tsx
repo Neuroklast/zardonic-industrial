@@ -70,15 +70,6 @@ export default function EditGalleryForm({ item }: { item: GalleryItem }) {
           className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none"
         />
       </div>
-      <div>
-        <label className="block text-sm text-zinc-300 mb-1">Display Order</label>
-        <input
-          name="display_order"
-          type="number"
-          defaultValue={item.display_order}
-          className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none"
-        />
-      </div>
       {error && <p className="text-red-400 text-sm">{error}</p>}
       <div className="flex gap-3">
         <button

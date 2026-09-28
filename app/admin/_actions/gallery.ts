@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { fetchNextDisplayOrder } from '@/app/admin/_lib/displayOrder'
 import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
@@ -13,7 +14,6 @@ const galleryInputSchema = z.object({
   storage_path: z.string().min(1, 'Please upload or select an image first.'),
   alt: z.string().optional().nullable(),
   caption: z.string().optional().nullable(),
-  display_order: z.coerce.number().optional().default(0),
 })
 
 function friendlyZodError(error: z.ZodError): string {
@@ -36,7 +36,6 @@ export async function saveGalleryImage(formData: FormData) {
     storage_path: formData.get('storage_path'),
     alt: normalizeOptionalText(formData.get('alt')),
     caption: normalizeOptionalText(formData.get('caption')),
-    display_order: formData.get('display_order') || 0,
   }
 
   const parsed = galleryInputSchema.safeParse(raw)
@@ -55,12 +54,13 @@ export async function saveGalleryImage(formData: FormData) {
   }
 
   return runAdminAction(async () => {
+    const nextOrder = await fetchNextDisplayOrder(supabaseAdmin, 'gallery')
     const row = preferR2StoragePath(
       {
         storage_path: parsed.data.storage_path,
         alt: parsed.data.alt ?? '',
         caption: parsed.data.caption ?? '',
-        display_order: parsed.data.display_order ?? 0,
+        display_order: nextOrder,
         image_url: null,
         active: true,
       },
@@ -86,7 +86,6 @@ export async function updateGalleryImage(id: string, formData: FormData) {
     storage_path: formData.get('storage_path'),
     alt: normalizeOptionalText(formData.get('alt')),
     caption: normalizeOptionalText(formData.get('caption')),
-    display_order: formData.get('display_order') || 0,
     image_url: formData.get('image_url') || null,
   }
 

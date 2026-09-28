@@ -52,15 +52,6 @@ export default function NewMusicHighlightPage() {
             className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
           />
         </div>
-        <div>
-          <label className="block text-sm text-zinc-300 mb-1">Display Order</label>
-          <input
-            name="display_order"
-            type="number"
-            defaultValue={0}
-            className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm focus:outline-none focus:border-zinc-500"
-          />
-        </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <div className="flex gap-3">
           <button

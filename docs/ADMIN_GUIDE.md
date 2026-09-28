@@ -1,6 +1,6 @@
 # Admin Guide
 
-> **Last updated:** 2026-09-03
+> **Last updated:** 2026-09-28
 
 The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabase user that has `profiles.role = 'admin'`.
 
@@ -16,8 +16,8 @@ Use the email/password form (native POST to the server route). Do not use browse
 | Site Config (Look & Feel) | `/admin/site-config` | Hero, background, appearance, footer URLs + **live preview** |
 | Legal & Privacy | `/admin/legal` | Operator details, privacy policy override |
 | Biography | `/admin/bio` | Bio text |
-| Gallery | `/admin/gallery` | Images |
-| Media Downloads | `/admin/media` | Press photos, logos, PDFs, ZIPs, audio |
+| Gallery | `/admin/gallery` | Images — drag tiles to reorder |
+| Media Downloads | `/admin/media` | Press photos, logos, PDFs, ZIPs, audio — drag to reorder |
 | Discography | `/admin/releases` | Releases + sync |
 | Events | `/admin/gigs` | Gigs + Bandsintown sync |
 | Newsletter | `/admin/newsletter` | Subscribers |
@@ -40,7 +40,26 @@ Go to **`/admin/security`** (also under **System → Security** in the nav), ent
 - Allowed: JPEG, PNG, WebP, GIF (preview + overlay), PDF/ZIP (direct download), MP3/WAV (inline player).
 - Files are stored **as uploaded** in R2 — no crop/WebP conversion.
 - Category (`photo` / `logo` / `document` / `audio` / `other`) is a filter on `/media`; click behaviour follows the file type.
+- Drag rows on `/admin/media` to set the public order (saves on drop). New files append at the end.
 - After adding the `media_downloads` table in Supabase (`supabase/schema.sql`), new section `media` appears in Look & Feel → Sections (existing sites: at the end of the list until you reorder).
+
+## Reordering content
+
+Drag the grip handle on these admin lists; the public site follows immediately (no Save button):
+
+| List | Path | Notes |
+|------|------|--------|
+| Credits & Partners | `/admin/partners` | Drag within a section only |
+| Social links | `/admin/social` | |
+| Homepage sections | Look & Feel → Sections | Live preview |
+| Gallery | `/admin/gallery` | Thumbnail grid |
+| Merchandise | `/admin/merchandise` | |
+| Soundpacks | `/admin/soundpacks` | |
+| Music Highlights | `/admin/music-highlights` | |
+| Media Downloads | `/admin/media` | |
+| News | `/admin/news` | |
+
+Gigs stay date-ordered. Discography has its own sort/filter tools, not drag-and-drop. New items append at the end of the list.
 
 ## Look & Feel live preview
 

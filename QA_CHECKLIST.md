@@ -64,6 +64,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
 - [ ] Partner edit: logo upload + white-logo toggle
 - [ ] Credits & Partners: drag a row inside Credits / Endorsements / Partners & Friends to reorder; reload keeps the order and the public grids show it after refresh (drop across sections is ignored)
+- [ ] Gallery: drag a thumbnail; public gallery order matches after refresh
+- [ ] Merchandise / Soundpacks / Music Highlights / Media / News: drag a row; public section order matches after refresh; new item lands at the end; editing a row does not jump it to position 0
 - [ ] Credits & Partners → **Bulk import**: dropping several logo files fills a row per file (name from file name); website URL + section editable per row
 - [ ] Bulk import → **Paste a list** parses tab/pipe/comma rows (header + `#` lines ignored) and shows per-line errors for missing names
 - [ ] Bulk import skips rows whose `name + section` already exists (marked "Already exists — skipped") and reports inserted/skipped counts

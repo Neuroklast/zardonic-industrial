@@ -160,22 +160,22 @@ describe('Admin table pages — overflow-x-auto wrapper', () => {
     expect(wrapper?.querySelector('table')).toBeTruthy()
   })
 
-  it('SoundpacksPage wraps table in overflow-x-auto', async () => {
+  it('SoundpacksPage renders a drag-reorder list instead of a table', async () => {
     mockSupabaseWithRows([{ id: '1', title: 'Pack', display_order: 1 }])
     const result = await SoundpacksPage()
     const { container } = render(result as React.ReactElement)
-    const wrapper = container.querySelector('.overflow-x-auto')
-    expect(wrapper).toBeTruthy()
-    expect(wrapper?.querySelector('table')).toBeTruthy()
+    expect(screen.getByText('Pack')).toBeTruthy()
+    expect(container.querySelector('table')).toBeNull()
+    expect(screen.getByLabelText(/drag to reorder pack/i)).toBeTruthy()
   })
 
-  it('MerchandisePage wraps table in overflow-x-auto', async () => {
+  it('MerchandisePage renders a drag-reorder list instead of a table', async () => {
     mockSupabaseWithRows([{ id: '1', title: 'T-Shirt', display_order: 1 }])
     const result = await MerchandisePage()
     const { container } = render(result as React.ReactElement)
-    const wrapper = container.querySelector('.overflow-x-auto')
-    expect(wrapper).toBeTruthy()
-    expect(wrapper?.querySelector('table')).toBeTruthy()
+    expect(screen.getByText('T-Shirt')).toBeTruthy()
+    expect(container.querySelector('table')).toBeNull()
+    expect(screen.getByLabelText(/drag to reorder t-shirt/i)).toBeTruthy()
   })
 })
 

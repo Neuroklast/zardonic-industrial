@@ -5,6 +5,7 @@ import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
+import { fetchNextDisplayOrder } from '@/app/admin/_lib/displayOrder'
 import { safeExternalUrl } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
@@ -12,7 +13,6 @@ const schema = z.object({
   title: z.string().min(1),
   youtube_url: safeExternalUrl,
   description: z.string().optional().nullable(),
-  display_order: z.coerce.number().optional().default(0),
 })
 
 function parseFormData(formData: FormData) {
@@ -20,7 +20,6 @@ function parseFormData(formData: FormData) {
     title: formData.get('title'),
     youtube_url: formData.get('youtube_url'),
     description: formData.get('description') || null,
-    display_order: formData.get('display_order') || 0,
   }
 }
 
@@ -34,7 +33,10 @@ export async function createMusicHighlight(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
-    const { error } = await supabaseAdmin.from('music_highlights').insert(parsed.data)
+    const nextOrder = await fetchNextDisplayOrder(supabaseAdmin, 'music_highlights')
+    const { error } = await supabaseAdmin
+      .from('music_highlights')
+      .insert({ ...parsed.data, display_order: nextOrder })
     if (error) return { error: error.message }
 
     revalidatePath('/admin/music-highlights')

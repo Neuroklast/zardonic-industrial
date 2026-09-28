@@ -7,6 +7,7 @@ import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
 import { parseMediaCategory, validateMediaUpload } from '@/lib/media-download'
+import { fetchNextDisplayOrder } from '@/app/admin/_lib/displayOrder'
 import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
@@ -19,7 +20,6 @@ const schema = z.object({
   file_mime: z.string().optional().nullable(),
   file_size_bytes: z.coerce.number().optional().nullable(),
   original_filename: z.string().optional().nullable(),
-  display_order: z.coerce.number().optional().default(0),
 })
 
 function normalizeOptionalText(value: FormDataEntryValue | null): string | null {
@@ -39,7 +39,6 @@ function parseFormData(formData: FormData) {
     file_mime: normalizeOptionalText(formData.get('file_mime')),
     file_size_bytes: sizeRaw == null || String(sizeRaw).trim() === '' ? null : sizeRaw,
     original_filename: normalizeOptionalText(formData.get('original_filename')),
-    display_order: formData.get('display_order') || 0,
   }
 }
 
@@ -59,7 +58,6 @@ function toRow(parsed: z.infer<typeof schema>) {
       file_mime: mimeCheck.ok && mimeCheck.mime ? mimeCheck.mime : parsed.file_mime || null,
       file_size_bytes: parsed.file_size_bytes ?? null,
       original_filename: filename,
-      display_order: parsed.display_order ?? 0,
     },
     'file_storage_path',
     'file_url',
@@ -86,8 +84,10 @@ export async function createMediaDownload(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
+    const nextOrder = await fetchNextDisplayOrder(supabaseAdmin, 'media_downloads')
     const { error } = await supabaseAdmin.from('media_downloads').insert({
       ...toRow(parsed.data),
+      display_order: nextOrder,
       active: true,
     })
     if (error) return { error: error.message }
