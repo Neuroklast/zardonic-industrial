@@ -17,6 +17,7 @@ import { z } from 'zod'
 import { setAdminValue } from './admin-settings'
 import type { AdminSettings, DisclosureLevel } from './types'
 import type { SiteData } from '@/lib/app-types'
+import { orderedIdsInputSchema } from '@/lib/admin-display-order'
 
 // ─── Result type ──────────────────────────────────────────────────────────────
 
@@ -91,6 +92,19 @@ function register<TSchema extends z.ZodTypeAny>(
       // Safe cast: dispatchAdminAction always calls schema.safeParse before invoking this
       def.execute(validatedInput as z.infer<TSchema>, ctx),
   }
+}
+
+function registerReorder(id: string, label: string): RegisteredAdminAction {
+  return register({
+    id,
+    label,
+    schema: orderedIdsInputSchema,
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  })
 }
 
 // ─── Input schemas ────────────────────────────────────────────────────────────
@@ -500,13 +514,20 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
   reorder_partners: register({
     id: 'reorder_partners',
     label: 'Reorder Partners',
-    schema: z.object({ orderedIds: z.array(z.string().min(1)).min(1).max(500) }),
+    schema: orderedIdsInputSchema,
     minDisclosure: 'basic',
     execute(input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
       return { ok: true }
     },
   }),
+
+  reorder_gallery: registerReorder('reorder_gallery', 'Reorder Gallery'),
+  reorder_merchandise: registerReorder('reorder_merchandise', 'Reorder Merchandise'),
+  reorder_soundpacks: registerReorder('reorder_soundpacks', 'Reorder Soundpacks'),
+  reorder_music_highlights: registerReorder('reorder_music_highlights', 'Reorder Music Highlights'),
+  reorder_media_downloads: registerReorder('reorder_media_downloads', 'Reorder Media Downloads'),
+  reorder_news_posts: registerReorder('reorder_news_posts', 'Reorder News Posts'),
 
   update_social_link: register({
     id: 'update_social_link',

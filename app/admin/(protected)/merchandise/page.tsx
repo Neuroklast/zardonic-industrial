@@ -1,10 +1,10 @@
 import { createClient } from '@/lib/supabaseServer'
 import Link from 'next/link'
-import { deleteMerchandise } from '@/app/admin/_actions/merchandise'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
+import { MerchandiseSortable, type MerchandiseListRow } from './MerchandiseSortable'
 
 export default async function MerchandisePage() {
-  let items: Array<{ id: string; title: string; display_order: number }> = []
+  let items: MerchandiseListRow[] = []
 
   try {
     const supabase = await createClient()
@@ -21,7 +21,7 @@ export default async function MerchandisePage() {
     <div>
       <AdminPageHeader
         title="Merchandise"
-        description="Manage shop items shown on the public site. Upload product images via R2 or link external URLs."
+        description="Manage shop items shown on the public site. Drag rows to reorder. Upload product images via R2 or link external URLs."
         action={
           <Link
             href="/admin/merchandise/new"
@@ -34,47 +34,7 @@ export default async function MerchandisePage() {
       {items.length === 0 ? (
         <p className="text-zinc-400 text-sm">No merchandise items yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-zinc-800 text-zinc-400">
-              <th className="text-left py-2 pr-4">Order</th>
-              <th className="text-left py-2 pr-4">Title</th>
-              <th className="text-right py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className="border-b border-zinc-800/50 hover:bg-zinc-900/50">
-                <td className="py-2 pr-4 text-zinc-400">{item.display_order}</td>
-                <td className="py-2 pr-4 text-zinc-200">{item.title}</td>
-                <td className="py-2 text-right space-x-2">
-                  <Link
-                    href={`/admin/merchandise/${item.id}`}
-                    className="text-zinc-400 hover:text-white transition-colors"
-                  >
-                    Edit
-                  </Link>
-                  <form
-                    action={async () => {
-                      'use server'
-                      await deleteMerchandise(item.id)
-                    }}
-                    className="inline"
-                  >
-                    <button
-                      type="submit"
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        </div>
+        <MerchandiseSortable initialItems={items} />
       )}
     </div>
   )

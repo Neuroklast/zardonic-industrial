@@ -42,6 +42,13 @@ describe('ADMIN_ACTION_REGISTRY', () => {
     expect(ids).toContain('update_media_download_visibility')
     expect(ids).toContain('rewrite_media_hosts')
     expect(ids).toContain('reconcile_r2_media')
+    expect(ids).toContain('reorder_partners')
+    expect(ids).toContain('reorder_gallery')
+    expect(ids).toContain('reorder_merchandise')
+    expect(ids).toContain('reorder_soundpacks')
+    expect(ids).toContain('reorder_music_highlights')
+    expect(ids).toContain('reorder_media_downloads')
+    expect(ids).toContain('reorder_news_posts')
   })
 
   it('every action has id, label, schema, minDisclosure, execute', () => {

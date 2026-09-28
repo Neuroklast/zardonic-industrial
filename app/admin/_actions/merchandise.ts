@@ -6,6 +6,7 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { fetchNextDisplayOrder } from '@/app/admin/_lib/displayOrder'
 import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
@@ -14,7 +15,6 @@ const schema = z.object({
   image_storage_path: z.string().optional().nullable(),
   image_url: safeExternalUrlOptional,
   external_url: safeExternalUrlOptional,
-  display_order: z.coerce.number().optional().default(0),
 })
 
 function parseFormData(formData: FormData) {
@@ -23,7 +23,6 @@ function parseFormData(formData: FormData) {
     image_storage_path: formData.get('image_storage_path') || null,
     image_url: formData.get('image_url') || null,
     external_url: formData.get('external_url') || null,
-    display_order: formData.get('display_order') || 0,
   }
 }
 
@@ -37,11 +36,13 @@ export async function createMerchandise(formData: FormData) {
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
+    const nextOrder = await fetchNextDisplayOrder(supabaseAdmin, 'merchandise')
     const row = preferR2StoragePath(
       {
         ...parsed.data,
         image_url: parsed.data.image_url || null,
         external_url: parsed.data.external_url || null,
+        display_order: nextOrder,
       },
       'image_storage_path',
       'image_url',

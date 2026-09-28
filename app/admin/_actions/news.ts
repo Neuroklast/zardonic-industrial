@@ -4,6 +4,7 @@ import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { revalidatePath } from 'next/cache'
 import { preferR2StoragePath } from '@/lib/r2-image-preference'
+import { fetchNextDisplayOrder } from '@/app/admin/_lib/displayOrder'
 import { safeExternalUrlOptional } from '@/lib/safe-external-url'
 import { z } from 'zod'
 
@@ -24,7 +25,6 @@ const schema = z.object({
   cover_storage_path: z.string().optional().nullable(),
   cover_url: safeExternalUrlOptional,
   published_at: z.string().optional().nullable(),
-  display_order: z.coerce.number().optional().default(0),
   active: z
     .union([z.boolean(), z.string()])
     .optional()
@@ -40,7 +40,6 @@ function parseFormData(formData: FormData) {
     cover_storage_path: formData.get('cover_storage_path') || null,
     cover_url: formData.get('cover_url') || null,
     published_at: formData.get('published_at') || null,
-    display_order: formData.get('display_order') || 0,
     active: formData.get('active') ?? true,
   }
 }
@@ -57,7 +56,6 @@ function toRow(parsed: z.infer<typeof schema>) {
       cover_storage_path: parsed.cover_storage_path || null,
       cover_url: parsed.cover_url || null,
       published_at: parsed.published_at || new Date().toISOString(),
-      display_order: parsed.display_order ?? 0,
       active: parsed.active ?? true,
     },
     'cover_storage_path',
@@ -73,7 +71,8 @@ export async function createNewsPost(formData: FormData) {
   const supabaseAdmin = createAdminClient()
 
   return runAdminAction(async () => {
-    const row = toRow(parsed.data)
+    const nextOrder = await fetchNextDisplayOrder(supabaseAdmin, 'news_posts')
+    const row = { ...toRow(parsed.data), display_order: nextOrder }
     const { error } = await supabaseAdmin.from('news_posts').insert(row)
     if (error) return { error: error.message }
 

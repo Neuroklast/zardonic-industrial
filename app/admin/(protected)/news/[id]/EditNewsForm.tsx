@@ -109,15 +109,6 @@ export function EditNewsForm({ post }: { post: NewsPost }) {
           className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none"
         />
       </div>
-      <div>
-        <label className="mb-1 block text-sm text-zinc-300">Display order</label>
-        <input
-          name="display_order"
-          type="number"
-          defaultValue={post.display_order}
-          className="w-full rounded border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-white focus:outline-none"
-        />
-      </div>
       <label className="flex items-center gap-2 text-sm text-zinc-300">
         <input name="active" type="checkbox" defaultChecked={post.active} />
         Visible on site
