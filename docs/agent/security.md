@@ -21,6 +21,7 @@ Distributed, durable rate limiting runs on the **existing Supabase Postgres** (`
 ## Storage & consent
 
 - Analytics / tracking localStorage: gated by `CookieConsent` + `lib/consent.ts`
+- Analytics is **pseudonymous** and must stay disclosed in Privacy Policy §4: `analytics_events` stores page/section views, heatmap clicks, device type, browser, screen resolution, referrer, landing page, UTM params, and a per-visit session ID (`sessionStorage: zd-analytics-session`). Never claim "no personal data" — say "no cross-site profile / no advertising".
 - Functional prefs (theme, locale, sound): permitted without analytics consent
 - Import consent helpers from `@/lib/consent`, not from `CookieConsent` in non-UI modules
 
