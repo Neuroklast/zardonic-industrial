@@ -76,6 +76,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] After an R2 bucket move / Production deploy: `[r2-reconcile] done objects=â€¦ rows=â€¦ urls=â€¦` in Vercel logs; `/admin/data` preview shows corrected URLs; `content_hash` backfilled on media rows. A deliberately-broken old URL is auto-repaired by the `<img onError>` â†’ `/api/media-fix` path (the image swaps to the corrected URL)
 - [ ] Legal admin saves and public pages reflect changes after revalidate
 - [ ] Data export JSON includes news posts, manually edited releases (tracks/copy), and site_config keys; import restores them without wiping extra rows
+- [ ] Release list Type column shows four buttons (**Single / Remix / Album / Compilation**), only one active per row; clicking saves immediately (optimistic), the row is marked manually edited (survives "Fix release types"), and the public badge updates after refresh
 - [ ] Advances: â€œPurge all releasesâ€ / â€œPurge all + re-syncâ€ confirm dialog warns that **manually edited** releases are deleted too; after re-sync the releases list matches the Spotify catalogue (no leftover manual rows)
 - [ ] Factory reset: button disabled until backup checkbox ticked + phrase typed; wrong phrase is rejected server-side (nothing deleted); correct phrase + cleanup restores default site config; R2 media left intact unless the â€œdelete mediaâ€ box is checked
 

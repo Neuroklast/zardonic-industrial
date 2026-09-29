@@ -168,6 +168,32 @@ export function classifyReleaseType(
   return 'album'
 }
 
+/** The four buckets shown by the admin quick-select control. */
+export type QuickSelectReleaseType = 'single' | 'remix' | 'album' | 'compilation'
+
+/**
+ * Maps a stored release type to one of the four admin quick-select buckets.
+ * `ep` folds into `single` (the public label groups them as "Single / EP").
+ * Returns null for empty/unknown values so no button is highlighted.
+ */
+export function toQuickSelectReleaseType(
+  type: string | null | undefined,
+): QuickSelectReleaseType | null {
+  switch ((type ?? '').trim().toLowerCase()) {
+    case 'single':
+    case 'ep':
+      return 'single'
+    case 'remix':
+      return 'remix'
+    case 'album':
+      return 'album'
+    case 'compilation':
+      return 'compilation'
+    default:
+      return null
+  }
+}
+
 /**
  * Whether there is at least one *explicit* signal to justify a type. Used by
  * the one-off reclassification pass so a bare title never rewrites a curated

@@ -207,6 +207,35 @@ export async function mergeSelectedReleases(
   }, 'Unable to merge selected releases.')
 }
 
+export async function updateReleaseType(
+  id: string,
+  type: 'single' | 'remix' | 'album' | 'compilation',
+) {
+  const supabaseAdmin = createAdminClient()
+
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'update_release',
+    { id, type },
+    createSupabaseActionContext(supabaseAdmin),
+  )
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
+  return runAdminAction(async () => {
+    const { error } = await supabaseAdmin
+      .from('releases')
+      .update({ type, manually_edited: true })
+      .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/releases')
+    revalidatePath(`/admin/releases/${id}`)
+    revalidatePath('/')
+    revalidatePath('/releases')
+    return { success: true }
+  }, 'Unable to update release type.')
+}
+
 export async function toggleReleaseVisibility(id: string, active: boolean) {
   const supabaseAdmin = createAdminClient()
 
