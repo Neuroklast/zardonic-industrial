@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  extractEditionQualifiers,
   hasComplementaryExternalIds,
+  hasConflictingPlatformIds,
   normalizeCoverArtFingerprint,
   normalizeReleaseTitleKey,
+  releaseDatesAlign,
+  releaseTitlesDescribeDifferentEditions,
+  releaseTitlesHaveConflictingSequence,
   releasesMatchByCoverArt,
   releaseTitleKeysMatch,
   sharedCoverFingerprint,
@@ -155,5 +160,42 @@ describe('releasesAreDuplicates cross-source', () => {
       spotify_id: '200',
     })
     expect(releasesAreDuplicates(a, b, { artistNames: ['Zardonic'] })).toBe(true)
+  })
+})
+
+describe('hasConflictingPlatformIds', () => {
+  it('flags different ids on the same platform', () => {
+    const a = row({ id: '1', title: 'A', discogs_id: '111' })
+    const b = row({ id: '2', title: 'B', discogs_id: '222' })
+    expect(hasConflictingPlatformIds(a, b)).toBe(true)
+  })
+
+  it('does not flag different platforms', () => {
+    const a = row({ id: '1', title: 'A', discogs_id: '111' })
+    const b = row({ id: '2', title: 'B', spotify_id: '222' })
+    expect(hasConflictingPlatformIds(a, b)).toBe(false)
+  })
+})
+
+describe('edition + sequence markers', () => {
+  it('extracts edition qualifiers', () => {
+    expect(extractEditionQualifiers('Anthem (Live)')).toEqual(new Set(['live']))
+    expect(extractEditionQualifiers('Anthem - Remixes')).toEqual(new Set(['remix']))
+  })
+
+  it('treats one-sided edition markers as different releases', () => {
+    expect(releaseTitlesDescribeDifferentEditions('Anthem', 'Anthem (Live)')).toBe(true)
+    expect(releaseTitlesDescribeDifferentEditions('Anthem (Live)', 'Anthem (Live)')).toBe(false)
+  })
+
+  it('detects numbered sequels', () => {
+    expect(releaseTitlesHaveConflictingSequence('hive mind', 'hive mind ii')).toBe(true)
+    expect(releaseTitlesHaveConflictingSequence('volume 1', 'volume 2')).toBe(true)
+    expect(releaseTitlesHaveConflictingSequence('hive mind', 'hive mind')).toBe(false)
+  })
+
+  it('does not align missing release dates', () => {
+    expect(releaseDatesAlign(null, '2020-01-01')).toBe(false)
+    expect(releaseDatesAlign('2020-01-01', '2020-06-01')).toBe(true)
   })
 })

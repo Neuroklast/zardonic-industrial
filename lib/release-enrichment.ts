@@ -10,15 +10,19 @@ import {
 } from '@/lib/release-streaming-enrichment'
 import { hasCoverArt } from '@/lib/release-cover-art'
 import { cacheReleaseCoverToR2, resolveBestCoverSource } from '@/lib/release-cover-r2'
+import { classifyReleaseType } from '@/lib/release-type'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 import { fetchReleaseMetadataFromSpotify } from '@/lib/spotify-sync'
-import type { ReleaseTrackMetadata } from '@/lib/release-metadata'
+import type { ReleaseMetadata, ReleaseTrackMetadata } from '@/lib/release-metadata'
 
 export type TracksSource = 'spotify' | 'discogs' | 'itunes'
 
 export interface ReleaseEnrichmentRow extends ReleaseStreamingRow {
   id: string
   title: string
+  type?: string | null
+  artists?: string[] | null
+  description?: string | null
   tracks: unknown
   manually_edited: boolean | null
   spotify_id: string | null
@@ -88,6 +92,7 @@ export function releaseNeedsTrackEnrichment(
 export async function fetchTracksForRelease(
   row: ReleaseEnrichmentRow,
   artistName: string,
+  prefetchedDiscogsMetadata?: ReleaseMetadata | null,
 ): Promise<{ tracks: ReleaseTrackMetadata[]; source: TracksSource } | null> {
   if (row.spotify_id) {
     const metadata = await fetchReleaseMetadataFromSpotify(row.spotify_id)
@@ -97,7 +102,8 @@ export async function fetchTracksForRelease(
   }
 
   if (row.discogs_id) {
-    const metadata = await fetchReleaseMetadataFromDiscogs(row.discogs_id)
+    const metadata =
+      prefetchedDiscogsMetadata ?? (await fetchReleaseMetadataFromDiscogs(row.discogs_id))
     if (metadata?.tracks && metadata.tracks.length > 0) {
       return { tracks: metadata.tracks, source: 'discogs' }
     }
@@ -143,12 +149,27 @@ export function releaseNeedsStreamingEnrichment(
   return isStaleEnrichment(row.last_enriched_at)
 }
 
+/**
+ * Discogs catalogue imports only carry list-row metadata (title/year/thumb), so
+ * `artists` and `description` arrive empty. This flags rows that still need the
+ * full release document fetched to backfill them.
+ */
+export function releaseNeedsDiscogsMetadataBackfill(row: ReleaseEnrichmentRow): boolean {
+  if (row.manually_edited) return false
+  if (!row.discogs_id) return false
+  return (row.artists ?? []).length === 0 || !row.description?.trim()
+}
+
 export function releaseNeedsEnrichment(
   row: ReleaseEnrichmentRow,
   options?: { force?: boolean },
 ): boolean {
   if (!releaseCanBeAutoEnriched(row)) return false
-  return releaseNeedsTrackEnrichment(row, options) || releaseNeedsStreamingEnrichment(row, options)
+  return (
+    releaseNeedsTrackEnrichment(row, options) ||
+    releaseNeedsStreamingEnrichment(row, options) ||
+    releaseNeedsDiscogsMetadataBackfill(row)
+  )
 }
 
 /**
@@ -191,16 +212,49 @@ export async function buildReleaseEnrichmentUpdate(
   const update: Record<string, unknown> = {}
   let changed = false
 
+  // Discogs list imports omit artists/description — fetch the full release once
+  // and reuse it below so tracks do not trigger a second request.
+  let discogsMetadata: ReleaseMetadata | null = null
+  if (row.discogs_id && releaseNeedsDiscogsMetadataBackfill(row)) {
+    discogsMetadata = await fetchReleaseMetadataFromDiscogs(row.discogs_id)
+    if (discogsMetadata) {
+      if ((row.artists ?? []).length === 0 && discogsMetadata.artists.length > 0) {
+        update.artists = discogsMetadata.artists
+        changed = true
+      }
+      if (!row.description?.trim() && discogsMetadata.description?.trim()) {
+        update.description = discogsMetadata.description
+        changed = true
+      }
+    }
+  }
+
   const wantsTracks =
     options?.force && releaseHasExternalId(row)
       ? true
       : releaseNeedsTrackEnrichment(row, options)
 
   if (wantsTracks) {
-    const fetched = await fetchTracksForRelease(row, artistName)
+    const fetched = await fetchTracksForRelease(row, artistName, discogsMetadata)
     if (fetched) {
       Object.assign(update, buildTrackEnrichmentUpdate(fetched.tracks, fetched.source))
       changed = true
+
+      // Re-derive the type now that per-track artist credits exist: a long
+      // release with a shared artist is an album, a various-artists one is
+      // "Appears On" (compilation).
+      const resolvedArtists: string[] = Array.isArray(update.artists)
+        ? update.artists.filter((name): name is string => typeof name === 'string')
+        : (row.artists ?? [])
+      const nextType = classifyReleaseType({
+        title: row.title,
+        trackCount: fetched.tracks.length,
+        trackArtists: fetched.tracks.map((track) =>
+          [track.artist, ...(track.featuredArtists ?? [])].filter(Boolean).join(', '),
+        ),
+        primaryArtist: resolvedArtists[0] ?? null,
+      })
+      if (nextType !== row.type) update.type = nextType
     }
   }
 
@@ -247,7 +301,7 @@ export async function runCatalogueEnrichmentBatch(
   const { data: rows, error: listError } = await supabase
     .from('releases')
     .select(
-      'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, cover_storage_path, cover_url, streaming_links',
+      'id, title, type, artists, description, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, cover_storage_path, cover_url, streaming_links',
     )
     .eq('manually_edited', false)
     .order('display_order', { ascending: true })

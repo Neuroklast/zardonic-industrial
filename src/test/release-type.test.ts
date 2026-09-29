@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyReleaseType,
   displayReleaseType,
+  hasArtistOnEveryTrack,
   toQuickSelectReleaseType,
   trustworthyDeclaredType,
 } from '@/lib/release-type'
@@ -16,7 +17,7 @@ describe('displayReleaseType', () => {
   it('maps the remaining stored values', () => {
     expect(displayReleaseType('album')).toBe('Album')
     expect(displayReleaseType('remix')).toBe('Remix')
-    expect(displayReleaseType('compilation')).toBe('Compilation')
+    expect(displayReleaseType('compilation')).toBe('Appears On')
   })
 })
 
@@ -137,6 +138,60 @@ describe('classifyReleaseType — Spotify semantics', () => {
   it('falls back to album when nothing is known', () => {
     expect(classifyReleaseType({ title: '' })).toBe('album')
     expect(classifyReleaseType({ title: 'Mystery' })).toBe('album')
+  })
+})
+
+describe('hasArtistOnEveryTrack', () => {
+  it('returns null without per-track artist data', () => {
+    expect(hasArtistOnEveryTrack(null)).toBeNull()
+    expect(hasArtistOnEveryTrack([])).toBeNull()
+  })
+
+  it('detects a shared artist and a various-artists set', () => {
+    expect(hasArtistOnEveryTrack(['Zardonic', 'Zardonic, Guest'])).toBe(true)
+    expect(hasArtistOnEveryTrack(['Alpha', 'Beta'])).toBe(false)
+  })
+})
+
+describe('classifyReleaseType — Appears On vs Album artist rule', () => {
+  const primaryArtist = 'Zardonic'
+
+  it('is an album when one artist is credited on every track', () => {
+    const trackArtists = Array.from({ length: 8 }, () => 'Zardonic, Some Guest')
+    expect(
+      classifyReleaseType({ title: 'Anthems', trackCount: 8, trackArtists, primaryArtist }),
+    ).toBe('album')
+  })
+
+  it('is Appears On when many different artists share no common credit', () => {
+    const trackArtists = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta']
+    expect(classifyReleaseType({ title: 'Label Sampler', trackCount: 8, trackArtists })).toBe(
+      'compilation',
+    )
+  })
+
+  it('falls back to the release artist when a track lists none', () => {
+    const trackArtists = Array.from({ length: 9 }, () => null)
+    expect(classifyReleaseType({ title: 'Album', trackCount: 9, trackArtists, primaryArtist })).toBe(
+      'album',
+    )
+  })
+
+  it('stays an album when only a couple of distinct artists appear', () => {
+    const trackArtists = [null, null, null, null, null, null, 'Someone Else']
+    expect(
+      classifyReleaseType({ title: 'Album With Guest', trackCount: 7, trackArtists, primaryArtist }),
+    ).toBe('album')
+  })
+
+  it('ignores the artist rule below the track threshold', () => {
+    const trackArtists = ['Alpha', 'Beta', 'Gamma']
+    expect(classifyReleaseType({ title: 'Sampler', trackCount: 3, trackArtists })).toBe('ep')
+  })
+
+  it('keeps remix authoritative over the artist rule', () => {
+    const trackArtists = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta']
+    expect(classifyReleaseType({ title: 'Remixes', trackCount: 6, trackArtists })).toBe('remix')
   })
 })
 

@@ -84,11 +84,11 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 | `reconcile_r2_media` | expert | List live R2 objects and rewrite DB URLs when the **filename** or **content hash** uniquely matches (re-uploads / prefix changes); backfills `content_hash` columns |
 | `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
 | `release_external_sync` | basic | Per-release ID sync |
-| `reclassify_release_types` | basic | Re-run the release-type classifier over existing rows (Album / Single / EP / Remix / Compilation); skips `manually_edited` |
+| `reclassify_release_types` | basic | Re-run the release-type classifier over existing rows (Album / Single / EP / Remix / Appears On); skips `manually_edited` |
 
 Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance.ts`, `releaseExternalSync.ts`.
 
-The admin release list (`ReleasesListClient`) has a per-row **Type** quick-select (`ReleaseTypeSelector`): four mutually exclusive buttons Single / Remix / Album / Compilation. Each click calls `updateReleaseType` (`app/admin/_actions/releases.ts`), which sets the type and `manually_edited: true` (so auto-reclassify never reverts a manual choice) and revalidates the public discography. `ep` rows highlight Single.
+The admin release list (`ReleasesListClient`) has a per-row **Type** quick-select (`ReleaseTypeSelector`): four mutually exclusive buttons Single / Remix / Album / Appears On. Each click calls `updateReleaseType` (`app/admin/_actions/releases.ts`), which sets the type and `manually_edited: true` (so auto-reclassify never reverts a manual choice) and revalidates the public discography. `ep` rows highlight Single. The stored value stays `compilation`; only the label is "Appears On".
 
 Authenticated admin dispatches use `dispatchAdminActionAsAdmin()` (`expert` disclosure). Real auth is `requireAdmin()`.
 
@@ -162,3 +162,16 @@ Footer URL fields: Site Config → Footer & Legal tab.
 - The job lock is an atomic conditional UPDATE (15 min stale window), so a long tick or a redundant tick cannot run the import twice.
 - Track backfill is skipped for `manually_edited` releases.
 - Every catalogue import's enrichment phase also backfills missing cover art (iTunes → Spotify → Discogs) onto R2 automatically — no separate backfill button/job exists (`lib/release-enrichment.ts` + `lib/release-cover-r2.ts`). The manual "Enrich / Consolidate / Reset / Backfill" repair buttons were removed from the Catalogue Sync screen; imports now self-heal.
+- Discogs list rows only carry title/year/thumb, so the async import writes `artists: []` / `description: null`; the enrichment phase now fetches the full Discogs release once and backfills both (`releaseNeedsDiscogsMetadataBackfill` in `lib/release-enrichment.ts`), reusing that fetch for the tracklist.
+- Discogs API calls retry 429 **and** transient 5xx with `Retry-After`/exponential backoff (`lib/fetch-retry.ts`, `{ retryServerErrors: true }`). A failed artist-releases page now throws instead of silently truncating; a page without `pagination` keeps paging while it returns a full 100-row page.
+
+## Consolidation safety guards (2026-09-29)
+
+Auto-consolidation (`lib/release-consolidation.ts`) only merges rows that are genuinely the same entry. It **refuses** to merge when:
+
+- both rows hold **different ids for the same platform** (`hasConflictingPlatformIds` — e.g. two Discogs pressings, two Spotify albums);
+- the titles carry a one-sided edition marker (`Live` / `Remix` / `Instrumental` / `Acoustic` …, `releaseTitlesDescribeDifferentEditions`);
+- the titles are numbered sequels (`Hive Mind` vs `Hive Mind II`, `releaseTitlesHaveConflictingSequence`);
+- only one side has a release date (`releaseDatesAlign` no longer treats `null` as a match).
+
+Cross-source merges (different platforms, complementary ids) are unaffected. Manual merge keeps its stricter `findConflictingPlatformIds` guard. `consolidateDuplicateReleases(supabase, { dryRun: true })` reports planned merges/deletes without writing to Supabase or R2; the `consolidate_releases` admin action accepts `dryRun`.

@@ -17,8 +17,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Hover labels are short (Bio / Releases / â€¦), not full section titles
 - [ ] Smooth scroll to sections works (Lenis); mobile hamburger works
 - [ ] Releases: open detail â†’ **CyberpunkOverlay** chrome (corners, label, close)
-- [ ] Release categories show four labels: **Album / Single / EP / Remix / Compilation**; a `compilation` release badge reads **Compilation** (never "Appears On"), and both EP and Single releases/pills read **Single / EP**
-- [ ] After a catalogue import, discography types are plausible: singles/EPs are not all **Album**, a remix-titled release reads **Remix**, and `manually_edited` rows keep their type (Catalogue Sync → Automatic maintenance → **Fix release types** repairs existing rows)
+- [ ] Release categories show four labels: **Album / Single / EP / Remix / Appears On**; a `compilation` release badge reads **Appears On**, and both EP and Single releases/pills read **Single / EP**
+- [ ] After a catalogue import, discography types are plausible: singles/EPs are not all **Album**, a remix-titled release reads **Remix**, a various-artists release with ≥6 tracks reads **Appears On**, a long release with Zardonic on every track reads **Album**, and `manually_edited` rows keep their type (Catalogue Sync → Automatic maintenance → **Fix release types** repairs existing rows)
 - [ ] Events/gigs: same overlay system as releases
 - [ ] Gallery: open image â†’ **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes
@@ -76,7 +76,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] After an R2 bucket move / Production deploy: `[r2-reconcile] done objects=â€¦ rows=â€¦ urls=â€¦` in Vercel logs; `/admin/data` preview shows corrected URLs; `content_hash` backfilled on media rows. A deliberately-broken old URL is auto-repaired by the `<img onError>` â†’ `/api/media-fix` path (the image swaps to the corrected URL)
 - [ ] Legal admin saves and public pages reflect changes after revalidate
 - [ ] Data export JSON includes news posts, manually edited releases (tracks/copy), and site_config keys; import restores them without wiping extra rows
-- [ ] Release list Type column shows four buttons (**Single / Remix / Album / Compilation**), only one active per row; clicking saves immediately (optimistic), the row is marked manually edited (survives "Fix release types"), and the public badge updates after refresh
+- [ ] Release list Type column shows four buttons (**Single / Remix / Album / Appears On**), only one active per row; clicking saves immediately (optimistic), the row is marked manually edited (survives "Fix release types"), and the public badge updates after refresh
 - [ ] Advances: â€œPurge all releasesâ€ / â€œPurge all + re-syncâ€ confirm dialog warns that **manually edited** releases are deleted too; after re-sync the releases list matches the Spotify catalogue (no leftover manual rows)
 - [ ] Factory reset: button disabled until backup checkbox ticked + phrase typed; wrong phrase is rejected server-side (nothing deleted); correct phrase + cleanup restores default site config; R2 media left intact unless the â€œdelete mediaâ€ box is checked
 
@@ -104,6 +104,9 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | Discography missing covers | Releases imported from Spotify/Discogs and the async import path now store cover art on R2; coverless releases show a fallback. Running any catalogue import auto-backfills coverless releases (iTunes then Spotify then Discogs). |
 | Sync job shows duplicate-key errors | Re-running an iTunes/Spotify/Discogs import shows no duplicate key value violates unique constraint floods; existing ids are resolved as backfill/update. |
 | Sync job double-runs / progress sticky | The job lock is 15 min stale and atomic, so a long/running job is not superseded mid-tick. |
+| Discogs releases missing artist / description | After a Discogs catalogue sync, a Discogs-imported release has `artists` and `description` filled — the enrich phase fetches the full release once and backfills both. |
+| Distinct releases wrongly merged | Two pressings (different Discogs ids), an original vs a `(Live)`/`(Remix)` edition, or a numbered sequel (`Hive Mind II`) remain separate rows after sync/consolidation. |
+| Consolidation preview | `consolidate_releases` with `dryRun` reports the planned merge/delete counts but changes nothing in Supabase or R2. |
 | Duplicate form field id warning | Admin forms (e.g. GigEditDialog) no longer emit "Duplicate form field id in the same form" in the browser Issues panel. |
 | PostgREST egress spike (bot crawls) | Public pages are CDN-cached (`Cache-Control: s-maxage` on ISR routes): two consecutive loads in 60s produce **no** Supabase queries on the second. Request with `User-Agent: GPTBot` (or `Bytespider`) → HTTP 403, no function start, no DB hit. `/admin` shows the legacy `supabase.co` URL badge when rows still reference Supabase Storage; media rows with legacy `file_url` show no download link until migrated to R2. |
 | Supabase `rls_disabled_in_public` | Security Advisor is clean. `public.rate_limits` has RLS on + deny-all for anon; REST `GET /rest/v1/rate_limits` with the anon key returns `[]` or 401/42501, not rows. Login still 429s when the rate limit is exceeded. |

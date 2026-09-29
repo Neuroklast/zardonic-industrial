@@ -8,7 +8,7 @@ export const RELEASE_TYPE_FILTERS: Array<{ value: ReleaseTypeFilter; label: stri
   { value: 'album', label: 'Album' },
   { value: 'single-ep', label: 'Single / EP' },
   { value: 'remix', label: 'Remix' },
-  { value: 'compilation', label: 'Compilation' },
+  { value: 'compilation', label: 'Appears On' },
 ]
 
 export interface BrowsableRelease {

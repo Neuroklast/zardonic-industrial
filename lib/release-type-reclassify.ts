@@ -11,6 +11,7 @@ export interface ReclassifyReleaseRow {
   title: string
   type: string | null
   tracks: unknown
+  artists: string[] | null
   manually_edited: boolean | null
 }
 
@@ -41,10 +42,18 @@ export interface ReclassifyReleasesResult {
 export function planReleaseTypeChange(row: ReclassifyReleaseRow): ReclassifyChange | null {
   if (row.manually_edited) return null
 
-  const trackCount = parseReleaseTracks(row.tracks).length
+  const tracks = parseReleaseTracks(row.tracks)
+  const trackCount = tracks.length
+  const trackArtists = tracks.map((track) =>
+    [track.artist, ...(track.featuredArtists ?? [])].filter(Boolean).join(', '),
+  )
+  const primaryArtist =
+    Array.isArray(row.artists) && row.artists.length > 0 ? row.artists[0] : null
   const signals = {
     title: row.title,
     trackCount: trackCount > 0 ? trackCount : null,
+    trackArtists: trackArtists.length > 0 ? trackArtists : null,
+    primaryArtist,
   }
   if (!hasExplicitReleaseTypeSignal(signals)) return null
 
@@ -104,7 +113,7 @@ export async function reclassifyReleaseTypes(options: {
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await supabase
       .from('releases')
-      .select('id, title, type, tracks, manually_edited')
+      .select('id, title, type, tracks, artists, manually_edited')
       .order('id', { ascending: true })
       .range(from, from + PAGE_SIZE - 1)
 

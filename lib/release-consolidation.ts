@@ -4,9 +4,12 @@ import { parseCatalogueSyncConfig } from '@/lib/catalogue-sync-config'
 import { releaseTracksAreEmpty } from '@/lib/release-enrichment'
 import {
   hasComplementaryExternalIds,
+  hasConflictingPlatformIds,
   normalizeReleaseTitleKey,
   releaseDatesAlign,
   releasesMatchByCoverArt,
+  releaseTitlesDescribeDifferentEditions,
+  releaseTitlesHaveConflictingSequence,
   releaseTitleKeysMatch,
   sharedStreamingFingerprint,
   type ReleaseTitleMatchOptions,
@@ -54,6 +57,8 @@ export interface ConsolidateReleasesResult {
   deleted: number
   skipped: number
   errors: string[]
+  /** True when this was a preview run and nothing was written. */
+  dryRun?: boolean
 }
 
 export type { ReleaseTitleMatchOptions } from '@/lib/release-title-match'
@@ -91,6 +96,14 @@ export function releasesAreDuplicates(
   const sharedFingerprint = sharedStreamingFingerprint(a, b)
   if (sharedFingerprint) return true
 
+  // Distinct ids on the same platform are different catalogue entries (e.g. two
+  // Discogs pressings / masters) — never collapse them by title alone.
+  if (hasConflictingPlatformIds(a, b)) return false
+
+  // Edition markers ("Live", "Remix", "Instrumental", …) distinguish releases
+  // that share a base title. Only merge when both sides carry the same markers.
+  if (releaseTitlesDescribeDifferentEditions(a.title, b.title)) return false
+
   if (releasesMatchByCoverArt(a, b, options)) return true
 
   const keysMatch = titleKeysMatch(a.title, b.title, options)
@@ -99,6 +112,17 @@ export function releasesAreDuplicates(
 
   if (keysMatch && complementaryIds) return true
   if (!keysMatch) return false
+
+  // Numbered sequels ("Hive Mind" vs "Hive Mind II") share almost every token;
+  // do not treat them as the same entry.
+  if (
+    releaseTitlesHaveConflictingSequence(
+      normalizeReleaseTitleKey(a.title, options),
+      normalizeReleaseTitleKey(b.title, options),
+    )
+  ) {
+    return false
+  }
 
   return datesAlign && typesCompatible(a.type, b.type)
 }
@@ -666,16 +690,23 @@ async function mergeDuplicateGroups(
   }
 }
 
+export interface ConsolidateReleasesOptions extends ReleaseTitleMatchOptions {
+  /** Report what would be merged without writing to the database or R2. */
+  dryRun?: boolean
+}
+
 /** Merge duplicate release rows in Supabase and delete redundant copies. */
 export async function consolidateDuplicateReleases(
   supabase: ReturnType<typeof createAdminClient>,
-  options?: ReleaseTitleMatchOptions,
+  options?: ConsolidateReleasesOptions,
 ): Promise<ConsolidateReleasesResult> {
+  const dryRun = options?.dryRun ?? false
   const result: ConsolidateReleasesResult = {
     merged: 0,
     deleted: 0,
     skipped: 0,
     errors: [],
+    dryRun,
   }
 
   const matchOptions = options ?? (await loadTitleMatchOptions(supabase))
@@ -694,6 +725,17 @@ export async function consolidateDuplicateReleases(
     const rows = (data ?? []) as ReleaseConsolidationRow[]
     const groups = groupDuplicateReleases(rows, matchOptions)
     if (groups.length === 0) break
+
+    // A dry run must not mutate anything, so the group set is identical on every
+    // pass — tally once and stop instead of looping MAX_CONSOLIDATION_PASSES times.
+    if (dryRun) {
+      for (const group of groups) {
+        const planned = group.length - 1
+        result.merged += planned
+        result.deleted += planned
+      }
+      break
+    }
 
     const deletedBefore = result.deleted
     const skippedBefore = result.skipped

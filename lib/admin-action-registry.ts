@@ -764,7 +764,7 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
   consolidate_releases: register({
     id: 'consolidate_releases',
     label: 'Consolidate Duplicate Releases',
-    schema: z.object({}),
+    schema: z.object({ dryRun: z.boolean().optional() }),
     minDisclosure: 'advanced',
     execute(_input, { supabaseAdmin }) {
       if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }

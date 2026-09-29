@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { parseItunesItem } from '@/lib/itunes-sync'
+import { itunesArtistNameMatches, parseItunesItem } from '@/lib/itunes-sync'
+
+describe('itunesArtistNameMatches', () => {
+  it('accepts the configured artist and collaborations', () => {
+    expect(itunesArtistNameMatches('Zardonic', 'Zardonic')).toBe(true)
+    expect(itunesArtistNameMatches('Black Sun Empire & Zardonic', 'Zardonic')).toBe(true)
+    expect(itunesArtistNameMatches('ZARDONIC', 'zardonic')).toBe(true)
+  })
+
+  it('rejects unrelated artists', () => {
+    expect(itunesArtistNameMatches('Some Other Band', 'Zardonic')).toBe(false)
+  })
+
+  it('keeps results without artist metadata', () => {
+    expect(itunesArtistNameMatches(undefined, 'Zardonic')).toBe(true)
+  })
+})
 
 describe('parseItunesItem', () => {
   it('parses album collections', () => {

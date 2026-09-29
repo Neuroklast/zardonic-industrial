@@ -156,6 +156,44 @@ function hasPlatformFingerprint(fingerprints: Set<string>, platform: 'spotify' |
   return false
 }
 
+function platformFingerprintIds(
+  fingerprints: Set<string>,
+  platform: 'spotify' | 'itunes' | 'discogs',
+): Set<string> {
+  const ids = new Set<string>()
+  for (const fingerprint of fingerprints) {
+    if (fingerprint.startsWith(`${platform}:`)) ids.add(fingerprint.slice(platform.length + 1))
+  }
+  return ids
+}
+
+/**
+ * True when both rows anchor the *same* platform but with disjoint ids — e.g. two
+ * different Discogs pressings or two different Spotify albums. Those are distinct
+ * catalogue entries and must never be auto-merged, even when titles/dates align.
+ */
+export function hasConflictingPlatformIds(
+  a: ReleaseMatchableRow,
+  b: ReleaseMatchableRow,
+): boolean {
+  const fa = releaseStreamingFingerprints(a)
+  const fb = releaseStreamingFingerprints(b)
+  for (const platform of ['spotify', 'itunes', 'discogs'] as const) {
+    const idsA = platformFingerprintIds(fa, platform)
+    const idsB = platformFingerprintIds(fb, platform)
+    if (idsA.size === 0 || idsB.size === 0) continue
+    let shares = false
+    for (const id of idsA) {
+      if (idsB.has(id)) {
+        shares = true
+        break
+      }
+    }
+    if (!shares) return true
+  }
+  return false
+}
+
 /** True when two rows anchor different platforms (column or streaming link) with no shared id. */
 export function hasComplementaryExternalIds(
   a: ReleaseMatchableRow,
@@ -188,8 +226,75 @@ export function hasComplementaryExternalIds(
   )
 }
 
+const EDITION_QUALIFIER_RE =
+  /\b(live|instrumental|acoustic|a\s*cappella|acapella|remix(?:es|ed)?|demo|karaoke|orchestral|symphonic|extended|club\s+mix|radio\s+edit|radio\s+version|sped\s+up|slowed(?:\s*\+\s*reverb)?|nightcore)\b/gi
+
+const EDITION_QUALIFIER_ALIASES: Record<string, string> = {
+  remixes: 'remix',
+  remixed: 'remix',
+  acapella: 'acapella',
+  'a cappella': 'acapella',
+}
+
+/**
+ * Edition markers that make two same-named releases *different* catalogue
+ * entries (e.g. the original vs. a "(Live)" or "(Remix)" edition). Parenthetical
+ * stripping would otherwise collapse them, so they are compared explicitly.
+ */
+export function extractEditionQualifiers(title: string): Set<string> {
+  const qualifiers = new Set<string>()
+  for (const match of title.toLowerCase().matchAll(EDITION_QUALIFIER_RE)) {
+    const raw = match[1].replace(/\s+/g, ' ').trim()
+    qualifiers.add(EDITION_QUALIFIER_ALIASES[raw] ?? raw)
+  }
+  return qualifiers
+}
+
+/** True when the two titles carry different edition markers (one-sided or mismatched). */
+export function releaseTitlesDescribeDifferentEditions(a: string, b: string): boolean {
+  const qa = extractEditionQualifiers(a)
+  const qb = extractEditionQualifiers(b)
+  if (qa.size !== qb.size) return true
+  for (const qualifier of qa) {
+    if (!qb.has(qualifier)) return true
+  }
+  return false
+}
+
+const SEQUEL_NUMERALS = new Set([
+  'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii',
+])
+
+function trailingSequenceToken(key: string): string | null {
+  const tokens = key.split(' ').filter(Boolean)
+  if (tokens.length === 0) return null
+  const last = tokens[tokens.length - 1]
+  if (/^\d+$/.test(last) || SEQUEL_NUMERALS.has(last)) return `#${last}`
+  if (tokens.length >= 2) {
+    const prev = tokens[tokens.length - 2]
+    if (
+      /^(pt|part|vol|volume|chapter)$/.test(last) &&
+      (/^\d+$/.test(prev) || SEQUEL_NUMERALS.has(prev))
+    ) {
+      return `#${prev} ${last}`
+    }
+  }
+  return null
+}
+
+/**
+ * True when one title is a numbered sequel of the other ("Hive Mind" vs
+ * "Hive Mind II", "Volume 1" vs "Volume 2"). These share nearly all tokens and
+ * would otherwise trip the prefix/substring heuristics.
+ */
+export function releaseTitlesHaveConflictingSequence(a: string, b: string): boolean {
+  return trailingSequenceToken(a) !== trailingSequenceToken(b)
+}
+
 export function releaseDatesAlign(a: string | null, b: string | null): boolean {
-  if (!a || !b) return true
+  // Missing dates must not be treated as a match — otherwise any two rows with
+  // the same title would merge regardless of when they were actually released.
+  if (!a || !b) return false
   if (a === b) return true
   if (a.slice(0, 7) === b.slice(0, 7)) return true
   if (a.slice(0, 4) === b.slice(0, 4)) return true

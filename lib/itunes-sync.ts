@@ -11,12 +11,45 @@ export interface ItunesSearchResult {
   trackId?: number
   collectionName?: string
   trackName?: string
+  artistName?: string
   wrapperType?: string
   kind?: string
   collectionType?: string
   trackCount?: number
   artworkUrl100?: string
   releaseDate?: string
+}
+
+function normalizeArtistName(value: string): string {
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/\bfeat\.?\b|\bfeaturing\b|\bft\.?\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Whether an iTunes search result belongs to the configured artist. The search
+ * API matches on any field, so similar artist names otherwise leak into the
+ * catalogue. Results without artist metadata are kept (never drop silently).
+ */
+export function itunesArtistNameMatches(
+  resultArtist: string | undefined,
+  configuredArtist: string,
+): boolean {
+  const configured = normalizeArtistName(configuredArtist)
+  if (!configured) return true
+  if (!resultArtist?.trim()) return true
+
+  const resultTokens = new Set(normalizeArtistName(resultArtist).split(' ').filter(Boolean))
+  const configuredTokens = configured.split(' ').filter((token) => token.length > 1)
+  if (configuredTokens.length === 0) return true
+
+  return configuredTokens.every((token) => resultTokens.has(token))
 }
 
 export function parseItunesItem(item: ItunesSearchResult): {
@@ -136,6 +169,17 @@ export async function buildItunesCatalogueImportItems(options: {
     if (singlesRes.status === 'fulfilled' && singlesRes.value.ok) {
       const data = (await singlesRes.value.json()) as { results?: ItunesSearchResult[] }
       rawItems.push(...(data.results ?? []))
+    }
+  }
+
+  // The iTunes search endpoint matches any field, so unrelated artists with a
+  // similar name leak in. Filter them out when we searched by name (an explicit
+  // artist id is already authoritative and needs no filter).
+  if (!options.itunesArtistId && artistName) {
+    const beforeFilter = rawItems.length
+    rawItems = rawItems.filter((item) => itunesArtistNameMatches(item.artistName, artistName))
+    if (beforeFilter > 0 && rawItems.length === 0) {
+      errors.push(`iTunes search returned no releases by "${artistName}"`)
     }
   }
 

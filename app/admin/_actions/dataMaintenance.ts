@@ -46,18 +46,21 @@ async function purgeAllGigs(): Promise<PurgeResult> {
   return { deleted: count ?? 0 }
 }
 
-export async function consolidateReleases(): Promise<ConsolidateReleasesResult | { error: string }> {
+export async function consolidateReleases(
+  options?: { dryRun?: boolean },
+): Promise<ConsolidateReleasesResult | { error: string }> {
+  const dryRun = options?.dryRun ?? false
   const dispatchResult = dispatchAdminActionAsAdmin(
     'consolidate_releases',
-    {},
+    { dryRun },
     createSupabaseActionContext(createAdminClient()),
   )
   if (!dispatchResult.ok) return { error: dispatchResult.error }
 
   return runAdminAction(async () => {
     const supabase = createAdminClient()
-    const result = await consolidateDuplicateReleases(supabase)
-    revalidatePath('/admin/releases')
+    const result = await consolidateDuplicateReleases(supabase, { dryRun })
+    if (!dryRun) revalidatePath('/admin/releases')
     revalidatePath('/')
     return result
   }, 'Unable to consolidate duplicate releases.')

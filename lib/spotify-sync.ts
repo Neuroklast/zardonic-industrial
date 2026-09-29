@@ -63,8 +63,16 @@ function classifySpotifyRelease(
   albumType: string | undefined,
   title: string,
   trackCount: number | null,
+  trackArtists: Array<string | null | undefined> | null = null,
+  primaryArtist: string | null = null,
 ): ReleaseMetadata['type'] {
-  return classifyReleaseType({ title, declaredType: spotifyDeclaredType(albumType), trackCount })
+  return classifyReleaseType({
+    title,
+    declaredType: spotifyDeclaredType(albumType),
+    trackCount,
+    trackArtists,
+    primaryArtist,
+  })
 }
 
 function pickLargestImage(images: SpotifyImage[] | undefined): string | null {
@@ -156,6 +164,8 @@ function parseSpotifyAlbum(
       data.album_type,
       title,
       data.total_tracks ?? (tracks.length > 0 ? tracks.length : null),
+      tracks.length > 0 ? tracks.map((track) => track.artist ?? null) : null,
+      artists[0] ?? null,
     ),
     release_date: normalizeReleaseDateForDb(data.release_date),
     description: null,

@@ -11,6 +11,7 @@ function row(overrides: Partial<ReclassifyReleaseRow>): ReclassifyReleaseRow {
     title: 'Untitled',
     type: 'album',
     tracks: [],
+    artists: null,
     manually_edited: false,
     ...overrides,
   }
@@ -52,6 +53,28 @@ describe('planReleaseTypeChange', () => {
     )
     expect(change?.to).toBe('album')
     expect(change?.trackCount).toBe(12)
+  })
+})
+
+describe('planReleaseTypeChange — Appears On vs Album', () => {
+  it('reclassifies a various-artists long release as compilation', () => {
+    const tracks = ['Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta'].map(
+      (artist, index) => ({ title: `Track ${index + 1}`, artist }),
+    )
+    const change = planReleaseTypeChange(row({ title: 'Label Sampler', type: 'album', tracks }))
+    expect(change?.to).toBe('compilation')
+  })
+
+  it('reclassifies a Zardonic album (guest on every track) as album', () => {
+    const tracks = Array.from({ length: 8 }, (_, index) => ({
+      title: `Track ${index + 1}`,
+      artist: 'Zardonic',
+      featuredArtists: ['Guest'],
+    }))
+    const change = planReleaseTypeChange(
+      row({ title: 'Anthems', type: 'compilation', tracks, artists: ['Zardonic'] }),
+    )
+    expect(change?.to).toBe('album')
   })
 })
 

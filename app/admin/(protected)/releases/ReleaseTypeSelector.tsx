@@ -11,7 +11,7 @@ const TYPE_OPTIONS: Array<{ value: QuickSelectReleaseType; label: string }> = [
   { value: 'single', label: 'Single' },
   { value: 'remix', label: 'Remix' },
   { value: 'album', label: 'Album' },
-  { value: 'compilation', label: 'Compilation' },
+  { value: 'compilation', label: 'Appears On' },
 ]
 
 interface ReleaseTypeSelectorProps {
