@@ -197,7 +197,7 @@ function buildPrivacyEn(config: LegalConfig): LegalSection[] {
       title: '1. Data protection at a glance',
       paragraphs: [
         'The following information provides a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to identify you personally.',
-        `Data processing on this website is carried out by the website operator: ${controller}.`,
+        `The data controller responsible for data processing on this website is: ${controller}. We use technical service providers (processors) — including Vercel (hosting), Supabase, Cloudflare and Resend — which process data only on our behalf and under our instructions. See section 2 for details.`,
         'Some data is collected because you provide it to us (e.g. contact form or newsletter). Other data is recorded automatically by our IT systems when you visit the website (e.g. browser type, operating system, or time of access).',
         'Optional analytics are only collected if you explicitly consent via the cookie banner. No third-party advertising or tracking cookies are used.',
       ],
@@ -320,7 +320,7 @@ function buildPrivacyDe(config: LegalConfig): LegalSection[] {
       title: '1. Datenschutz auf einen Blick',
       paragraphs: [
         'Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.',
-        `Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber: ${controller}.`,
+        `Verantwortlicher für die Datenverarbeitung auf dieser Website ist: ${controller}. Wir setzen technische Dienstleister (Auftragsverarbeiter) ein — u. a. Vercel (Hosting), Supabase, Cloudflare und Resend — die Daten ausschließlich in unserem Auftrag und nach unseren Weisungen verarbeiten. Details siehe Abschnitt 2.`,
         'Ein Teil der Daten wird erhoben, indem Sie uns diese mitteilen (z. B. Kontaktformular oder Newsletter). Andere Daten werden automatisch beim Besuch der Website durch unsere IT-Systeme erfasst (z. B. Browsertyp, Betriebssystem oder Uhrzeit des Seitenaufrufs).',
         'Optionale Analyse-/Nutzungsdaten werden nur erhoben, wenn Sie im Cookie-Banner ausdrücklich zustimmen. Es werden keine Werbe- oder Tracking-Cookies Dritter eingesetzt.',
       ],
