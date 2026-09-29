@@ -510,7 +510,12 @@ export async function importCatalogueBatch(
       title: metadata.title,
       type:
         metadata.type ||
-        classifyReleaseType({ title: metadata.title, trackCount: metadata.trackCount }),
+        classifyReleaseType({
+          title: metadata.title,
+          trackCount: metadata.trackCount ?? metadata.tracks?.length ?? null,
+          trackArtists: metadata.tracks?.map((track) => track.artist ?? null),
+          primaryArtist: metadata.artists[0] ?? null,
+        }),
       release_date: metadata.release_date,
       description: metadata.description,
       artists: metadata.artists,

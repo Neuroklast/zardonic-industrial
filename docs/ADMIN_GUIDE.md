@@ -188,7 +188,7 @@ Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 
 Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, cover, and Odesli links.
 
-Release **type** (Album / Single / EP / Remix / Compilation) is derived by one shared classifier (`lib/release-type.ts`) from title markers, the platform's declared type, Apple's `- Single`/`- EP` suffix, and track count — Apple's iTunes `collectionType` is unreliable (always `"Album"`) and is never trusted alone. To repair rows imported before 2026-09-29, use **Catalogue Sync → Automatic maintenance → Fix release types** (re-runs the classifier over existing rows; `manually_edited` rows are never touched). The same pass is available from the CLI (`npm run reclassify-release-types`, dry-run; `-- --apply` to write) for ops.
+Release **type** (Album / Single / EP / Remix / Appears On) is derived by one shared classifier (`lib/release-type.ts`) from title markers, per-track artist credits, the platform's declared type, Apple's `- Single`/`- EP` suffix, and track count — Apple's iTunes `collectionType` is unreliable (always `"Album"`) and is never trusted alone. A long release (≥6 tracks) is an **Album** when some artist is credited on every track (Zardonic + guests) and **Appears On** when many different artists share no common credit. To repair rows imported before 2026-09-29, use **Catalogue Sync → Automatic maintenance → Fix release types** (re-runs the classifier over existing rows; `manually_edited` rows are never touched). The same pass is available from the CLI (`npm run reclassify-release-types`, dry-run; `-- --apply` to write) for ops.
 
 ## Supabase Egress & media origin
 

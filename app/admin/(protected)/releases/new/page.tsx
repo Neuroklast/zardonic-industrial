@@ -60,7 +60,7 @@ export default function NewReleasePage() {
             <option value="ep">EP</option>
             <option value="album">Album</option>
             <option value="remix">Remix</option>
-            <option value="compilation">Compilation</option>
+            <option value="compilation">Appears On</option>
           </select>
         </div>
         <div>

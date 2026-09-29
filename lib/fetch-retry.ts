@@ -1,16 +1,28 @@
 const MAX_RETRIES = 3
 const BASE_DELAY_MS = 1000
 
+export interface FetchRetryOptions {
+  /** Also retry transient 5xx responses (e.g. Discogs). Off by default. */
+  retryServerErrors?: boolean
+}
+
 /**
  * Fetch a URL with automatic retry when the server responds with HTTP 429
- * (Too Many Requests). Respects the `Retry-After` response header when present;
- * otherwise uses exponential backoff (1 s, 2 s, 4 s …).
+ * (Too Many Requests) — and, when `retryServerErrors` is set, transient 5xx
+ * errors. Respects the `Retry-After` response header when present; otherwise
+ * uses exponential backoff (1 s, 2 s, 4 s …).
  */
-export async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+export async function fetchWithRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options?: FetchRetryOptions,
+): Promise<Response> {
+  const retryServerErrors = options?.retryServerErrors ?? false
   let attempt = 0
   while (true) {
     const response = await fetch(input, init)
-    if (response.status !== 429 || attempt >= MAX_RETRIES) {
+    const retryable = response.status === 429 || (retryServerErrors && response.status >= 500)
+    if (!retryable || attempt >= MAX_RETRIES) {
       return response
     }
     const retryAfter = response.headers.get('Retry-After')

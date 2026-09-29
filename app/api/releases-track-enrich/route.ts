@@ -13,7 +13,7 @@ import {
 export const dynamic = 'force-dynamic'
 
 const ENRICHMENT_SELECT =
-  'id, title, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links'
+  'id, title, type, artists, description, tracks, manually_edited, spotify_id, discogs_id, itunes_id, tracks_source, last_enriched_at, streaming_links'
 
 const CRON_BATCH_LIMIT = 15
 

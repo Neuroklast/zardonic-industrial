@@ -389,7 +389,7 @@ export function CatalogueSyncClient({
       <SectionCard
         icon={ArrowsClockwise}
         title="Automatic maintenance"
-        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass for extra platform links, or Fix release types to re-classify existing rows (Album / Single / EP / Remix / Compilation) — manually edited releases are never changed."
+        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass for extra platform links, or Fix release types to re-classify existing rows (Album / Single / EP / Remix / Appears On) — manually edited releases are never changed."
       >
         {needsEnrichment != null ? (
           <p className="text-xs text-zinc-500 font-mono">

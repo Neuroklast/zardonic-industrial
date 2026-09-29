@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildConsolidatedReleaseUpdate,
+  consolidateDuplicateReleases,
   dedupeCatalogueImportItems,
   findExistingReleaseForImport,
   findManualMergeRejectionReason,
@@ -183,6 +184,44 @@ describe('releasesAreDuplicates', () => {
     })
     expect(releasesAreDuplicates(a, b)).toBe(true)
   })
+
+  it('does not merge distinct Discogs pressings that share a title and year', () => {
+    const a = row({
+      id: '1',
+      title: 'Anthem',
+      type: 'single',
+      release_date: '2020-01-01',
+      discogs_id: '111',
+    })
+    const b = row({
+      id: '2',
+      title: 'Anthem',
+      type: 'single',
+      release_date: '2020-01-01',
+      discogs_id: '222',
+    })
+    expect(releasesAreDuplicates(a, b)).toBe(false)
+  })
+
+  it('does not merge an original with a Live / Remix edition', () => {
+    const studio = row({ id: '1', title: 'Anthem', release_date: '2020-01-01' })
+    const live = row({ id: '2', title: 'Anthem (Live)', release_date: '2020-01-01' })
+    const remix = row({ id: '3', title: 'Anthem - Remix', release_date: '2020-01-01' })
+    expect(releasesAreDuplicates(studio, live)).toBe(false)
+    expect(releasesAreDuplicates(studio, remix)).toBe(false)
+  })
+
+  it('does not merge numbered sequels', () => {
+    const first = row({ id: '1', title: 'Hive Mind', release_date: '2020-01-01' })
+    const second = row({ id: '2', title: 'Hive Mind II', release_date: '2020-01-01' })
+    expect(releasesAreDuplicates(first, second)).toBe(false)
+  })
+
+  it('does not merge same-title rows when only one date is known', () => {
+    const a = row({ id: '1', title: 'Anthem', release_date: '2020-01-01' })
+    const b = row({ id: '2', title: 'Anthem', release_date: null })
+    expect(releasesAreDuplicates(a, b)).toBe(false)
+  })
 })
 
 describe('findExistingReleaseForImport', () => {
@@ -319,18 +358,42 @@ describe('dedupeCatalogueImportItems', () => {
     // Same spotify_id → one catalogue entry, keeps the richer/first item.
     expect(deduped).toHaveLength(1)
   })
+
+  it('keeps distinct Discogs items that carry different ids', () => {
+    const base = {
+      type: 'single' as const,
+      release_date: '2020-01-01',
+      description: null,
+      artists: [],
+      coverUrl: null,
+      streaming_links: [],
+    }
+    const deduped = dedupeCatalogueImportItems([
+      { externalId: '111', metadata: { ...base, title: 'Anthem', discogs_id: '111' } },
+      { externalId: '222', metadata: { ...base, title: 'Anthem', discogs_id: '222' } },
+    ])
+    expect(deduped).toHaveLength(2)
+  })
 })
 
 describe('groupDuplicateReleases', () => {
   it('groups duplicates and prefers manually edited canonical rows', () => {
     const groups = groupDuplicateReleases([
       row({ id: '1', title: 'Album', spotify_id: 's1' }),
-      row({ id: '2', title: 'Album (Remastered)', spotify_id: 's2', manually_edited: true }),
+      row({ id: '2', title: 'Album (Remastered)', itunes_id: 'i2', manually_edited: true }),
     ])
 
     expect(groups).toHaveLength(1)
     expect(groups[0]).toHaveLength(2)
     expect(scoreReleaseForCanonical(groups[0][1])).toBeGreaterThan(scoreReleaseForCanonical(groups[0][0]))
+  })
+
+  it('does not merge rows with different ids on the same platform', () => {
+    const groups = groupDuplicateReleases([
+      row({ id: '1', title: 'Album', spotify_id: 's1' }),
+      row({ id: '2', title: 'Album', spotify_id: 's2' }),
+    ])
+    expect(groups).toHaveLength(0)
   })
 
   it('skips groups where both rows are manually edited', () => {
@@ -452,5 +515,38 @@ describe('buildConsolidatedReleaseUpdate', () => {
     })
     expect(coverPathsToDiscard).toContain('releases/spotify-mars')
     expect(coverPathsToDiscard).not.toContain('releases/itunes-mars')
+  })
+})
+
+describe('consolidateDuplicateReleases', () => {
+  it('dry run reports planned merges without writing', async () => {
+    const rows = [
+      row({ id: '1', title: 'Album', spotify_id: 's1' }),
+      row({ id: '2', title: 'Album', itunes_id: 'i2' }),
+    ]
+    let wrote = false
+    const client = {
+      from: () => ({
+        select: () => ({
+          order: async () => ({ data: rows, error: null }),
+        }),
+        update: () => {
+          wrote = true
+          return { eq: async () => ({ error: null }) }
+        },
+        delete: () => {
+          wrote = true
+          return { eq: async () => ({ error: null }) }
+        },
+      }),
+    }
+
+    const result = await consolidateDuplicateReleases(
+      client as unknown as Parameters<typeof consolidateDuplicateReleases>[0],
+      { artistNames: ['Zardonic'], dryRun: true },
+    )
+
+    expect(result).toMatchObject({ dryRun: true, deleted: 1, merged: 1 })
+    expect(wrote).toBe(false)
   })
 })

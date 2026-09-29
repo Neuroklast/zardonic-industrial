@@ -27,7 +27,7 @@ const TYPE_FILTERS: Array<{ value: TypeFilter; label: string }> = [
   { value: 'album', label: 'Album' },
   { value: 'single-ep', label: 'Single / EP' },
   { value: 'remix', label: 'Remix' },
-  { value: 'compilation', label: 'Compilation' },
+  { value: 'compilation', label: 'Appears On' },
 ]
 
 const STATUS_FILTERS: Array<{ value: StatusFilter; label: string }> = [

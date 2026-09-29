@@ -103,9 +103,11 @@ Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` acti
 
 Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited`.
 
+Discogs catalogue imports only carry list-row metadata (title/year/thumb), so the enrichment pass also fetches the full release once to backfill `artists`/`description` (`releaseNeedsDiscogsMetadataBackfill` in `lib/release-enrichment.ts`). Auto-consolidation refuses to merge rows with conflicting same-platform ids, one-sided edition markers, numbered sequels, or a missing date on one side — see [admin.md](./admin.md#consolidation-safety-guards-2026-09-29).
+
 ### Release type classification (2026-09-29)
 
-One canonical classifier — `classifyReleaseType` in `lib/release-type.ts` — is the single source of truth for `releases.type` across every source (iTunes `lib/itunes-sync.ts`, Spotify `lib/spotify-sync.ts`, Discogs `lib/discogs-sync.ts`). `lib/release-metadata.ts::inferReleaseTypeFromTitle` is a deprecated wrapper. Apple's iTunes `collectionType` is always `"Album"`, so it is only trusted via `trustworthyDeclaredType()`; the real signals are title markers (`remix`/`rmx`, `compilation`), Apple's trailing suffix, and `trackCount` (single ≤2, EP 3–6, album ≥7). Existing rows can be repaired from **Catalogue Sync → Automatic maintenance → Fix release types** (action `reclassify_release_types` → `lib/release-type-reclassify.ts`, skips `manually_edited`); CLI equivalent `npm run reclassify-release-types` (dry-run) / `-- --apply`.
+One canonical classifier — `classifyReleaseType` in `lib/release-type.ts` — is the single source of truth for `releases.type` across every source (iTunes `lib/itunes-sync.ts`, Spotify `lib/spotify-sync.ts`, Discogs `lib/discogs-sync.ts`). `lib/release-metadata.ts::inferReleaseTypeFromTitle` is a deprecated wrapper. Apple's iTunes `collectionType` is always `"Album"`, so it is only trusted via `trustworthyDeclaredType()`; the real signals are title markers (`remix`/`rmx`, `compilation`), per-track artist credits (≥6 tracks: shared artist → album, many artists → Appears On), Apple's trailing suffix, and `trackCount` (single ≤2, EP 3–6, album ≥7). Existing rows can be repaired from **Catalogue Sync → Automatic maintenance → Fix release types** (action `reclassify_release_types` → `lib/release-type-reclassify.ts`, skips `manually_edited`); CLI equivalent `npm run reclassify-release-types` (dry-run) / `-- --apply`.
 
 ## Legal pages
 

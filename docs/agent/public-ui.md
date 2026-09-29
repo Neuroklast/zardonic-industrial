@@ -188,10 +188,10 @@ After public UI changes:
 
 ### Release category labels (2026-09-03)
 
-Public release categories are **four**: Album, **Single / EP**, Remix, Compilation. Internal stored values are unchanged (`album | ep | single | remix | compilation`); only the user-facing label + filter matching collapsed `ep`/`single`.
+Public release categories are **four**: Album, **Single / EP**, Remix, **Appears On**. Internal stored values are unchanged (`album | ep | single | remix | compilation`); only the user-facing label + filter matching collapsed `ep`/`single`.
 
 - Always render the label via `displayReleaseType` (`lib/release-type.ts`) — never the raw stored value or `normalizeReleaseFilterType` (it returns the filter key `single-ep`).
-- **`compilation` displays as `Compilation`** — the old `Appears On` remap is removed.
+- **`compilation` displays as `Appears On`** (2026-09-29 — renamed back from `Compilation`).
 - Filter matching uses `matchesReleaseFilterType` (`lib/release-browse.ts`); the public/admin list filters expose one **Single / EP** pill (`value: 'single-ep'`) that matches both `single` and `ep`.
 - The admin release editor (new/edit) still offers separate **Single** and **EP** options.
 
@@ -200,7 +200,8 @@ Public release categories are **four**: Album, **Single / EP**, Remix, Compilati
 Stored `type` is derived by **one** canonical classifier, `classifyReleaseType` (`lib/release-type.ts`), used by iTunes, Spotify and Discogs sync. Do not add source-local heuristics — they drift (the pre-2026-09 code had three conflicting copies).
 
 - **Apple's iTunes `collectionType` is always `"Album"`** — even for singles/EPs. Never trust it on its own; only pass it through `trustworthyDeclaredType()` (which drops the generic `"Album"`).
-- Priority: (1) semantic title markers (`remix`/`rmx`, `compilation`/`best of`/`greatest hits`) always win; (2) trustworthy declared type; (3) Apple suffix / parenthetical (`- Single`, `- EP`, `(EP)`); (4) track count (single ≤2, EP 3–6, album ≥7); (5) bare `Single` token; (6) fallback `album`.
+- Priority: (1) remix title marker (`remix`/`rmx`) always wins; (2) **Appears On vs Album** from per-track artist credits — with ≥6 tracks, a shared artist on every track → `album`, no shared artist + ≥3 distinct artists → `compilation`; (3) compilation title markers (`compilation`/`best of`/`greatest hits`); (4) trustworthy declared type; (5) Apple suffix / parenthetical (`- Single`, `- EP`, `(EP)`); (6) bare `EP` token; (7) track count (single ≤2, EP 3–6, album ≥7); (8) bare `Single` token; (9) fallback `album`.
+- The artist rule uses `signals.trackArtists` (one entry per track) + `signals.primaryArtist` (release artist, used when a track lists none). Spotify supplies both at parse time; Discogs/iTunes get theirs during enrichment; stored rows via **Fix release types**.
 - All matching is **word-boundary** based — `"The Epic"` must never classify as EP.
 - iTunes **song** results are still imported (as before) but classified from `collectionName`, which carries the `- Single`/`- EP` suffix.
 - One-off repair of existing rows: **Catalogue Sync → Automatic maintenance → Fix release types** (admin action `reclassify_release_types`; `lib/release-type-reclassify.ts`). `manually_edited` rows are never touched. CLI equivalent for ops: `npm run reclassify-release-types` (dry-run) / `-- --apply`.

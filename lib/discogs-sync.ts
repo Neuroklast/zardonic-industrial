@@ -1,4 +1,5 @@
 import { getApiSecret } from '@/lib/api-secrets'
+import { fetchWithRetry } from '@/lib/fetch-retry'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
 import { classifyReleaseType } from '@/lib/release-type'
 import { type ReleaseMetadata, type ReleaseTrackMetadata } from '@/lib/release-metadata'
@@ -126,10 +127,11 @@ export async function fetchReleaseMetadataFromDiscogs(discogsId: string): Promis
   const token = await getApiSecret('discogs_token')
   if (!token) return null
 
-  const releaseRes = await fetch(`${DISCOGS_BASE}/releases/${encodeURIComponent(discogsId)}`, {
-    headers: discogsHeaders(token),
-    cache: 'no-store',
-  })
+  const releaseRes = await fetchWithRetry(
+    `${DISCOGS_BASE}/releases/${encodeURIComponent(discogsId)}`,
+    { headers: discogsHeaders(token), cache: 'no-store' },
+    { retryServerErrors: true },
+  )
   if (releaseRes.ok) {
     const data = (await releaseRes.json()) as DiscogsReleasePayload
     return parseDiscogsRelease(data, discogsId)
@@ -137,10 +139,11 @@ export async function fetchReleaseMetadataFromDiscogs(discogsId: string): Promis
 
   if (releaseRes.status !== 404) return null
 
-  const masterRes = await fetch(`${DISCOGS_BASE}/masters/${encodeURIComponent(discogsId)}`, {
-    headers: discogsHeaders(token),
-    cache: 'no-store',
-  })
+  const masterRes = await fetchWithRetry(
+    `${DISCOGS_BASE}/masters/${encodeURIComponent(discogsId)}`,
+    { headers: discogsHeaders(token), cache: 'no-store' },
+    { retryServerErrors: true },
+  )
   if (!masterRes.ok) return null
 
   const masterData = (await masterRes.json()) as DiscogsMasterPayload
@@ -157,7 +160,11 @@ export async function searchDiscogsArtistId(artistName: string): Promise<number 
   if (!token) return null
 
   const url = `${DISCOGS_BASE}/database/search?q=${encodeURIComponent(artistName)}&type=artist&per_page=10`
-  const res = await fetch(url, { headers: discogsHeaders(token), cache: 'no-store' })
+  const res = await fetchWithRetry(
+    url,
+    { headers: discogsHeaders(token), cache: 'no-store' },
+    { retryServerErrors: true },
+  )
   if (!res.ok) return null
 
   const data = (await res.json()) as {
@@ -219,7 +226,11 @@ export async function fetchDiscogsArtistReleasesPage(
   if (!token) return { items: [], page, totalPages: 0, ok: false }
 
   const url = `${DISCOGS_BASE}/artists/${artistId}/releases?per_page=100&page=${page}&sort=year&sort_order=desc`
-  const res = await fetch(url, { headers: discogsHeaders(token), cache: 'no-store' })
+  const res = await fetchWithRetry(
+    url,
+    { headers: discogsHeaders(token), cache: 'no-store' },
+    { retryServerErrors: true },
+  )
   if (!res.ok) return { items: [], page, totalPages: 0, ok: false }
 
   const data = (await res.json()) as {
@@ -241,10 +252,21 @@ export async function fetchDiscogsArtistReleasesPage(
     if (parsed) items.push(parsed)
   }
 
+  // Discogs normally returns `pagination.pages`, but when it is missing we must
+  // not silently truncate at page 1. A full page (100 rows) implies there may be
+  // more pages, so keep paging until a short page confirms the end.
+  const reportedPages = data.pagination?.pages
+  const totalPages =
+    typeof reportedPages === 'number' && reportedPages > 0
+      ? reportedPages
+      : items.length >= 100
+        ? page + 1
+        : page
+
   return {
     items,
     page,
-    totalPages: data.pagination?.pages ?? 1,
+    totalPages,
     ok: true,
   }
 }
@@ -256,7 +278,9 @@ export async function fetchDiscogsArtistReleases(artistId: number): Promise<Disc
 
   do {
     const result = await fetchDiscogsArtistReleasesPage(artistId, page)
-    if (!result.ok) break
+    if (!result.ok) {
+      throw new Error(`Discogs artist releases fetch failed on page ${page}`)
+    }
     items.push(...result.items)
     totalPages = result.totalPages
     page++

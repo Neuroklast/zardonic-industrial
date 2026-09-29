@@ -32,7 +32,21 @@ export interface ReleaseTypeSignals {
   trackCount?: number | null
   /** Extra context: Discogs genres/styles, platform groups, etc. */
   hints?: string[]
+  /**
+   * Per-track artist credits (comma / `&` / `feat.` separated names allowed),
+   * one entry per track. Enables the "Appears On vs Album" rule: a long release
+   * is an album when some artist is credited on **every** track (Zardonic +
+   * guests) and "Appears On" when no artist spans all tracks.
+   */
+  trackArtists?: Array<string | null | undefined> | null
+  /** Release-level primary artist, used when a track lists no artist. */
+  primaryArtist?: string | null
 }
+
+/** Minimum track count before the Appears On / Album artist rule applies. */
+export const APPEARS_ON_MIN_TRACKS = 6
+/** Minimum distinct artists for a long release to count as "many different artists". */
+export const APPEARS_ON_MIN_ARTISTS = 3
 
 export interface ReleaseTypeThresholds {
   /** Tracks ≤ this count are a single. */
@@ -74,7 +88,9 @@ const DECLARED_ALBUM_RE = /\balbum\b/i
 /**
  * Maps an internal release type value to its user-facing display label.
  * 'single' and 'ep' are grouped under the single combined label 'Single / EP'.
- * Returns the raw value for any unknown input so callers can apply a fallback.
+ * 'compilation' is shown as **Appears On** (a release the artist only features
+ * on, rather than a release of their own). Returns the raw value for any
+ * unknown input so callers can apply a fallback.
  */
 export function displayReleaseType(type: string): string {
   switch (type) {
@@ -86,7 +102,7 @@ export function displayReleaseType(type: string): string {
     case 'remix':
       return 'Remix'
     case 'compilation':
-      return 'Compilation'
+      return 'Appears On'
     default:
       return type
   }
@@ -115,17 +131,81 @@ function normalizeDeclaredType(value: string | null | undefined): ReleaseTypeVal
   return null
 }
 
+const ARTIST_SPLIT_RE = /\s*(?:,|&|\+|\/|\bfeat\.?\b|\bfeaturing\b|\bft\.?\b|\bwith\b|\bx\b)\s*/i
+
+function splitArtistNames(value: string): string[] {
+  return value
+    .split(ARTIST_SPLIT_RE)
+    .map((name) => name.trim().toLowerCase())
+    .filter(Boolean)
+}
+
+function trackArtistNames(
+  trackArtist: string | null | undefined,
+  primaryArtist: string | null | undefined,
+): Set<string> {
+  const names = splitArtistNames(trackArtist ?? '')
+  if (names.length > 0) return new Set(names)
+  return new Set(splitArtistNames(primaryArtist ?? ''))
+}
+
+/**
+ * Whether a single artist is credited on **every** track.
+ *
+ * - `true`  → some artist spans all tracks (a Zardonic album, even with guests),
+ * - `false` → the tracks share no artist (a various-artists compilation),
+ * - `null`  → not enough per-track artist data to decide.
+ */
+export function hasArtistOnEveryTrack(
+  trackArtists: Array<string | null | undefined> | null | undefined,
+  primaryArtist?: string | null,
+): boolean | null {
+  if (!trackArtists || trackArtists.length === 0) return null
+
+  let intersection: Set<string> | null = null
+  for (const raw of trackArtists) {
+    const names = trackArtistNames(raw, primaryArtist)
+    if (names.size === 0) return null
+    if (intersection === null) {
+      intersection = names
+      continue
+    }
+    const shared = new Set<string>()
+    for (const name of intersection) {
+      if (names.has(name)) shared.add(name)
+    }
+    if (shared.size === 0) return false
+    intersection = shared
+  }
+  return true
+}
+
+function distinctTrackArtistCount(
+  trackArtists: Array<string | null | undefined> | null | undefined,
+  primaryArtist?: string | null,
+): number {
+  const all = new Set<string>()
+  for (const raw of trackArtists ?? []) {
+    for (const name of trackArtistNames(raw, primaryArtist)) all.add(name)
+  }
+  return all.size
+}
+
 /**
  * Classifies a release into one of the five stored catalogue types.
  *
  * Priority (most reliable first):
- *   1. semantic title/hint markers (remix, compilation) — always win,
- *   2. trustworthy platform-declared type,
- *   3. explicit title suffix / parenthetical marker (`- Single`, `(EP)`),
- *   4. bare `EP` token in the title,
- *   5. track-count thresholds,
- *   6. bare `Single` token in the title,
- *   7. fallback: `album`.
+ *   1. remix title/hint marker — always wins,
+ *   2. Appears On vs Album from per-track artist credits (≥6 tracks): an album
+ *      when some artist is credited on every track, "Appears On" (compilation)
+ *      when no artist spans the tracks and there are many distinct artists,
+ *   3. semantic compilation markers (best of / greatest hits / compilation),
+ *   4. trustworthy platform-declared type,
+ *   5. explicit title suffix / parenthetical marker (`- Single`, `(EP)`),
+ *   6. bare `EP` token in the title,
+ *   7. track-count thresholds,
+ *   8. bare `Single` token in the title,
+ *   9. fallback: `album`.
  */
 export function classifyReleaseType(
   signals: ReleaseTypeSignals,
@@ -135,36 +215,51 @@ export function classifyReleaseType(
   const hints = signals.hints ?? []
   const haystack = [title, ...hints].join(' ')
 
-  // 1. Semantic markers — authoritative. A title with "Remix"/"RMX" is a remix,
-  //    regardless of track count or a platform's generic "Album" label.
+  // 1. Remix is authoritative — a title with "Remix"/"RMX" is a remix, regardless
+  //    of track count or a platform's generic "Album" label.
   if (REMIX_RE.test(haystack)) return 'remix'
+
+  // 2. Appears On vs Album from per-track artist credits. Only meaningful for
+  //    long releases; shorter ones fall through to the single/EP logic below.
+  const count = signals.trackCount
+  if (typeof count === 'number' && Number.isFinite(count) && count >= APPEARS_ON_MIN_TRACKS) {
+    const sharedArtist = hasArtistOnEveryTrack(signals.trackArtists, signals.primaryArtist)
+    if (sharedArtist === true) return 'album'
+    if (
+      sharedArtist === false &&
+      distinctTrackArtistCount(signals.trackArtists, signals.primaryArtist) >= APPEARS_ON_MIN_ARTISTS
+    ) {
+      return 'compilation'
+    }
+  }
+
+  // 3. Semantic compilation markers.
   if (COMPILATION_RES.some((re) => re.test(haystack))) return 'compilation'
 
-  // 2. Trustworthy declared type (Spotify album_type, Discogs formats, …).
+  // 4. Trustworthy declared type (Spotify album_type, Discogs formats, …).
   const declared = normalizeDeclaredType(signals.declaredType)
   if (declared) return declared
 
-  // 3. Explicit Apple-style suffix or parenthetical marker.
+  // 5. Explicit Apple-style suffix or parenthetical marker.
   const suffixMatch = title.match(TRAILING_SUFFIX_RE) ?? title.match(PARENTHETICAL_TYPE_RE)
   const suffixType = suffixMatch ? suffixToType(suffixMatch[1]) : null
   if (suffixType) return suffixType
 
-  // 4. Bare "EP" token in the title is explicit enough to beat track count.
+  // 6. Bare "EP" token in the title is explicit enough to beat track count.
   if (EP_TOKEN_RE.test(title)) return 'ep'
 
-  // 5. Track count.
-  const count = signals.trackCount
+  // 7. Track count.
   if (typeof count === 'number' && Number.isFinite(count) && count > 0) {
     if (count <= thresholds.singleMax) return 'single'
     if (count <= thresholds.epMax) return 'ep'
     return 'album'
   }
 
-  // 6. Weak title marker: "Single". Only used when no track count exists, so a
+  // 8. Weak title marker: "Single". Only used when no track count exists, so a
   //    full-length titled "Singles" is not misclassified.
   if (SINGLE_TOKEN_RE.test(title)) return 'single'
 
-  // 7. Fallback.
+  // 9. Fallback.
   return 'album'
 }
 
@@ -200,7 +295,7 @@ export function toQuickSelectReleaseType(
  * value to the 'album' fallback. The weak bare "Single" token is excluded.
  */
 export function hasExplicitReleaseTypeSignal(
-  signals: Pick<ReleaseTypeSignals, 'title' | 'trackCount' | 'hints'>,
+  signals: Pick<ReleaseTypeSignals, 'title' | 'trackCount' | 'hints' | 'trackArtists'>,
 ): boolean {
   const title = signals.title ?? ''
   const haystack = [title, ...(signals.hints ?? [])].join(' ')
@@ -210,6 +305,7 @@ export function hasExplicitReleaseTypeSignal(
   if (TRAILING_SUFFIX_RE.test(title) || PARENTHETICAL_TYPE_RE.test(title)) return true
   if (EP_TOKEN_RE.test(title)) return true
   if (typeof signals.trackCount === 'number' && signals.trackCount > 0) return true
+  if (signals.trackArtists && signals.trackArtists.length > 0) return true
 
   return false
 }
