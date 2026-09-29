@@ -674,6 +674,17 @@ export const ADMIN_ACTION_REGISTRY: AdminActionMap = {
     },
   }),
 
+  reclassify_release_types: register({
+    id: 'reclassify_release_types',
+    label: 'Fix Release Types',
+    schema: z.object({}).passthrough(),
+    minDisclosure: 'basic',
+    execute(_input, { supabaseAdmin }) {
+      if (!supabaseAdmin) return { ok: false, error: 'Supabase admin client required' }
+      return { ok: true }
+    },
+  }),
+
   release_external_sync: register({
     id: 'release_external_sync',
     label: 'Sync Release From External ID',

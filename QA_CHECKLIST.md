@@ -18,7 +18,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Smooth scroll to sections works (Lenis); mobile hamburger works
 - [ ] Releases: open detail â†’ **CyberpunkOverlay** chrome (corners, label, close)
 - [ ] Release categories show four labels: **Album / Single / EP / Remix / Compilation**; a `compilation` release badge reads **Compilation** (never "Appears On"), and both EP and Single releases/pills read **Single / EP**
-- [ ] After a catalogue import, discography types are plausible: singles/EPs are not all **Album**, a remix-titled release reads **Remix**, and `manually_edited` rows keep their type (run `npm run reclassify-release-types` as dry-run to inspect existing rows)
+- [ ] After a catalogue import, discography types are plausible: singles/EPs are not all **Album**, a remix-titled release reads **Remix**, and `manually_edited` rows keep their type (Catalogue Sync → Automatic maintenance → **Fix release types** repairs existing rows)
 - [ ] Events/gigs: same overlay system as releases
 - [ ] Gallery: open image â†’ **same** overlay shell as releases (not a bare lightbox)
 - [ ] Gallery: page does not scroll away under the modal; Escape closes

@@ -7,6 +7,10 @@ import { syncReleasesFromSpotify } from '@/app/admin/_actions/releaseExternalSyn
 import { enrichAllReleasesTracks } from '@/app/admin/_actions/releaseTrackEnrichment'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { consolidateDuplicateReleases } from '@/lib/release-consolidation'
+import {
+  reclassifyReleaseTypes,
+  type ReclassifyReleasesResult,
+} from '@/lib/release-type-reclassify'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
 
@@ -57,6 +61,26 @@ export async function consolidateReleases(): Promise<ConsolidateReleasesResult |
     revalidatePath('/')
     return result
   }, 'Unable to consolidate duplicate releases.')
+}
+
+export async function reclassifyReleaseTypesAction(): Promise<
+  ReclassifyReleasesResult | { error: string }
+> {
+  const dispatchResult = dispatchAdminActionAsAdmin(
+    'reclassify_release_types',
+    {},
+    createSupabaseActionContext(createAdminClient()),
+  )
+  if (!dispatchResult.ok) return { error: dispatchResult.error }
+
+  return runAdminAction(async () => {
+    const supabase = createAdminClient()
+    const result = await reclassifyReleaseTypes({ supabase, apply: true })
+    revalidatePath('/admin/releases')
+    revalidatePath('/')
+    revalidatePath('/releases')
+    return result
+  }, 'Unable to reclassify release types.')
 }
 
 export async function purgeReleases(): Promise<PurgeResult | { error: string }> {

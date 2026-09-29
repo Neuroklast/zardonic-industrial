@@ -203,4 +203,4 @@ Stored `type` is derived by **one** canonical classifier, `classifyReleaseType` 
 - Priority: (1) semantic title markers (`remix`/`rmx`, `compilation`/`best of`/`greatest hits`) always win; (2) trustworthy declared type; (3) Apple suffix / parenthetical (`- Single`, `- EP`, `(EP)`); (4) track count (single ≤2, EP 3–6, album ≥7); (5) bare `Single` token; (6) fallback `album`.
 - All matching is **word-boundary** based — `"The Epic"` must never classify as EP.
 - iTunes **song** results are still imported (as before) but classified from `collectionName`, which carries the `- Single`/`- EP` suffix.
-- One-off repair of existing rows: `npm run reclassify-release-types` (dry-run) / `-- --apply`; `manually_edited` rows are never touched (`lib/release-type-reclassify.ts`).
+- One-off repair of existing rows: **Catalogue Sync → Automatic maintenance → Fix release types** (admin action `reclassify_release_types`; `lib/release-type-reclassify.ts`). `manually_edited` rows are never touched. CLI equivalent for ops: `npm run reclassify-release-types` (dry-run) / `-- --apply`.

@@ -64,6 +64,22 @@ export function planReleaseTypeChange(row: ReclassifyReleaseRow): ReclassifyChan
 const PAGE_SIZE = 1000
 
 /**
+ * Buckets planned changes by their target type so the write can be a handful
+ * of `update(...).in('id', ids)` statements instead of one request per row —
+ * important to stay well inside a server-action time limit.
+ */
+export function groupChangesByType(
+  changes: ReclassifyChange[],
+): Partial<Record<ReleaseTypeValue, string[]>> {
+  const groups: Partial<Record<ReleaseTypeValue, string[]>> = {}
+  for (const change of changes) {
+    const ids = groups[change.to] ?? (groups[change.to] = [])
+    ids.push(change.id)
+  }
+  return groups
+}
+
+/**
  * Re-runs the canonical classifier over every stored release. Dry-run by
  * default; pass `apply: true` to persist. Manually edited rows are skipped.
  */
@@ -120,22 +136,27 @@ export async function reclassifyReleaseTypes(options: {
         `  ${change.from || '(empty)'} → ${change.to}  "${change.title}"` +
           (change.trackCount != null ? ` [${change.trackCount} tracks]` : ''),
       )
-
-      if (!apply) continue
-
-      const { error: updateError } = await supabase
-        .from('releases')
-        .update({ type: change.to })
-        .eq('id', change.id)
-
-      if (updateError) {
-        result.errors.push(`Failed to update "${change.title}": ${updateError.message}`)
-        continue
-      }
-      result.applied++
     }
 
     if (rows.length < PAGE_SIZE) break
+  }
+
+  if (!apply || result.changes.length === 0) return result
+
+  const groups = groupChangesByType(result.changes)
+  for (const [type, ids] of Object.entries(groups) as Array<[ReleaseTypeValue, string[]]>) {
+    if (ids.length === 0) continue
+
+    const { error: updateError } = await supabase
+      .from('releases')
+      .update({ type })
+      .in('id', ids)
+
+    if (updateError) {
+      result.errors.push(`Failed to update ${ids.length} release(s) to "${type}": ${updateError.message}`)
+      continue
+    }
+    result.applied += ids.length
   }
 
   return result
