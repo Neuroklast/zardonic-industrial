@@ -1,6 +1,10 @@
 import { dedupeCatalogueImportItems } from '@/lib/release-consolidation'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
-import { normalizeReleaseType } from '@/lib/release-public-mapper'
+import {
+  classifyReleaseType,
+  trustworthyDeclaredType,
+  type ReleaseTypeValue,
+} from '@/lib/release-type'
 
 export interface ItunesSearchResult {
   collectionId?: number
@@ -10,24 +14,26 @@ export interface ItunesSearchResult {
   wrapperType?: string
   kind?: string
   collectionType?: string
+  trackCount?: number
   artworkUrl100?: string
   releaseDate?: string
 }
 
 export function parseItunesItem(item: ItunesSearchResult): {
   title: string
-  type: string
+  type: ReleaseTypeValue
   release_date: string | null
   itunes_id: string
   artworkUrl: string | null
 } | null {
-  const isAlbum =
-    item.wrapperType === 'collection' &&
-    (item.collectionType === 'Album' || item.collectionType === 'Single')
+  const isCollection = item.wrapperType === 'collection'
   const isMusicVideo = item.wrapperType === 'track' && item.kind === 'music-video'
   const isSong = item.wrapperType === 'track' && item.kind === 'song'
 
-  if (!isAlbum && !isMusicVideo && !isSong) return null
+  // Collections of every type are valid releases (the old code dropped EP and
+  // Compilation collections because it only accepted collectionType
+  // "Album"/"Single").
+  if (!isCollection && !isMusicVideo && !isSong) return null
 
   const title = item.collectionName ?? item.trackName
   if (!title) return null
@@ -35,12 +41,17 @@ export function parseItunesItem(item: ItunesSearchResult): {
   const rawId = item.collectionId ?? item.trackId
   if (!rawId) return null
 
-  const nameLower = title.toLowerCase()
-  let type = 'album'
-  if (nameLower.includes(' ep') || nameLower.endsWith(' ep')) type = 'ep'
-  else if (nameLower.includes('single') || item.collectionType === 'Single') type = 'single'
-  else if (nameLower.includes('remix') || nameLower.includes('remixed')) type = 'remix'
-  else if (nameLower.includes('compilation') || nameLower.includes('best of')) type = 'compilation'
+  // Apple reports collectionType "Album" for *every* collection (singles and
+  // EPs included), so it is only trusted when it carries a specific value.
+  const declaredType = trustworthyDeclaredType(item.collectionType)
+
+  // `title` already prefers `collectionName`, which carries the reliable
+  // "- Single" / "- EP" suffix for song/video tracks as well as collections.
+  const type = classifyReleaseType({
+    title,
+    declaredType,
+    trackCount: typeof item.trackCount === 'number' ? item.trackCount : null,
+  })
 
   const artworkUrl = item.artworkUrl100
     ? item.artworkUrl100.replace('100x100bb', '1000x1000bb')
@@ -140,7 +151,7 @@ export async function buildItunesCatalogueImportItems(options: {
       externalId: parsed.itunes_id,
       metadata: {
         title: parsed.title,
-        type: normalizeReleaseType(parsed.type) || 'album',
+        type: parsed.type,
         release_date: parsed.release_date,
         description: null,
         itunes_id: parsed.itunes_id,

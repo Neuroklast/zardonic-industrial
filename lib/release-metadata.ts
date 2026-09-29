@@ -1,3 +1,5 @@
+import { classifyReleaseType } from '@/lib/release-type'
+
 export interface StreamingLink {
   platform: string
   url: string
@@ -22,15 +24,16 @@ export interface ReleaseMetadata {
   itunes_id?: string | null
   spotify_id?: string | null
   discogs_id?: string | null
+  /** Track count from the source, used for single/EP/album classification. */
+  trackCount?: number | null
 }
 
+/**
+ * @deprecated Use `classifyReleaseType` from `@/lib/release-type` directly.
+ * Kept as a thin wrapper for callers that only have a title + hints.
+ */
 export function inferReleaseTypeFromTitle(title: string, hints: string[] = []): ReleaseMetadata['type'] {
-  const lower = `${title} ${hints.join(' ')}`.toLowerCase()
-  if (lower.includes(' ep') || lower.endsWith(' ep')) return 'ep'
-  if (lower.includes('single')) return 'single'
-  if (lower.includes('remix') || lower.includes('remixed')) return 'remix'
-  if (lower.includes('compilation') || lower.includes('best of')) return 'compilation'
-  return 'album'
+  return classifyReleaseType({ title, hints })
 }
 
 export function mergeStreamingLinks(

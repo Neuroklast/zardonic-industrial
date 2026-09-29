@@ -27,6 +27,7 @@ import {
   mergeOdesliIntoReleaseLinks,
 } from '@/lib/release-streaming-enrichment'
 import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
+import { classifyReleaseType } from '@/lib/release-type'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
 export interface BulkExternalSyncResult {
@@ -507,7 +508,9 @@ export async function importCatalogueBatch(
 
     const row: Record<string, unknown> = {
       title: metadata.title,
-      type: metadata.type || 'album',
+      type:
+        metadata.type ||
+        classifyReleaseType({ title: metadata.title, trackCount: metadata.trackCount }),
       release_date: metadata.release_date,
       description: metadata.description,
       artists: metadata.artists,

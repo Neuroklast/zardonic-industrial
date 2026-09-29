@@ -9,6 +9,7 @@ import {
   normalizeExternalId,
   type ExternalReleaseSource,
 } from '@/lib/release-external-ids'
+import { classifyReleaseType } from '@/lib/release-type'
 import { fetchReleaseMetadataFromSpotify } from '@/lib/spotify-sync'
 
 export async function fetchReleaseMetadataByExternalId(
@@ -56,7 +57,9 @@ export function buildReleaseUpdateFromMetadata(
 ): Record<string, unknown> {
   const update: Record<string, unknown> = {
     title: metadata.title,
-    type: metadata.type || 'album',
+    type:
+      metadata.type ||
+      classifyReleaseType({ title: metadata.title, trackCount: metadata.trackCount }),
     release_date: metadata.release_date,
     artists: metadata.artists,
     streaming_links: mergeStreamingLinks(existingLinks, metadata.streaming_links),

@@ -103,6 +103,10 @@ Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` acti
 
 Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited`.
 
+### Release type classification (2026-09-29)
+
+One canonical classifier — `classifyReleaseType` in `lib/release-type.ts` — is the single source of truth for `releases.type` across every source (iTunes `lib/itunes-sync.ts`, Spotify `lib/spotify-sync.ts`, Discogs `lib/discogs-sync.ts`). `lib/release-metadata.ts::inferReleaseTypeFromTitle` is a deprecated wrapper. Apple's iTunes `collectionType` is always `"Album"`, so it is only trusted via `trustworthyDeclaredType()`; the real signals are title markers (`remix`/`rmx`, `compilation`), Apple's trailing suffix, and `trackCount` (single ≤2, EP 3–6, album ≥7). Existing rows can be repaired with `npm run reclassify-release-types` (dry-run) / `-- --apply` (`lib/release-type-reclassify.ts`, skips `manually_edited`).
+
 ## Legal pages
 
 - `/legal-notice` — templates in `lib/legal-templates.ts`
