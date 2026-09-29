@@ -4,11 +4,8 @@ import {
 } from '@/lib/spotify-api-limits'
 import { getSpotifyAccessToken } from '@/lib/spotify-client'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
-import {
-  inferReleaseTypeFromTitle,
-  type ReleaseMetadata,
-  type ReleaseTrackMetadata,
-} from '@/lib/release-metadata'
+import { classifyReleaseType } from '@/lib/release-type'
+import { type ReleaseMetadata, type ReleaseTrackMetadata } from '@/lib/release-metadata'
 
 interface SpotifyImage {
   url?: string
@@ -34,6 +31,7 @@ interface SpotifyAlbumPayload {
   id?: string
   name?: string
   album_type?: string
+  total_tracks?: number
   release_date?: string
   images?: SpotifyImage[]
   artists?: SpotifyArtistRef[]
@@ -49,11 +47,24 @@ interface SpotifyTrackPayload {
   album?: SpotifyAlbumPayload
 }
 
-function mapSpotifyAlbumType(albumType: string | undefined, title: string): ReleaseMetadata['type'] {
-  const normalized = (albumType ?? '').toLowerCase()
-  if (normalized === 'single') return 'single'
+/**
+ * Spotify collapses EPs into `album_type: "single"`, so that value is treated
+ * as ambiguous and left to the track-count heuristic. "album" and
+ * "compilation" are unambiguous.
+ */
+function spotifyDeclaredType(albumType: string | undefined): string | null {
+  const normalized = (albumType ?? '').trim().toLowerCase()
   if (normalized === 'compilation') return 'compilation'
-  return inferReleaseTypeFromTitle(title)
+  if (normalized === 'album') return 'album'
+  return null
+}
+
+function classifySpotifyRelease(
+  albumType: string | undefined,
+  title: string,
+  trackCount: number | null,
+): ReleaseMetadata['type'] {
+  return classifyReleaseType({ title, declaredType: spotifyDeclaredType(albumType), trackCount })
 }
 
 function pickLargestImage(images: SpotifyImage[] | undefined): string | null {
@@ -141,7 +152,11 @@ function parseSpotifyAlbum(
 
   return {
     title,
-    type: mapSpotifyAlbumType(data.album_type, title),
+    type: classifySpotifyRelease(
+      data.album_type,
+      title,
+      data.total_tracks ?? (tracks.length > 0 ? tracks.length : null),
+    ),
     release_date: normalizeReleaseDateForDb(data.release_date),
     description: null,
     artists,
@@ -163,7 +178,9 @@ function parseSpotifyTrack(data: SpotifyTrackPayload): ReleaseMetadata | null {
 
   return {
     title,
-    type: album ? mapSpotifyAlbumType(album.album_type, title) : 'single',
+    type: album
+      ? classifySpotifyRelease(album.album_type, title, album.total_tracks ?? null)
+      : 'single',
     release_date: normalizeReleaseDateForDb(album?.release_date),
     description: null,
     artists,

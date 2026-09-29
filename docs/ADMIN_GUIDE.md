@@ -188,6 +188,8 @@ Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 
 Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, cover, and Odesli links.
 
+Release **type** (Album / Single / EP / Remix / Compilation) is derived by one shared classifier (`lib/release-type.ts`) from title markers, the platform's declared type, Apple's `- Single`/`- EP` suffix, and track count — Apple's iTunes `collectionType` is unreliable (always `"Album"`) and is never trusted alone. To repair rows imported before 2026-09-29: `npm run reclassify-release-types` (dry-run) then `npm run reclassify-release-types -- --apply`; `manually_edited` rows are never touched.
+
 ## Supabase Egress & media origin
 
 The Supabase Free plan limits egress to **5 GB per period** (hard limit — the API can be paused when exceeded). All site media is served from Cloudflare R2; Supabase is used as the database only. Keep egress low:

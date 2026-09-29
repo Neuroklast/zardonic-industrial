@@ -194,3 +194,13 @@ Public release categories are **four**: Album, **Single / EP**, Remix, Compilati
 - **`compilation` displays as `Compilation`** — the old `Appears On` remap is removed.
 - Filter matching uses `matchesReleaseFilterType` (`lib/release-browse.ts`); the public/admin list filters expose one **Single / EP** pill (`value: 'single-ep'`) that matches both `single` and `ep`.
 - The admin release editor (new/edit) still offers separate **Single** and **EP** options.
+
+### Release type classification (2026-09-29)
+
+Stored `type` is derived by **one** canonical classifier, `classifyReleaseType` (`lib/release-type.ts`), used by iTunes, Spotify and Discogs sync. Do not add source-local heuristics — they drift (the pre-2026-09 code had three conflicting copies).
+
+- **Apple's iTunes `collectionType` is always `"Album"`** — even for singles/EPs. Never trust it on its own; only pass it through `trustworthyDeclaredType()` (which drops the generic `"Album"`).
+- Priority: (1) semantic title markers (`remix`/`rmx`, `compilation`/`best of`/`greatest hits`) always win; (2) trustworthy declared type; (3) Apple suffix / parenthetical (`- Single`, `- EP`, `(EP)`); (4) track count (single ≤2, EP 3–6, album ≥7); (5) bare `Single` token; (6) fallback `album`.
+- All matching is **word-boundary** based — `"The Epic"` must never classify as EP.
+- iTunes **song** results are still imported (as before) but classified from `collectionName`, which carries the `- Single`/`- EP` suffix.
+- One-off repair of existing rows: `npm run reclassify-release-types` (dry-run) / `-- --apply`; `manually_edited` rows are never touched (`lib/release-type-reclassify.ts`).

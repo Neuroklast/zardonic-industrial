@@ -1,10 +1,7 @@
 import { getApiSecret } from '@/lib/api-secrets'
 import { normalizeReleaseDateForDb } from '@/lib/normalize-release-date'
-import {
-  inferReleaseTypeFromTitle,
-  type ReleaseMetadata,
-  type ReleaseTrackMetadata,
-} from '@/lib/release-metadata'
+import { classifyReleaseType } from '@/lib/release-type'
+import { type ReleaseMetadata, type ReleaseTrackMetadata } from '@/lib/release-metadata'
 
 const DISCOGS_BASE = 'https://api.discogs.com'
 const DISCOGS_USER_AGENT = `ZardonicWebsite/1.0 +${process.env.SITE_URL || 'https://zardonic.com'}`
@@ -87,7 +84,12 @@ function parseDiscogsRelease(data: DiscogsReleasePayload, discogsId: string): Re
 
   return {
     title,
-    type: inferReleaseTypeFromTitle(title, [...formatHints, ...(data.genres ?? []), ...(data.styles ?? [])]),
+    type: classifyReleaseType({
+      title,
+      declaredType: formatHints.join(' ') || null,
+      trackCount: tracks.length > 0 ? tracks.length : null,
+      hints: [...(data.genres ?? []), ...(data.styles ?? [])],
+    }),
     release_date: normalizeReleaseDateForDb(data.year ? String(data.year) : null),
     description: data.notes?.trim() || null,
     artists,
@@ -107,7 +109,10 @@ function parseDiscogsMaster(data: DiscogsMasterPayload, discogsId: string): Rele
 
   return {
     title,
-    type: inferReleaseTypeFromTitle(title, [...(data.genres ?? []), ...(data.styles ?? [])]),
+    type: classifyReleaseType({
+      title,
+      hints: [...(data.genres ?? []), ...(data.styles ?? [])],
+    }),
     release_date: normalizeReleaseDateForDb(data.year ? String(data.year) : null),
     description: data.notes?.trim() || null,
     artists,
@@ -194,7 +199,7 @@ function parseDiscogsArtistReleaseRow(item: {
     discogs_id: discogsId,
     metadata: {
       title: item.title.trim(),
-      type: inferReleaseTypeFromTitle(item.title),
+      type: classifyReleaseType({ title: item.title }),
       release_date: normalizeReleaseDateForDb(item.year ? String(item.year) : null),
       description: null,
       artists: [],
