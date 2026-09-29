@@ -88,6 +88,8 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 
 Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance.ts`, `releaseExternalSync.ts`.
 
+The admin release list (`ReleasesListClient`) has a per-row **Type** quick-select (`ReleaseTypeSelector`): four mutually exclusive buttons Single / Remix / Album / Compilation. Each click calls `updateReleaseType` (`app/admin/_actions/releases.ts`), which sets the type and `manually_edited: true` (so auto-reclassify never reverts a manual choice) and revalidates the public discography. `ep` rows highlight Single.
+
 Authenticated admin dispatches use `dispatchAdminActionAsAdmin()` (`expert` disclosure). Real auth is `requireAdmin()`.
 
 ## Data import / export (`/admin/data`)

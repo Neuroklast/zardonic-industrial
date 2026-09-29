@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ArrowsMerge, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { mergeSelectedReleases } from '@/app/admin/_actions/releases'
 import { DeleteReleaseButton } from './DeleteReleaseButton'
+import { ReleaseTypeSelector } from './ReleaseTypeSelector'
 import { ReleaseVisibilityToggle } from './ReleaseVisibilityToggle'
 
 export interface AdminReleaseRow {
@@ -338,7 +339,9 @@ export function ReleasesListClient({ releases }: ReleasesListClientProps) {
                       />
                     </td>
                     <td className="py-2 pr-4 text-zinc-200">{release.title}</td>
-                    <td className="py-2 pr-4 text-zinc-400">{release.type}</td>
+                    <td className="py-2 pr-4">
+                      <ReleaseTypeSelector releaseId={release.id} type={release.type} />
+                    </td>
                     <td className="py-2 pr-4 text-zinc-400">{release.release_date ?? '—'}</td>
                     <td className="py-2 pr-4">
                       <ReleaseVisibilityToggle releaseId={release.id} active={release.active ?? true} />

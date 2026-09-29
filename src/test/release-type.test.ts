@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   classifyReleaseType,
   displayReleaseType,
+  toQuickSelectReleaseType,
   trustworthyDeclaredType,
 } from '@/lib/release-type'
 import { inferReleaseTypeFromTitle } from '@/lib/release-metadata'
@@ -16,6 +17,26 @@ describe('displayReleaseType', () => {
     expect(displayReleaseType('album')).toBe('Album')
     expect(displayReleaseType('remix')).toBe('Remix')
     expect(displayReleaseType('compilation')).toBe('Compilation')
+  })
+})
+
+describe('toQuickSelectReleaseType', () => {
+  it('folds single and ep into one bucket', () => {
+    expect(toQuickSelectReleaseType('single')).toBe('single')
+    expect(toQuickSelectReleaseType('ep')).toBe('single')
+  })
+
+  it('maps the other stored values', () => {
+    expect(toQuickSelectReleaseType('remix')).toBe('remix')
+    expect(toQuickSelectReleaseType('album')).toBe('album')
+    expect(toQuickSelectReleaseType('compilation')).toBe('compilation')
+  })
+
+  it('returns null for empty or unknown values', () => {
+    expect(toQuickSelectReleaseType('')).toBeNull()
+    expect(toQuickSelectReleaseType(null)).toBeNull()
+    expect(toQuickSelectReleaseType(undefined)).toBeNull()
+    expect(toQuickSelectReleaseType('bogus')).toBeNull()
   })
 })
 
