@@ -84,6 +84,7 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 | `reconcile_r2_media` | expert | List live R2 objects and rewrite DB URLs when the **filename** or **content hash** uniquely matches (re-uploads / prefix changes); backfills `content_hash` columns |
 | `spotify_sync` / `discogs_sync` / `itunes_sync` | basic | Catalogue bulk import |
 | `release_external_sync` | basic | Per-release ID sync |
+| `reclassify_release_types` | basic | Re-run the release-type classifier over existing rows (Album / Single / EP / Remix / Compilation); skips `manually_edited` |
 
 Server actions: `app/admin/_actions/releaseTrackEnrichment.ts`, `dataMaintenance.ts`, `releaseExternalSync.ts`.
 

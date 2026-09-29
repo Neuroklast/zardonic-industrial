@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { planReleaseTypeChange, type ReclassifyReleaseRow } from '@/lib/release-type-reclassify'
+import {
+  groupChangesByType,
+  planReleaseTypeChange,
+  type ReclassifyReleaseRow,
+} from '@/lib/release-type-reclassify'
 
 function row(overrides: Partial<ReclassifyReleaseRow>): ReclassifyReleaseRow {
   return {
@@ -48,5 +52,22 @@ describe('planReleaseTypeChange', () => {
     )
     expect(change?.to).toBe('album')
     expect(change?.trackCount).toBe(12)
+  })
+})
+
+describe('groupChangesByType', () => {
+  it('buckets ids by their target type', () => {
+    const groups = groupChangesByType([
+      { id: 'a', title: 'A', from: 'album', to: 'single', trackCount: 1 },
+      { id: 'b', title: 'B', from: 'album', to: 'single', trackCount: 1 },
+      { id: 'c', title: 'C', from: 'album', to: 'ep', trackCount: 4 },
+    ])
+    expect(groups.single).toEqual(['a', 'b'])
+    expect(groups.ep).toEqual(['c'])
+    expect(groups.album).toBeUndefined()
+  })
+
+  it('returns an empty object when there are no changes', () => {
+    expect(groupChangesByType([])).toEqual({})
   })
 })

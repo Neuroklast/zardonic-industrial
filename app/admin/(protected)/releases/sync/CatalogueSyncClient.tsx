@@ -3,8 +3,12 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowsClockwise, CalendarBlank, MusicNotes, Trash, Warning } from '@phosphor-icons/react'
-import { purgeGigs, purgeReleases } from '@/app/admin/_actions/dataMaintenance'
+import { ArrowsClockwise, CalendarBlank, MusicNotes, Tag, Trash, Warning } from '@phosphor-icons/react'
+import {
+  purgeGigs,
+  purgeReleases,
+  reclassifyReleaseTypesAction,
+} from '@/app/admin/_actions/dataMaintenance'
 import { SyncJobStatus } from '@/app/admin/_components/SyncJobStatus'
 import { CatalogueSyncSettings } from '@/app/admin/_components/CatalogueSyncSettings'
 import {
@@ -124,6 +128,7 @@ export function CatalogueSyncClient({
   const [openAction, setOpenAction] = useState<MaintenanceAction | null>(null)
   const [pending, startTransition] = useTransition()
   const [enriching, setEnriching] = useState(false)
+  const [fixingTypes, setFixingTypes] = useState(false)
   const router = useRouter()
 
   const { job, error: jobError, polling, startPolling } = useSyncJobPoll({
@@ -226,6 +231,25 @@ export function CatalogueSyncClient({
       setError(e instanceof Error ? e.message : 'Odesli enrichment failed')
     } finally {
       setEnriching(false)
+    }
+  }
+
+  async function runReclassifyTypes() {
+    setMessage(null)
+    setError(null)
+    setFixingTypes(true)
+    try {
+      const result = await reclassifyReleaseTypesAction()
+      if ('error' in result) throw new Error(result.error)
+      setMessage(
+        `Release types fixed: ${result.applied} updated · ` +
+          `${result.skippedManual} manually edited skipped · ${result.unchanged} unchanged.`,
+      )
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Reclassifying release types failed')
+    } finally {
+      setFixingTypes(false)
     }
   }
 
@@ -365,22 +389,33 @@ export function CatalogueSyncClient({
       <SectionCard
         icon={ArrowsClockwise}
         title="Automatic maintenance"
-        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass to pull extra platform links for the whole catalogue."
+        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass for extra platform links, or Fix release types to re-classify existing rows (Album / Single / EP / Remix / Compilation) — manually edited releases are never changed."
       >
         {needsEnrichment != null ? (
           <p className="text-xs text-zinc-500 font-mono">
             Releases awaiting automatic enrichment: {needsEnrichment}
           </p>
         ) : null}
-        <button
-          type="button"
-          onClick={runStreamingEnrichment}
-          disabled={enriching || pending}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors disabled:opacity-50 min-h-[44px]"
-        >
-          <ArrowsClockwise className={`h-4 w-4 ${enriching ? 'animate-spin' : ''}`} aria-hidden />
-          {enriching ? 'Enriching streaming links…' : 'Enrich streaming links (Odesli)'}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={runStreamingEnrichment}
+            disabled={enriching || pending}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors disabled:opacity-50 min-h-[44px]"
+          >
+            <ArrowsClockwise className={`h-4 w-4 ${enriching ? 'animate-spin' : ''}`} aria-hidden />
+            {enriching ? 'Enriching streaming links…' : 'Enrich streaming links (Odesli)'}
+          </button>
+          <button
+            type="button"
+            onClick={runReclassifyTypes}
+            disabled={fixingTypes || pending || polling}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors disabled:opacity-50 min-h-[44px]"
+          >
+            <Tag className={`h-4 w-4 ${fixingTypes ? 'animate-pulse' : ''}`} aria-hidden />
+            {fixingTypes ? 'Fixing release types…' : 'Fix release types'}
+          </button>
+        </div>
       </SectionCard>
 
       <SectionCard
