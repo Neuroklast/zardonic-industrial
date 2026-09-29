@@ -38,6 +38,7 @@ Legacy paths `/impressum`, `/privacy`, `/datenschutz` redirect to the routes abo
 | `newsletter_subscribers` | Newsletter signups (double opt-in) | Consent (Art. 6(1)(a)) |
 | `news_posts` | Public editorial news content | Legitimate interest (no personal data from readers) |
 | `profiles` | Admin authentication role | Contract (admin access) |
+| `analytics_events` | **Consent-gated** first-party usage events: page/section views, heatmap clicks, device type, browser, screen resolution, referrer, landing page, UTM params, per-visit session ID (`sessionStorage: zd-analytics-session`). Pseudonymous, no cross-site profile. | Consent (Art. 6(1)(a)); 90-day retention |
 
 Supabase region and DPA: configure in Supabase dashboard; referenced in Privacy Policy template.
 
@@ -95,13 +96,15 @@ Client IPs are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage — no
 | Admin auth | Supabase Auth + `profiles.role` check |
 | Session cookies | HttpOnly, Secure, SameSite (Supabase SSR) |
 | Input validation | Zod on API routes and server actions |
-| Rate limiting | Upstash Redis, hashed IPs |
+| Rate limiting | Supabase Postgres (`public.rate_limits`), SHA-256 hashed IPs |
 | CSP / headers | `vercel.json` + `next.config.mjs` parity |
 | Transport | HTTPS, HSTS |
 
 ## Compliance status
 
-**Overall: Good+** — bilingual legal templates, self-hosted fonts (no Google Fonts CDN), consent for analytics, two-click embeds, admin legal completeness UI, documented processors + 90-day analytics retention language. Remaining: operator must complete real identity data + DPAs; lawyer review recommended for DE production.
+**Overall: Good+** — bilingual legal templates, self-hosted default fonts, consent for analytics, two-click embeds, admin legal completeness UI, documented processors + 90-day analytics retention language. Remaining: operator must complete real identity data + DPAs; lawyer review recommended for DE production.
+
+**Open risk (fonts):** the default theme uses only `next/font` self-hosted faces (Orbitron, Share Tech Mono, Space Mono), but `lib/appearance-presets.ts` still offers remote Google Fonts (Inter, Roboto, Rajdhani, Space Grotesk, JetBrains Mono, …) and `lib/font-loader.ts` loads them at runtime from `fonts.googleapis.com` (also SSR via `app/layout.tsx`). Selecting any of those in Appearance transmits visitor IPs to Google — under LG München I (3 O 17493/20) that needs consent in DE. Either self-host the offered families or gate the remote load behind consent. See TD-037.
 
 ## Contact
 
