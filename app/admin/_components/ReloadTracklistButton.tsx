@@ -36,9 +36,6 @@ export function ReloadTracklistButton({ releaseId, disabled }: ReloadTracklistBu
       if (result.trackCount) {
         parts.push(`${result.trackCount} tracks from ${result.source ?? 'external API'}`)
       }
-      if (result.platformCount) {
-        parts.push(`${result.platformCount} streaming platforms via Odesli`)
-      }
       setMessage(parts.length > 0 ? `Loaded ${parts.join(' · ')}.` : 'Release enriched.')
       router.refresh()
     })

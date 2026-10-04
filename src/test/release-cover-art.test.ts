@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  coverSourcePriority,
   isItunesSourcedCover,
   isSpotifySourcedCover,
   resolveMergedCoverUpdate,
   shouldImportCoverFromSource,
+  shouldReplaceCoverWithSource,
 } from '@/lib/release-cover-art'
 
 describe('release-cover-art', () => {
@@ -46,6 +48,40 @@ describe('release-cover-art', () => {
     })
     expect(result.discardPaths).toContain('releases/spotify-aaa')
     expect(result.discardPaths).not.toContain('releases/itunes-bbb')
+  })
+
+  it('ranks cover sources iTunes > Spotify > Discogs', () => {
+    expect(coverSourcePriority('itunes')).toBeGreaterThan(coverSourcePriority('spotify'))
+    expect(coverSourcePriority('spotify')).toBeGreaterThan(coverSourcePriority('discogs'))
+  })
+
+  it('accepts a source cover for a coverless row', () => {
+    expect(shouldReplaceCoverWithSource({}, 'discogs')).toBe(true)
+  })
+
+  it('replaces a lower-priority cover with a higher-priority source', () => {
+    const spotify = {
+      cover_storage_path: 'releases/spotify-abc.jpg',
+      cover_url: 'https://i.scdn.co/image/abc',
+    }
+    expect(shouldReplaceCoverWithSource(spotify, 'itunes')).toBe(true)
+  })
+
+  it('keeps a higher-priority cover and does not re-download the same source', () => {
+    const itunes = {
+      cover_storage_path: 'releases/itunes-123.jpg',
+      cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/x.jpg',
+    }
+    expect(shouldReplaceCoverWithSource(itunes, 'spotify')).toBe(false)
+    expect(shouldReplaceCoverWithSource(itunes, 'discogs')).toBe(false)
+    // Same source: already the best cover — never re-fetch on every sync.
+    expect(shouldReplaceCoverWithSource(itunes, 'itunes')).toBe(false)
+  })
+
+  it('migrates an external-URL-only cover onto R2 regardless of source rank', () => {
+    const externalOnly = { cover_url: 'https://is1-ssl.mzstatic.com/image/thumb/x.jpg' }
+    expect(shouldReplaceCoverWithSource(externalOnly, 'itunes')).toBe(true)
+    expect(shouldReplaceCoverWithSource(externalOnly, 'spotify')).toBe(true)
   })
 
   it('discards Spotify duplicate cover without adopting it', () => {

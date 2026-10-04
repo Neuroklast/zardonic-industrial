@@ -15,7 +15,7 @@
 | Admin (`/admin/*`) | Functional — Supabase Auth; Look & Feel **Desktop/Mobile** live preview |
 | Content DB | Supabase (`supabase/schema.sql`) |
 | Media | Cloudflare R2 (WebP crop uploads, 4 MB body limit) |
-| Legacy `api/` | Slim — image proxies, Odesli/Spotify/iTunes/Bandsintown helpers, rate limiting (needs live Upstash) |
+| Legacy `api/` | Slim — image proxies, Spotify/iTunes/Bandsintown helpers, rate limiting (needs live Upstash) |
 | Public geo | App Router (`app/api/geo`) — no Redis; do not reintroduce `api/geo.ts` |
 | OG / sitemap | App Router (`app/api/og`, `app/api/sitemap`) |
 | Tests | Vitest — 700+ tests (`npm run test`) |
@@ -42,7 +42,7 @@
 - [x] CRUD for releases, gigs, gallery, media downloads, partners, etc.
 - [x] Catalogue sync (iTunes, Spotify, Discogs)
 - [x] Data import/export (full editorial JSON backup incl. news + manually edited releases) + **data maintenance** (purge/sync, track enrichment) + **R2 media host rewrite / bucket reconcile** (runs on Production deploy)
-- [x] Odesli cross-platform links on releases (sync + enrichment + public modal)
+- [x] Streaming links on releases (source APIs + public modal); Odesli (song.link) integration removed after the service shut down — existing enriched links remain stored and rendered
 - [x] Full retirement of legacy KV `AdminPanel` / CMS shell (`cms/`, `src/cms/`, `components/admin/` removed)
 
 ## Open work (post-launch)

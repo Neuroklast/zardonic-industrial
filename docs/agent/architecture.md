@@ -95,11 +95,10 @@ Admin edits via `app/admin/_actions/siteConfig.ts` → `update_site_config` acti
 | Layer | File | Role |
 |-------|------|------|
 | Tracklists | `lib/release-enrichment.ts` | Spotify → Discogs → iTunes; respects `manually_edited` |
-| Streaming links | `lib/release-streaming-enrichment.ts` + `lib/odesli.ts` | Odesli merge into `streaming_links` |
-| Odesli API | `app/api/odesli/route.ts` | Admin-only: `GET ?url=&userCountry=` single lookup; `POST` streaming-only batch (`runStreamingEnrichmentBatch`) — separately triggerable from Catalogue Sync |
+| Streaming links | source APIs + stored `streaming_links` | Spotify/Discogs/iTunes links are merged, never overwritten; existing extra-platform links are preserved. The Odesli (song.link) API was **removed** (service shut down) — `lib/release-streaming-enrichment.ts` now only extracts external ids from stored links |
 | Cron | `app/api/releases-track-enrich/route.ts` | Daily batch (15 releases/call) |
 | Admin | `app/admin/_actions/releaseTrackEnrichment.ts` | Manual + bulk triggers |
-| Async jobs | `sync_jobs` table + `app/api/sync-jobs/**` | Chunked Spotify/Discogs import, purge+sync |
+| Async jobs | `sync_jobs` table + `app/api/sync-jobs/**` | Chunked Spotify/Discogs import, purge+sync. Client-facing reads (`/api/sync-jobs/[id]`, `/active`, tick response) use `SyncJobSummary` and **never** select the heavy `payload` JSONB (`getSyncJobSummary` / `listActiveSyncJobsSummary`); `getSyncJob` (full payload) is server-runner only |
 
 Schema: `releases.tracks`, `tracks_source`, `last_enriched_at`, `manually_edited`.
 

@@ -25,7 +25,7 @@ import {
 import { useSyncJobPoll } from '@/hooks/useSyncJobPoll'
 import type { CatalogueSyncConfig } from '@/lib/catalogue-sync-config'
 import { startSyncJob } from '@/lib/sync-job-client'
-import type { SyncJobRow } from '@/lib/sync-jobs'
+import type { SyncJobSummary } from '@/lib/sync-jobs'
 
 type SyncSource = 'itunes' | 'spotify' | 'discogs'
 
@@ -85,7 +85,7 @@ const ACTION_COPY: Record<
 
 interface CatalogueSyncClientProps {
   initialConfig: CatalogueSyncConfig
-  activeJob?: SyncJobRow | null
+  activeJob?: SyncJobSummary | null
   needsEnrichment?: number | null
 }
 
@@ -127,7 +127,6 @@ export function CatalogueSyncClient({
   const [error, setError] = useState<string | null>(null)
   const [openAction, setOpenAction] = useState<MaintenanceAction | null>(null)
   const [pending, startTransition] = useTransition()
-  const [enriching, setEnriching] = useState(false)
   const [fixingTypes, setFixingTypes] = useState(false)
   const router = useRouter()
 
@@ -199,39 +198,6 @@ export function CatalogueSyncClient({
         setOpenAction(null)
       }
     })
-  }
-
-  async function runStreamingEnrichment() {
-    setMessage(null)
-    setError(null)
-    setEnriching(true)
-    try {
-      let cursor = 0
-      let enriched = 0
-      let remaining = 0
-      // Walk the catalogue in batches until Odesli has been consulted for
-      // every release (bounded so a single click can't run unbounded).
-      for (let batch = 0; batch < 20; batch++) {
-        const res = await fetch('/api/odesli', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cursor }),
-        })
-        const data = await res.json().catch(() => null)
-        if (!res.ok) throw new Error(data?.error ?? `Request failed (${res.status})`)
-        enriched += data?.enriched ?? 0
-        cursor = data?.nextCursor ?? cursor
-        remaining = data?.remaining ?? 0
-        setMessage(`Odesli enrichment: ${enriched} release(s) updated — ${remaining} remaining…`)
-        if (data?.done) break
-      }
-      setMessage(`Odesli enrichment finished: ${enriched} release(s) updated.`)
-      router.refresh()
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Odesli enrichment failed')
-    } finally {
-      setEnriching(false)
-    }
   }
 
   async function runReclassifyTypes() {
@@ -307,11 +273,11 @@ export function CatalogueSyncClient({
 
   const descriptions: Record<SyncSource, string> = {
     itunes:
-      'Bulk-import via iTunes, merge with Spotify/Discogs rows, then Odesli enriches Deezer/Tidal/YouTube links.',
+      'Bulk-import via iTunes, merge with Spotify/Discogs rows, and backfill missing tracklists and cover art.',
     spotify:
-      'Bulk-import from Spotify, merge with iTunes/Discogs rows, then Odesli enriches extra streaming platforms.',
+      'Bulk-import from Spotify, merge with iTunes/Discogs rows, and backfill missing tracklists and cover art.',
     discogs:
-      'Bulk-import from Discogs, merge with iTunes/Spotify rows, add tracklists, then Odesli enriches links.',
+      'Bulk-import from Discogs, merge with iTunes/Spotify rows, and backfill missing tracklists and cover art.',
   }
 
   const configuredId: Record<SyncSource, string> = {
@@ -389,7 +355,7 @@ export function CatalogueSyncClient({
       <SectionCard
         icon={ArrowsClockwise}
         title="Automatic maintenance"
-        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists & streaming links, and backfills missing cover art (iTunes → Spotify → Discogs). Run a manual Odesli pass for extra platform links, or Fix release types to re-classify existing rows (Album / Single / EP / Remix / Appears On) — manually edited releases are never changed."
+        description="Every catalogue import automatically consolidates duplicate releases, enriches tracklists, and backfills missing cover art (iTunes → Spotify → Discogs). Fix release types re-classifies existing rows (Album / Single / EP / Remix / Appears On) — manually edited releases are never changed."
       >
         {needsEnrichment != null ? (
           <p className="text-xs text-zinc-500 font-mono">
@@ -397,15 +363,6 @@ export function CatalogueSyncClient({
           </p>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={runStreamingEnrichment}
-            disabled={enriching || pending}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded font-medium bg-zinc-800 hover:bg-zinc-700 text-white transition-colors disabled:opacity-50 min-h-[44px]"
-          >
-            <ArrowsClockwise className={`h-4 w-4 ${enriching ? 'animate-spin' : ''}`} aria-hidden />
-            {enriching ? 'Enriching streaming links…' : 'Enrich streaming links (Odesli)'}
-          </button>
           <button
             type="button"
             onClick={runReclassifyTypes}

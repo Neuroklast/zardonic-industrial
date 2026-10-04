@@ -1,4 +1,4 @@
-import type { SyncJobRow, SyncJobType } from '@/lib/sync-jobs'
+import type { SyncJobSummary, SyncJobType } from '@/lib/sync-jobs'
 
 export async function startSyncJob(
   type: SyncJobType,
@@ -18,19 +18,19 @@ export async function startSyncJob(
   return { jobId: data.jobId }
 }
 
-export async function fetchSyncJob(jobId: string): Promise<SyncJobRow> {
+export async function fetchSyncJob(jobId: string): Promise<SyncJobSummary> {
   const res = await fetch(`/api/sync-jobs/${jobId}`, { cache: 'no-store' })
-  const data = (await res.json()) as { job?: SyncJobRow; error?: string }
+  const data = (await res.json()) as { job?: SyncJobSummary; error?: string }
   if (!res.ok || !data.job) {
     throw new Error(data.error ?? 'Failed to load sync job')
   }
   return data.job
 }
 
-export async function fetchActiveSyncJobs(types?: SyncJobType[]): Promise<SyncJobRow[]> {
+export async function fetchActiveSyncJobs(types?: SyncJobType[]): Promise<SyncJobSummary[]> {
   const query = types && types.length > 0 ? `?types=${types.join(',')}` : ''
   const res = await fetch(`/api/sync-jobs/active${query}`, { cache: 'no-store' })
-  const data = (await res.json()) as { jobs?: SyncJobRow[]; error?: string }
+  const data = (await res.json()) as { jobs?: SyncJobSummary[]; error?: string }
   if (!res.ok || !data.jobs) {
     throw new Error(data.error ?? 'Failed to load active sync jobs')
   }

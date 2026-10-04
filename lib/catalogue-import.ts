@@ -21,12 +21,9 @@ import {
   type ReleaseMetadata,
   type StreamingLink,
 } from '@/lib/release-metadata'
-import {
-  externalIdsFromStreamingLinks,
-  fetchOdesliStreamingLinks,
-  mergeOdesliIntoReleaseLinks,
-} from '@/lib/release-streaming-enrichment'
-import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
+import { externalIdsFromStreamingLinks } from '@/lib/release-streaming-enrichment'
+import { shouldImportCoverFromSource, shouldReplaceCoverWithSource } from '@/lib/release-cover-art'
+import { deleteReleaseCoversFromR2 } from '@/lib/release-cover-r2'
 import { classifyReleaseType } from '@/lib/release-type'
 import { parseStreamingLinks } from '@/lib/release-public-mapper'
 
@@ -48,12 +45,12 @@ export interface ImportCatalogueBatchOptions {
   items: CatalogueImportItem[]
   cursor: number
   limit: number
-  /** Skip per-item API enrichment, Odesli, and R2 — faster chunks for async jobs. */
+  /** Skip per-item API enrichment and R2 — faster chunks for async jobs. */
   lightImport?: boolean
   existingIds?: Set<string>
   releaseMatchIndex?: ReleaseMatchIndex
   displayOrderStart?: number
-  /** Resolve missing Spotify/iTunes ids via Odesli when backfilling cross-source rows. */
+  /** Derive missing Spotify/iTunes/Discogs ids from the release's native links when backfilling cross-source rows. */
   linkCrossSource?: boolean
   matchOptions?: ReleaseTitleMatchOptions
   cacheCover?: (
@@ -74,6 +71,8 @@ interface ExistingReleaseBackfillRow {
   itunes_id?: string | null
   spotify_id?: string | null
   discogs_id?: string | null
+  cover_storage_path?: string | null
+  cover_url?: string | null
 }
 
 function buildBulkBackfillUpdate(
@@ -161,12 +160,34 @@ async function applyBulkBackfillToExistingRelease(
   idField: 'itunes_id' | 'spotify_id' | 'discogs_id',
   externalId: string,
   result: BulkExternalSyncResult,
+  cacheCover?: ImportCatalogueBatchOptions['cacheCover'],
 ): Promise<void> {
-  const update = buildBulkBackfillUpdate(existingRow, metadata, source, idField, externalId)
-  if (!update) {
+  const update: Record<string, unknown> =
+    buildBulkBackfillUpdate(existingRow, metadata, source, idField, externalId) ?? {}
+
+  // Upload the source artwork to R2 in the same backfill update (no later DB
+  // read + second API fetch). Priority iTunes > Spotify > Discogs; a coverless
+  // row always accepts one, a manual row is left untouched.
+  if (
+    cacheCover &&
+    !existingRow.manually_edited &&
+    shouldImportCoverFromSource(source) &&
+    metadata.coverUrl &&
+    shouldReplaceCoverWithSource(existingRow, source)
+  ) {
+    const cached = await cacheCover(metadata.coverUrl, source, externalId)
+    if (cached) {
+      update.cover_storage_path = cached.cover_storage_path
+      update.cover_url = cached.cover_url
+    }
+  }
+
+  if (Object.keys(update).length === 0) {
     result.skipped++
     return
   }
+
+  const previousCoverPath = existingRow.cover_storage_path?.trim() ?? ''
 
   const { error: updateError } = await supabase
     .from('releases')
@@ -177,6 +198,12 @@ async function applyBulkBackfillToExistingRelease(
     result.errors.push(`Failed to update "${metadata.title}": ${updateError.message}`)
     result.skipped++
     return
+  }
+
+  // Drop the superseded R2 object (keys are `releases/{source}-{id}.{ext}`).
+  const nextCoverPath = typeof update.cover_storage_path === 'string' ? update.cover_storage_path.trim() : ''
+  if (nextCoverPath && previousCoverPath && previousCoverPath !== nextCoverPath) {
+    await deleteReleaseCoversFromR2([previousCoverPath])
   }
 
   result.updated++
@@ -221,48 +248,28 @@ async function enrichMetadataForBulkImport(
   return baseMetadata
 }
 
-async function linkCrossSourceMetadata(
-  source: ExternalReleaseSource,
+/**
+ * Fill in missing cross-source external ids from the release's own (native)
+ * streaming links. No external API is called — the Odesli lookup was removed
+ * when that API shut down; the source APIs already return their own links.
+ */
+function linkCrossSourceMetadata(
   metadata: ReleaseMetadata,
   existingRow: ExistingReleaseBackfillRow | null,
-  options: { lightImport: boolean; linkCrossSource: boolean },
-): Promise<ReleaseMetadata> {
-  if (!options.linkCrossSource) return metadata
+  linkCrossSource: boolean,
+): ReleaseMetadata {
+  if (!linkCrossSource) return metadata
 
-  const existingSpotifyId = existingRow?.spotify_id ?? null
-  const existingItunesId = existingRow?.itunes_id ?? null
-  const existingDiscogsId = existingRow?.discogs_id ?? null
-  const needsSpotify = !metadata.spotify_id && !existingSpotifyId
-  const needsItunes = !metadata.itunes_id && !existingItunesId
-  const hasOdesliAnchor = Boolean(
-    metadata.itunes_id ||
-      metadata.spotify_id ||
-      existingItunesId ||
-      existingSpotifyId,
-  )
-
-  if (!hasOdesliAnchor || (!needsSpotify && !needsItunes)) return metadata
-
-  if (!options.lightImport) return metadata
-
-  const odesliLinks = await fetchOdesliStreamingLinks({
-    itunes_id: metadata.itunes_id ?? existingItunesId,
-    spotify_id: metadata.spotify_id ?? existingSpotifyId,
-    discogs_id: metadata.discogs_id ?? existingDiscogsId,
-    streaming_links: metadata.streaming_links,
+  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(metadata.streaming_links), {
+    spotify_id: metadata.spotify_id ?? existingRow?.spotify_id ?? null,
+    itunes_id: metadata.itunes_id ?? existingRow?.itunes_id ?? null,
+    discogs_id: metadata.discogs_id ?? existingRow?.discogs_id ?? null,
   })
-  if (odesliLinks.length === 0) return metadata
 
-  const mergedLinks = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
-  const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(mergedLinks), {
-    spotify_id: metadata.spotify_id ?? existingSpotifyId,
-    itunes_id: metadata.itunes_id ?? existingItunesId,
-    discogs_id: metadata.discogs_id ?? existingDiscogsId,
-  })
+  if (!linkedIds.spotify_id && !linkedIds.itunes_id && !linkedIds.discogs_id) return metadata
 
   return {
     ...metadata,
-    streaming_links: mergedLinks,
     spotify_id: metadata.spotify_id ?? linkedIds.spotify_id ?? null,
     itunes_id: metadata.itunes_id ?? linkedIds.itunes_id ?? null,
     discogs_id: metadata.discogs_id ?? linkedIds.discogs_id ?? null,
@@ -396,28 +403,12 @@ export async function importCatalogueBatch(
   }
 
   const existingSelect =
-    'id, tracks, streaming_links, manually_edited, itunes_id, spotify_id, discogs_id'
+    'id, tracks, streaming_links, manually_edited, itunes_id, spotify_id, discogs_id, cover_storage_path, cover_url'
 
   for (const { externalId, metadata: baseMetadata } of slice) {
     let metadata = baseMetadata
     if (!lightImport) {
       metadata = await enrichMetadataForBulkImport(source, externalId, baseMetadata)
-      const odesliLinks = await fetchOdesliStreamingLinks({
-        itunes_id: metadata.itunes_id,
-        spotify_id: metadata.spotify_id,
-        streaming_links: metadata.streaming_links,
-      })
-      if (odesliLinks.length > 0) {
-        metadata.streaming_links = mergeOdesliIntoReleaseLinks(metadata.streaming_links, odesliLinks)
-        const linkedIds = externalIdsFromStreamingLinks(parseStreamingLinks(metadata.streaming_links), {
-          spotify_id: metadata.spotify_id,
-          itunes_id: metadata.itunes_id,
-          discogs_id: metadata.discogs_id,
-        })
-        metadata.spotify_id = metadata.spotify_id ?? linkedIds.spotify_id ?? null
-        metadata.itunes_id = metadata.itunes_id ?? linkedIds.itunes_id ?? null
-        metadata.discogs_id = metadata.discogs_id ?? linkedIds.discogs_id ?? null
-      }
     }
 
     if (existingIds.has(externalId)) {
@@ -435,11 +426,10 @@ export async function importCatalogueBatch(
         continue
       }
 
-      metadata = await linkCrossSourceMetadata(
-        source,
+      metadata = linkCrossSourceMetadata(
         metadata,
         existingRow as ExistingReleaseBackfillRow,
-        { lightImport, linkCrossSource },
+        linkCrossSource,
       )
 
       await applyBulkBackfillToExistingRelease(
@@ -450,6 +440,7 @@ export async function importCatalogueBatch(
         idField,
         externalId,
         result,
+        options.cacheCover,
       )
       continue
     }
@@ -470,11 +461,10 @@ export async function importCatalogueBatch(
         continue
       }
 
-      metadata = await linkCrossSourceMetadata(
-        source,
+      metadata = linkCrossSourceMetadata(
         metadata,
         existingRow as ExistingReleaseBackfillRow,
-        { lightImport, linkCrossSource },
+        linkCrossSource,
       )
 
       await applyBulkBackfillToExistingRelease(
@@ -485,6 +475,7 @@ export async function importCatalogueBatch(
         idField,
         externalId,
         result,
+        options.cacheCover,
       )
       existingIds.add(externalId)
       continue
@@ -557,10 +548,11 @@ export async function importCatalogueBatch(
           .maybeSingle()
 
         if (!reloadError && existingRow) {
-          metadata = await linkCrossSourceMetadata(source, metadata, existingRow as ExistingReleaseBackfillRow, {
-            lightImport,
+          metadata = linkCrossSourceMetadata(
+            metadata,
+            existingRow as ExistingReleaseBackfillRow,
             linkCrossSource,
-          })
+          )
           await applyBulkBackfillToExistingRelease(
             supabase,
             existingRow as ExistingReleaseBackfillRow,
@@ -569,6 +561,7 @@ export async function importCatalogueBatch(
             idField,
             externalId,
             result,
+            options.cacheCover,
           )
           existingIds.add(externalId)
           continue

@@ -9,11 +9,11 @@ import {
   getSyncJobStatusHeadline,
   getSyncJobStatusMessage,
 } from '@/lib/sync-job-messages'
-import type { SyncJobRow } from '@/lib/sync-jobs'
+import type { SyncJobSummary } from '@/lib/sync-jobs'
 import { Progress } from '@/components/ui/progress'
 
 interface SyncJobStatusProps {
-  job: SyncJobRow
+  job: SyncJobSummary
   onCancelled?: () => void
 }
 

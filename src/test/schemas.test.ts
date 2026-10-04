@@ -11,7 +11,6 @@ import {
   totpSetupSchema,
   analyticsPostSchema,
   itunesQuerySchema,
-  odesliQuerySchema,
   imageProxyQuerySchema,
   terminalCommandSchema,
   validate,
@@ -277,27 +276,6 @@ describe('itunesQuerySchema', () => {
 
   it('accepts valid limit', () => {
     expect(itunesQuerySchema.safeParse({ term: 'x', limit: '50' }).success).toBe(true)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// odesliQuerySchema
-// ---------------------------------------------------------------------------
-describe('odesliQuerySchema', () => {
-  it('accepts valid streaming URL', () => {
-    expect(odesliQuerySchema.safeParse({ url: 'https://open.spotify.com/track/123' }).success).toBe(true)
-  })
-
-  it('rejects empty url', () => {
-    expect(odesliQuerySchema.safeParse({ url: '' }).success).toBe(false)
-  })
-
-  it('rejects non-URL string', () => {
-    expect(odesliQuerySchema.safeParse({ url: 'not a url' }).success).toBe(false)
-  })
-
-  it('accepts extra fields (stripped by default)', () => {
-    expect(odesliQuerySchema.safeParse({ url: 'https://spotify.com/x', userCountry: 'DE' }).success).toBe(true)
   })
 })
 

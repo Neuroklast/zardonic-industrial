@@ -75,7 +75,6 @@ Client IPs are pseudonymised (SHA-256 + `RATE_LIMIT_SALT`) before storage — no
 |-----|-----------|---------|
 | iTunes / Spotify / Discogs | Artist/release IDs, public metadata | Catalogue sync |
 | Bandsintown | Artist ID | Tour dates |
-| Odesli | Release URLs | Streaming link enrichment |
 | wsrv.nl | Image URLs (public images only) | Image optimisation proxy |
 
 ## GDPR rights implementation

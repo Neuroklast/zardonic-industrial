@@ -34,10 +34,6 @@ import {
   fetchSpotifyArtistAlbums,
   searchSpotifyArtistId,
 } from '@/lib/spotify-sync'
-import {
-  fetchOdesliStreamingLinks,
-  mergeOdesliIntoReleaseLinks,
-} from '@/lib/release-streaming-enrichment'
 import { shouldImportCoverFromSource } from '@/lib/release-cover-art'
 import { revalidatePath } from 'next/cache'
 
@@ -115,18 +111,6 @@ export async function syncReleaseFromExternalId(
       : []
 
     const update = buildReleaseUpdateFromMetadata(metadata, existingLinks, source)
-
-    const odesliLinks = await fetchOdesliStreamingLinks({
-      itunes_id: metadata.itunes_id ?? (source === 'itunes' ? normalized : null),
-      spotify_id: metadata.spotify_id ?? (source === 'spotify' ? normalized : null),
-      streaming_links: update.streaming_links ?? existingLinks,
-    })
-    if (odesliLinks.length > 0) {
-      update.streaming_links = mergeOdesliIntoReleaseLinks(
-        update.streaming_links ?? existingLinks,
-        odesliLinks,
-      )
-    }
 
     if (shouldImportCoverFromSource(source) && metadata.coverUrl) {
       const cached = await cacheReleaseCoverToR2(metadata.coverUrl, source, normalized)

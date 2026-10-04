@@ -41,7 +41,8 @@
 | Partner SVG/PNG | `lib/partner-logo-white.ts`, `lib/partner-logo-white-server.ts`, `CreditsSection.tsx`, `app/api/partner-logo/route.ts` | White-fill: `/api/partner-logo?white=1` (sharp silhouette). Proxy allowlist includes `R2_PUBLIC_HOST`, not only `*.r2.dev`. Never wsrv for R2. Light plate only if a dark mark exists. Fail → name, not original colours / CSS invert. Native: eager load; no `whileInView`+`opacity:0` |
 | Background video | `BackgroundStack.tsx` | No canvas animation while scroll video is active; seek ≥ 1/24s |
 | Vitest localStorage | `src/test/setup.ts` | Full Storage mock — Node 22+ partial `localStorage` breaks `clear()` / `setItem()` |
-| Odesli | `lib/odesli.ts`, `app/api/odesli/route.ts` | Server enrichment calls `fetchOdesliLinksFromApi` **directly** (no HTTP hop); admin-only route `/api/odesli` = `GET ?url=` lookup + `POST` streaming-enrichment batch (`runStreamingEnrichmentBatch`, admin UI button in Catalogue Sync). No client proxy/queue. |
+| Sync-job egress | `lib/sync-jobs.ts`, `lib/sync-job-runner.ts`, `app/api/sync-jobs/**` | Never `select('*')` a `sync_jobs` row on a client-facing path — the `payload` JSONB holds the whole staged catalogue. Use `SyncJobSummary` + `getSyncJobSummary` / `listActiveSyncJobsSummary`; `getSyncJob` is server-runner only. Releasing the processing lock uses `updateSyncJobWithoutReturn` (no read-back). |
+| Odesli (removed) | `lib/release-streaming-enrichment.ts` | Odesli/song.link was shut down — no client, route, schema or admin button. Existing `streaming_links` stay in the DB and are merged (never overwritten) on update; the public overlay renders every stored platform. |
 | Nav logo vs BIO | `SiteNav.tsx` | Flex `shrink-0` logo; never absolute over links |
 | Compact nav labels | `lib/nav-links.ts` | Short nav labels; long titles only on section headings |
 | Gallery modal | `GallerySection` + `CyberpunkOverlay` + `GalleryOverlayContent` | Same shell as releases/events |

@@ -7,7 +7,7 @@ import {
 } from '@/lib/release-streaming-enrichment'
 
 describe('cross-source streaming link ids', () => {
-  it('extracts Spotify album id from Odesli links', () => {
+  it('extracts Spotify album id from streaming links', () => {
     const id = extractSpotifyAlbumIdFromLinks([
       { platform: 'spotify', url: 'https://open.spotify.com/album/7BqEidErPMNiUXCRE0dV2n' },
     ])
@@ -28,7 +28,7 @@ describe('cross-source streaming link ids', () => {
     expect(id).toBe('12345')
   })
 
-  it('fills missing external ids from Odesli link set', () => {
+  it('fills missing external ids from a streaming link set', () => {
     const ids = externalIdsFromStreamingLinks(
       [
         { platform: 'spotify', url: 'https://open.spotify.com/album/7BqEidErPMNiUXCRE0dV2n' },

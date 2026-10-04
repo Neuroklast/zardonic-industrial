@@ -251,10 +251,10 @@ const HOWTO_ENTRIES: AdminHelpEntry[] = [
     id: 'help-tracklist',
     title: 'How do I reload a release tracklist?',
     description:
-      'Open the release edit form → Reload tracklist. Fetches tracks from Spotify → Discogs → iTunes and Odesli streaming links. Data maintenance can batch-enrich all releases.',
+      'Open the release edit form → Reload tracklist. Fetches tracks from Spotify → Discogs → iTunes. Data maintenance can batch-enrich all releases.',
     href: '/admin/data',
     group: 'Help',
-    keywords: ['tracklist', 'tracks', 'reload', 'enrich', 'odesli', 'spotify tracks'],
+    keywords: ['tracklist', 'tracks', 'reload', 'enrich', 'spotify tracks'],
     priority: 68,
   },
   {
