@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Security
 - **`public.rate_limits` RLS**: table was created after the RLS block, so Supabase advisor `rls_disabled_in_public` flagged it as publicly readable/writable. Enable RLS, revoke `anon`/`authenticated` grants, deny-all policy. Access remains service-role + `consume_rate_limit()` only. **Must run the SQL on the live project** (schema.sql is not auto-applied).
 - **CI `npm audit --audit-level=high`**: bumped `next` 16.3.4 (CVE-2026-75604 / GHSA-2xp9-vwfh-vxw4), `sharp` 0.35.4 (GHSA-rgj7-g3m4-5g8c), `js-yaml` override 4.3.2 (CVE-2026-84375), `fflate` 0.8.3 (GHSA-px8p-9vwx-vf98), `vitest` / `@vitest/coverage-v8` 4.1.11 (GHSA-82fw-gwwq-j7x9).
+- **CI `npm audit --audit-level=high` (new advisories)**: bumped `next` 16.3.8 (GHSA-vcvr-r3jv-pc5j, critical — `next/og` RCE), `dompurify` 3.4.16 (GHSA-p98j-92pf-mc4p), and tightened the `undici` (7.30.0) + `brace-expansion` (2.1.7) overrides (GHSA-q2hr-2g5m-vwhr / GHSA-qhr7-859c-m2p7 / GHSA-6j4f-fj2g-mc7p). Audit is clean again.
 - `SECURITY.md`, `docs/agent/security.md`, README, operator checklist, and GDPR doc updated to match the real architecture (no Redis, no honeytoken/threat-score/blocklist/zip-bomb machinery). Also documents that the project does not use Vercel cron triggers (Vercel Free).
 
 ### Added
