@@ -17,7 +17,6 @@ export interface EnrichReleaseTracksResult {
   enriched?: boolean
   source?: string
   trackCount?: number
-  platformCount?: number
   error?: string
 }
 
@@ -72,7 +71,7 @@ export async function enrichReleaseTracks(
     const artistName = await loadArtistName()
     const update = await buildReleaseEnrichmentUpdate(release, artistName, options)
     if (!update) {
-      return { ok: false, error: 'No tracklist or streaming links found from external APIs' }
+      return { ok: false, error: 'No tracklist found from external APIs' }
     }
 
     const { error: updateError } = await supabase.from('releases').update(update).eq('id', releaseId)
@@ -83,14 +82,12 @@ export async function enrichReleaseTracks(
     revalidatePath('/')
 
     const tracks = Array.isArray(update.tracks) ? update.tracks : []
-    const links = Array.isArray(update.streaming_links) ? update.streaming_links : []
 
     return {
       ok: true,
       enriched: true,
       source: typeof update.tracks_source === 'string' ? update.tracks_source : undefined,
       trackCount: tracks.length,
-      platformCount: links.length,
     }
   }, 'Unable to enrich release tracklist.')
 

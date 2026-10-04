@@ -1,8 +1,15 @@
-import { ArrowsClockwise } from '@phosphor-icons/react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+/**
+ * Manual streaming-link editor.
+ *
+ * There is **no** cross-platform link-resolution API any more: Odesli
+ * (song.link) was shut down. Automatic links now come only from the source
+ * APIs during import/sync (Spotify/iTunes/Discogs each return their own
+ * platform URL); everything else is entered by hand here. Existing stored
+ * links (including previously Odesli-enriched platforms) are preserved.
+ */
 interface StreamingLinksSectionProps {
   spotify: string
   soundcloud: string
@@ -11,9 +18,6 @@ interface StreamingLinksSectionProps {
   appleMusic: string
   beatport: string
   onChange: (field: string, value: string) => void
-  releaseId?: string
-  isSyncing: boolean
-  onSync: () => void
   isSaving: boolean
 }
 
@@ -25,32 +29,18 @@ export function StreamingLinksSection({
   appleMusic,
   beatport,
   onChange,
-  releaseId,
-  isSyncing,
-  onSync,
   isSaving,
 }: StreamingLinksSectionProps) {
   return (
     <div className="border-t border-border pt-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3">
         <h4 className="font-semibold">Streaming Links (optional)</h4>
-        {releaseId && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onSync}
-            disabled={isSyncing || isSaving}
-            className="border-primary/30 hover:bg-primary/10 text-xs gap-1.5"
-            title="Sync streaming links from Odesli"
-          >
-            <ArrowsClockwise size={14} className={isSyncing ? 'animate-spin' : ''} />
-            {isSyncing ? 'Syncing…' : 'Sync Odesli'}
-          </Button>
-        )}
+        <p className="text-xs text-muted-foreground mt-1">
+          Platform links are imported from the source API on sync; add or correct them here.
+        </p>
       </div>
 
-      <div className="space-y-3">
+      <fieldset disabled={isSaving} className="space-y-3">
         <div>
           <Label htmlFor="spotify">Spotify</Label>
           <Input
@@ -122,7 +112,7 @@ export function StreamingLinksSection({
             placeholder="https://beatport.com/..."
           />
         </div>
-      </div>
+      </fieldset>
     </div>
   )
 }

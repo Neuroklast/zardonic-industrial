@@ -70,7 +70,7 @@ export function fullReleaseToStored(release: FullRelease): StoredRelease {
  * Streaming link strategy:
  *   - Updated platforms always win.
  *   - Existing platforms NOT present in the update are preserved, so that
- *     Odesli-enriched links (deezer, tidal, amazonMusic) survive manual edits.
+ *     extra platform links (deezer, tidal, amazonMusic, …) survive manual edits.
  *
  * Custom link strategy:
  *   - `undefined`  → field was not included by the editor; preserve existing.

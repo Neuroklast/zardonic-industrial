@@ -318,10 +318,10 @@ export function dedupeCatalogueImportItems(
       if (releasesAreDuplicates(probes[i], probes[j], options)) {
         union(i, j)
       } else if (itemsShareExternalId(probes[i], probes[j])) {
-        // Distinct titles that resolve to the same external id (via Odesli /
-        // cross-source linking) would both be inserted with that id and hit the
-        // UNIQUE constraint on spotify_id / itunes_id / discogs_id. Treat them
-        // as one catalogue entry regardless of title.
+        // Distinct titles that resolve to the same external id (via cross-source
+        // linking) would both be inserted with that id and hit the UNIQUE
+        // constraint on spotify_id / itunes_id / discogs_id. Treat them as one
+        // catalogue entry regardless of title.
         union(i, j)
       }
     }

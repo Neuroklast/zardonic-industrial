@@ -59,7 +59,7 @@ function EditButtons({
           disabled={isSyncing || bulkSyncing}
           className="p-1 bg-black/60 hover:bg-accent/80 text-foreground hover:text-accent-foreground rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label={`Sync ${release.title}`}
-          title="Sync with MusicBrainz + Odesli"
+          title="Sync release metadata"
         >
           <ArrowsClockwise className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
         </button>

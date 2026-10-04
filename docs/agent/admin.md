@@ -72,8 +72,8 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 
 | ID | Disclosure | Purpose |
 |----|------------|---------|
-| `enrich_release_tracks` | basic | Single-release tracklist + Odesli enrichment |
-| `enrich_all_release_tracks` | basic | Batch enrichment (limit param) |
+| `enrich_release_tracks` | basic | Single-release tracklist enrichment |
+| `enrich_all_release_tracks` | basic | Batch tracklist enrichment (limit param) |
 | `purge_releases` | expert | Delete **all** releases, including manually edited (hard reset) |
 | `purge_gigs` | expert | Delete all gigs |
 | `factory_reset` | expert | Hard wipe of all editorial tables + restore default `site_config`; requires echoing `zardonic-factory-reset` (client) and optional R2 media wipe (`lib/factory-reset.ts`) |

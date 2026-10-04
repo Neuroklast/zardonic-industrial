@@ -1,4 +1,4 @@
-import type { SyncJobPhase, SyncJobRow, SyncJobStatus, SyncJobType } from '@/lib/sync-jobs'
+import type { SyncJobPhase, SyncJobStatus, SyncJobSummary, SyncJobType } from '@/lib/sync-jobs'
 
 const JOB_LABELS: Record<SyncJobType, string> = {
   spotify_sync: 'Spotify import',
@@ -14,7 +14,7 @@ export function getSyncJobLabel(type: SyncJobType): string {
   return JOB_LABELS[type] ?? type
 }
 
-export function getSyncJobProgressPercent(job: SyncJobRow): number | null {
+export function getSyncJobProgressPercent(job: SyncJobSummary): number | null {
   const { progress, status } = job
 
   if (status === 'completed') return 100
@@ -46,7 +46,7 @@ function phaseVerb(phase: SyncJobPhase | null): string {
   }
 }
 
-function runningMessage(job: SyncJobRow): string {
+function runningMessage(job: SyncJobSummary): string {
   const { type, phase, progress } = job
   const label = getSyncJobLabel(type)
   const verb = phaseVerb(phase)
@@ -62,7 +62,7 @@ function runningMessage(job: SyncJobRow): string {
   return `${label}: ${verb}…`
 }
 
-export function getSyncJobStatusMessage(job: SyncJobRow): string {
+export function getSyncJobStatusMessage(job: SyncJobSummary): string {
   const { status, progress } = job
   const label = getSyncJobLabel(job.type)
 

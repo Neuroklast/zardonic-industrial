@@ -1,71 +1,21 @@
-import { fetchOdesliLinksFromApi, cleanAppleMusicUrl } from '@/lib/odesli'
-import { parseStreamingLinks } from '@/lib/release-public-mapper'
-import { mergeStreamingLinks, type StreamingLink } from '@/lib/release-metadata'
+import type { StreamingLink } from '@/lib/release-metadata'
 import { normalizeDiscogsId, normalizeItunesId } from '@/lib/release-external-ids'
 import { normalizeStreamingPlatform } from '@/lib/streaming-platforms'
+
+/**
+ * Cross-source external-id extraction from stored streaming links.
+ *
+ * These links used to be enriched via the Odesli (song.link) API. That
+ * integration was removed (the API was shut down), but the id extractors stay
+ * useful: they recover platform ids from the native links returned by the
+ * Spotify / iTunes / Discogs source APIs, and from manually pasted links.
+ */
 
 export interface ReleaseStreamingRow {
   itunes_id?: string | null
   spotify_id?: string | null
   discogs_id?: string | null
   streaming_links?: unknown
-}
-
-function findLinkUrl(links: StreamingLink[], platform: string): string | undefined {
-  const canonical = normalizeStreamingPlatform(platform)
-  const match = links.find(
-    (link) => normalizeStreamingPlatform(link.platform) === canonical,
-  )
-  return match?.url
-}
-
-function findUrlByHost(links: StreamingLink[], hostPattern: RegExp): string | undefined {
-  return links.find((link) => hostPattern.test(link.url))?.url
-}
-
-/** Build the best URL to pass to Odesli (Apple Music preferred, then Spotify). */
-export function buildOdesliLookupUrl(row: ReleaseStreamingRow): string | null {
-  const links = parseStreamingLinks(row.streaming_links)
-
-  const appleFromLinks =
-    findLinkUrl(links, 'appleMusic') ??
-    findUrlByHost(links, /music\.apple\.com/i)
-  if (appleFromLinks) return cleanAppleMusicUrl(appleFromLinks)
-
-  if (row.itunes_id) {
-    return `https://music.apple.com/album/id${row.itunes_id}`
-  }
-
-  const spotifyFromLinks =
-    findLinkUrl(links, 'spotify') ??
-    findUrlByHost(links, /open\.spotify\.com/i)
-  if (spotifyFromLinks) return spotifyFromLinks
-
-  if (row.spotify_id) {
-    return `https://open.spotify.com/album/${row.spotify_id}`
-  }
-
-  // Last resort: let Odesli attempt resolution from a Discogs release anchor.
-  // Unsupported anchors return an empty link set (harmless, no throw).
-  if (row.discogs_id) {
-    return `https://www.discogs.com/release/${row.discogs_id}`
-  }
-
-  return null
-}
-
-export async function fetchOdesliStreamingLinks(row: ReleaseStreamingRow): Promise<StreamingLink[]> {
-  const lookupUrl = buildOdesliLookupUrl(row)
-  if (!lookupUrl) return []
-  const { links } = await fetchOdesliLinksFromApi(lookupUrl)
-  return links
-}
-
-export function mergeOdesliIntoReleaseLinks(
-  existing: unknown,
-  odesliLinks: StreamingLink[],
-): StreamingLink[] {
-  return mergeStreamingLinks(parseStreamingLinks(existing), odesliLinks)
 }
 
 /**

@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabaseServer'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { countReleasesNeedingTrackEnrichment } from '@/app/admin/_actions/releaseTrackEnrichment'
 import { parseCatalogueSyncConfig } from '@/lib/catalogue-sync-config'
-import { listActiveSyncJobs } from '@/lib/sync-jobs'
+import { listActiveSyncJobsSummary } from '@/lib/sync-jobs'
 import { CatalogueSyncClient } from './CatalogueSyncClient'
 
 export default async function ExternalSyncPage() {
@@ -20,7 +20,7 @@ export default async function ExternalSyncPage() {
       .maybeSingle()
     catalogueConfig = parseCatalogueSyncConfig(data?.value)
 
-    const activeJobs = await listActiveSyncJobs([
+    const activeJobs = await listActiveSyncJobsSummary([
       'itunes_sync',
       'spotify_sync',
       'discogs_sync',

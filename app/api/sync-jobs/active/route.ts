@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isAdminSession } from '@/lib/api-admin-auth'
-import { listActiveSyncJobs, type SyncJobType } from '@/lib/sync-jobs'
+import { listActiveSyncJobsSummary, type SyncJobType } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const jobs = await listActiveSyncJobs(types)
+    const jobs = await listActiveSyncJobsSummary(types)
     return NextResponse.json({ jobs }, { status: 200, headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[sync-jobs] active list failed:', error)

@@ -171,14 +171,14 @@ Server-side, the action is `factory_reset` (expert disclosure, admin-session-gat
 
 | Action | Effect |
 |--------|--------|
-| Enrich all tracklists | Fetches missing/stale tracklists (Spotify → Discogs → iTunes) + Odesli platform links for non-manual releases |
+| Enrich all tracklists | Fetches missing/stale tracklists (Spotify → Discogs → iTunes) for non-manual releases |
 | Reset tracklists | Clears `tracks` on auto-synced releases (keeps `manually_edited`) |
 | Purge + sync releases | **Hard reset**: deletes **every** release (manually edited included), re-imports Spotify catalogue so the list matches Spotify exactly, enriches tracklists |
 | Purge + sync gigs | Deletes all gigs, runs Bandsintown sync |
 
-Per-release: edit form → **Reload tracklist** (force refresh tracks + Odesli).
+Per-release: edit form → **Reload tracklist** (force refresh tracks).
 
-**Catalogue Sync** (`/admin/releases/sync`) → **Automatic maintenance** → **Enrich streaming links (Odesli)** runs a streaming-only pass over the whole catalogue (admin-only `POST /api/odesli`, batched, shows how many releases remain). Use it after an import or whenever a release is missing platform links — links are merged, never overwritten.
+**Odesli (song.link) was shut down and removed** from the codebase. Imports still store the platform links returned by the Spotify/iTunes/Discogs APIs, and any streaming links already enriched via Odesli stay in the database — updates **merge** links and never overwrite stored platforms, so the public release modal keeps showing them. There is no "Enrich streaming links (Odesli)" button or `/api/odesli` route any more.
 
 Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 
@@ -186,7 +186,7 @@ Cron: `POST /api/releases-track-enrich` daily (requires `CRON_SECRET`).
 
 `/admin/releases/sync` — bulk iTunes / Spotify / Discogs import.
 
-Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, cover, and Odesli links.
+Per release: paste platform URLs or raw IDs (Spotify `intl-de/album/…`, Apple Music geo links, etc.) → **Sync** fetches metadata, tracklist, and cover.
 
 Release **type** (Album / Single / EP / Remix / Appears On) is derived by one shared classifier (`lib/release-type.ts`) from title markers, per-track artist credits, the platform's declared type, Apple's `- Single`/`- EP` suffix, and track count — Apple's iTunes `collectionType` is unreliable (always `"Album"`) and is never trusted alone. A long release (≥6 tracks) is an **Album** when some artist is credited on every track (Zardonic + guests) and **Appears On** when many different artists share no common credit. To repair rows imported before 2026-09-29, use **Catalogue Sync → Automatic maintenance → Fix release types** (re-runs the classifier over existing rows; `manually_edited` rows are never touched). The same pass is available from the CLI (`npm run reclassify-release-types`, dry-run; `-- --apply` to write) for ops.
 
@@ -198,6 +198,7 @@ The Supabase Free plan limits egress to **5 GB per period** (hard limit — the 
 - **How the site protects itself (2026-09):**
   - Public routes (homepage, `/releases`, `/gigs`, `/media`, legal, `/news/[slug]`, `/api/sitemap`, `/api/og`) are **ISR-cached** (`revalidate=60`) via the cookie-less `createPublicClient()` — one upstream query per revalidate window, not per request. Admin mutations trigger `revalidatePath('/', 'layout')`, so edits appear immediately.
   - `proxy.ts` returns **403** for known scraper/AI bots (`lib/crawler-blocklist.ts`) before any render — this also protects `/admin` at the edge. `public/robots.txt` mirrors the list for compliant bots.
+  - **Catalogue sync jobs:** client-facing job reads (`/api/sync-jobs/[id]`, `/active`, tick response) return a `SyncJobSummary` and **never** select the heavy `payload` JSONB (the whole staged catalogue). The old 2 s poller pulled that payload out of PostgREST on every poll; the admin UI only ever used progress/status.
   - Media is **always** served from Cloudflare R2. The site never loads an asset from Supabase Storage: any `*.supabase.co` media URL resolves to nothing (`lib/r2.ts` / `lib/image-cache.ts`) until it is migrated. A legacy row still pointing there shows a red badge (`/admin`) with the row count and its download link stays hidden. The migration runs **automatically once** (on the first Production deploy — check Vercel logs for `[legacy-url-migration] done ...`; the `doneOnce` flag in `site_config.legacy_url_migration_deploy` prevents re-runs); manual dry-run/re-run: **`npm run migrate-legacy`** (see `scripts/MIGRATION.md`). If a row can't be migrated (download fails), fix or delete it in the admin editor.
 - **Checks:** run this in the Supabase SQL Editor to find legacy URLs:
 

@@ -42,6 +42,14 @@ export function hasCoverArt(row: ReleaseCoverFields): boolean {
   return Boolean(row.cover_storage_path?.trim() || row.cover_url?.trim())
 }
 
+/** Priority of an incoming source's artwork (iTunes > Spotify > Discogs). */
+export function coverSourcePriority(source: ExternalReleaseSource): number {
+  if (source === 'itunes') return 100
+  if (source === 'spotify') return 60
+  if (source === 'discogs') return 40
+  return 0
+}
+
 /** Higher score = preferred canonical cover when consolidating duplicates. */
 export function coverSourceScore(row: ReleaseCoverFields): number {
   if (!hasCoverArt(row)) return -1
@@ -49,6 +57,21 @@ export function coverSourceScore(row: ReleaseCoverFields): number {
   if (isSpotifySourcedCover(row)) return 60
   if (isDiscogsSourcedCover(row)) return 40
   return 20
+}
+
+/**
+ * Whether an artwork from `source` should be fetched and stored during a
+ * catalogue sync. A coverless row always accepts one; a row that only has an
+ * external URL (no R2 object yet) is migrated to R2; otherwise the incoming
+ * source must outrank the stored one (iTunes > Spotify > Discogs).
+ */
+export function shouldReplaceCoverWithSource(
+  existing: ReleaseCoverFields,
+  source: ExternalReleaseSource,
+): boolean {
+  if (!hasCoverArt(existing)) return true
+  if (!existing.cover_storage_path?.trim()) return true
+  return coverSourceScore(existing) < coverSourcePriority(source)
 }
 
 export interface MergedCoverResult {

@@ -4,6 +4,7 @@ import { isAdminSession } from '@/lib/api-admin-auth'
 import { isCronOrAdminAuthorized } from '@/lib/sync-job-chain'
 import { continueSyncJob } from '@/lib/sync-job-continuation'
 import { advanceSyncJob } from '@/lib/sync-job-runner'
+import { toSyncJobSummary } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -33,7 +34,8 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     return NextResponse.json(
-      { job: result.job, done: result.done },
+      // Strip the staged-catalogue payload — the browser only needs progress.
+      { job: toSyncJobSummary(result.job), done: result.done },
       { status: 200, headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

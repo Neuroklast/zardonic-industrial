@@ -39,13 +39,18 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
 import {
   getSyncJob,
   updateSyncJob,
+  updateSyncJobWithoutReturn,
   type SyncJobPayload,
   type SyncJobProgress,
   type SyncJobRow,
   type SyncJobType,
 } from '@/lib/sync-jobs'
 
-const IMPORT_BATCH_SIZE = 8
+// `lightImport: true` skips per-item API/R2 work, so a larger chunk is
+// cheap. A bigger batch means fewer ticks, and each tick re-reads the whole
+// `releases` table for duplicate matching — so this directly cuts Supabase
+// egress per catalogue import. Stay well under the route's 60s maxDuration.
+const IMPORT_BATCH_SIZE = 16
 const ENRICH_BATCH_SIZE = 5
 
 const CATALOGUE_IMPORT_JOB_TYPES = new Set<SyncJobType>([
@@ -619,7 +624,9 @@ async function acquireProcessingLock(job: SyncJobRow): Promise<SyncJobRow | null
 }
 
 async function releaseProcessingLock(job: SyncJobRow): Promise<void> {
-  await updateSyncJob(job.id, {
+  // No-return update: the caller already holds the payload in memory, so there
+  // is no reason to transfer it back out of PostgREST.
+  await updateSyncJobWithoutReturn(job.id, {
     payload: {
       ...job.payload,
       processing: false,
@@ -678,11 +685,14 @@ export async function advanceSyncJob(jobId: string): Promise<AdvanceSyncJobResul
   }
 
   try {
+    // `locked` already carries the freshest payload (processing lock applied)
+    // and tick phases never branch on `status`, so the pending→running
+    // transition does not need a second full-payload read.
+    let current = locked
     if (locked.status === 'pending') {
-      await updateSyncJob(jobId, { status: 'running' })
+      current = await updateSyncJob(jobId, { status: 'running' })
     }
 
-    const current = (await getSyncJob(jobId))!
     const result = await runSyncJobTick(current)
     await releaseProcessingLock(result.job)
     return result

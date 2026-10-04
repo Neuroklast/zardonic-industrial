@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isAdminSession } from '@/lib/api-admin-auth'
-import { getSyncJob } from '@/lib/sync-jobs'
+import { getSyncJobSummary } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +17,8 @@ export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params
 
   try {
-    const job = await getSyncJob(id)
+    // Summary only — never transfer the staged-catalogue `payload` on a poll.
+    const job = await getSyncJobSummary(id)
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }

@@ -8,7 +8,7 @@ import {
   type SyncJobStorageKey,
 } from '@/lib/sync-job-storage'
 import { fetchActiveSyncJobs, fetchSyncJob, triggerSyncJobTick } from '@/lib/sync-job-client'
-import type { SyncJobRow, SyncJobType } from '@/lib/sync-jobs'
+import type { SyncJobSummary, SyncJobType } from '@/lib/sync-jobs'
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed', 'cancelled'])
 
@@ -29,7 +29,7 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
     nudgeTicks = true,
   } = options
 
-  const [job, setJob] = useState<SyncJobRow | null>(null)
+  const [job, setJob] = useState<SyncJobSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [polling, setPolling] = useState(false)
   const jobIdRef = useRef<string | null>(null)
