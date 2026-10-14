@@ -128,7 +128,7 @@ async function fetchReleases(supabase: ReturnType<typeof createPublicClient>): P
 
   if (fallbackError) {
     console.error('[fetchAll] releases fallback query failed:', fallbackError.message)
-    return []
+    throw new Error('Public releases unavailable', { cause: fallbackError })
   }
 
   // Dynamic select strings are not const-literal-parsed by supabase-js generics
