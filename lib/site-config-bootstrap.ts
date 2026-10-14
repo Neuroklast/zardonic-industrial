@@ -1,4 +1,4 @@
-import { createPublicClient } from '@/lib/supabaseServer'
+import { createPublicClient, isSupabaseConfigured } from '@/lib/supabaseServer'
 import { parseAnalyticsConfig, type AnalyticsConfig } from '@/lib/analytics-config'
 import { parseLanguagesConfig } from '@/lib/languages-config'
 import type { SiteLanguage } from '@/lib/i18n'
@@ -60,6 +60,17 @@ export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
       appearance: parseAppearanceBootstrap(rowMap.appearance),
     }
   } catch (error) {
+    // Configured Supabase → propagate so ISR keeps the last good page.
+    // Unconfigured (CI / local prod build) → degrade to defaults so the build
+    // can prerender instead of failing on the missing-env throw.
+    if (!isSupabaseConfigured()) {
+      return {
+        customTranslations: {},
+        analyticsConfig: parseAnalyticsConfig(null),
+        languages: parseLanguagesConfig(null),
+        appearance: {},
+      }
+    }
     console.error('[site-bootstrap] Supabase config refresh failed:', error)
     throw error
   }

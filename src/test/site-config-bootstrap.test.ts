@@ -1,7 +1,47 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { parseAnalyticsConfig, isAnalyticsTrackingAllowed } from '@/lib/analytics-config'
 import { parseLanguagesConfig } from '@/lib/languages-config'
 import { parseTranslationsConfig } from '@/lib/translations-config'
+import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
+
+// Simulate the production build without Supabase env: the client throws.
+vi.mock('@/lib/supabaseServer', () => ({
+  createPublicClient: () => {
+    throw new Error('Missing required Supabase environment variables')
+  },
+  isSupabaseConfigured: () =>
+    Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+}))
+
+describe('getPublicSiteBootstrap build safety', () => {
+  const savedUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const savedKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = savedUrl
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = savedKey
+  })
+
+  it('degrades to defaults when Supabase is not configured (CI build)', async () => {
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    await expect(getPublicSiteBootstrap()).resolves.toEqual({
+      customTranslations: {},
+      analyticsConfig: parseAnalyticsConfig(null),
+      languages: parseLanguagesConfig(null),
+      appearance: {},
+    })
+  })
+
+  it('rethrows when Supabase is configured (real outage must not cache empty)', async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co'
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
+
+    await expect(getPublicSiteBootstrap()).rejects.toThrow()
+  })
+})
+
 
 describe('parseAnalyticsConfig', () => {
   it('defaults to enabled when keys are absent', () => {
