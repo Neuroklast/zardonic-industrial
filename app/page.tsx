@@ -128,7 +128,7 @@ async function fetchReleases(supabase: ReturnType<typeof createPublicClient>): P
 
   if (fallbackError) {
     console.error('[fetchAll] releases fallback query failed:', fallbackError.message)
-    return []
+    throw new Error('Public releases unavailable', { cause: fallbackError })
   }
 
   // Dynamic select strings are not const-literal-parsed by supabase-js generics
@@ -196,6 +196,26 @@ async function fetchAll() {
     logQueryError('social_links', socialResult.error)
     logQueryError('news_posts', newsResult.error)
 
+    // Reject partial or failed reads. Otherwise the ISR cache would store an
+    // empty/default site as if it were a successful database response.
+    const failedQueries = [
+      ['site_config', configResult.error],
+      ['bio', bioResult.error],
+      ['gigs', gigResult.error],
+      ['partners', partnerResult.error],
+      ['music_highlights', musicResult.error],
+      ['merchandise', merchResult.error],
+      ['soundpacks', soundpackResult.error],
+      ['gallery', galleryResult.error],
+      ['media_downloads', mediaResult.error],
+      ['social_links', socialResult.error],
+      ['news_posts', newsResult.error],
+    ].filter(([, error]) => error != null)
+
+    if (failedQueries.length > 0) {
+      throw new Error(`Public content unavailable: ${failedQueries.map(([name]) => name).join(', ')}`)
+    }
+
     const releaseRows = await fetchReleases(supabase)
 
     return {
@@ -212,22 +232,11 @@ async function fetchAll() {
       social: (socialResult.data ?? []) as SocialRow[],
       newsPosts: (newsResult.data ?? []) as NewsPostRow[],
     }
-  } catch {
-    // Return safe empty defaults when Supabase is not configured (local dev)
-    return {
-      configRows: [] as SiteConfigRow[],
-      bio: '',
-      gigs: [] as GigRow[],
-      releases: [] as ReleaseRow[],
-      partners: [] as PartnerRow[],
-      musicHighlights: [] as MusicHighlightRow[],
-      merch: [] as CommerceItemRow[],
-      soundpacks: [] as CommerceItemRow[],
-      gallery: [] as GalleryItemRow[],
-      mediaDownloads: [],
-      social: [] as SocialRow[],
-      newsPosts: [] as NewsPostRow[],
-    }
+  } catch (error) {
+    // Never cache an outage as valid empty content. Let Next.js keep the last
+    // successfully generated page when revalidation fails.
+    console.error('[fetchAll] public Supabase refresh failed:', error)
+    throw error
   }
 }
 
