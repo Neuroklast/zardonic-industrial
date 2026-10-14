@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { unstable_cache } from 'next/cache'
-import { createPublicClient } from '@/lib/supabaseServer'
+import { createPublicClient, isSupabaseConfigured } from '@/lib/supabaseServer'
 import { resolveImageUrl } from '@/lib/r2'
 import { splitGigsByDate } from '@/lib/gig-browse'
 import { PageLayout } from '@/layouts/PageLayout'
@@ -233,8 +233,25 @@ async function fetchAll() {
       newsPosts: (newsResult.data ?? []) as NewsPostRow[],
     }
   } catch (error) {
-    // Never cache an outage as valid empty content. Let Next.js keep the last
-    // successfully generated page when revalidation fails.
+    // Unconfigured (CI / local prod build) → safe empty defaults so the build
+    // can prerender. Configured → never cache an outage as valid empty content;
+    // rethrow so Next.js keeps the last successfully generated page.
+    if (!isSupabaseConfigured()) {
+      return {
+        configRows: [] as SiteConfigRow[],
+        bio: '',
+        gigs: [] as GigRow[],
+        releases: [] as ReleaseRow[],
+        partners: [] as PartnerRow[],
+        musicHighlights: [] as MusicHighlightRow[],
+        merch: [] as CommerceItemRow[],
+        soundpacks: [] as CommerceItemRow[],
+        gallery: [] as GalleryItemRow[],
+        mediaDownloads: [] as ReturnType<typeof mapMediaDownloadRow>[],
+        social: [] as SocialRow[],
+        newsPosts: [] as NewsPostRow[],
+      }
+    }
     console.error('[fetchAll] public Supabase refresh failed:', error)
     throw error
   }

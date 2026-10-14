@@ -74,6 +74,16 @@ function makeCookieAdapter(
   }
 }
 
+/**
+ * True when the anon env is present, i.e. Supabase reads are expected to
+ * succeed. Callers that normally rethrow on read error (to preserve the last
+ * good ISR page) must degrade to safe defaults when this is false — otherwise
+ * a production build without env (CI) cannot prerender.
+ */
+export function isSupabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+}
+
 function requireAnonEnv(): { url: string; anonKey: string } | null {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

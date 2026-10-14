@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Orbitron, Share_Tech_Mono, Space_Mono } from 'next/font/google'
-import { createPublicClient } from '@/lib/supabaseServer'
+import { createPublicClient, isSupabaseConfigured } from '@/lib/supabaseServer'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 import {
   buildPublicFontCssVars,
@@ -58,8 +58,13 @@ export async function generateMetadata(): Promise<Metadata> {
     if (error) throw new Error('Metadata appearance unavailable', { cause: error })
     faviconUrl = (data?.value as { faviconUrl?: string } | null)?.faviconUrl
   } catch (error) {
-    console.error('[metadata] Supabase appearance refresh failed:', error)
-    throw error
+    // Unconfigured (CI / local prod build) → keep the default icon instead of
+    // failing prerender on the missing-env throw. Configured → propagate so
+    // the ISR metadata refresh surfaces a real outage.
+    if (isSupabaseConfigured()) {
+      console.error('[metadata] Supabase appearance refresh failed:', error)
+      throw error
+    }
   }
 
   return {
