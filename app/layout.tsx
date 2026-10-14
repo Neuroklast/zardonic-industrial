@@ -49,15 +49,17 @@ export async function generateMetadata(): Promise<Metadata> {
     // client would force every route dynamic and multiply Supabase egress per
     // request (see docs/LESSONS_LEARNED.md: postgrest egress spike).
     const supabase = createPublicClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('site_config')
       .select('value')
       .eq('key', 'appearance')
       .maybeSingle()
 
+    if (error) throw new Error('Metadata appearance unavailable', { cause: error })
     faviconUrl = (data?.value as { faviconUrl?: string } | null)?.faviconUrl
-  } catch {
-    faviconUrl = undefined
+  } catch (error) {
+    console.error('[metadata] Supabase appearance refresh failed:', error)
+    throw error
   }
 
   return {
