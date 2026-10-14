@@ -44,10 +44,12 @@ export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
     // Cookie-less client (see app/layout.tsx): keeps routes static so ISR can
     // dedupe Supabase reads — one query per revalidate window, not per request.
     const supabase = createPublicClient()
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('site_config')
       .select('key, value')
       .in('key', ['translations', 'analytics', 'languages', 'appearance'])
+
+    if (error) throw new Error('Public site bootstrap unavailable', { cause: error })
 
     const rows = (data ?? []) as Array<{ key: string; value: unknown }>
     const rowMap = Object.fromEntries(rows.map((row) => [row.key, row.value]))
@@ -57,12 +59,8 @@ export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
       languages: parseLanguagesConfig(rowMap.languages),
       appearance: parseAppearanceBootstrap(rowMap.appearance),
     }
-  } catch {
-    return {
-      customTranslations: {},
-      analyticsConfig: parseAnalyticsConfig(null),
-      languages: parseLanguagesConfig(null),
-      appearance: {},
-    }
+  } catch (error) {
+    console.error('[site-bootstrap] Supabase config refresh failed:', error)
+    throw error
   }
 }
