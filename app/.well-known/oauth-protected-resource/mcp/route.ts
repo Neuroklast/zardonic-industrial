@@ -1,7 +1,7 @@
 // RFC 9728 metadata for the protected MCP resource.
 // OAuth discovery is delegated to Supabase Auth. Discovery intentionally works
-// before an OAuth client ID has been registered; the MCP API itself stays
-// fail-closed until ZARDONIC_MCP_CLIENT_ID is explicitly configured.
+// before OAuth client registration; the MCP API stays fail-closed until
+// a registered client is allowlisted and MFA-approved by an administrator.
 export const dynamic = 'force-dynamic'
 
 export function GET() {
