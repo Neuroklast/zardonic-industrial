@@ -18,7 +18,9 @@ export async function proxy(request: NextRequest) {
 
   // Edge-level crawler shield — cheap string test on every path. Blocked bots
   // never start a function instance nor hit the database.
-  if (isBlockedCrawlerUserAgent(request.headers.get('user-agent'))) {
+  if (pathname !== '/api/mcp' &&
+      !pathname.startsWith('/.well-known/oauth-protected-resource') &&
+      isBlockedCrawlerUserAgent(request.headers.get('user-agent'))) {
     return new NextResponse(null, { status: 403 })
   }
 
