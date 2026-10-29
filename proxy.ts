@@ -119,7 +119,7 @@ export async function proxy(request: NextRequest) {
     profile = null
   }
 
-  if (profile !== null && profile.role !== 'admin') {
+  if (profile?.role !== 'admin') {
     const forbiddenUrl = new URL('/admin/login?error=forbidden', request.url)
     return redirectWithCookies(forbiddenUrl)
   }
