@@ -77,7 +77,7 @@ describe('ChatGPT MCP tool discovery compatibility', () => {
       cacheScope: 'private',
       ttlMs: 0,
       _meta: { 'io.modelcontextprotocol/serverInfo': {
-        name: 'neuroklast-content',
+        name: 'zardonic-content',
       } },
     })
     expect(authenticate).toHaveBeenCalledTimes(1)
