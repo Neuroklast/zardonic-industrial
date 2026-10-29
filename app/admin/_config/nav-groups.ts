@@ -48,6 +48,15 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     ],
   },
   {
+    id: 'ai',
+    label: 'AI',
+    items: [
+      { href: '/admin/ai-content', label: 'Content Review' },
+      { href: '/admin/integrations', label: 'AI Integrations' },
+      { href: '/admin/mfa', label: 'Authenticator / MFA' },
+    ],
+  },
+  {
     id: 'system',
     label: 'System',
     items: [
