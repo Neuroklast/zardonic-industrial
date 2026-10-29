@@ -105,7 +105,7 @@ describe('middleware admin auth', () => {
     expect(response.cookies.get('sb-refresh-token')?.value).toBe('fresh-refresh-token')
   })
 
-  it('allows request when profile lookup returns null after valid auth', async () => {
+  it('rejects requests with no admin profile after valid auth', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'admin-user' } },
       error: null,
@@ -116,7 +116,7 @@ describe('middleware admin auth', () => {
 
     const response = await proxy(createRequest('/admin/releases'))
 
-    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
   it('redirects to forbidden when authenticated user is not admin', async () => {
@@ -133,7 +133,7 @@ describe('middleware admin auth', () => {
     expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
-  it('allows request when profile lookup throws after valid auth', async () => {
+  it('rejects requests when the profile lookup fails', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'admin-user' } },
       error: null,
@@ -142,7 +142,7 @@ describe('middleware admin auth', () => {
 
     const response = await proxy(createRequest('/admin/releases'))
 
-    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
   it('applies cache-control headers from @supabase/ssr to the response', async () => {
