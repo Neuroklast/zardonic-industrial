@@ -54,6 +54,9 @@ const NAV_ICONS: Record<string, Icon> = {
   '/admin/api-keys': Key,
   '/admin/health': Heartbeat,
   '/admin/data': Export,
+  '/admin/ai-content': Newspaper,
+  '/admin/integrations': Key,
+  '/admin/mfa': Key,
 }
 
 function NavLink({ item, onClick }: { item: AdminNavItemData; onClick?: () => void }) {
