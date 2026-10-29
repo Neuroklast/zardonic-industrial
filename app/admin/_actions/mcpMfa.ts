@@ -22,7 +22,7 @@ export async function beginAdminMfaEnrollment(): Promise<EnrollmentResult> {
 
     const { data, error } = await supabase.auth.mfa.enroll({
       factorType: 'totp',
-      friendlyName: 'NEUROKLAST Admin',
+      friendlyName: 'ZARDONIC Admin',
     })
     if (error || !data?.totp?.qr_code || !data.totp.secret) {
       return { success: false, error: 'Authenticator setup failed. Please try again.' }
