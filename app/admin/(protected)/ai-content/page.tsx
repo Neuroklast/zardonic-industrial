@@ -24,7 +24,7 @@ export default async function AiContentReviewPage() {
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-red-400">AI / Editorial</p>
         <h1 className="mt-1 text-xl font-bold tracking-tight">Content Review</h1>
         <p className="mt-1 hidden text-xs text-zinc-400 sm:block">
-          Changes require MFA approval. Accepted releases publish to your discography. Other new content stays unpublished.
+          Changes require MFA approval. New content stays unpublished until activated in the admin.
         </p>
       </header>
       {pendingResult.error || historyResult.error ? (
