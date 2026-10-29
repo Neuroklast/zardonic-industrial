@@ -168,3 +168,9 @@ export async function consumeRateLimitForRequest(
 ): Promise<RateLimitResult> {
   return consumeRequestRateLimit({ ...options, headers: request.headers })
 }
+
+/** MCP requests require distributed throttling and fail closed when PostgreSQL is unavailable. */
+export async function consumeStrictMcpRateLimit(request: Request, options: Omit<RateLimitOptions, 'ip' | 'headers'>): Promise<RateLimitResult> {
+  const ipHash = hashIp(clientIpFrom(request.headers))
+  return consumeSupabase(options.namespace, ipHash, options.limit, options.windowSeconds)
+}
