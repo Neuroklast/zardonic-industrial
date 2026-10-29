@@ -11,11 +11,6 @@ const text = z.string().max(30000)
 const nullableText = text.nullable()
 const httpsUrl = z.string().url().max(2048).refine((s) => s.startsWith('https://'), 'HTTPS required')
 const url = httpsUrl.nullable()
-const siteHref = z.string().max(2048).refine((s) =>
-  (s.startsWith('/') && !s.startsWith('//') && !s.includes('\\') && !s.includes(':')) ||
-  httpsUrl.safeParse(s).success, 'Site-relative or HTTPS link required')
-const linkMap = z.record(z.string().regex(/^[a-zA-Z0-9_-]{1,40}$/), httpsUrl)
-  .refine((value) => Object.keys(value).length <= 20 && !Object.keys(value).some((key) => ['constructor', 'prototype', '__proto__'].includes(key)))
 const streamingLinks = z.array(z.object({
   platform: short, url: httpsUrl, label: short.optional(),
 }).strict()).max(50)
