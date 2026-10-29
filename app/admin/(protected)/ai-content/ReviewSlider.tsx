@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { reviewMcpContent } from '@/app/admin/_actions/mcpContent'
 
@@ -49,7 +49,7 @@ export function ReviewSlider({
   const before = asObject(current?.operation === 'config'
     ? asObject(current.previous_snapshot).value : current?.previous_snapshot)
   const after = asObject(current?.changes)
-  const changes = useMemo(() => Object.entries(after), [current?.id])
+  const changes = Object.entries(after)
   const title = String(after.title ?? after.name ?? before.title ?? before.name
     ?? current?.target_key ?? current?.collection ?? 'No pending requests')
 
