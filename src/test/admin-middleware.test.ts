@@ -68,6 +68,15 @@ describe('middleware admin auth', () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
   })
 
+  it('allows ChatGPT OAuth MCP requests to reach the authenticated endpoint', async () => {
+    const request = createRequest('/api/mcp')
+    request.headers.set('user-agent', 'ChatGPT-User/2.0')
+    const response = await proxy(request)
+    expect(response.status).toBe(200)
+    expect(response.headers.get('location')).toBeNull()
+    expect(mockGetUser).not.toHaveBeenCalled()
+  })
+
   it('keeps refreshed cookies on login redirect when auth fails', async () => {
     mockCookiesToSet.push({
       name: 'sb-access-token',
@@ -105,7 +114,7 @@ describe('middleware admin auth', () => {
     expect(response.cookies.get('sb-refresh-token')?.value).toBe('fresh-refresh-token')
   })
 
-  it('allows request when profile lookup returns null after valid auth', async () => {
+  it('rejects requests with no admin profile after valid auth', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'admin-user' } },
       error: null,
@@ -116,7 +125,7 @@ describe('middleware admin auth', () => {
 
     const response = await proxy(createRequest('/admin/releases'))
 
-    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
   it('redirects to forbidden when authenticated user is not admin', async () => {
@@ -133,7 +142,7 @@ describe('middleware admin auth', () => {
     expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
-  it('allows request when profile lookup throws after valid auth', async () => {
+  it('rejects requests when the profile lookup fails', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'admin-user' } },
       error: null,
@@ -142,7 +151,7 @@ describe('middleware admin auth', () => {
 
     const response = await proxy(createRequest('/admin/releases'))
 
-    expect(response.headers.get('location')).toBeNull()
+    expect(response.headers.get('location')).toBe('https://example.com/admin/login?error=forbidden')
   })
 
   it('applies cache-control headers from @supabase/ssr to the response', async () => {
