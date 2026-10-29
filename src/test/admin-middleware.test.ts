@@ -68,6 +68,15 @@ describe('middleware admin auth', () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'anon-key'
   })
 
+  it('allows ChatGPT OAuth MCP requests to reach the authenticated endpoint', async () => {
+    const request = createRequest('/api/mcp')
+    request.headers.set('user-agent', 'ChatGPT-User/2.0')
+    const response = await proxy(request)
+    expect(response.status).toBe(200)
+    expect(response.headers.get('location')).toBeNull()
+    expect(mockGetUser).not.toHaveBeenCalled()
+  })
+
   it('keeps refreshed cookies on login redirect when auth fails', async () => {
     mockCookiesToSet.push({
       name: 'sb-access-token',
