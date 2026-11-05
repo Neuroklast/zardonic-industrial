@@ -41,6 +41,7 @@ export interface SyncJobPayload {
   gigImportCursor?: number
   processing?: boolean
   processingSince?: number
+  tickCount?: number
 }
 
 export interface SyncJobRow {
@@ -149,6 +150,7 @@ export async function updateSyncJob(
     .from('sync_jobs')
     .update({ ...patch, updated_at: new Date().toISOString() })
     .eq('id', id)
+    .in('status', ['pending', 'running'])
     .select('*')
     .single()
 
@@ -173,11 +175,26 @@ export async function updateSyncJobWithoutReturn(
   if (error) throw new Error(error.message)
 }
 
-export async function cancelSyncJob(id: string): Promise<SyncJobRow> {
-  return updateSyncJob(id, {
-    status: 'cancelled',
-    completed_at: new Date().toISOString(),
-  })
+export async function cancelSyncJob(id: string): Promise<SyncJobSummary> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('sync_jobs')
+    .update({
+      status: 'cancelled',
+      updated_at: new Date().toISOString(),
+      completed_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .in('status', ['pending', 'running'])
+    .select(SYNC_JOB_SUMMARY_COLUMNS)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (data) return data as SyncJobSummary
+
+  // Repeated cancellation should not re-download the staged JSON payload.
+  const existing = await getSyncJobSummary(id)
+  if (!existing) throw new Error('Sync job not found')
+  return existing
 }
 
 /**
