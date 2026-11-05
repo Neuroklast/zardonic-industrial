@@ -5,6 +5,8 @@ import {
   isSecretsEncryptionConfigured,
 } from '@/lib/secrets-encryption'
 
+import { isValidSpotifyClientId } from '@/lib/spotify-client-id'
+
 export const API_SECRET_KEYS = [
   'spotify_client_id',
   'spotify_client_secret',
@@ -49,6 +51,7 @@ export const API_SECRET_GROUPS: readonly ApiSecretGroupDef[] = [
         key: 'spotify_client_id',
         envVar: 'SPOTIFY_CLIENT_ID',
         label: 'Client ID',
+        description: 'Spotify Developer Dashboard app ID (32 letters or digits, not an email address).',
         sensitive: false,
       },
       {
@@ -293,6 +296,10 @@ export async function setApiSecret(key: ApiSecretKey, plaintext: string): Promis
   const trimmed = plaintext.trim()
   if (!trimmed) {
     throw new Error('Secret value cannot be empty')
+  }
+
+  if (key === 'spotify_client_id' && !isValidSpotifyClientId(trimmed)) {
+    throw new Error('Invalid Spotify Client ID. Enter the 32-character app ID from Spotify Developer Dashboard, not your email address.')
   }
 
   const encrypted = encryptSecret(trimmed)

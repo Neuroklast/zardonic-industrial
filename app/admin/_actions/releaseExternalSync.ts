@@ -29,7 +29,7 @@ import {
   fetchDiscogsArtistReleases,
   searchDiscogsArtistId,
 } from '@/lib/discogs-sync'
-import { getSpotifyAccessToken } from '@/lib/spotify-client'
+import { getSpotifyAccessTokenDetailed } from '@/lib/spotify-client'
 import {
   fetchSpotifyArtistAlbums,
   searchSpotifyArtistId,
@@ -217,13 +217,13 @@ async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
 export async function syncReleasesFromSpotify(artist?: string): Promise<BulkExternalSyncResult> {
   await requireAdmin()
 
-  const token = await getSpotifyAccessToken()
-  if (!token) {
+  const auth = await getSpotifyAccessTokenDetailed()
+  if (!auth.ok) {
     return {
       synced: 0,
       updated: 0,
       skipped: 0,
-      errors: ['Spotify API credentials missing. Configure them in Admin → API Keys.'],
+      errors: [auth.message],
     }
   }
 

@@ -7,6 +7,7 @@ import {
   type ApiSecretKey,
 } from '@/lib/api-secrets'
 import { isSecretsEncryptionConfigured } from '@/lib/secrets-encryption'
+import { isValidSpotifyClientId } from '@/lib/spotify-client-id'
 import { revalidatePath } from 'next/cache'
 
 export async function updateApiSecrets(formData: FormData) {
@@ -30,6 +31,10 @@ export async function updateApiSecrets(formData: FormData) {
     if (clearFlag === '1' || clearFlag === 'true') {
       clearKeys.push(field.key)
     }
+  }
+
+  if (values.spotify_client_id && !isValidSpotifyClientId(values.spotify_client_id)) {
+    return { error: 'Invalid Spotify Client ID. Use the 32-character app ID from Spotify Developer Dashboard, not an email address.' }
   }
 
   return runAdminAction(async () => {

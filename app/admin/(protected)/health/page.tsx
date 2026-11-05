@@ -1,6 +1,8 @@
 import { getApiSecret, getApiSecretsStatus } from '@/lib/api-secrets'
+import { getSpotifyAccessTokenDetailed } from '@/lib/spotify-client'
 import { createClient } from '@/lib/supabaseServer'
-import { S3Client, ListObjectsV2Command, GetBucketCorsCommand } from '@aws-sdk/client-s3'
+import { S3Client, ListObjectsV2Command, PutObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { AdminPageHeader } from '@/app/admin/_components/AdminPageHeader'
 import { RefreshButton } from './RefreshButton'
 
@@ -57,9 +59,12 @@ async function checkR2Cors(): Promise<CheckResult> {
     const bucket = process.env.R2_BUCKET_MEDIA
 
     if (!accountId || !accessKeyId || !secretAccessKey || !bucket) {
-      return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail: 'Missing R2 environment variables' }
+      return { name: 'R2 browser PUT preflight', ok: false, ms: Date.now() - start, detail: 'Missing R2 environment variables' }
     }
 
+    // GetBucketCors is not a reliable upload check: a scoped R2 S3 key may
+    // list and upload objects but lack permission to read the bucket policy.
+    // Instead, test the same OPTIONS preflight a browser sends before upload.
     const client = new S3Client({
       region: 'auto',
       endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
@@ -67,26 +72,50 @@ async function checkR2Cors(): Promise<CheckResult> {
       forcePathStyle: true,
       requestChecksumCalculation: 'WHEN_REQUIRED',
     })
-
-    const res = await client.send(new GetBucketCorsCommand({ Bucket: bucket }))
-    const rules = res.CORSRules ?? []
-    if (rules.length === 0) {
-      return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail: 'No CORS policy — browser PUT uploads (video / media download) will be blocked' }
+    const signedUrl = await getSignedUrl(
+      client,
+      new PutObjectCommand({ Bucket: bucket, Key: '__healthcheck__/cors-preflight', ContentType: 'application/octet-stream' }),
+      { expiresIn: 60 },
+    )
+    const origin = new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://zardonic.net').origin
+    const res = await fetch(signedUrl, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: origin,
+        'Access-Control-Request-Method': 'PUT',
+        'Access-Control-Request-Headers': 'content-type',
+      },
+      signal: AbortSignal.timeout(8000),
+      cache: 'no-store',
+    })
+    const allowedOrigin = res.headers.get('access-control-allow-origin')
+    const methods = res.headers.get('access-control-allow-methods') ?? ''
+    const originOk = allowedOrigin === '*' || allowedOrigin === origin
+    const putOk = methods.split(',').some((method) => method.trim().toUpperCase() === 'PUT')
+    const ok = res.ok && originOk && putOk
+    return {
+      name: 'R2 browser PUT preflight',
+      ok,
+      ms: Date.now() - start,
+      detail: ok ? `PUT allowed from ${origin}` : `Preflight HTTP ${res.status} (origin: ${originOk ? 'ok' : 'blocked'}, PUT: ${putOk ? 'ok' : 'blocked'})`,
     }
-    const hasPut = rules.some((r) => r.AllowedMethods?.includes('PUT'))
-    const origins = rules.flatMap((r) => r.AllowedOrigins ?? [])
-    const wildcard = origins.includes('*')
-    const localhost = origins.some((o) => /localhost|127\.0\.0\.1/.test(o))
-    const detail = [
-      `${rules.length} rule(s)`,
-      hasPut ? 'PUT ok' : 'PUT missing',
-      wildcard ? 'origins *' : `${origins.length} origin(s)`,
-      localhost ? 'localhost ok' : 'no localhost',
-    ].join(' · ')
-    return { name: 'R2 bucket CORS', ok: hasPut && (wildcard || origins.length > 0), ms: Date.now() - start, detail }
   } catch (e) {
-    const detail = e instanceof Error ? e.message : 'Unknown error'
-    return { name: 'R2 bucket CORS', ok: false, ms: Date.now() - start, detail }
+    return { name: 'R2 browser PUT preflight', ok: false, ms: Date.now() - start, detail: e instanceof Error ? e.message : 'Preflight failed' }
+  }
+}
+
+async function checkSpotify(): Promise<CheckResult> {
+  const start = Date.now()
+  try {
+    const auth = await getSpotifyAccessTokenDetailed()
+    return {
+      name: 'Spotify OAuth',
+      ok: auth.ok,
+      ms: Date.now() - start,
+      detail: auth.ok ? 'Client credentials validated' : auth.message,
+    }
+  } catch {
+    return { name: 'Spotify OAuth', ok: false, ms: Date.now() - start, detail: 'Could not check Spotify credentials' }
   }
 }
 
@@ -148,19 +177,20 @@ function StatusBadge({ ok }: { ok: boolean }) {
 }
 
 export default async function HealthPage() {
-  const [supabaseResult, r2Result, r2CorsResult, resendResult, itunesResult, apiSecretsStatus] = await Promise.all([
+  const [supabaseResult, r2Result, r2CorsResult, spotifyResult, resendResult, itunesResult, apiSecretsStatus] = await Promise.all([
     checkSupabase(),
     checkR2(),
     checkR2Cors(),
+    checkSpotify(),
     checkResend(),
     checkItunes(),
     getApiSecretsStatus(),
   ])
 
-  const checks: CheckResult[] = [supabaseResult, r2Result, r2CorsResult, resendResult, itunesResult]
+  const checks: CheckResult[] = [supabaseResult, r2Result, r2CorsResult, spotifyResult, resendResult, itunesResult]
 
   const integrationKeys = [
-    { label: 'Spotify', ok: apiSecretsStatus.spotify_client_id && apiSecretsStatus.spotify_client_secret },
+    { label: 'Spotify keys stored (authentication checked above)', ok: apiSecretsStatus.spotify_client_id && apiSecretsStatus.spotify_client_secret },
     { label: 'Discogs', ok: apiSecretsStatus.discogs_token },
     { label: 'Bandsintown', ok: apiSecretsStatus.bandsintown_api_key },
     { label: 'Resend', ok: apiSecretsStatus.resend_api_key },

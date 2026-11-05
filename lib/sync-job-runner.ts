@@ -30,7 +30,7 @@ import {
   normalizeDiscogsArtistId,
   normalizeSpotifyArtistId,
 } from '@/lib/release-external-ids'
-import { getSpotifyAccessToken } from '@/lib/spotify-client'
+import { getSpotifyAccessTokenDetailed } from '@/lib/spotify-client'
 import {
   fetchSpotifyArtistAlbumsPage,
   searchSpotifyArtistId,
@@ -132,8 +132,8 @@ async function initCataloguePayload(
         ? String(payload.artistId)
         : await resolveSpotifyArtistId(config, artistName)
     if (!artistId) throw new Error('Spotify artist ID or name not configured')
-    const token = await getSpotifyAccessToken()
-    if (!token) throw new Error('Spotify API credentials missing')
+    const auth = await getSpotifyAccessTokenDetailed()
+    if (!auth.ok) throw new Error(auth.message)
     return { ...payload, source, artistName, artistId }
   }
 
