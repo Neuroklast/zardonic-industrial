@@ -8,6 +8,10 @@ The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabas
 
 Use the email/password form (native POST to the server route). Do not use browser-side Supabase sign-in for admin — it causes cookie race issues. See [agent/security.md](./agent/security.md).
 
+## Supabase security checks
+
+Security and RLS improvements are defined only in `supabase/schema.sql`. Production enforces RLS on `rate_limits`, restricts direct access to internal counters, hardens the signup trigger and optimizes admin RLS policies. Re-run Supabase Security and Performance Advisors after applying canonical SQL. Enable **Leaked Password Protection** in Supabase Authentication password security settings when the plan supports it. Do not delete unused-index warnings without confirming usage over time.
+
 ## Navigation
 
 | Section | Path | Purpose |
