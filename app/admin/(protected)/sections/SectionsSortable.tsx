@@ -22,7 +22,7 @@ import { CSS } from '@dnd-kit/utilities'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import type { SectionConfig } from '@/lib/site-config-sections'
+import { SECTION_ITEM_LIMIT_DEFAULTS, MAX_HOMEPAGE_SECTION_ITEMS, sectionItemLimit, type SectionConfig } from '@/lib/site-config-sections'
 
 export type { SectionConfig }
 
@@ -31,9 +31,10 @@ interface SectionRowProps {
   onToggle: (id: string, visible: boolean) => void
   onLabelChange: (id: string, label: string) => void
   onIntroChange: (id: string, intro: string) => void
+  onMaxItemsChange: (id: string, count: number) => void
 }
 
-function SectionRow({ section, onToggle, onLabelChange, onIntroChange }: SectionRowProps) {
+function SectionRow({ section, onToggle, onLabelChange, onIntroChange, onMaxItemsChange }: SectionRowProps) {
   const {
     attributes,
     listeners,
@@ -93,6 +94,21 @@ function SectionRow({ section, onToggle, onLabelChange, onIntroChange }: Section
           <SwitchPrimitive.Thumb className="pointer-events-none block size-3.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0.5" />
         </SwitchPrimitive.Root>
       </div>
+      {SECTION_ITEM_LIMIT_DEFAULTS[section.id] ? (
+        <label className="flex items-center justify-between gap-3 font-mono text-xs text-zinc-400">
+          <span>Items on homepage</span>
+          <input
+            type="number"
+            min={1}
+            max={MAX_HOMEPAGE_SECTION_ITEMS}
+            step={1}
+            value={sectionItemLimit(section)}
+            onChange={(event) => onMaxItemsChange(section.id, Number(event.target.value))}
+            aria-label={`Items shown in ${section.label} on homepage`}
+            className="w-20 rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-zinc-200 focus:border-zinc-500 focus:outline-none"
+          />
+        </label>
+      ) : null}
       {showIntro ? (
         <input
           type="text"
@@ -155,6 +171,14 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
     )
   }
 
+  function handleMaxItemsChange(id: string, count: number) {
+    if (!Number.isSafeInteger(count)) return
+    const maxItems = Math.max(1, Math.min(MAX_HOMEPAGE_SECTION_ITEMS, count))
+    setSections((prev) => prev.map((section) =>
+      section.id === id ? { ...section, maxItems } : section,
+    ))
+  }
+
   async function handleSave() {
     setStatus('saving')
     setErrorMsg(null)
@@ -176,7 +200,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
   return (
     <div className="space-y-4">
       <div className="text-xs text-zinc-500">
-        Drag to reorder, edit headings and optional subtitles, and toggle visibility. Changes preview live.
+        Drag to reorder, edit titles and subtitles, set homepage card counts, and toggle visibility. Save to update the public site.
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -189,6 +213,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
                 onToggle={handleToggle}
                 onLabelChange={handleLabelChange}
                 onIntroChange={handleIntroChange}
+                onMaxItemsChange={handleMaxItemsChange}
               />
             ))}
           </div>
