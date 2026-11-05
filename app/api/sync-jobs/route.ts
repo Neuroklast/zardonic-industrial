@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     const suppliedPayload = parsed.data.payload ?? {}
     // Processing state is exclusively controlled by the server worker.
     if (['processing', 'processingSince', 'tickCount', 'stagedItems', 'stagedGigs'].some(
-      (key) => Object.hasOwn(suppliedPayload, key),
+      (key) => Object.prototype.hasOwnProperty.call(suppliedPayload, key),
     )) {
       return NextResponse.json({ error: 'Invalid sync job payload' }, { status: 400 })
     }
