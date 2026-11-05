@@ -19,6 +19,20 @@ describe('contact form regression guards', () => {
     expect(readSource('lib/contact-client.ts')).toContain("fetch('/api/contact'")
   })
 
+  it('uses a consistent user-facing success message in both contact forms', () => {
+    const client = readSource('lib/contact-client.ts')
+    expect(client).toContain("export const CONTACT_SUBMISSION_SUCCESS_MESSAGE = 'Thank you! Your message has been submitted successfully.'")
+    for (const path of [
+      'app/_components/public/ContactSection.tsx',
+      'components/overlays/ContactOverlayContent.tsx',
+    ]) {
+      const source = readSource(path)
+      expect(source).toContain('CONTACT_SUBMISSION_SUCCESS_MESSAGE')
+      expect(source).not.toContain('Message accepted for delivery')
+    }
+    expect(readSource('app/_components/public/ContactSection.tsx')).toContain('role="status"')
+  })
+
   it('validates, rate-limits and delivers without reporting false success', () => {
     const route = readSource('app/api/contact/route.ts')
     expect(route).toContain('contactFormSchema.safeParse')
