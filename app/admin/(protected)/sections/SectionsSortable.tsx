@@ -22,7 +22,7 @@ import { CSS } from '@dnd-kit/utilities'
 import * as SwitchPrimitive from '@radix-ui/react-switch'
 import { updateSiteConfig } from '@/app/admin/_actions/siteConfig'
 import { broadcastAdminDraft } from '@/lib/admin-draft-channel'
-import { SECTION_ITEM_LIMIT_DEFAULTS, MAX_HOMEPAGE_SECTION_ITEMS, sectionItemLimit, type SectionConfig } from '@/lib/site-config-sections'
+import { SECTION_ITEM_LIMIT_DEFAULTS, sectionItemMax, sectionItemLimit, type SectionConfig } from '@/lib/site-config-sections'
 
 export type { SectionConfig }
 
@@ -100,7 +100,7 @@ function SectionRow({ section, onToggle, onLabelChange, onIntroChange, onMaxItem
           <input
             type="number"
             min={1}
-            max={MAX_HOMEPAGE_SECTION_ITEMS}
+            max={sectionItemMax(section.id)}
             step={1}
             value={sectionItemLimit(section)}
             onChange={(event) => onMaxItemsChange(section.id, Number(event.target.value))}
@@ -173,7 +173,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
 
   function handleMaxItemsChange(id: string, count: number) {
     if (!Number.isSafeInteger(count)) return
-    const maxItems = Math.max(1, Math.min(MAX_HOMEPAGE_SECTION_ITEMS, count))
+    const maxItems = Math.max(1, Math.min(sectionItemMax(id), count))
     setSections((prev) => prev.map((section) =>
       section.id === id ? { ...section, maxItems } : section,
     ))
@@ -200,7 +200,7 @@ export function SectionsSortable({ initialSections }: SectionsSortableProps) {
   return (
     <div className="space-y-4">
       <div className="text-xs text-zinc-500">
-        Drag to reorder, edit titles and subtitles, set homepage card counts, and toggle visibility. Save to update the public site.
+        Drag to reorder, edit titles and subtitles, set homepage card counts (at most two rows), and toggle visibility. Save to update the public site.
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
