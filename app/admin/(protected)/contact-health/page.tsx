@@ -65,14 +65,25 @@ async function diagnostics(): Promise<StatusRow[]> {
       cache: 'no-store',
     })
     if (!response.ok) {
+      const errorPayload: unknown = await response.json().catch(() => null)
+      const errorName = errorPayload && typeof errorPayload === 'object' && 'name' in errorPayload
+        ? String((errorPayload as { name: unknown }).name) : ''
+      const sendOnly = errorName === 'restricted_api_key'
       rows.push({
         label: 'Resend connectivity',
+        ok: sendOnly,
+        detail: sendOnly
+          ? 'Sending-only API key: domain inspection is restricted. This does not prove delivery or domain verification.'
+          : response.status === 401
+            ? 'HTTP 401: The Resend API key is invalid or expired.'
+            : response.status === 403
+              ? 'HTTP 403: Resend denied the domain lookup. Check key permissions.'
+              : `Resend domain lookup failed with HTTP ${response.status}.`,
+      })
+      if (sendOnly) rows.push({
+        label: 'Sending domain',
         ok: false,
-        detail: response.status === 401
-          ? 'HTTP 401: Invalid Resend API key.'
-          : response.status === 403
-            ? 'HTTP 403: This key cannot list domains. Sending may still be allowed. Check key permissions in Resend.'
-            : `Resend domain lookup failed with HTTP ${response.status}.`,
+        detail: 'Cannot verify the sending domain with a sending-only API key. Check domain status manually in Resend.',
       })
       return rows
     }
