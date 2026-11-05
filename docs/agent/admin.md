@@ -179,3 +179,18 @@ Auto-consolidation (`lib/release-consolidation.ts`) only merges rows that are ge
 - only one side has a release date (`releaseDatesAlign` no longer treats `null` as a match).
 
 Cross-source merges (different platforms, complementary ids) are unaffected. Manual merge keeps its stricter `findConflictingPlatformIds` guard. `consolidateDuplicateReleases(supabase, { dryRun: true })` reports planned merges/deletes without writing to Supabase or R2; the `consolidate_releases` admin action accepts `dryRun`.
+## Admin password recovery and Resend SMTP
+
+The login page links to `/admin/forgot-password`. Its POST endpoint invokes Supabase Auth `resetPasswordForEmail` with rate limiting and a generic non-enumerating response. Password-reset email should use a **token hash** link (see below). `/auth/confirm` shows a deliberate confirmation button to avoid consuming a one-time recovery link on ordinary mail scanner GET requests. Its POST verifies `type: recovery` and writes the resulting session cookies onto the 303 redirect to `/admin/reset-password`. The password update POST checks `getUser()`, enforces matching passwords of at least 12 characters and signs out after successful update.
+
+**Manual Supabase Auth setup (cannot be performed through SQL / the Supabase connector):**
+
+- Open `https://supabase.com/dashboard/project/djipxxbipfgabfgipiea/auth/smtp`.
+- Enable custom SMTP: Host `smtp.resend.com`, Port `465`, User `resend`, Password **Resend API key**, Sender `no-reply@zardonic.net`, Sender name `Zardonic`.
+- Domain `zardonic.net` must be verified for sending in Resend.
+- Under Auth URL settings, use the correct live site origin as **Site URL** and allow redirects on `https://zardonic.net/**` and `https://www.zardonic.net/**`.
+- In the **Reset Password** email template, use this link: `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`. Escape the ampersand as `&amp;` in an HTML attribute.
+- Test with a real admin email: request reset, open link, press Continue, change password, then sign in with new password.
+- Do not put the API key in the repository, SQL schema or `NEXT_PUBLIC_` environment. The encrypted site-level `api_secrets.resend_api_key` does not automatically configure Supabase Auth SMTP.
+
+`CONTACT_EMAIL=zardonicst@gmail.com` is a **separate Vercel production environment setting** controlling the website's contact form. Supabase Auth SMTP does not change that recipient.
