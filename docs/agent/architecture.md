@@ -13,7 +13,7 @@ Next.js App Router (public + admin), Supabase (`site_config`, content tables, au
 - Pages that must stay request-dynamic (searchParams like the homepage `adminPreview`): wrap DB reads in `unstable_cache(fn, [keys], { revalidate })`.
 - Admin mutations revalidate the public tree: `revalidatePath('/', 'layout')` in `runAdminAction`.
 - Edge bot shield: `proxy.ts` returns 403 for UA matches in `lib/crawler-blocklist.ts` before render (extend the list, keep Googlebot/Bingbot/link-preview agents allowed); mirror in `public/robots.txt`.
-- `.supabase.co` is **never** rendered: `resolveImageUrl` returns `null` and `toDirectImageUrl`/`partnerLogoCanvasSrc` return `''` for a legacy Supabase Storage URL (`lib/r2.ts`, `lib/image-cache.ts`, `lib/partner-logo-white.ts`) — no Direct fetch, no wsrv rewrap. Rows are migrated to R2 automatically once (badge count via `lib/legacy-url-audit.ts`). Migration runs **automatically once** on the first Production deploy (`lib/legacy-url-migration-on-deploy.ts` via `instrumentation.ts`; `doneOnce` flag in `site_config.legacy_url_migration_deploy` disarms it, never re-runs); core in `lib/legacy-url-migrator.ts`, helpers `lib/legacy-url-migration.ts`, manual CLI `npm run migrate-legacy` (`scripts/r2-migrate-legacy-urls.ts`).
+- `*.supabase.co` media URLs are never rendered: `lib/r2.ts` and `lib/image-cache.ts` reject legacy Supabase Storage addresses. The admin badge (`lib/legacy-url-audit.ts`) reports affected records for explicit repair. Production boot does not migrate old media; the existing R2 reference reconcile only repairs links to objects already in R2.
 
 ## Import paths
 
