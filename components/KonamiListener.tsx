@@ -10,14 +10,20 @@ interface KonamiListenerProps {
 }
 
 export default function KonamiListener({ onCodeActivated, customCode }: KonamiListenerProps) {
-  const code = customCode && customCode.length > 0 ? customCode : DEFAULT_KONAMI_CODE
+  const code = Array.isArray(customCode) && customCode.length > 0 && customCode.every((key) => typeof key === 'string' && key.length > 0)
+    ? customCode : DEFAULT_KONAMI_CODE
 
   useEffect(() => {
     let konamiIndex = 0
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase()
-      const expectedKey = code[konamiIndex].toLowerCase()
+      const key = typeof e.key === 'string' ? e.key.toLowerCase() : ''
+      const expected = code[konamiIndex]
+      if (typeof expected !== 'string') {
+        konamiIndex = 0
+        return
+      }
+      const expectedKey = expected.toLowerCase()
 
       if (key === expectedKey) {
         konamiIndex++
