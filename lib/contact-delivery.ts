@@ -1,4 +1,5 @@
 import { getApiSecret } from '@/lib/api-secrets'
+import { resolveContactSender } from '@/lib/contact-sender'
 import { explainResendError, recordContactEvent } from '@/lib/contact-diagnostics'
 import type { ContactFormData } from '@/lib/contact-form'
 
@@ -22,7 +23,20 @@ export async function deliverContactMessage(
       return { error: 'Contact form is temporarily unavailable. Please try again later.' }
     }
     const to = process.env.CONTACT_EMAIL?.trim() || 'contact@zardonic.com'
-    const from = process.env.CONTACT_FROM_EMAIL?.trim() || process.env.EMAIL_FROM?.trim() || 'no-reply@zardonic.com'
+    const sender = await resolveContactSender(resendKey)
+    if (!sender.from) {
+      console.error('[contact] Resend sending domain is not configured or verified', sender.code)
+      await recordContactEvent({
+        category: 'configuration',
+        code: sender.code ?? 'sender_unavailable',
+        detail: sender.error ?? 'No usable Resend sender address is configured.',
+        http_status: 503,
+      })
+      return { error: 'Contact form is temporarily unavailable. Please try again later.' }
+    }
+    // Prefer the requested FROM address only if its domain is verified.
+    // Otherwise use the already verified Zardonic domain selected above.
+    const from = sender.from
     const html = [
       `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>`,
       `<p><strong>Subject:</strong> ${escapeHtml(subject)}</p>`,
