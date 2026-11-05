@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Footer mailing list embed:** clipped, lazy-loaded iframe pointing at Zardonic's existing Bandzoogle signup page. The embedded document remains hosted by Bandzoogle; the crop requires a browser check after deployment because its coordinates and frame permissions are provider-controlled.
+
 ### Changed
 - **Canonical single Supabase SQL restored:** the MCP OAuth client, MFA-grant and editorial approval SQL has been folded into the idempotent `supabase/schema.sql`. Removed the duplicate `supabase/migrations/20261029_secure_editorial_mcp.sql`, the separate disposable SQL fixture and obsolete Supabase data migration CLIs. Production startup no longer triggers a legacy Supabase Storage → R2 data migration. Existing R2 reference reconciliation and admin-only repair flows remain. A CI guard now requires exactly one SQL file within `supabase/`.
 - **Sync-job polling no longer transfers the staged-catalogue `payload` (Supabase egress)**: `GET /api/sync-jobs/[id]`, `/api/sync-jobs/active` and the tick response now return a `SyncJobSummary` (id/type/status/phase/progress/timestamps) instead of the full row, so the admin 2 s poller no longer pulls the entire `stagedItems` JSONB out of PostgREST on every poll (`getSyncJobSummary` / `listActiveSyncJobsSummary`; the UI never used `payload`). The runner no longer re-reads the payload for a redundant `getSyncJob`, and releasing the processing lock uses `updateSyncJobWithoutReturn` (no read-back). `IMPORT_BATCH_SIZE` raised 8 → 16 to halve the per-tick full-catalogue `releases` reads.
