@@ -10,7 +10,7 @@ describe('contact email error reporting', () => {
   it('classifies upstream failures without saving provider messages or private user data', () => {
     expect(explainResendError(401, { name: 'validation_error', message: 'secret api key re_secret' }))
       .toMatchObject({ code: 'resend_401_validation_error', detail: expect.stringContaining('API key') })
-    expect(explainResendError(403, { name: 'validation_error', message: 'Domain zardonic.com is not verified' }).detail)
+    expect(explainResendError(403, { name: 'validation_error', message: 'Domain zardonic.net is not verified' }).detail)
       .toContain('sender domain')
     expect(explainResendError(429, null).detail).toContain('rate limit')
     const sensitive = 'Someone private@example.com wrote a private message'
