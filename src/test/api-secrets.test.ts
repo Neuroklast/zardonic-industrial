@@ -24,6 +24,7 @@ import {
   isValidApiSecretKey,
 } from '@/lib/api-secrets'
 import { decryptSecret, encryptSecret } from '@/lib/secrets-encryption'
+import { isValidSpotifyClientId } from '@/lib/spotify-client-id'
 
 const TEST_KEY = 'a'.repeat(64)
 
@@ -51,6 +52,12 @@ describe('api-secrets', () => {
     clearApiSecretsCache()
     delete process.env.SPOTIFY_CLIENT_ID
     delete process.env.DISCOGS_TOKEN
+  })
+
+  it('accepts app IDs but rejects emails and malformed Spotify client IDs', () => {
+    expect(isValidSpotifyClientId('a'.repeat(32))).toBe(true)
+    expect(isValidSpotifyClientId('info@zardonic.net')).toBe(false)
+    expect(isValidSpotifyClientId('short')).toBe(false)
   })
 
   it('validates known secret keys', () => {
