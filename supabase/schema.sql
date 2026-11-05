@@ -1244,3 +1244,93 @@ $mcp_apply$;
 REVOKE ALL ON FUNCTION public.mcp_apply_content_request(uuid,uuid)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.mcp_apply_content_request(uuid,uuid) TO service_role;
+
+
+-- ============================================================
+-- Supabase advisor hardening (idempotent; no separate migration)
+-- ============================================================
+-- The auth signup trigger is only invoked by auth.users, never via PostgREST.
+ALTER FUNCTION public.handle_new_user() SET search_path = '';
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authenticated;
+
+-- Preserve rate-limit writes through service_role only.
+ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE public.rate_limits FROM PUBLIC, anon, authenticated;
+
+-- Avoid recalculating auth.uid() for every row in policies.
+DO $advisor_opt$
+DECLARE p record;
+DECLARE read_p record;
+DECLARE guard text := $guard$(EXISTS (SELECT 1 FROM public.profiles WHERE id = (SELECT auth.uid()) AND role = 'admin'))$guard$;
+DECLARE using_expr text;
+DECLARE check_expr text;
+BEGIN
+  FOR p IN SELECT * FROM pg_policies
+    WHERE schemaname = 'public'
+      AND (coalesce(qual,'') LIKE '%auth.uid()%'
+        OR coalesce(with_check,'') LIKE '%auth.uid()%')
+  LOOP
+    using_expr := replace(p.qual, 'auth.uid()', '(select auth.uid())');
+    check_expr := replace(p.with_check, 'auth.uid()', '(select auth.uid())');
+    IF p.cmd = 'INSERT' THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I WITH CHECK (%s)',p.policyname,p.tablename,check_expr);
+    ELSIF p.cmd IN ('SELECT','DELETE') THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I USING (%s)',p.policyname,p.tablename,using_expr);
+    ELSIF check_expr IS NOT NULL THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I USING (%s) WITH CHECK (%s)',p.policyname,p.tablename,using_expr,check_expr);
+    ELSE
+      EXECUTE format('ALTER POLICY %I ON public.%I USING (%s)',p.policyname,p.tablename,using_expr);
+    END IF;
+  END LOOP;
+
+  -- Replace overlapping public SELECT and admin ALL permissive policies.
+  -- Preserve the same public and admin read conditions while separating writes.
+  FOR p IN SELECT tablename, policyname FROM pg_policies
+    WHERE schemaname='public' AND policyname LIKE 'Admin all %'
+  LOOP
+    SELECT * INTO read_p FROM pg_policies WHERE schemaname='public'
+      AND tablename=p.tablename AND cmd='SELECT'
+      AND policyname LIKE 'Public read %';
+
+    IF p.tablename='newsletter_subscribers' THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I WITH CHECK (consent_given = true OR %s)',
+        'Public subscribe',p.tablename,guard);
+    ELSIF read_p.policyname IS NOT NULL THEN
+      EXECUTE format('ALTER POLICY %I ON public.%I USING ((%s) OR (%s))',
+        read_p.policyname,p.tablename,read_p.qual,guard);
+    ELSE
+      EXECUTE format('CREATE POLICY %I ON public.%I FOR SELECT USING (%s)',
+        'Admin select '||p.tablename,p.tablename,guard);
+    END IF;
+
+    EXECUTE format('DROP POLICY %I ON public.%I',p.policyname,p.tablename);
+    IF p.tablename <> 'newsletter_subscribers' THEN
+      EXECUTE format('CREATE POLICY %I ON public.%I FOR INSERT WITH CHECK (%s)',
+        'Admin insert '||p.tablename,p.tablename,guard);
+    END IF;
+    EXECUTE format('CREATE POLICY %I ON public.%I FOR UPDATE USING (%s) WITH CHECK (%s)',
+      'Admin update '||p.tablename,p.tablename,guard,guard);
+    EXECUTE format('CREATE POLICY %I ON public.%I FOR DELETE USING (%s)',
+      'Admin delete '||p.tablename,p.tablename,guard);
+  END LOOP;
+
+  -- Existing restrictive OAuth isolation policies must remain restrictive.
+  -- Rewrite their predicates with statement-level scalar SELECTs.
+  FOR p IN SELECT * FROM pg_policies
+    WHERE schemaname='public' AND policyname='Deny direct OAuth client table access'
+      AND permissive='RESTRICTIVE'
+  LOOP
+    EXECUTE format($fmt$ALTER POLICY %I ON public.%I
+      USING ((SELECT nullif(current_setting('request.jwt.claims',true),'')::jsonb ->> 'client_id') IS NULL)
+      WITH CHECK ((SELECT nullif(current_setting('request.jwt.claims',true),'')::jsonb ->> 'client_id') IS NULL)$fmt$,
+      p.policyname,p.tablename);
+  END LOOP;
+END
+$advisor_opt$;
+
+CREATE INDEX IF NOT EXISTS sync_jobs_created_by_idx ON public.sync_jobs(created_by);
+CREATE INDEX IF NOT EXISTS mcp_content_requests_requested_by_idx ON public.mcp_content_requests(requested_by);
+CREATE INDEX IF NOT EXISTS mcp_content_requests_reviewed_by_idx ON public.mcp_content_requests(reviewed_by);
+CREATE INDEX IF NOT EXISTS mcp_oauth_clients_created_by_idx ON public.mcp_oauth_clients(created_by);
+CREATE INDEX IF NOT EXISTS mcp_oauth_clients_updated_by_idx ON public.mcp_oauth_clients(updated_by);
+CREATE INDEX IF NOT EXISTS mcp_oauth_mfa_grants_client_id_idx ON public.mcp_oauth_mfa_grants(client_id);
