@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Security and performance
+- **Supabase RLS hardening:** hardened `handle_new_user` trigger search path and execution grants, revoked direct `rate_limits` access, split overlapping public/admin permissive policies without changing the intended authorizations, cached `auth.uid()` policy expressions and added foreign-key indexes for sync/MCP tables. All changes remain in the single idempotent `supabase/schema.sql` file. Existing restrictive OAuth isolation policies remain active. Leaked-password protection requires a separate Auth Dashboard change.
+
 ### Changed
 - **Two-row homepage preview cap:** Music Highlights displays no more than 2 tiles on mobile or 4 on desktop; Soundpacks no more than 4/6/8 tiles on mobile/tablet/desktop. Old saved section limits cannot override the cap. Show More remains visible below both populated sections and the full lists retain search, sort and pagination. Admin homepage limit inputs now stop at 4 and 8.
 - **Canonical single Supabase SQL restored:** the MCP OAuth client, MFA-grant and editorial approval SQL has been folded into the idempotent `supabase/schema.sql`. Removed the duplicate `supabase/migrations/20261029_secure_editorial_mcp.sql`, the separate disposable SQL fixture and obsolete Supabase data migration CLIs. Production startup no longer triggers a legacy Supabase Storage → R2 data migration. Existing R2 reference reconciliation and admin-only repair flows remain. A CI guard now requires exactly one SQL file within `supabase/`.
