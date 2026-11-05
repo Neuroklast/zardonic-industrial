@@ -102,11 +102,22 @@ interface MusicHighlightsSectionProps {
   maxItems?: number
 }
 
-export function MusicHighlightsGrid({ highlights }: { highlights: MusicHighlight[] }) {
+export function MusicHighlightsGrid({
+  highlights,
+  homepagePreview = false,
+}: {
+  highlights: MusicHighlight[]
+  homepagePreview?: boolean
+}) {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-      {highlights.map((h) => (
-        <div key={h.id} className="flex flex-col gap-3">
+      {highlights.map((h, index) => (
+        <div
+          key={h.id}
+          className={homepagePreview && index >= 2
+            ? 'hidden flex-col gap-3 md:flex'
+            : 'flex flex-col gap-3'}
+        >
           <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
           <p className="font-mono text-sm text-foreground">{h.title}</p>
           {h.description ? (
@@ -121,7 +132,7 @@ export function MusicHighlightsGrid({ highlights }: { highlights: MusicHighlight
 export function MusicHighlightsSection({ highlights, heading, intro, maxItems = 4 }: MusicHighlightsSectionProps) {
   const { t } = useLocale()
   const title = resolveSectionHeading(heading, 'music-highlights', t)
-  const limit = Math.max(1, Math.min(48, maxItems))
+  const limit = Math.max(1, Math.min(4, maxItems))
 
   return (
     <SectionWrapper id="music" data-theme-color="foreground card border primary">
@@ -129,7 +140,7 @@ export function MusicHighlightsSection({ highlights, heading, intro, maxItems = 
       <SectionIntro sectionId="music-highlights">{intro}</SectionIntro>
       {highlights.length > 0 ? (
         <>
-          <MusicHighlightsGrid highlights={highlights.slice(0, limit)} />
+          <MusicHighlightsGrid highlights={highlights.slice(0, limit)} homepagePreview />
           <SectionMoreLink href="/music-highlights" count={highlights.length} />
         </>
       ) : (
