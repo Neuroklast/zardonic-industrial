@@ -143,3 +143,59 @@ export async function fetchPublicArtistName(): Promise<string> {
     return 'ZARDONIC'
   }
 }
+export interface PublicMusicHighlight {
+  id: string
+  title: string
+  youtube_url: string
+  description: string | null
+}
+
+export async function fetchPublicMusicHighlights(): Promise<PublicMusicHighlight[]> {
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('music_highlights')
+    .select('id, title, youtube_url, description')
+    .eq('active', true)
+    .order('display_order', { ascending: true })
+
+  if (error) {
+    console.error('[fetchPublicMusicHighlights] query failed:', error.message)
+    throw new Error('Music highlights unavailable', { cause: error })
+  }
+  return (data ?? []) as PublicMusicHighlight[]
+}
+
+export interface PublicSoundpackItem {
+  id: string
+  title: string
+  imageUrl: string | null
+  externalUrl: string | null
+}
+
+interface PublicSoundpackRow {
+  id: string
+  title: string
+  image_storage_path: string | null
+  image_url: string | null
+  external_url: string | null
+}
+
+export async function fetchPublicSoundpacks(): Promise<PublicSoundpackItem[]> {
+  const supabase = createPublicClient()
+  const { data, error } = await supabase
+    .from('soundpacks')
+    .select('id, title, image_storage_path, image_url, external_url')
+    .eq('active', true)
+    .order('display_order', { ascending: true })
+
+  if (error) {
+    console.error('[fetchPublicSoundpacks] query failed:', error.message)
+    throw new Error('Soundpacks unavailable', { cause: error })
+  }
+  return ((data ?? []) as PublicSoundpackRow[]).map((row) => ({
+    id: row.id,
+    title: row.title,
+    imageUrl: resolveImageUrl(row.image_storage_path, row.image_url),
+    externalUrl: row.external_url,
+  }))
+}

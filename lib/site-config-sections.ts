@@ -6,6 +6,8 @@ export interface SectionConfig {
   intro?: string
   visible: boolean
   order: number
+  /** Maximum cards on the homepage; browse pages always show the full catalogue. */
+  maxItems?: number
 }
 
 export const DEFAULT_SECTIONS: SectionConfig[] = [
@@ -23,6 +25,22 @@ export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'newsletter', label: 'Newsletter', visible: true, order: 11 },
   { id: 'contact', label: 'Contact', visible: true, order: 12 },
 ]
+
+export const SECTION_ITEM_LIMIT_DEFAULTS: Readonly<Record<string, number>> = {
+  'music-highlights': 4,
+  soundpacks: 8,
+}
+export const MAX_HOMEPAGE_SECTION_ITEMS = 48
+
+export function sectionItemLimit(section: SectionConfig): number {
+  const fallback = SECTION_ITEM_LIMIT_DEFAULTS[section.id] ?? 8
+  return typeof section.maxItems === 'number' &&
+    Number.isSafeInteger(section.maxItems) &&
+    section.maxItems >= 1 &&
+    section.maxItems <= MAX_HOMEPAGE_SECTION_ITEMS
+    ? section.maxItems
+    : fallback
+}
 
 export const EXCLUDED_HOME_SECTION_IDS = new Set(['social', 'connect', 'spotify'])
 
@@ -57,6 +75,11 @@ export function parseSections(raw: unknown): SectionConfig[] {
       intro: typeof item.intro === 'string' ? item.intro : undefined,
       visible: typeof item.visible === 'boolean' ? item.visible : true,
       order: typeof item.order === 'number' ? item.order : 0,
+      maxItems: typeof item.maxItems === 'number' &&
+        Number.isSafeInteger(item.maxItems) &&
+        item.maxItems >= 1 && item.maxItems <= MAX_HOMEPAGE_SECTION_ITEMS
+        ? item.maxItems
+        : undefined,
     }))
     .filter((s) => s.id !== '')
   if (parsed.length === 0) return DEFAULT_SECTIONS

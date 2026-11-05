@@ -9,6 +9,10 @@
 
 New public-facing config → **Supabase `site_config`**, not KV.
 
+## Homepage section catalogue limits
+
+The existing `site_config.sections` array stores optional `maxItems` for `music-highlights` and `soundpacks`. The shared `parseSections` parser validates 1–48 and retains the prior label/order/visibility. Defaults without a saved value are 4 and 8 respectively. Edit under **Site → Homepage Sections** or **Look & Feel → Sections**. Both use the existing `SectionsSortable` and `updateSiteConfig` action. No new database schema or key is required. Public catalogue pages fetch active rows with `createPublicClient()`.
+
 ## Site config mutations
 
 `updateSiteConfig` in `app/admin/_actions/siteConfig.ts` dispatches `update_site_config` via `lib/admin-action-registry.ts`.

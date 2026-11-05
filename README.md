@@ -33,7 +33,7 @@ A cyberpunk-themed artist website for **ZARDONIC**, built on **Next.js App Route
 - **iTunes & Bandsintown Sync** — Automatic release and tour date fetching with Odesli cross-platform links
 - **Release Detail Overlay** — Cyberpunk animated detail overlay with cover art, links, and track metadata
 - **Responsive Gallery** — Swipeable image gallery with lightbox; Google Drive URL support via wsrv.nl proxy
-- **Social Connect** — Instagram, Facebook, Spotify, YouTube, SoundCloud, TikTok, and more
+- **Social Connect** — Theme-coloured local brand SVGs for Apple Music, Amazon Music, Beatport, Deezer, Tidal, Spotify, YouTube, SoundCloud, TikTok and more; theme-tinted uploaded logo fallback
 - **News & Partners** — News section and partner/sponsors showcase
 - **Contact & Newsletter** — Contact form (Resend) and newsletter signup
 - **Legal Notice & Privacy Policy** — `/legal-notice` and `/privacy-policy` (English, GDPR/DDG templates); editable in `/admin/legal`
@@ -44,7 +44,7 @@ Access the admin at `/admin/login` using Supabase Auth; protected routes require
 
 - **Look & Feel live preview** — Split pane with **Desktop / Mobile** iframe widths (mobile = 390px) so media queries match a phone; draft changes before Save
 - **Hero editor** — Wordmark upload (high-res WebP crop), independent desktop/mobile width sliders, boot sequence toggle
-- **Section Visibility** — Show/hide any section (Bio, Music, Gigs, Releases, Gallery, Connect, Credits)
+- **Section Visibility** — Reorder and show/hide homepage sections; Music Highlights and Soundpacks have configurable item counts and dedicated searchable, sorted, paginated browse pages
 - **Theme Customization** — Colors, fonts, and favicon uploads stored in R2
 - **Animation Controls** — Toggle glitch, scanline, chromatic, CRT, noise, and circuit effects
 - **Legal & Privacy** — Structured operator fields and optional privacy policy override (`site_config.legal`)

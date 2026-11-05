@@ -14,6 +14,7 @@ Use the email/password form (native POST to the server route). Do not use browse
 |---------|------|---------|
 | Dashboard | `/admin` | Overview |
 | Site Config (Look & Feel) | `/admin/site-config` | Hero, background, appearance, footer URLs + **live preview** |
+| Homepage Sections | `/admin/sections` | Section order, visibility, headings and item limits |
 | Legal & Privacy | `/admin/legal` | Operator details, privacy policy override |
 | Biography | `/admin/bio` | Bio text |
 | Gallery | `/admin/gallery` | Images — drag tiles to reorder |
@@ -36,6 +37,10 @@ Go to **`/admin/security`** (also under **System → Security** in the nav), ent
 ## Media downloads
 
 `/admin/media` publishes files on the homepage **Media** section and `/media`.
+
+**Homepage item counts:** **Site → Homepage Sections** (also **Look & Feel → Sections**) has **Items on homepage** for Music Highlights and Soundpacks. Set 1–48 items (defaults 4 and 8). **Show More** opens `/music-highlights` or `/soundpacks`, each with search, sorting and pagination. Counts, visibility, labels and order save together in the existing `site_config.sections` JSON array; no migration is required.
+
+**Footer social icons:** automatic themed brand marks include Apple Music, Amazon Music, Spotify, Beatport, Deezer, Tidal and major social networks. Custom uploaded logos use the existing secure R2 white-logo proxy and are tinted using the current theme colour.
 
 - Allowed: JPEG, PNG, WebP, GIF (preview + overlay), PDF/ZIP (direct download), MP3/WAV (inline player).
 - Files are stored **as uploaded** in R2 — no crop/WebP conversion.

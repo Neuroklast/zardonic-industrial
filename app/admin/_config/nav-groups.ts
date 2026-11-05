@@ -25,6 +25,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupData[] = [
     label: 'Site',
     items: [
       { href: '/admin/site-config', label: 'Look & Feel' },
+      { href: '/admin/sections', label: 'Homepage Sections' },
       { href: '/admin/legal', label: 'Legal & Privacy' },
       { href: '/admin/translations', label: 'Translations' },
     ],

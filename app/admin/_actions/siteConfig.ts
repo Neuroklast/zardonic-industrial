@@ -45,6 +45,8 @@ export async function updateSiteConfig(formData: FormData) {
 
     revalidatePath('/', 'layout')
     revalidatePath('/')
+    revalidatePath('/music-highlights')
+    revalidatePath('/soundpacks')
     revalidatePath('/releases')
     revalidatePath('/gigs')
     revalidatePath('/legal-notice')

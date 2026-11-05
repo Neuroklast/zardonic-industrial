@@ -11,8 +11,9 @@ import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { sanitizeExternalHref } from '@/lib/sanitize-href'
 import { SectionWrapper, SectionEmpty, SectionHeading, SectionIntro } from './SectionWrapper'
+import { SectionMoreLink } from './SectionMoreLink'
 
-interface MusicHighlight {
+export interface MusicHighlight {
   id: string
   title: string
   youtube_url: string
@@ -98,28 +99,39 @@ interface MusicHighlightsSectionProps {
   highlights: MusicHighlight[]
   heading?: string
   intro?: string
+  maxItems?: number
 }
 
-export function MusicHighlightsSection({ highlights, heading, intro }: MusicHighlightsSectionProps) {
+export function MusicHighlightsGrid({ highlights }: { highlights: MusicHighlight[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+      {highlights.map((h) => (
+        <div key={h.id} className="flex flex-col gap-3">
+          <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
+          <p className="font-mono text-sm text-foreground">{h.title}</p>
+          {h.description ? (
+            <p className="font-mono text-xs text-muted-foreground">{h.description}</p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function MusicHighlightsSection({ highlights, heading, intro, maxItems = 4 }: MusicHighlightsSectionProps) {
   const { t } = useLocale()
   const title = resolveSectionHeading(heading, 'music-highlights', t)
+  const limit = Math.max(1, Math.min(48, maxItems))
 
   return (
     <SectionWrapper id="music" data-theme-color="foreground card border primary">
       <SectionHeading sectionId="music-highlights" dataText={title}>{title}</SectionHeading>
       <SectionIntro sectionId="music-highlights">{intro}</SectionIntro>
       {highlights.length > 0 ? (
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {highlights.map((h) => (
-            <div key={h.id} className="flex flex-col gap-3">
-              <EmbedPlayer title={h.title} youtubeUrl={h.youtube_url} />
-              <p className="font-mono text-sm text-foreground">{h.title}</p>
-              {h.description ? (
-                <p className="font-mono text-xs text-muted-foreground">{h.description}</p>
-              ) : null}
-            </div>
-          ))}
-        </div>
+        <>
+          <MusicHighlightsGrid highlights={highlights.slice(0, limit)} />
+          <SectionMoreLink href="/music-highlights" count={highlights.length} />
+        </>
       ) : (
         <SectionEmpty label="Music highlights coming soon" />
       )}

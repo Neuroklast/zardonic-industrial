@@ -1,5 +1,6 @@
 import { createPublicClient } from '@/lib/supabaseServer'
-import { DEFAULT_FOOTER_CONFIG, DEFAULT_LEGAL_CONFIG, loadLegalPageData } from '@/lib/legal-content'
+import { resolveImageUrl } from '@/lib/r2'
+import { DEFAULT_FOOTER_CONFIG, DEFAULT_LEGAL_CONFIG, loadLegalPageData, type LegalPageData } from '@/lib/legal-content'
 import { PageLayout } from '@/layouts/PageLayout'
 import { CookieConsent } from '@/components/CookieConsent'
 import { GlobalEffects } from './GlobalEffects'
@@ -13,7 +14,7 @@ interface LegalPageShellProps {
 }
 
 export async function LegalPageShell({ children }: LegalPageShellProps) {
-  let pageData = {
+  let pageData: LegalPageData = {
     legal: DEFAULT_LEGAL_CONFIG,
     footer: DEFAULT_FOOTER_CONFIG,
     appearance: {} as Record<string, unknown>,
@@ -54,7 +55,10 @@ export async function LegalPageShell({ children }: LegalPageShellProps) {
       nav={<SiteNav links={navLinks} />}
       footer={
         <SiteFooter
-          socialLinks={pageData.social}
+          socialLinks={pageData.social.map((link) => ({
+            ...link,
+            logoUrl: resolveImageUrl(link.logo_storage_path, link.logo_url),
+          }))}
           legalNoticeUrl={pageData.footer.legalNoticeUrl}
           privacyPolicyUrl={privacyUrl}
         />

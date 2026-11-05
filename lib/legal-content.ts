@@ -174,7 +174,7 @@ export interface LegalPageData {
   legal: LegalConfig
   footer: FooterConfig
   appearance: Record<string, unknown>
-  social: Array<{ id: string; platform: string; url: string; label: string | null }>
+  social: Array<{ id: string; platform: string; url: string; label: string | null; logo_storage_path?: string | null; logo_url?: string | null }>
 }
 
 export async function loadLegalPageData(
@@ -182,7 +182,7 @@ export async function loadLegalPageData(
 ): Promise<LegalPageData> {
   const [configResult, socialResult] = await Promise.all([
     supabase.from('site_config').select('key, value'),
-    supabase.from('social_links').select('id, platform, url, label').order('display_order', { ascending: true }),
+    supabase.from('social_links') .select('id, platform, url, label, logo_storage_path, logo_url').order('display_order', { ascending: true }),
   ])
 
   const rows = (configResult.data ?? []) as SiteConfigRow[]

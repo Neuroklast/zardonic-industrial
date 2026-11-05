@@ -41,6 +41,7 @@ import { resolveHeroLogoUrl } from '@/lib/hero-defaults'
 import { buildNavLinks } from '@/lib/nav-links'
 import {
   parseSections,
+  sectionItemLimit,
   withoutExcludedSections,
   type SectionConfig,
 } from '@/lib/site-config-sections'
@@ -637,6 +638,7 @@ export default async function HomePage({
                 {divider}
                 <MusicHighlightsSection
                   highlights={musicHighlights}
+                  maxItems={sectionItemLimit(section)}
                   heading={section.label}
                   intro={section.intro}
                 />
@@ -694,6 +696,7 @@ export default async function HomePage({
                 {divider}
                 <SoundpacksSection
                   items={soundpacks.map(commerceItemMap)}
+                  maxItems={sectionItemLimit(section)}
                   heading={section.label}
                   intro={section.intro}
                 />
