@@ -119,7 +119,7 @@ export function ContactOverlayContent({ adminSettings, decorativeTexts }: Contac
               try {
                 const result = await sendContactForm(formData)
                 if (result.success) {
-                  toast.success('Message sent successfully!', { id: 'contact-submit' })
+                  toast.success('Message accepted for delivery. Inbox delivery is not yet confirmed.', { id: 'contact-submit' })
                   form.reset()
                 } else {
                   toast.error(result.error || 'Failed to send message', { id: 'contact-submit' })
