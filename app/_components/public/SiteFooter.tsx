@@ -97,7 +97,7 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
                 href={sanitizeExternalHref(link.url)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex min-h-[48px] min-w-[48px] items-center justify-center text-primary transition-colors hover:text-foreground"
                 aria-label={link.label ?? link.platform}
                 title={link.label ?? link.platform}
               >
