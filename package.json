@@ -14,8 +14,6 @@
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
     "db:types": "npx supabase gen types typescript --local > lib/database.types.ts",
-    "migrate": "npx ts-node --project tsconfig.scripts.json scripts/migrate-site-data.ts",
-    "migrate-legacy": "npx ts-node -r tsconfig-paths/register --project tsconfig.scripts.json scripts/r2-migrate-legacy-urls.ts",
     "reclassify-release-types": "npx ts-node -r tsconfig-paths/register --project tsconfig.scripts.json scripts/reclassify-release-types.ts"
   },
   "dependencies": {

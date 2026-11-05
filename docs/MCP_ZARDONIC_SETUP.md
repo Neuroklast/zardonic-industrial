@@ -16,8 +16,8 @@ Use the canonical production domain instead of the Vercel hostname once it is co
 
 ## Deployment checklist
 
-1. Apply the existing `supabase/schema.sql` first if the project is new.
-2. Create a backup. In the correct ZARDONIC Supabase project, run `supabase/migrations/20261029_secure_editorial_mcp.sql` using the SQL editor or your deployment migration workflow.
+1. Create a database backup. Open the **single canonical** `supabase/schema.sql` in the Supabase SQL Editor for the correct ZARDONIC project and execute it. This includes the MCP OAuth and human approval tables/functions. The script is idempotent and can be rerun after schema changes.
+2. Verify that the SQL Editor finished without errors and that `mcp_oauth_clients`, `mcp_oauth_mfa_grants` and `mcp_content_requests` exist. No separate SQL migrations, migration folders or automatic schema changes are permitted.
 3. Enable Supabase Authentication > OAuth Server and set the authorization path to `/admin/oauth/consent`. Configure the site's exact URL in Authentication URL Configuration.
 4. Enroll a TOTP authenticator at `/admin/mfa` while logged in as a current admin. OAuth consent and review require verified AAL2.
 5. Create a dedicated OAuth application for each provider in Supabase Authentication > OAuth Apps. Use the exact callback address supplied by that provider, do not guess the callback URL.
@@ -57,7 +57,7 @@ The API has no access to raw SQL, credentials, users, payments, newsletters, ana
 - Verify mobile review UI and consent flow, OAuth refresh, and protected-route redirects.
 - Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
 
-Do not mark this deployment production-ready before a real OAuth login and end-to-end review with the correct Supabase project. The migration is committed as source code but is **not** automatically applied by a pull request.
+Do not mark this deployment production-ready before a real OAuth login and end-to-end review with the correct Supabase project. GitHub merges do **not** apply `supabase/schema.sql` to a live database; its execution is an explicit operator action.
 
 ## ChatGPT availability
 

@@ -57,6 +57,10 @@ Access the admin at `/admin/login` using Supabase Auth; protected routes require
 - **Cloudflare R2** — Media uploads via presigned URLs
 - **Legacy `api/`** — Upstash Redis endpoints for security, sync workers, and analytics (being phased out where App Router replaces them)
 
+### Database schema
+
+`supabase/schema.sql` is the **only** Supabase SQL script and the sole source of truth for database definitions. Schema changes are idempotent and require explicit execution in the project's SQL Editor. No migration folder, legacy data migration CLI or automatic database migration runs during deployment.
+
 ### Data Persistence
 - **Supabase PostgreSQL** — Site content, configuration, legal data, admin profiles
 - **Cloudflare R2** — Uploaded images, videos, favicons
@@ -138,7 +142,6 @@ See [SECURITY.md](./SECURITY.md) for the full security-related variable list.
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run db:types` | Generate Supabase types → `lib/database.types.ts` |
-| `npm run migrate` | Seed/migrate site data to Supabase |
 
 ---
 
@@ -151,7 +154,7 @@ Deploy to **Vercel**. App Router routes under `app/` deploy automatically; legac
 ### First-time Admin Setup
 
 1. Deploy with Supabase and R2 environment variables configured
-2. Run [`supabase/schema.sql`](./supabase/schema.sql) (or `npm run migrate`) against your Supabase project
+2. After backing up the target database, apply the **single** [`supabase/schema.sql`](./supabase/schema.sql) manually in the Supabase SQL Editor. This script includes all MCP tables, functions and policies. No separate migrations or automatic schema execution are supported.
 3. Create an admin user in Supabase Auth and set `profiles.role = 'admin'`
 4. Log in at `https://your-domain.com/admin/login`
 
