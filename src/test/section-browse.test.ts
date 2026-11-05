@@ -5,6 +5,7 @@ import {
   DEFAULT_SECTIONS,
   parseSections,
   sectionItemLimit,
+  sectionItemMax,
 } from '@/lib/site-config-sections'
 
 describe('homepage section configuration', () => {
@@ -21,6 +22,19 @@ describe('homepage section configuration', () => {
     expect(sectionItemLimit(packs)).toBe(5)
     expect(sectionItemLimit(sections.find((s) => s.id === 'music-highlights')!)).toBe(2)
     expect(sections.length).toBe(DEFAULT_SECTIONS.length)
+  })
+
+  it('enforces no more than two homepage rows even for older saved limits', () => {
+    expect(sectionItemMax('music-highlights')).toBe(4)
+    expect(sectionItemMax('soundpacks')).toBe(8)
+    const saved = parseSections([
+      { id: 'music-highlights', label: 'Music', visible: true, order: 0, maxItems: 48 },
+      { id: 'soundpacks', label: 'Packs', visible: true, order: 1, maxItems: 48 },
+    ])
+    expect(sectionItemLimit(saved.find((item) => item.id === 'music-highlights')!)).toBe(4)
+    expect(sectionItemLimit(saved.find((item) => item.id === 'soundpacks')!)).toBe(8)
+    expect(sectionItemLimit({ id: 'music-highlights', label: '', visible: true, order: 0, maxItems: 3 })).toBe(3)
+    expect(sectionItemLimit({ id: 'soundpacks', label: '', visible: true, order: 0, maxItems: 6 })).toBe(6)
   })
 
   it('uses safe defaults for legacy, invalid and extreme counts', () => {
