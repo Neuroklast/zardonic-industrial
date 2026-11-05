@@ -27,7 +27,9 @@ export async function proxy(request: NextRequest) {
   // Always allow login/logout (and non-admin). Login form must reach the submit handler.
   if (
     pathname.startsWith('/admin/login') ||
-    pathname.startsWith('/admin/logout')
+    pathname.startsWith('/admin/logout') ||
+    pathname.startsWith('/admin/forgot-password') ||
+    pathname.startsWith('/admin/reset-password')
   ) {
     return NextResponse.next()
   }
