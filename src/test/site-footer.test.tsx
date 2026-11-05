@@ -59,7 +59,7 @@ describe('SiteFooter legal links', () => {
     expect(parseFloat(crop.style.height)).toBeCloseTo(92 * mobileScale)
     expect(frame.style.transform).toBe(`translateX(-50%) scale(${mobileScale})`)
     expect(parseFloat(frame.style.top)).toBeCloseTo(-560 * mobileScale)
-    expect(frame.style.transformOrigin).toBe('center top')
+    expect(frame.style.transformOrigin).toBe('top center')
 
     containerWidth = 280
     fireEvent.resize(window)
