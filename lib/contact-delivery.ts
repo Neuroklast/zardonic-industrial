@@ -22,7 +22,7 @@ export async function deliverContactMessage(
       await recordContactEvent({ category: 'configuration', code: 'resend_key_missing', detail: 'No usable Resend API key on this deployment. Check encryption key or RESEND_API_KEY.' })
       return { error: 'Contact form is temporarily unavailable. Please try again later.' }
     }
-    const to = process.env.CONTACT_EMAIL?.trim() || 'contact@zardonic.com'
+    const to = process.env.CONTACT_EMAIL?.trim() || 'info@zardonic.net'
     const sender = await resolveContactSender(resendKey)
     if (!sender.from) {
       console.error('[contact] Resend sending domain is not configured or verified', sender.code)
