@@ -1,10 +1,10 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
-import { submitContact } from '@/app/_actions/contact'
+import { sendContactForm, type ContactSubmitResult } from '@/lib/contact-client'
 
 const fieldClass =
   'min-h-[44px] w-full border border-border bg-transparent px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-primary/40 focus:border-primary/60 focus:outline-none'
@@ -21,7 +21,23 @@ export function ContactSection({
   privacyPolicyUrl = '/privacy-policy',
 }: ContactSectionProps) {
   const { t } = useLocale()
-  const [state, formAction, pending] = useActionState(submitContact, null)
+  const [state, setState] = useState<ContactSubmitResult | null>(null)
+  const [pending, setPending] = useState(false)
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (pending) return
+    const formData = new FormData(event.currentTarget)
+    setPending(true)
+    setState(null)
+    try {
+      setState(await sendContactForm(formData))
+    } catch {
+      setState({ error: 'Failed to send message. Please try again later.' })
+    } finally {
+      setPending(false)
+    }
+  }
   const title = resolveSectionHeading(heading, 'contact', t)
 
   return (
@@ -34,7 +50,7 @@ export function ContactSection({
           {t('contact.success')}
         </p>
       ) : (
-        <form action={formAction} className="flex w-full flex-col gap-4">
+        <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
           {/* Honeypot — hidden from users; bots that fill it are silently accepted */}
           <input
             type="text"
