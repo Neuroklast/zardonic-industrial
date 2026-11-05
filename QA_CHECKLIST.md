@@ -51,7 +51,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Language switch (ES/DE/â€¦): section error fallback strings localize if a section ever crashes; Retry remounts
 
 - [ ] Footer icons (Spotify, Apple Music, Amazon, Beatport, Tidal, Deezer, uploaded logo) follow active theme colour, including hover and mobile; broken uploaded logo falls back to link icon.
-- [ ] Music Highlights and Soundpacks homepage item counts match Admin → Homepage Sections; Show More appears when the section has content and opens the full catalogue.
+- [ ] Music Highlights renders at most 2 items mobile and 4 desktop; Soundpacks at most 4 mobile, 6 tablet, 8 desktop (two rows at each responsive breakpoint). Older saved `maxItems:48` also respects these caps. Show More appears whenever the section has content and opens the full catalogue.
 
 ## Public browse
 
@@ -66,7 +66,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 
 - [ ] Login works; protected routes redirect when logged out
 - [ ] `/admin/security`: change password with current + new (min 8); wrong current password is rejected; success signs in with the new password
-- [ ] Admin → Homepage Sections and Look & Feel → Sections open the same editor; change max items (1–48), save, reload, verify counts and existing visibility/order persist.
+- [ ] Admin → Homepage Sections and Look & Feel → Sections open the same editor; change max items (1–4 for Music Highlights, 1–8 for Soundpacks), save, reload, verify counts and existing visibility/order persist.
 - [ ] Site config / sections draft does not break public nav labels
 - [ ] Look & Feel split preview: **Desktop / Mobile** toggle; Mobile iframe ~390px; hero mobile width % visible on Mobile
 - [ ] Hero editor: Desktop + Mobile width sliders live-update preview before Save
