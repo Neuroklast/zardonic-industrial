@@ -100,23 +100,24 @@ export async function createSyncJob(
   type: SyncJobType,
   payload: SyncJobPayload,
   createdBy: string | null,
-): Promise<SyncJobRow> {
+  phase: SyncJobPhase | null,
+): Promise<Pick<SyncJobRow, 'id' | 'status'>> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('sync_jobs')
     .insert({
       type,
       status: 'pending',
-      phase: null,
+      phase,
       payload,
       progress: DEFAULT_PROGRESS,
       created_by: createdBy,
     })
-    .select('*')
+    .select('id, status')
     .single()
 
   if (error || !data) throw new Error(error?.message ?? 'Failed to create sync job')
-  return data as SyncJobRow
+  return data as Pick<SyncJobRow, 'id' | 'status'>
 }
 
 export async function getSyncJob(id: string): Promise<SyncJobRow | null> {
@@ -233,4 +234,18 @@ export async function listStaleRunningJobs(olderThanMs: number): Promise<SyncJob
 
   if (error) throw new Error(error.message)
   return (data ?? []) as SyncJobSummary[]
+}
+/** Reuse an existing job instead of spawning overlapping imports. */
+export async function findActiveSyncJobOfType(type: SyncJobType): Promise<SyncJobSummary | null> {
+  const supabase = createAdminClient()
+  const { data, error } = await supabase
+    .from('sync_jobs')
+    .select(SYNC_JOB_SUMMARY_COLUMNS)
+    .eq('type', type)
+    .in('status', ['pending', 'running'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  return (data as SyncJobSummary | null) ?? null
 }
