@@ -92,6 +92,7 @@ const BRAND_ALIASES: Array<[string, string]> = [
 
 export function resolveBrandMark(platform: string): BrandMark | null {
   const normalized = platform.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (normalized === 'x') return BRAND_MARKS.x
   const match = BRAND_ALIASES.find(([name]) => normalized.includes(name))
   return match ? BRAND_MARKS[match[1]] ?? null : null
 }
