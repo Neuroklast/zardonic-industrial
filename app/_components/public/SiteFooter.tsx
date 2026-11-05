@@ -7,6 +7,7 @@ import { CookiePreferencesButton } from '@/components/CookieConsent'
 import LanguageSwitcher from '@/components/LanguageSwitcher'
 import { useLocale } from '@/contexts/LocaleContext'
 import { sanitizeExternalHref, sanitizeHref } from '@/lib/sanitize-href'
+import { BandzoogleMailingListEmbed } from './BandzoogleMailingListEmbed'
 
 interface SocialLink {
   id: string
@@ -110,6 +111,8 @@ export function SiteFooter({ socialLinks, legalNoticeUrl, privacyPolicyUrl }: Si
             ))}
           </nav>
         ) : null}
+
+        <BandzoogleMailingListEmbed />
 
         <nav
           className="flex max-w-full flex-wrap items-center justify-center gap-x-4 gap-y-2 sm:gap-x-5"

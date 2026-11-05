@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Footer mailing list embed:** clipped, lazy-loaded iframe pointing at Zardonic's existing Bandzoogle signup page. The visible crop now scales proportionally to its actual footer width (via ResizeObserver), keeping the heading, email field and button aligned on mobile. The embedded document remains hosted by Bandzoogle; the crop requires a browser check after deployment because its coordinates and frame permissions are provider-controlled.
+
 ### Security and performance
 - **Supabase RLS hardening:** hardened `handle_new_user` trigger search path and execution grants, revoked direct `rate_limits` access, split overlapping public/admin permissive policies without changing the intended authorizations, cached `auth.uid()` policy expressions and added foreign-key indexes for sync/MCP tables. All changes remain in the single idempotent `supabase/schema.sql` file. Existing restrictive OAuth isolation policies remain active. Leaked-password protection requires a separate Auth Dashboard change.
 
