@@ -8,8 +8,8 @@ function resolveOrigin(): string {
   return 'http://localhost:3000'
 }
 
-/** Fire-and-forget next tick for a running sync job (cron secret auth). */
-export function chainSyncJobTick(jobId: string): void {
+/** Hand off a single chunk to the next request, without automatic retries. */
+export async function chainSyncJobTick(jobId: string): Promise<void> {
   const secret = process.env.CRON_SECRET
   if (!secret) {
     console.warn(`[sync-job-chain] CRON_SECRET missing — cannot HTTP-chain job ${jobId}`)
@@ -17,16 +17,24 @@ export function chainSyncJobTick(jobId: string): void {
   }
 
   const url = `${resolveOrigin()}/api/sync-jobs/${jobId}/tick`
-  void fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${secret}`,
-      'Content-Type': 'application/json',
-    },
-    cache: 'no-store',
-  }).catch((error) => {
+  try {
+    // Await the handoff so the serverless runtime does not discard it.
+    // Network or server failures are logged, not retried in a hot loop.
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${secret}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(55_000),
+    })
+    if (!response.ok && response.status !== 409) {
+      console.error(`[sync-job-chain] Tick returned HTTP ${response.status} for ${jobId}`)
+    }
+  } catch (error) {
     console.error(`[sync-job-chain] Failed to chain tick for ${jobId}:`, error)
-  })
+  }
 }
 
 export function isCronOrAdminAuthorized(request: Request, isAdmin: boolean): boolean {
