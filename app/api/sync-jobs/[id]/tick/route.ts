@@ -15,8 +15,7 @@ interface RouteContext {
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  const admin = await isAdminSession()
-  if (!isCronOrAdminAuthorized(request, admin)) {
+  if (!(await isCronOrAdminAuthorized(request, isAdminSession))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
