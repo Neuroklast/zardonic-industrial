@@ -30,15 +30,19 @@ export const SECTION_ITEM_LIMIT_DEFAULTS: Readonly<Record<string, number>> = {
   'music-highlights': 4,
   soundpacks: 8,
 }
-export const MAX_HOMEPAGE_SECTION_ITEMS = 48
+/** Hard cap: at most two rows at the largest grid breakpoint. */
+export const MAX_HOMEPAGE_SECTION_ITEMS = 8
+
+export function sectionItemMax(sectionId: string): number {
+  return sectionId === 'music-highlights' ? 4 : MAX_HOMEPAGE_SECTION_ITEMS
+}
 
 export function sectionItemLimit(section: SectionConfig): number {
   const fallback = SECTION_ITEM_LIMIT_DEFAULTS[section.id] ?? 8
   return typeof section.maxItems === 'number' &&
     Number.isSafeInteger(section.maxItems) &&
-    section.maxItems >= 1 &&
-    section.maxItems <= MAX_HOMEPAGE_SECTION_ITEMS
-    ? section.maxItems
+    section.maxItems >= 1
+    ? Math.min(section.maxItems, sectionItemMax(section.id))
     : fallback
 }
 
@@ -77,7 +81,7 @@ export function parseSections(raw: unknown): SectionConfig[] {
       order: typeof item.order === 'number' ? item.order : 0,
       maxItems: typeof item.maxItems === 'number' &&
         Number.isSafeInteger(item.maxItems) &&
-        item.maxItems >= 1 && item.maxItems <= MAX_HOMEPAGE_SECTION_ITEMS
+        item.maxItems >= 1
         ? item.maxItems
         : undefined,
     }))
