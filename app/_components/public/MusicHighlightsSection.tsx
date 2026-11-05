@@ -130,7 +130,7 @@ export function MusicHighlightsSection({ highlights, heading, intro, maxItems = 
       {highlights.length > 0 ? (
         <>
           <MusicHighlightsGrid highlights={highlights.slice(0, limit)} />
-          {highlights.length > limit ? <SectionMoreLink href="/music-highlights" count={highlights.length} /> : null}
+          <SectionMoreLink href="/music-highlights" count={highlights.length} />
         </>
       ) : (
         <SectionEmpty label="Music highlights coming soon" />
