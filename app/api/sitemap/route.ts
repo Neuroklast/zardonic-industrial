@@ -4,7 +4,7 @@ import { createPublicClient } from '@/lib/supabaseServer'
 /** Rebuild periodically so new news posts appear without redeploy. */
 export const revalidate = 3600
 
-const BASE_URL = process.env.SITE_URL?.replace(/\/$/, '') || 'https://zardonic.com'
+const BASE_URL = process.env.SITE_URL?.replace(/\/$/, '') || 'https://zardonic.net'
 
 type SitemapUrl = { loc: string; changefreq: string; priority: string; lastmod?: string }
 
