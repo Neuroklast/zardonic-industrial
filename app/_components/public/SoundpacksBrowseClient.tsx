@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { browseSectionItems, type SectionBrowseSort } from '@/lib/section-browse'
+import { browseSectionItems, type SectionBrowseSort as SectionSortOrder } from '@/lib/section-browse'
 import { paginateItems } from '@/lib/browse-pagination'
 import { BrowseToolbar } from './BrowseToolbar'
 import { BrowsePagination } from './BrowsePagination'
@@ -12,7 +12,7 @@ import type { PublicSoundpackItem } from '@/lib/public-fetch'
 
 export function SoundpacksBrowseClient({ items }: { items: PublicSoundpackItem[] }) {
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState<SectionBrowseSort>('editorial')
+  const [sort, setSort] = useState<SectionSortOrder>('editorial')
   const [page, setPage] = useState(1)
   const filtered = useMemo(() => browseSectionItems(items, search, sort), [items, search, sort])
   const paged = paginateItems(filtered, page)
