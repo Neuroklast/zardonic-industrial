@@ -32,7 +32,7 @@ export function SoundpacksSection({ items, heading, intro, maxItems = 8 }: Sound
       {items.length > 0 ? (
         <>
           <SquareImageGrid items={items.slice(0, limit)} />
-          {items.length > limit ? <SectionMoreLink href="/soundpacks" count={items.length} /> : null}
+          <SectionMoreLink href="/soundpacks" count={items.length} />
         </>
       ) : (
         <SectionEmpty label="Soundpacks coming soon" />
