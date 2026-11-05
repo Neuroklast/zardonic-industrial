@@ -1,7 +1,7 @@
 /**
  * Find a usable Resend sender without guessing that a domain is verified.
- * Only @zardonic.net sender addresses are permitted. Never use zardonic.com,
- * a subdomain or an unrelated verified domain for contact messages.
+ * Only @zardonic.net sender addresses are permitted. Reject all other
+ * domains, including subdomains, regardless of domain verification.
  */
 
 export interface ResendDomain {
@@ -76,7 +76,7 @@ export function chooseContactSender(
   configuredSender: string,
   lookup: ResendDomainLookup,
 ): SenderResolution {
-  // Ignore any legacy @zardonic.com environment configuration.
+  // Ignore any configured address outside the required sender domain.
   const from = isRequiredSenderAddress(configuredSender) ? configuredSender : DEFAULT_SENDER
   if (!lookup.available) {
     // Sending-only API keys cannot inspect domains. Attempt the required
