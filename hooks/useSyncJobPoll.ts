@@ -25,7 +25,7 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
     storageKey,
     resumeTypes,
     initialJobId = null,
-    intervalMs = 2000,
+    intervalMs = 5000,
     nudgeTicks = true,
   } = options
 
@@ -34,6 +34,8 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
   const [polling, setPolling] = useState(false)
   const jobIdRef = useRef<string | null>(null)
   const tickInFlightRef = useRef(false)
+  const pollInFlightRef = useRef(false)
+  const lastNudgeAtRef = useRef(0)
   const resumedRef = useRef(false)
 
   const stop = useCallback(() => {
@@ -41,13 +43,20 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
     setPolling(false)
   }, [])
 
-  const nudgeTick = useCallback(async (jobId: string) => {
-    if (!nudgeTicks || tickInFlightRef.current) return
+  const nudgeTick = useCallback(async (jobId: string, updatedAt: string) => {
+    if (!nudgeTicks || tickInFlightRef.current || document.visibilityState === 'hidden') return
+    const lastUpdate = Date.parse(updatedAt)
+    const now = Date.now()
+    // Normal jobs advance via their server-side handoff. Only attempt recovery
+    // after a genuine stall; never issue a tick on every UI poll.
+    if (!Number.isFinite(lastUpdate) || now - lastUpdate < 90_000) return
+    if (now - lastNudgeAtRef.current < 120_000) return
+    lastNudgeAtRef.current = now
     tickInFlightRef.current = true
     try {
       await triggerSyncJobTick(jobId)
     } catch {
-      // Polling will retry; stale jobs are also reaped by cron.
+      // A later visible poll can recover a stale job.
     } finally {
       tickInFlightRef.current = false
     }
@@ -55,17 +64,23 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
 
   const pollOnce = useCallback(
     async (jobId: string) => {
-      const row = await fetchSyncJob(jobId)
-      setJob(row)
+      if (pollInFlightRef.current || document.visibilityState === 'hidden') return
+      pollInFlightRef.current = true
+      try {
+        const row = await fetchSyncJob(jobId)
+        if (jobIdRef.current !== jobId) return
+        setJob(row)
 
-      if (TERMINAL_STATUSES.has(row.status)) {
-        if (storageKey) clearPersistedSyncJobId(storageKey)
-        stop()
-        return row
+        if (TERMINAL_STATUSES.has(row.status)) {
+          if (storageKey) clearPersistedSyncJobId(storageKey)
+          stop()
+          return
+        }
+
+        await nudgeTick(jobId, row.updated_at)
+      } finally {
+        pollInFlightRef.current = false
       }
-
-      await nudgeTick(jobId)
-      return row
     },
     [nudgeTick, stop, storageKey],
   )
@@ -73,6 +88,7 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
   const startPolling = useCallback(
     (jobId: string) => {
       jobIdRef.current = jobId
+      lastNudgeAtRef.current = 0
       if (storageKey) persistSyncJobId(storageKey, jobId)
       setError(null)
       setPolling(true)
@@ -87,16 +103,21 @@ export function useSyncJobPoll(options: UseSyncJobPollOptions = {}) {
   useEffect(() => {
     if (!polling || !jobIdRef.current) return
 
-    const id = window.setInterval(() => {
+    const refresh = () => {
       const currentId = jobIdRef.current
-      if (!currentId) return
+      if (!currentId || document.visibilityState === 'hidden') return
       void pollOnce(currentId).catch((e: unknown) => {
         setError(e instanceof Error ? e.message : 'Polling failed')
         stop()
       })
-    }, intervalMs)
+    }
 
-    return () => window.clearInterval(id)
+    const id = window.setInterval(refresh, Math.max(3000, intervalMs))
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      window.clearInterval(id)
+      document.removeEventListener('visibilitychange', refresh)
+    }
   }, [polling, intervalMs, pollOnce, stop])
 
   useEffect(() => {

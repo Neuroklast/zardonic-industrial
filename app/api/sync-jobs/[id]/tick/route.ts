@@ -5,6 +5,7 @@ import { isCronOrAdminAuthorized } from '@/lib/sync-job-chain'
 import { continueSyncJob } from '@/lib/sync-job-continuation'
 import { advanceSyncJob } from '@/lib/sync-job-runner'
 import { toSyncJobSummary } from '@/lib/sync-jobs'
+import { shouldContinueSyncJob } from '@/lib/sync-job-scheduling'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -14,8 +15,7 @@ interface RouteContext {
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  const admin = await isAdminSession()
-  if (!isCronOrAdminAuthorized(request, admin)) {
+  if (!(await isCronOrAdminAuthorized(request, isAdminSession))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -23,7 +23,7 @@ export async function POST(request: Request, context: RouteContext) {
 
   try {
     const result = await advanceSyncJob(id)
-    if (!result.done && result.job.status === 'running') {
+    if (shouldContinueSyncJob(result)) {
       continueSyncJob(id)
     }
 
@@ -35,8 +35,8 @@ export async function POST(request: Request, context: RouteContext) {
 
     return NextResponse.json(
       // Strip the staged-catalogue payload — the browser only needs progress.
-      { job: toSyncJobSummary(result.job), done: result.done },
-      { status: 200, headers: { 'Cache-Control': 'no-store' } },
+      { job: toSyncJobSummary(result.job), done: result.done, busy: result.busy === true },
+      { status: result.busy ? 409 : 200, headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {
     console.error('[sync-jobs] tick failed:', error)

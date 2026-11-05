@@ -1,22 +1,36 @@
 import { after } from 'next/server'
 import { chainSyncJobTick } from '@/lib/sync-job-chain'
 import { advanceSyncJob } from '@/lib/sync-job-runner'
+import { shouldContinueSyncJob } from '@/lib/sync-job-scheduling'
 
-/** Schedule the next sync chunk after the HTTP response (no gateway timeout). */
+/**
+ * Advance one chunk after the response, then hand off at most one follow-up
+ * request. Busy locks, terminal jobs and errors never schedule more work.
+ * A stuck job can be resumed explicitly via the admin reaper.
+ */
 export function continueSyncJob(jobId: string): void {
   try {
     after(async () => {
       try {
         const result = await advanceSyncJob(jobId)
-        if (!result.done && result.job.status === 'running') {
-          continueSyncJob(jobId)
+        if (shouldContinueSyncJob(result)) {
+          if (process.env.CRON_SECRET) {
+            await chainSyncJobTick(jobId)
+          } else {
+            // Sites without a cron secret can still finish normal imports.
+            // Only the lock owner may chain; busy/error paths always stop.
+            continueSyncJob(jobId)
+          }
         }
       } catch (error) {
         console.error(`[sync-job-continuation] tick failed for ${jobId}:`, error)
-        chainSyncJobTick(jobId)
+        // No immediate retry here: repeated errors previously caused a
+        // runaway loop of PostgREST requests and excessive egress.
       }
     })
-  } catch {
-    chainSyncJobTick(jobId)
+  } catch (error) {
+    console.error(`[sync-job-continuation] after() unavailable for ${jobId}:`, error)
+    // One HTTP fallback, never a recursive retry on failure.
+    void chainSyncJobTick(jobId)
   }
 }

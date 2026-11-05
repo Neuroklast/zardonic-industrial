@@ -4,7 +4,7 @@ import { runAdminAction } from '@/app/admin/_actions/auth'
 import { createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { dispatchAdminActionAsAdmin } from '@/app/admin/_actions/context'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -43,6 +43,7 @@ export async function updateSiteConfig(formData: FormData) {
 
     if (error) return { error: error.message }
 
+    revalidateTag('zardonic-site-bootstrap', 'max')
     revalidatePath('/', 'layout')
     revalidatePath('/')
     revalidatePath('/music-highlights')

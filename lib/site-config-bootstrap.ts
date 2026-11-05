@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache'
 import { createPublicClient, isSupabaseConfigured } from '@/lib/supabaseServer'
 import { parseAnalyticsConfig, type AnalyticsConfig } from '@/lib/analytics-config'
 import { parseLanguagesConfig } from '@/lib/languages-config'
@@ -39,7 +40,7 @@ function parseAppearanceBootstrap(raw: unknown): AppearanceConfigInput {
   }
 }
 
-export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
+async function loadPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
   try {
     // Cookie-less client (see app/layout.tsx): keeps routes static so ISR can
     // dedupe Supabase reads — one query per revalidate window, not per request.
@@ -75,3 +76,8 @@ export async function getPublicSiteBootstrap(): Promise<PublicSiteBootstrap> {
     throw error
   }
 }
+/** Share public configuration reads across routes, not once per request. */
+export const getPublicSiteBootstrap = unstable_cache(loadPublicSiteBootstrap, ['zardonic-site-bootstrap'], {
+  revalidate: 60,
+  tags: ['zardonic-site-bootstrap'],
+})

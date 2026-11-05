@@ -66,10 +66,14 @@ function shouldEnrichAfterCatalogueImport(type: SyncJobType): boolean {
 // A catalogue tick can span many network fetches + a full consolidation pass,
 // so 120s was far shorter than real work and let a second tick start mid-run.
 const PROCESSING_STALE_MS = 15 * 60 * 1000
+// Fail safe: even faulty source pagination cannot run forever.
+const MAX_SYNC_JOB_TICKS = 1000
 
 export interface AdvanceSyncJobResult {
   job: SyncJobRow
   done: boolean
+  /** Another worker owns the lease. Never schedule another tick for this result. */
+  busy?: boolean
 }
 
 async function loadCatalogueSyncConfig(): Promise<CatalogueSyncConfig> {
@@ -92,7 +96,7 @@ function mergeProgress(
     synced: current.synced + (delta.synced ?? 0),
     updated: current.updated + (delta.updated ?? 0),
     skipped: current.skipped + (delta.skipped ?? 0),
-    errors: [...current.errors, ...(delta.errors ?? [])],
+    errors: [...current.errors, ...(delta.errors ?? [])].slice(-100),
   }
 }
 
@@ -609,10 +613,16 @@ async function acquireProcessingLock(job: SyncJobRow): Promise<SyncJobRow | null
   const { data, error } = await supabase
     .from('sync_jobs')
     .update({
-      payload: { ...job.payload, processing: true, processingSince: Date.now() },
+      payload: {
+        ...job.payload,
+        processing: true,
+        processingSince: Date.now(),
+        tickCount: (job.payload.tickCount ?? 0) + 1,
+      },
       updated_at: new Date().toISOString(),
     })
     .eq('id', job.id)
+    .in('status', ['pending', 'running'])
     .or(
       `payload->>processing.is.null,payload->>processing.eq.false,and(payload->>processing.eq.true,payload->>processingSince.lt.${staleCutoff})`,
     )
@@ -679,9 +689,20 @@ export async function advanceSyncJob(jobId: string): Promise<AdvanceSyncJobResul
     return { job, done: true }
   }
 
+  if ((job.payload.tickCount ?? 0) >= MAX_SYNC_JOB_TICKS) {
+    const failed = await updateSyncJob(jobId, {
+      status: 'failed',
+      completed_at: new Date().toISOString(),
+      progress: mergeProgress(job.progress, {
+        errors: [`Sync stopped after ${MAX_SYNC_JOB_TICKS} chunks (safety limit).`],
+      }),
+    })
+    return { job: failed, done: true }
+  }
+
   const locked = await acquireProcessingLock(job)
   if (!locked) {
-    return { job, done: false }
+    return { job, done: false, busy: true }
   }
 
   try {
@@ -697,6 +718,12 @@ export async function advanceSyncJob(jobId: string): Promise<AdvanceSyncJobResul
     await releaseProcessingLock(result.job)
     return result
   } catch (error) {
+    // Cancellation can race with a running chunk. Never overwrite a terminal
+    // status with a worker's late success or failure.
+    const latest = await getSyncJob(jobId)
+    if (latest && ['cancelled', 'completed', 'failed'].includes(latest.status)) {
+      return { job: latest, done: true }
+    }
     const message = error instanceof Error ? error.message : 'Sync job failed'
     const failed = await updateSyncJob(jobId, {
       status: 'failed',
