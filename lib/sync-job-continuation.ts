@@ -14,7 +14,13 @@ export function continueSyncJob(jobId: string): void {
       try {
         const result = await advanceSyncJob(jobId)
         if (shouldContinueSyncJob(result)) {
-          await chainSyncJobTick(jobId)
+          if (process.env.CRON_SECRET) {
+            await chainSyncJobTick(jobId)
+          } else {
+            // Sites without a cron secret can still finish normal imports.
+            // Only the lock owner may chain; busy/error paths always stop.
+            continueSyncJob(jobId)
+          }
         }
       } catch (error) {
         console.error(`[sync-job-continuation] tick failed for ${jobId}:`, error)
