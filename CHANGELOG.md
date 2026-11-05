@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **Footer mailing list embed:** clipped, lazy-loaded iframe pointing at Zardonic's existing Bandzoogle signup page. The embedded document remains hosted by Bandzoogle; the crop requires a browser check after deployment because its coordinates and frame permissions are provider-controlled.
+- **Footer mailing list embed:** clipped, lazy-loaded iframe pointing at Zardonic's existing Bandzoogle signup page. The visible crop now scales proportionally to its actual footer width (via ResizeObserver), keeping the heading, email field and button aligned on mobile. The embedded document remains hosted by Bandzoogle; the crop requires a browser check after deployment because its coordinates and frame permissions are provider-controlled.
 
 ### Changed
 - **Canonical single Supabase SQL restored:** the MCP OAuth client, MFA-grant and editorial approval SQL has been folded into the idempotent `supabase/schema.sql`. Removed the duplicate `supabase/migrations/20261029_secure_editorial_mcp.sql`, the separate disposable SQL fixture and obsolete Supabase data migration CLIs. Production startup no longer triggers a legacy Supabase Storage → R2 data migration. Existing R2 reference reconciliation and admin-only repair flows remain. A CI guard now requires exactly one SQL file within `supabase/`.
