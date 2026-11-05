@@ -4,12 +4,13 @@ import { getAdminUserId, isAdminSession } from '@/lib/api-admin-auth'
 import { continueSyncJob } from '@/lib/sync-job-continuation'
 import {
   createSyncJob,
-  updateSyncJob,
+  findActiveSyncJobOfType,
   type SyncJobPayload,
   type SyncJobType,
 } from '@/lib/sync-jobs'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 const createJobSchema = z.object({
   type: z.enum([
@@ -47,7 +48,12 @@ export async function POST(request: Request) {
 
   let body: unknown
   try {
-    body = await request.json()
+    const raw = await request.text()
+    // Do not accept enormous client-provided staged catalogues.
+    if (raw.length > 8192) {
+      return NextResponse.json({ error: 'Request body is too large' }, { status: 413 })
+    }
+    body = JSON.parse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
@@ -58,19 +64,26 @@ export async function POST(request: Request) {
   }
 
   try {
-    const userId = await getAdminUserId()
     const type = parsed.data.type
+    const existing = await findActiveSyncJobOfType(type)
+    if (existing) {
+      return NextResponse.json({ jobId: existing.id, status: existing.status, reused: true })
+    }
+
+    const userId = await getAdminUserId()
+    const suppliedPayload = parsed.data.payload ?? {}
+    // Processing state is exclusively controlled by the server worker.
+    if (['processing', 'processingSince', 'tickCount', 'stagedItems', 'stagedGigs'].some(
+      (key) => Object.hasOwn(suppliedPayload, key),
+    )) {
+      return NextResponse.json({ error: 'Invalid sync job payload' }, { status: 400 })
+    }
     const payload = {
       ...initialPayload(type),
-      ...(parsed.data.payload ?? {}),
+      ...suppliedPayload,
     }
 
-    const job = await createSyncJob(type, payload as SyncJobPayload, userId)
-    const phase = initialPhase(type)
-    if (phase) {
-      await updateSyncJob(job.id, { phase })
-    }
-
+    const job = await createSyncJob(type, payload as SyncJobPayload, userId, initialPhase(type))
     continueSyncJob(job.id)
 
     return NextResponse.json({ jobId: job.id, status: job.status }, { status: 201 })
