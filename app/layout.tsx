@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Orbitron, Share_Tech_Mono, Space_Mono } from 'next/font/google'
-import { createPublicClient, isSupabaseConfigured } from '@/lib/supabaseServer'
+import { isSupabaseConfigured } from '@/lib/supabaseServer'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 import {
   buildPublicFontCssVars,
@@ -48,15 +48,10 @@ export async function generateMetadata(): Promise<Metadata> {
     // Cookie-less client: keeps the root layout static (ISR) — a cookie-based
     // client would force every route dynamic and multiply Supabase egress per
     // request (see docs/LESSONS_LEARNED.md: postgrest egress spike).
-    const supabase = createPublicClient()
-    const { data, error } = await supabase
-      .from('site_config')
-      .select('value')
-      .eq('key', 'appearance')
-      .maybeSingle()
-
-    if (error) throw new Error('Metadata appearance unavailable', { cause: error })
-    faviconUrl = (data?.value as { faviconUrl?: string } | null)?.faviconUrl
+    // Reuse the same cached public config as the layout instead of an extra
+    // PostgREST round trip for every metadata refresh.
+    const { appearance } = await getPublicSiteBootstrap()
+    faviconUrl = appearance.faviconUrl
   } catch (error) {
     // Unconfigured (CI / local prod build) → keep the default icon instead of
     // failing prerender on the missing-env throw. Configured → propagate so
