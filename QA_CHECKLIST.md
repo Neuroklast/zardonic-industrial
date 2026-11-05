@@ -51,7 +51,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Language switch (ES/DE/â€¦): section error fallback strings localize if a section ever crashes; Retry remounts
 
 - [ ] Footer icons (Spotify, Apple Music, Amazon, Beatport, Tidal, Deezer, uploaded logo) follow active theme colour, including hover and mobile; broken uploaded logo falls back to link icon.
-- [ ] Music Highlights and Soundpacks homepage item counts match Admin → Homepage Sections; Show More appears only when more active items exist and opens the full catalogue.
+- [ ] Music Highlights and Soundpacks homepage item counts match Admin → Homepage Sections; Show More appears when the section has content and opens the full catalogue.
 
 ## Public browse
 
