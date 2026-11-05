@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Admin password recovery:** Added a rate-limited Forgot password request, token-hash confirmation page with a deliberate POST (to avoid link-scanner redemption), authenticated password-update form, and post-reset sign-in. Requires one-time Supabase Auth SMTP + recovery-email template setup in its dashboard; Resend SMTP credentials are not stored in the site repository.
 - **Footer mailing list embed:** clipped, lazy-loaded iframe pointing at Zardonic's existing Bandzoogle signup page. The visible crop now scales proportionally to its actual footer width (via ResizeObserver), keeping the heading, email field and button aligned on mobile. The embedded document remains hosted by Bandzoogle; the crop requires a browser check after deployment because its coordinates and frame permissions are provider-controlled.
 
 ### Security and performance
