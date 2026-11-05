@@ -131,12 +131,18 @@ async function checkResend(): Promise<CheckResult> {
       signal: AbortSignal.timeout(5000),
     })
     // HTTP 401 is an invalid credential, not a successful connectivity check.
-    const ok = res.ok
-    const detail = res.status === 401
-      ? 'HTTP 401: Invalid Resend API key.'
-      : res.status === 403
-        ? 'HTTP 403: Domain lookup forbidden. Check API key permissions in Contact & Email Errors.'
-        : ok ? undefined : `HTTP ${res.status}`
+    const providerBody: unknown = res.ok ? null : await res.json().catch(() => null)
+    const providerCode = providerBody && typeof providerBody === 'object' && 'name' in providerBody
+      ? String((providerBody as { name: unknown }).name) : ''
+    const sendOnly = providerCode === 'restricted_api_key'
+    const ok = res.ok || sendOnly
+    const detail = sendOnly
+      ? 'Sending-only API key: domain listing cannot be verified. Review Contact & Email Errors.'
+      : res.status === 401
+        ? 'HTTP 401: Invalid Resend API key.'
+        : res.status === 403
+          ? 'HTTP 403: Domain lookup forbidden. Check API key permissions in Contact & Email Errors.'
+          : ok ? undefined : `HTTP ${res.status}`
     return { name: 'Resend Email API', ok, ms: Date.now() - start, detail }
   } catch (e) {
     return { name: 'Resend Email API', ok: false, ms: Date.now() - start, detail: e instanceof Error ? e.message : 'Network error' }
