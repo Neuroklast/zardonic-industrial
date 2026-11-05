@@ -111,6 +111,21 @@ CREATE TABLE IF NOT EXISTS public.api_secrets (
   updated_at timestamptz DEFAULT now()
 );
 
+-- ─── contact delivery diagnostics (never store message or sender PII) ───
+CREATE TABLE IF NOT EXISTS public.contact_delivery_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  category text NOT NULL CHECK (category IN ('accepted', 'configuration', 'provider', 'rate_limit', 'internal')),
+  code text NOT NULL CHECK (char_length(code) BETWEEN 1 AND 80),
+  detail text NOT NULL CHECK (char_length(detail) BETWEEN 1 AND 300),
+  http_status integer CHECK (http_status BETWEEN 100 AND 599),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS contact_delivery_events_created_at_idx
+  ON public.contact_delivery_events (created_at DESC);
+ALTER TABLE public.contact_delivery_events ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.contact_delivery_events FROM PUBLIC, anon, authenticated;
+GRANT SELECT, INSERT, DELETE ON public.contact_delivery_events TO service_role;
+
 -- ─── music_highlights ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.music_highlights (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

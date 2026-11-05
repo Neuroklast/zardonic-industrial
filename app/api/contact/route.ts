@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { contactFormSchema } from '@/lib/contact-form'
 import { deliverContactMessage } from '@/lib/contact-delivery'
+import { recordContactEvent } from '@/lib/contact-diagnostics'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 
 export const dynamic = 'force-dynamic'
@@ -49,7 +50,8 @@ export async function POST(request: NextRequest) {
       )
     }
   } catch (error) {
-    console.error('[contact] Rate limit failed:', error instanceof Error ? error.message : 'unknown error')
+    console.error('[contact] Rate limit failed:', error instanceof Error ? error.name : 'unknown error')
+    await recordContactEvent({ category: 'rate_limit', code: 'rate_limit_unavailable', detail: 'Rate limiter unavailable. Check server secrets and Supabase RPC.' })
     return NextResponse.json({ error: 'Contact form is temporarily unavailable.' }, { status: 503, headers: HEADERS })
   }
   const result = await deliverContactMessage(parsed.data)
