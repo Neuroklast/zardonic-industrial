@@ -204,7 +204,7 @@ The Supabase Free plan limits egress to **5 GB per period** (hard limit — the 
   - Public routes (homepage, `/releases`, `/gigs`, `/media`, legal, `/news/[slug]`, `/api/sitemap`, `/api/og`) are **ISR-cached** (`revalidate=60`) via the cookie-less `createPublicClient()` — one upstream query per revalidate window, not per request. Admin mutations trigger `revalidatePath('/', 'layout')`, so edits appear immediately.
   - `proxy.ts` returns **403** for known scraper/AI bots (`lib/crawler-blocklist.ts`) before any render — this also protects `/admin` at the edge. `public/robots.txt` mirrors the list for compliant bots.
   - **Catalogue sync jobs:** client-facing job reads (`/api/sync-jobs/[id]`, `/active`, tick response) return a `SyncJobSummary` and **never** select the heavy `payload` JSONB (the whole staged catalogue). The old 2 s poller pulled that payload out of PostgREST on every poll; the admin UI only ever used progress/status.
-  - Media is **always** served from Cloudflare R2. The site never loads an asset from Supabase Storage: any `*.supabase.co` media URL resolves to nothing (`lib/r2.ts` / `lib/image-cache.ts`) until it is migrated. A legacy row still pointing there shows a red badge (`/admin`) with the row count and its download link stays hidden. The migration runs **automatically once** (on the first Production deploy — check Vercel logs for `[legacy-url-migration] done ...`; the `doneOnce` flag in `site_config.legacy_url_migration_deploy` prevents re-runs); manual dry-run/re-run: **`npm run migrate-legacy`** (see `scripts/MIGRATION.md`). If a row can't be migrated (download fails), fix or delete it in the admin editor.
+  - Media is **always** served from Cloudflare R2. The site never loads an asset from Supabase Storage: legacy `*.supabase.co` media URLs stay hidden (`lib/r2.ts` / `lib/image-cache.ts`). The `/admin` badge reports unresolved rows. There is no automatic migration or `migrate-legacy` command. Repair a broken reference explicitly by uploading its file to R2 in the admin and updating its record. The existing R2 bucket reconcile handles stale R2 object references, not Supabase Storage imports.
 - **Checks:** run this in the Supabase SQL Editor to find legacy URLs:
 
   ```sql
@@ -218,13 +218,17 @@ The Supabase Free plan limits egress to **5 GB per period** (hard limit — the 
   UNION ALL SELECT 'social_links', count(*) FROM social_links WHERE logo_url ILIKE '%supabase.co%';
   ```
 
+## Database setup (single SQL file)
+
+Apply `supabase/schema.sql` manually in the **correct** Supabase project's SQL Editor after taking a backup. The file is idempotent and contains the complete MCP OAuth / approval schema, RLS, and site defaults. No migration directory, second SQL script, CLI seed migration, or automatic deploy-time database DDL is supported. A Git push alone never applies this script.
+
 ## Development
 
 ```bash
 npm install
 cp .env.example .env   # Supabase + R2 keys required for full functionality
 npm run dev
-npm run migrate        # seed site_config (see scripts/MIGRATION.md)
+
 ```
 
 ## Agent reference
