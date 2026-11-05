@@ -23,7 +23,7 @@ interface SoundpacksSectionProps {
 export function SoundpacksSection({ items, heading, intro, maxItems = 8 }: SoundpacksSectionProps) {
   const { t } = useLocale()
   const title = resolveSectionHeading(heading, 'soundpacks', t)
-  const limit = Math.max(1, Math.min(48, maxItems))
+  const limit = Math.max(1, Math.min(8, maxItems))
 
   return (
     <SectionWrapper id="soundpacks" data-theme-color="foreground card border primary">
@@ -31,7 +31,7 @@ export function SoundpacksSection({ items, heading, intro, maxItems = 8 }: Sound
       <SectionIntro sectionId="soundpacks">{intro}</SectionIntro>
       {items.length > 0 ? (
         <>
-          <SquareImageGrid items={items.slice(0, limit)} />
+          <SquareImageGrid items={items.slice(0, limit)} homepagePreview />
           <SectionMoreLink href="/soundpacks" count={items.length} />
         </>
       ) : (
