@@ -36,6 +36,7 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Multi-colour transparent logos (e.g. AEW white + gold A/W + gray): with **White logo fill** on, **all** ink is solid white â€” only transparency stays transparent (no gold leftover, no missing white text)
 - [ ] Partner logos: hover shows RGB chromatic fringe whether **White logo fill** is on or off (pre-whitened PNG with fill unchecked still fringes)
 - [ ] Footer: social icons readable size; legal links not micro-type; wrap on narrow screens
+- [ ] Footer Bandzoogle signup: only heading, email field and Sign up button visible at desktop and mobile widths; email input and submit work; Bandzoogle confirmation is reachable; no frame denial in browser console. Inspect provider layout when crop changes.
 - [ ] Footer Legal Notice + Privacy Policy are real links (`href="/legal-notice"` / `href="/privacy-policy"`) and open those pages
 - [ ] Cookie banner / preferences still reachable; Reject focuses first action; Escape closes customize
 - [ ] Legal Notice + Privacy Policy routes render from Supabase legal config (EN + DE via language switcher)
