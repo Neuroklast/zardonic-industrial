@@ -4,6 +4,11 @@ import { parseLanguagesConfig } from '@/lib/languages-config'
 import { parseTranslationsConfig } from '@/lib/translations-config'
 import { getPublicSiteBootstrap } from '@/lib/site-config-bootstrap'
 
+// Keep the loader tests independent of Next's server-side cache context.
+vi.mock('next/cache', () => ({
+  unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+}))
+
 // Simulate the production build without Supabase env: the client throws.
 vi.mock('@/lib/supabaseServer', () => ({
   createPublicClient: () => {
