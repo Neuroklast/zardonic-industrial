@@ -6,6 +6,7 @@ import { createActionClient } from '@/lib/supabaseServer'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 import { decryptSecret, isSecretsEncryptionConfigured } from '@/lib/secrets-encryption'
 import { getApiSecret } from '@/lib/api-secrets'
+import { getConfiguredContactSender } from '@/lib/contact-sender'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,19 +16,14 @@ interface StatusRow {
   detail: string
 }
 
-function senderAddress(): string {
-  return process.env.CONTACT_FROM_EMAIL?.trim()
-    || process.env.EMAIL_FROM?.trim()
-    || 'no-reply@zardonic.com'
-}
 
 async function diagnostics(): Promise<StatusRow[]> {
   const rows: StatusRow[] = []
-  const sender = senderAddress()
+  const sender = getConfiguredContactSender()
   const recipient = process.env.CONTACT_EMAIL?.trim() || 'contact@zardonic.com'
 
   rows.push({ label: 'Recipient', ok: !!recipient, detail: `Contact recipient: ${recipient}` })
-  rows.push({ label: 'Sender', ok: /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(sender), detail: `Configured sender: ${sender}` })
+  rows.push({ label: 'Sender', ok: /^[^@\s]+@zardonic\.net$/i.test(sender), detail: `Sender: ${sender} (zardonic.net only)` })
 
   try {
     const admin = createAdminClient()
@@ -94,14 +90,14 @@ async function diagnostics(): Promise<StatusRow[]> {
     const domainRows = Array.isArray(domains) ? domains : []
     const senderDomain = sender.split('@')[1]?.toLowerCase() ?? ''
     const match = domainRows.find((d) => d && typeof d === 'object'
-      && typeof d.name === 'string' && (senderDomain === d.name.toLowerCase() || senderDomain.endsWith(`.${d.name.toLowerCase()}`)))
+      && typeof d.name === 'string' && senderDomain === d.name.toLowerCase())
     const status = match && typeof match.status === 'string' ? match.status : null
     rows.push({
       label: 'Sending domain',
       ok: status === 'verified',
       detail: !match
-        ? `No Resend domain matches ${senderDomain || 'the configured sender'}.`
-        : `Sender domain status: ${status || 'unknown'}. A verified sending domain is required.`,
+        ? 'zardonic.net is not registered as a sending domain in Resend. Add and verify it.'
+        : `zardonic.net status: ${status || 'unknown'}. Domain must be verified before sending.`,
     })
   } catch {
     rows.push({ label: 'Resend connectivity', ok: false, detail: 'Resend API request failed or timed out.' })
