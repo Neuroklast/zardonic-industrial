@@ -5,7 +5,7 @@ import { shouldContinueSyncJob } from '@/lib/sync-job-scheduling'
 
 /**
  * Advance one chunk after the response, then hand off at most one follow-up
- * request. Never recursively schedule `after()` on a busy lock or an error.
+ * request. Busy locks, terminal jobs and errors never schedule more work.
  * A stuck job can be resumed explicitly via the admin reaper.
  */
 export function continueSyncJob(jobId: string): void {
