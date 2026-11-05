@@ -82,7 +82,7 @@ export function parseSections(raw: unknown): SectionConfig[] {
       maxItems: typeof item.maxItems === 'number' &&
         Number.isSafeInteger(item.maxItems) &&
         item.maxItems >= 1
-        ? item.maxItems
+        ? Math.min(item.maxItems, sectionItemMax(typeof item.id === 'string' ? item.id : ''))
         : undefined,
     }))
     .filter((s) => s.id !== '')
