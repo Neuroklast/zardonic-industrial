@@ -56,6 +56,7 @@ const NAV_ICONS: Record<string, Icon> = {
   '/admin/analytics': ChartBar,
   '/admin/api-keys': Key,
   '/admin/health': Heartbeat,
+  '/admin/contact-health': EnvelopeSimple,
   '/admin/data': Export,
   '/admin/ai-content': Newspaper,
   '/admin/integrations': Key,
