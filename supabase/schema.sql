@@ -1277,6 +1277,10 @@ BEGIN
     WHERE schemaname = 'public'
       AND (coalesce(qual,'') LIKE '%auth.uid()%'
         OR coalesce(with_check,'') LIKE '%auth.uid()%')
+      -- pg_policies deparses initplan calls as SELECT auth.uid() AS uid.
+      -- Do not wrap that call again on every subsequent schema run.
+      AND NOT (coalesce(qual,'') ~* 'SELECT[[:space:]]+auth[.]uid[(][)]'
+        OR coalesce(with_check,'') ~* 'SELECT[[:space:]]+auth[.]uid[(][)]')
   LOOP
     using_expr := replace(p.qual, 'auth.uid()', '(select auth.uid())');
     check_expr := replace(p.with_check, 'auth.uid()', '(select auth.uid())');
@@ -1303,21 +1307,36 @@ BEGIN
     IF p.tablename='newsletter_subscribers' THEN
       EXECUTE format('ALTER POLICY %I ON public.%I WITH CHECK (consent_given = true OR %s)',
         'Public subscribe',p.tablename,guard);
+      -- Public subscribe only covers INSERT. Restore private admin SELECT.
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I',
+        'Admin select '||p.tablename,p.tablename);
+      EXECUTE format('CREATE POLICY %I ON public.%I FOR SELECT USING (%s)',
+        'Admin select '||p.tablename,p.tablename,guard);
     ELSIF read_p.policyname IS NOT NULL THEN
       EXECUTE format('ALTER POLICY %I ON public.%I USING ((%s) OR (%s))',
         read_p.policyname,p.tablename,read_p.qual,guard);
     ELSE
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I',
+        'Admin select '||p.tablename,p.tablename);
       EXECUTE format('CREATE POLICY %I ON public.%I FOR SELECT USING (%s)',
         'Admin select '||p.tablename,p.tablename,guard);
     END IF;
 
     EXECUTE format('DROP POLICY %I ON public.%I',p.policyname,p.tablename);
+    -- The canonical schema recreates legacy "Admin all" policies on every run.
+    -- Replace existing split policies atomically before creating them again.
     IF p.tablename <> 'newsletter_subscribers' THEN
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I',
+        'Admin insert '||p.tablename,p.tablename);
       EXECUTE format('CREATE POLICY %I ON public.%I FOR INSERT WITH CHECK (%s)',
         'Admin insert '||p.tablename,p.tablename,guard);
     END IF;
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I',
+      'Admin update '||p.tablename,p.tablename);
     EXECUTE format('CREATE POLICY %I ON public.%I FOR UPDATE USING (%s) WITH CHECK (%s)',
       'Admin update '||p.tablename,p.tablename,guard,guard);
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I',
+      'Admin delete '||p.tablename,p.tablename);
     EXECUTE format('CREATE POLICY %I ON public.%I FOR DELETE USING (%s)',
       'Admin delete '||p.tablename,p.tablename,guard);
   END LOOP;
