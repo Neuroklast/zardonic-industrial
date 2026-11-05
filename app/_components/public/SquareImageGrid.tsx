@@ -14,15 +14,19 @@ interface SquareImageGridProps {
   footerText?: string
   footerUrl?: string
   className?: string
+  /** Only for compact homepage previews: hide tiles beyond two visible rows. */
+  homepagePreview?: boolean
   children?: (item: GridItem) => ReactNode
 }
 
 function GridItemTile({
   item,
   children,
+  visibilityClassName = 'block',
 }: {
   item: GridItem
   children?: ReactNode
+  visibilityClassName?: string
 }) {
   const imageBlock = (
     <div className="relative aspect-square overflow-hidden border border-border bg-muted transition-colors group-hover:border-primary/40">
@@ -61,7 +65,7 @@ function GridItemTile({
               href={sanitizeExternalHref(item.externalUrl)}
         target="_blank"
         rel="noopener noreferrer"
-        className="group block"
+        className={`group ${visibilityClassName}`}
         aria-label={item.title}
       >
         {content}
@@ -70,7 +74,7 @@ function GridItemTile({
   }
 
   return (
-    <div className="group block" aria-label={item.title}>
+    <div className={`group ${visibilityClassName}`} aria-label={item.title}>
       {content}
     </div>
   )
@@ -81,6 +85,7 @@ export function SquareImageGrid({
   footerText,
   footerUrl,
   className = '',
+  homepagePreview = false,
   children,
 }: SquareImageGridProps) {
   if (items.length === 0) return null
@@ -92,8 +97,16 @@ export function SquareImageGrid({
   return (
     <>
       <div className={`mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 ${className}`}>
-        {items.map((item) => (
-          <GridItemTile key={item.id} item={item}>
+        {items.map((item, index) => (
+          <GridItemTile
+            key={item.id}
+            item={item}
+            visibilityClassName={homepagePreview && index >= 6
+              ? 'hidden md:block'
+              : homepagePreview && index >= 4
+                ? 'hidden sm:block'
+                : 'block'}
+          >
             {children?.(item)}
           </GridItemTile>
         ))}
