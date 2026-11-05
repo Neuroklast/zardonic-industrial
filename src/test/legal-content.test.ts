@@ -21,7 +21,7 @@ const sampleConfig = {
   zipCity: '10115 Berlin',
   country: 'Germany',
   phone: '+49 30 123456',
-  email: 'legal@zardonic.com',
+  email: 'legal@zardonic.net',
   vatId: 'DE123456789',
 }
 

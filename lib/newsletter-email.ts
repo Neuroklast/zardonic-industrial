@@ -1,7 +1,7 @@
 import { getApiSecret } from '@/lib/api-secrets'
 import { getSiteOrigin } from '@/lib/og-share'
 
-const DEFAULT_FROM = 'no-reply@zardonic.com'
+const DEFAULT_FROM = 'no-reply@zardonic.net'
 
 function escapeHtml(str: string): string {
   return str

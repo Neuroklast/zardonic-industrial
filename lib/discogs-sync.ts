@@ -5,7 +5,7 @@ import { classifyReleaseType } from '@/lib/release-type'
 import { type ReleaseMetadata, type ReleaseTrackMetadata } from '@/lib/release-metadata'
 
 const DISCOGS_BASE = 'https://api.discogs.com'
-const DISCOGS_USER_AGENT = `ZardonicWebsite/1.0 +${process.env.SITE_URL || 'https://zardonic.com'}`
+const DISCOGS_USER_AGENT = `ZardonicWebsite/1.0 +${process.env.SITE_URL || 'https://zardonic.net'}`
 
 interface DiscogsArtistCredit {
   name?: string

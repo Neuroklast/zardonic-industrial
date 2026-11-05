@@ -93,7 +93,7 @@ All responses include defensive HTTP headers:
 | `R2_*` / `R2_BUCKET_MEDIA` | Cloudflare R2 media origin | Yes |
 | `RATE_LIMIT_SALT` | Secret salt for hashing client IPs (rate limiting) | **Required in production** |
 | `SECRETS_ENCRYPTION_KEY` | AES-256-GCM key for Admin → API Keys (64 hex chars) | When encrypted secrets are used |
-| `CONTACT_EMAIL` | Contact form recipient | Optional (default `contact@zardonic.com`) |
+| `CONTACT_EMAIL` | Contact form recipient | Optional (default `info@zardonic.net`) |
 
 ## Best Practices for Deployment
 

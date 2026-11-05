@@ -1,4 +1,4 @@
-# https://zardonic.com
+# https://zardonic.net
 # Crawlers: Please respect these access rules.
 
 User-agent: *
@@ -102,4 +102,4 @@ Disallow: /
 User-agent: omi
 Disallow: /
 
-Sitemap: https://zardonic.com/sitemap.xml
+Sitemap: https://zardonic.net/sitemap.xml

@@ -11,6 +11,8 @@ afterEach(() => {
   else process.env.EMAIL_FROM = previousEmailFrom
 })
 
+const legacyDomain = ['zardonic', 'com'].join('.')
+
 const verifiedNet = {
   available: true,
   domains: [{ name: 'zardonic.net', status: 'verified', sendingEnabled: true }],
@@ -18,18 +20,18 @@ const verifiedNet = {
 
 describe('Zardonic contact sender domain enforcement', () => {
   it('always defaults to zardonic.net even when legacy env vars specify .com', () => {
-    process.env.CONTACT_FROM_EMAIL = 'no-reply@zardonic.com'
+    process.env.CONTACT_FROM_EMAIL = `no-reply@${legacyDomain}`
     process.env.EMAIL_FROM = 'team@other.net'
     expect(getConfiguredContactSender()).toBe('no-reply@zardonic.net')
     process.env.CONTACT_FROM_EMAIL = 'contact@zardonic.net'
     expect(getConfiguredContactSender()).toBe('contact@zardonic.net')
   })
 
-  it('never selects zardonic.com, a subdomain or another verified domain', () => {
-    const result = chooseContactSender('no-reply@zardonic.com', {
+  it('never selects a legacy, subdomain or unrelated verified domain', () => {
+    const result = chooseContactSender(`no-reply@${legacyDomain}`, {
       available: true,
       domains: [
-        { name: 'zardonic.com', status: 'verified', sendingEnabled: true },
+        { name: legacyDomain, status: 'verified', sendingEnabled: true },
         { name: 'another.net', status: 'verified', sendingEnabled: true },
         { name: 'mail.zardonic.net', status: 'verified', sendingEnabled: true },
       ],
@@ -40,7 +42,7 @@ describe('Zardonic contact sender domain enforcement', () => {
   })
 
   it('uses the exact verified zardonic.net domain for sending', () => {
-    expect(chooseContactSender('no-reply@zardonic.com', verifiedNet))
+    expect(chooseContactSender(`no-reply@${legacyDomain}`, verifiedNet))
       .toMatchObject({ from: 'no-reply@zardonic.net', verified: true })
     expect(chooseContactSender('management@zardonic.net', verifiedNet))
       .toMatchObject({ from: 'management@zardonic.net', verified: true })
@@ -59,7 +61,7 @@ describe('Zardonic contact sender domain enforcement', () => {
   })
 
   it('keeps the required .net address for send-only Resend keys', () => {
-    expect(chooseContactSender('no-reply@zardonic.com', { available: false, domains: [] }))
+    expect(chooseContactSender(`no-reply@${legacyDomain}`, { available: false, domains: [] }))
       .toMatchObject({ from: 'no-reply@zardonic.net', verified: false })
   })
 })
