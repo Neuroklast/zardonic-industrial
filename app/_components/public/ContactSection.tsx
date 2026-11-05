@@ -47,7 +47,7 @@ export function ContactSection({
 
       {state?.success ? (
         <p className="border border-border px-4 py-3 font-mono text-sm text-foreground">
-          {t('contact.success')}
+          Message accepted for delivery. Please note that inbox delivery is not guaranteed.
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
