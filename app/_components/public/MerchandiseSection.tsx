@@ -24,8 +24,6 @@ export function MerchandiseSection({
   items,
   heading,
   intro,
-  footerText,
-  footerUrl,
 }: MerchandiseSectionProps) {
   const { t } = useLocale()
   const title = resolveSectionHeading(heading, 'merchandise', t)
@@ -35,7 +33,7 @@ export function MerchandiseSection({
       <SectionHeading sectionId="merchandise" dataText={title}>{title}</SectionHeading>
       <SectionIntro sectionId="merchandise">{intro}</SectionIntro>
       {items.length > 0 ? (
-        <SquareImageGrid items={items} footerText={footerText} footerUrl={footerUrl} />
+        <SquareImageGrid items={items} />
       ) : (
         <SectionEmpty label="Merchandise coming soon" />
       )}

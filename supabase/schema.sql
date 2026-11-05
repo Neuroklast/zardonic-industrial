@@ -765,7 +765,7 @@ CREATE TRIGGER on_auth_user_created
 INSERT INTO public.site_config (key, value) VALUES
   ('hero',        '{"headline":"ZARDONIC","tagline":"Industrial Metal / Drum & Bass","ctaLabel":"Listen Now","ctaUrl":"#music"}'::jsonb),
   ('newsletter',  '{"heading":"Mailing List","body":"Subscribe to get the latest news, releases and exclusive content."}'::jsonb),
-  ('merchandise', '{"footerText":"Visit the official Zardonic Merchandise Store to get these and more!"}'::jsonb),
+  ('merchandise', '{}'::jsonb),
   ('footer',      '{"legalNoticeUrl":"/legal-notice","privacyPolicyUrl":"/privacy-policy"}'::jsonb),
   ('legal',       '{"operatorName":"","street":"","zipCity":"","country":"Germany","email":""}'::jsonb),
   ('background',  '{}'::jsonb),
