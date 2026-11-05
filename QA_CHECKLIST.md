@@ -136,3 +136,19 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 | Streaming links after Odesli removal | `/api/odesli` returns 404 (route deleted). A release whose `streaming_links` already contain extra platforms (Deezer/Tidal/Amazon Music/…) still shows them in the public release modal, and re-importing/updating that release does not drop those platforms. |
 | Supabase `rls_disabled_in_public` | Security Advisor is clean. `public.rate_limits` has RLS on + deny-all for anon; REST `GET /rest/v1/rate_limits` with the anon key returns `[]` or 401/42501, not rows. Login still 429s when the rate limit is exceeded. |
 
+
+---
+
+## Admin password reset via Supabase Auth / Resend
+
+- [ ] Custom SMTP enabled in the linked Supabase Auth settings with verified `no-reply@zardonic.net` sender
+- [ ] Site URL / authorized redirect URLs include the production domain
+- [ ] Reset Password email template points at `/auth/confirm?token_hash=...&type=recovery`
+- [ ] Admin login has an accessible Forgot password link
+- [ ] Both existing and unknown email addresses receive non-enumerating request confirmation
+- [ ] A real reset email arrives via Resend in a test mailbox
+- [ ] Opening the email link does not consume the token until Continue is pressed
+- [ ] Valid token creates a cookie session and new password is accepted
+- [ ] Expired or replayed token is rejected, not logged in
+- [ ] Invalid password, mismatch and expired session are rejected
+- [ ] After changing password, signing in with the new password works

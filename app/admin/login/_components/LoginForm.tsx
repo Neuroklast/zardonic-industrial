@@ -8,6 +8,7 @@ export default function LoginForm() {
 
   const errorParam = searchParams.get('error')
   const msgParam = searchParams.get('msg')
+  const notice = searchParams.get('notice')
   const redirectTo = searchParams.get('redirect') ?? '/admin/releases'
 
   const [isLoading, setIsLoading] = useState(false)
@@ -31,6 +32,11 @@ export default function LoginForm() {
         {errorParam === 'config' && (
           <div className="mb-4 p-3 rounded bg-red-950 border border-red-800 text-red-300 text-sm">
             Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.
+          </div>
+        )}
+        {notice === 'password-updated' && (
+          <div role="status" className="mb-4 p-3 rounded bg-emerald-950 border border-emerald-800 text-emerald-200 text-sm">
+            Password updated. Sign in with your new password.
           </div>
         )}
         {serverAuthError && (
@@ -84,6 +90,9 @@ export default function LoginForm() {
             {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+        <a href="/admin/forgot-password" className="mt-4 block text-center text-sm text-zinc-400 underline underline-offset-4 hover:text-white">
+          Forgot password?
+        </a>
       </div>
     </div>
   )
