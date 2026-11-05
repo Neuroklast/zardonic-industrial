@@ -276,8 +276,11 @@ export async function getApiSecret(key: ApiSecretKey): Promise<string | null> {
         value = decryptSecret(data.encrypted_value)
       }
     }
-  } catch {
-    // Fall through to env
+  } catch (error) {
+    // Never log a secret or its ciphertext. A wrong/missing decryption key in
+    // production must be distinguishable from an unconfigured provider.
+    console.error('[api-secrets] Failed to resolve', key, error instanceof Error ? error.name : 'unknown error')
+    // Fall through to the environment variable.
   }
 
   if (!value) {

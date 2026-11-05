@@ -20,6 +20,7 @@ export async function deliverContactMessage(
       return { error: 'Contact form is temporarily unavailable. Please try again later.' }
     }
     const to = process.env.CONTACT_EMAIL?.trim() || 'contact@zardonic.com'
+    const from = process.env.CONTACT_FROM_EMAIL?.trim() || process.env.EMAIL_FROM?.trim() || 'no-reply@zardonic.com'
     const html = [
       `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p>`,
       `<p><strong>Subject:</strong> ${escapeHtml(subject)}</p>`,
@@ -30,7 +31,7 @@ export async function deliverContactMessage(
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
       body: JSON.stringify({
-        from: 'no-reply@zardonic.com',
+        from,
         to: [to],
         reply_to: email,
         subject: `[Contact] ${subject}`,
@@ -39,7 +40,15 @@ export async function deliverContactMessage(
       cache: 'no-store',
     })
     if (!response.ok) {
-      console.error('[contact] Resend rejected message; HTTP status:', response.status)
+      // Provider errors are only logged server-side. Do not expose API keys,
+      // addresses, or upstream validation payloads to public visitors.
+      const providerError: unknown = await response.json().catch(() => null)
+      const reason = providerError && typeof providerError === 'object'
+        ? providerError as Record<string, unknown> : {}
+      console.error('[contact] Resend rejected message', {
+        status: response.status,
+        code: typeof reason.name === 'string' ? reason.name : 'unknown',
+      })
       return { error: 'Failed to send message. Please try again later.' }
     }
     return { success: true }

@@ -40,3 +40,25 @@ describe('contact form regression guards', () => {
     expect(readSource('app/_components/public/SocialSection.tsx')).toContain("typeof platform === 'string'")
   })
 })
+
+describe('production integration hardening', () => {
+  it('never attempts to iframe Bandzoogle, which sets frame-ancestors self', () => {
+    const embed = readSource('app/_components/public/BandzoogleMailingListEmbed.tsx')
+    expect(embed).not.toContain('<iframe')
+    expect(embed).toContain('https://zardonic.bandzoogle.com/')
+    expect(embed).toContain('target="_blank"')
+  })
+
+  it('supports a stable server-side fallback for missing optional rate limit salt', () => {
+    const limiter = readSource('lib/rate-limit.ts')
+    expect(limiter).toContain('createHmac')
+    expect(limiter).toContain('process.env.SUPABASE_SERVICE_ROLE_KEY')
+    expect(limiter).toContain('process.env.RATE_LIMIT_SALT')
+  })
+
+  it('handles missing keyboard event keys and malformed custom codes', () => {
+    const listener = readSource('components/KonamiListener.tsx')
+    expect(listener).toContain("typeof e.key === 'string'")
+    expect(listener).toContain("typeof expected !== 'string'")
+  })
+})

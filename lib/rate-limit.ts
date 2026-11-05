@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto'
+import { createHmac, randomBytes } from 'node:crypto'
 import { headers as nextHeaders } from 'next/headers'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 
@@ -8,8 +8,8 @@ import { createAdminClient } from '@/lib/supabaseAdmin'
  * - No Redis: the atomic fixed-window counter lives in `public.rate_limits`,
  *   incremented via the `consume_rate_limit` Postgres function (SECURITY DEFINER,
  *   service-role only). This is globally consistent across all serverless instances.
- * - Privacy (GDPR): the client IP is hashed with SHA-256 + `RATE_LIMIT_SALT`
- *   before use; only the hash is ever persisted. No plaintext IPs are stored.
+ * - Privacy (GDPR): the client IP is protected using HMAC-SHA256 and a
+ *   server-only secret; only the digest is persisted, never the plaintext IP.
  * - Resilience: if the Postgres call fails (network/DB down), a per-instance
  *   in-memory sliding-window counter is used as a backstop so the limit is still
  *   enforced (never silently bypassed).
@@ -36,25 +36,33 @@ export interface RateLimitOptions {
 
 let salt: string | null = null
 
+/**
+ * Use a dedicated salt if configured, otherwise derive a stable keyed hash from
+ * an existing server-only secret. A missing optional RATE_LIMIT_SALT must not
+ * make public contact/newsletter endpoints return HTTP 503 in production.
+ * HMAC does not expose the underlying key or the original IP address.
+ */
 function resolveSalt(): string {
   if (salt) return salt
-  if (process.env.RATE_LIMIT_SALT) {
-    salt = process.env.RATE_LIMIT_SALT
+  const serverKey =
+    process.env.RATE_LIMIT_SALT ||
+    process.env.SECRETS_ENCRYPTION_KEY ||
+    process.env.OAUTH_ENCRYPTION_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (serverKey) {
+    salt = serverKey
     return salt
   }
   const isBuild = process.env.NEXT_PHASE === 'phase-production-build'
   if (process.env.NODE_ENV === 'production' && !isBuild) {
-    throw new Error(
-      '[SECURITY] RATE_LIMIT_SALT environment variable is not set. ' +
-        'A unique random salt is required in production to protect IP hashes.',
-    )
+    throw new Error('[SECURITY] A stable server-only secret is required to hash client IPs.')
   }
   salt = randomBytes(32).toString('hex')
   return salt
 }
 
 function hashIp(ip: string): string {
-  return createHash('sha256').update(resolveSalt() + ip).digest('hex')
+  return createHmac('sha256', resolveSalt()).update('zardonic-rate-limit-ip:v1:').update(ip).digest('hex')
 }
 
 function clientIpFrom(headers: Headers): string {
