@@ -1258,6 +1258,14 @@ ALTER TABLE public.rate_limits ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON TABLE public.rate_limits FROM PUBLIC, anon, authenticated;
 
 -- Avoid recalculating auth.uid() for every row in policies.
+CREATE OR REPLACE FUNCTION public.is_direct_browser_session()
+RETURNS boolean LANGUAGE sql STABLE SET search_path = ''
+AS $fn$
+  SELECT (NULLIF(current_setting('request.jwt.claims',true),'')::jsonb ->> 'client_id') IS NULL;
+$fn$;
+REVOKE ALL ON FUNCTION public.is_direct_browser_session() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.is_direct_browser_session() TO authenticated;
+
 DO $advisor_opt$
 DECLARE p record;
 DECLARE read_p record;
@@ -1314,15 +1322,12 @@ BEGIN
       'Admin delete '||p.tablename,p.tablename,guard);
   END LOOP;
 
-  -- Existing restrictive OAuth isolation policies must remain restrictive.
-  -- Rewrite their predicates with statement-level scalar SELECTs.
-  FOR p IN SELECT * FROM pg_policies
-    WHERE schemaname='public' AND policyname='Deny direct OAuth client table access'
-      AND permissive='RESTRICTIVE'
+  -- Preserve RESTRICTIVE OAuth isolation; evaluate only once per statement.
+  FOR p IN SELECT * FROM pg_policies WHERE schemaname='public'
+    AND policyname='Deny direct OAuth client table access'
+    AND permissive='RESTRICTIVE'
   LOOP
-    EXECUTE format($fmt$ALTER POLICY %I ON public.%I
-      USING ((SELECT nullif(current_setting('request.jwt.claims',true),'')::jsonb ->> 'client_id') IS NULL)
-      WITH CHECK ((SELECT nullif(current_setting('request.jwt.claims',true),'')::jsonb ->> 'client_id') IS NULL)$fmt$,
+    EXECUTE format('ALTER POLICY %I ON public.%I USING ((SELECT public.is_direct_browser_session())) WITH CHECK ((SELECT public.is_direct_browser_session()))',
       p.policyname,p.tablename);
   END LOOP;
 END
