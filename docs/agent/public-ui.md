@@ -32,6 +32,10 @@ Public content SSR: `createPublicClient()` (cookie-less), not session `createCli
 
 ---
 
+## Editorial catalogue sections
+
+Music Highlights and Soundpacks on the homepage use the `maxItems` value from `site_config.sections`, default 4/8. When more active rows exist, the shared `SectionMoreLink` leads to `/music-highlights` or `/soundpacks`. Browse views reuse `BrowseToolbar`, `BrowsePagination`, and the original cards/YouTube two-click embed (no eager iframe). The full collections are read server-side from their existing Supabase tables.
+
 ## CyberpunkOverlay (single modal system)
 
 **All** of these use `CyberpunkOverlay`:
@@ -121,6 +125,8 @@ Tests: `src/test/partner-logo-white.test.ts` (white-plate / QUESTEC, dark-plate 
 | Layout | `flex-wrap`, generous gap, `py-10+` |
 
 Legal Notice + Privacy Policy hrefs: `sanitizeHref` (same-origin `/legal-notice` / `/privacy-policy` plus http(s)). Do **not** use `sanitizeExternalHref` — it drops relative paths and the links stop being clickable.
+
+Social platforms are matched to bundled currentColor brand SVG paths (`lib/social-brand-icons.ts`, including Apple Music / Amazon / Beatport). Uploaded R2 logos are converted via the **same-origin** `/api/partner-logo?white=1` proxy and used as a mask over `bg-current`. Never mask remote R2 URLs directly or force white with CSS invert. Broken custom images use a generic link icon.
 
 File: `app/_components/public/SiteFooter.tsx`. Regression: `src/test/site-footer.test.tsx`, `src/test/sanitize-href.test.ts`.
 
