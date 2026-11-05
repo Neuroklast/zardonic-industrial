@@ -33,6 +33,8 @@ describe('homepage section configuration', () => {
     ])
     expect(sectionItemLimit(saved.find((item) => item.id === 'music-highlights')!)).toBe(4)
     expect(sectionItemLimit(saved.find((item) => item.id === 'soundpacks')!)).toBe(8)
+    expect(saved.find((item) => item.id === 'music-highlights')!.maxItems).toBe(4)
+    expect(saved.find((item) => item.id === 'soundpacks')!.maxItems).toBe(8)
     expect(sectionItemLimit({ id: 'music-highlights', label: '', visible: true, order: 0, maxItems: 3 })).toBe(3)
     expect(sectionItemLimit({ id: 'soundpacks', label: '', visible: true, order: 0, maxItems: 6 })).toBe(6)
   })
