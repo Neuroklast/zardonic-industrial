@@ -1,6 +1,6 @@
 export interface ContactSubmitResult { success?: boolean; error?: string }
 
-/** Visitors should see a successful submission, not an email provider status. */
+/** Shared success message for both public contact forms. */
 export const CONTACT_SUBMISSION_SUCCESS_MESSAGE = 'Message accepted for delivery.'
 
 /** Stable client transport independent of build-specific Server Action IDs. */
