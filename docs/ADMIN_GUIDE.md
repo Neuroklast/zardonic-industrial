@@ -38,7 +38,7 @@ Go to **`/admin/security`** (also under **System → Security** in the nav), ent
 
 `/admin/media` publishes files on the homepage **Media** section and `/media`.
 
-**Homepage item counts:** **Site → Homepage Sections** (also **Look & Feel → Sections**) has **Items on homepage** for Music Highlights and Soundpacks. Set 1–48 items (defaults 4 and 8). When additional entries exist, **Show More** opens `/music-highlights` or `/soundpacks`, each with search, sorting and pagination. Counts, visibility, labels and order save together in the existing `site_config.sections` JSON array; no migration is required.
+**Homepage item counts:** **Site → Homepage Sections** (also **Look & Feel → Sections**) has **Items on homepage** for Music Highlights and Soundpacks. Set 1–48 items (defaults 4 and 8). **Show More** opens `/music-highlights` or `/soundpacks`, each with search, sorting and pagination. Counts, visibility, labels and order save together in the existing `site_config.sections` JSON array; no migration is required.
 
 **Footer social icons:** automatic themed brand marks include Apple Music, Amazon Music, Spotify, Beatport, Deezer, Tidal and major social networks. Custom uploaded logos use the existing secure R2 white-logo proxy and are tinted using the current theme colour.
 
