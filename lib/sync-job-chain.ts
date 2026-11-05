@@ -37,8 +37,12 @@ export async function chainSyncJobTick(jobId: string): Promise<void> {
   }
 }
 
-export function isCronOrAdminAuthorized(request: Request, isAdmin: boolean): boolean {
+export async function isCronOrAdminAuthorized(
+  request: Request,
+  checkAdmin: () => Promise<boolean>,
+): Promise<boolean> {
   const bearer = readBearerToken(request.headers.get('authorization'))
   if (verifyCronSecret(bearer)) return true
-  return isAdmin
+  // A valid cron bearer must not trigger an unnecessary Supabase Auth lookup.
+  return checkAdmin()
 }
