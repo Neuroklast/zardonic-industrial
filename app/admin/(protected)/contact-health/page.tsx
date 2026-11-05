@@ -20,7 +20,7 @@ interface StatusRow {
 async function diagnostics(): Promise<StatusRow[]> {
   const rows: StatusRow[] = []
   const sender = getConfiguredContactSender()
-  const recipient = process.env.CONTACT_EMAIL?.trim() || 'contact@zardonic.com'
+  const recipient = process.env.CONTACT_EMAIL?.trim() || 'info@zardonic.net'
 
   rows.push({ label: 'Recipient', ok: !!recipient, detail: `Contact recipient: ${recipient}` })
   rows.push({ label: 'Sender', ok: /^[^@\s]+@zardonic\.net$/i.test(sender), detail: `Sender: ${sender} (zardonic.net only)` })
