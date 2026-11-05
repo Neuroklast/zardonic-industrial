@@ -8,6 +8,10 @@ The admin panel is at **`/admin`**. Sign in at **`/admin/login`** with a Supabas
 
 Use the email/password form (native POST to the server route). Do not use browser-side Supabase sign-in for admin — it causes cookie race issues. See [agent/security.md](./agent/security.md).
 
+## Supabase security checks
+
+Security and RLS improvements are defined only in `supabase/schema.sql`. Production enforces RLS on `rate_limits`, restricts direct access to internal counters, hardens the signup trigger and optimizes admin RLS policies. Re-run Supabase Security and Performance Advisors after applying canonical SQL. Enable **Leaked Password Protection** in Supabase Authentication password security settings when the plan supports it. Do not delete unused-index warnings without confirming usage over time.
+
 ## Navigation
 
 | Section | Path | Purpose |
@@ -38,7 +42,7 @@ Go to **`/admin/security`** (also under **System → Security** in the nav), ent
 
 `/admin/media` publishes files on the homepage **Media** section and `/media`.
 
-**Homepage item counts:** **Site → Homepage Sections** (also **Look & Feel → Sections**) has **Items on homepage** for Music Highlights and Soundpacks. Set 1–48 items (defaults 4 and 8). **Show More** opens `/music-highlights` or `/soundpacks`, each with search, sorting and pagination. Counts, visibility, labels and order save together in the existing `site_config.sections` JSON array; no migration is required.
+**Homepage item counts:** **Site → Homepage Sections** (also **Look & Feel → Sections**) has **Items on homepage** for Music Highlights and Soundpacks. Set up to **4 Music Highlights** or **8 Soundpacks** (defaults 4 and 8). Both are hard-capped to two rows per screen size, even when an older saved setting is larger. On mobile, Music Highlights shows at most 2 and Soundpacks at most 4. **Show More** opens `/music-highlights` or `/soundpacks`, each with search, sorting and pagination. Counts, visibility, labels and order save together in the existing `site_config.sections` JSON array; no migration is required.
 
 **Footer social icons:** automatic themed brand marks include Apple Music, Amazon Music, Spotify, Beatport, Deezer, Tidal and major social networks. Custom uploaded logos use the existing secure R2 white-logo proxy and are tinted using the current theme colour.
 

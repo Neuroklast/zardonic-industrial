@@ -44,7 +44,7 @@ Access the admin at `/admin/login` using Supabase Auth; protected routes require
 
 - **Look & Feel live preview** — Split pane with **Desktop / Mobile** iframe widths (mobile = 390px) so media queries match a phone; draft changes before Save
 - **Hero editor** — Wordmark upload (high-res WebP crop), independent desktop/mobile width sliders, boot sequence toggle
-- **Section Visibility** — Reorder and show/hide homepage sections; Music Highlights and Soundpacks have configurable item counts and dedicated searchable, sorted, paginated browse pages
+- **Section Visibility** — Reorder and show/hide homepage sections; Music Highlights and Soundpacks show at most two rows (4 and 8 desktop items respectively, fewer on mobile), with configurable lower limits, a Show More link and dedicated searchable, sorted, paginated browse pages
 - **Theme Customization** — Colors, fonts, and favicon uploads stored in R2
 - **Animation Controls** — Toggle glitch, scanline, chromatic, CRT, noise, and circuit effects
 - **Legal & Privacy** — Structured operator fields and optional privacy policy override (`site_config.legal`)

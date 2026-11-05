@@ -34,7 +34,7 @@ Public content SSR: `createPublicClient()` (cookie-less), not session `createCli
 
 ## Editorial catalogue sections
 
-Music Highlights and Soundpacks on the homepage use the `maxItems` value from `site_config.sections`, default 4/8. When more active rows exist, the shared `SectionMoreLink` leads to `/music-highlights` or `/soundpacks`. Browse views reuse `BrowseToolbar`, `BrowsePagination`, and the original cards/YouTube two-click embed (no eager iframe). The full collections are read server-side from their existing Supabase tables.
+Music Highlights and Soundpacks on the homepage use `maxItems` from `site_config.sections`, default 4/8 and hard-capped to two rows at every responsive breakpoint. Music Highlights shows at most 2 on mobile (one column), 4 from `md` (two columns). Soundpacks shows at most 4 mobile (two columns), 6 from `sm` (three columns), 8 from `md` (four columns). The `SectionMoreLink` is always shown for nonempty sections and leads to `/music-highlights` or `/soundpacks`, even when all items fit in the preview. Browse views reuse `BrowseToolbar`, `BrowsePagination`, and the original cards/YouTube two-click embed (no eager iframe). The full collections are read server-side from their existing Supabase tables.
 
 ## CyberpunkOverlay (single modal system)
 

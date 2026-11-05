@@ -47,15 +47,15 @@ const PLATFORM_COLORS: Record<string, string> = {
   applemusic: '#FC3C44',
 }
 
-function platformKey(platform: string) {
-  return platform.toLowerCase().replace(/[^a-z0-9]/g, '')
+function platformKey(platform: unknown) {
+  return typeof platform === 'string' ? platform.toLowerCase().replace(/[^a-z0-9]/g, '') : ''
 }
 
 function SocialButton({ link }: { link: SocialLink }) {
   const key = platformKey(link.platform)
   const Icon = PLATFORM_ICONS[key] ?? LinkIcon
   const color = PLATFORM_COLORS[key] ?? 'var(--color-primary)'
-  const displayLabel = link.label ?? link.platform
+  const displayLabel = link.label || link.platform || 'Website'
 
   return (
     <m.a
