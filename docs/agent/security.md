@@ -18,6 +18,10 @@ Distributed, durable rate limiting runs on the **existing Supabase Postgres** (`
 - Set `RATE_LIMIT_SALT` in production — `lib/rate-limit.ts` throws if missing.
 - Throttled: admin login, analytics POST, newsletter, contact, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`.
 
+## Production Supabase advisors
+
+The canonical `supabase/schema.sql` contains the idempotent security and RLS-advisor hardening. Do not create separate SQL migration files. `public.rate_limits` requires RLS and revoked `anon`/`authenticated` table grants; `service_role` calls the `consume_rate_limit` RPC. The `handle_new_user` trigger function uses an empty search path and no public execute grant. Admin write policies are separated from public SELECT rules to prevent overlapping permissive SELECT policies, preserving admin access to drafts. Auth UID checks are wrapped in a scalar SELECT. Existing restrictive OAuth-client isolation policies must not be removed to silence advisor output. The compromised-password protection warning is a Supabase Auth dashboard setting and must be enabled there when available.
+
 ## Storage & consent
 
 - Analytics / tracking localStorage: gated by `CookieConsent` + `lib/consent.ts`
