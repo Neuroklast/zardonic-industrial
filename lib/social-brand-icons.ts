@@ -90,7 +90,8 @@ const BRAND_ALIASES: Array<[string, string]> = [
   ['patreon', 'patreon'], ['bluesky', 'bluesky'],
 ]
 
-export function resolveBrandMark(platform: string): BrandMark | null {
+export function resolveBrandMark(platform: unknown): BrandMark | null {
+  if (typeof platform !== 'string' || !platform.trim()) return null
   const normalized = platform.toLowerCase().replace(/[^a-z0-9]/g, '')
   if (normalized === 'x') return BRAND_MARKS.x
   const match = BRAND_ALIASES.find(([name]) => normalized.includes(name))

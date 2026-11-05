@@ -483,13 +483,15 @@ export default async function HomePage({
     footerConfig.privacyPolicyUrl ?? footerConfig.privacyUrl ?? '/privacy-policy',
   )
 
-  const socialWithLogos = social.map((link) => ({
-    id: link.id,
-    platform: link.platform,
-    url: link.url,
-    label: link.label,
-    logoUrl: resolveImageUrl(link.logo_storage_path ?? null, link.logo_url ?? null),
-  }))
+  const socialWithLogos = social
+    .filter((link) => typeof link.url === 'string' && link.url.trim().length > 0)
+    .map((link) => ({
+      id: link.id,
+      platform: typeof link.platform === 'string' && link.platform.trim() ? link.platform : 'Website',
+      url: link.url,
+      label: typeof link.label === 'string' ? link.label : null,
+      logoUrl: resolveImageUrl(link.logo_storage_path ?? null, link.logo_url ?? null),
+    }))
 
   const footerSlot = (
     <SiteFooter
