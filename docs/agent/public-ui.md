@@ -130,7 +130,7 @@ Social platforms are matched to bundled currentColor brand SVG paths (`lib/socia
 
 File: `app/_components/public/SiteFooter.tsx`. Regression: `src/test/site-footer.test.tsx`, `src/test/sanitize-href.test.ts`.
 
-The footer also embeds the existing Bandzoogle mailing list through `BandzoogleMailingListEmbed.tsx`. A fixed desktop-size cross-origin iframe is cropped by an `overflow-hidden` viewport to match the heading/email/button portion. The offset is a manual provider-layout dependency, not a DOM selector; don't claim it is pixel-accurate or functional until checked on the deployed site in a real browser. `vercel.json` explicitly permits `https://zardonic.bandzoogle.com` in `frame-src`. The visitor can tab to the direct provider link if needed. Do not submit emails to the unrelated native Supabase newsletter as a fallback.
+The footer also embeds the existing Bandzoogle mailing list through `BandzoogleMailingListEmbed.tsx`. A fixed desktop-size cross-origin iframe is cropped by an `overflow-hidden` viewport to match the heading/email/button portion. The crop uses `ResizeObserver` to scale the entire frame and its vertical offset proportionally to the available footer-column width; this avoids clipping the email field and sign-up button independently on phones. The iframe stays at a fixed desktop layout internally. The offset is a manual provider-layout dependency, not a DOM selector; don't claim it is pixel-accurate or functional until checked on the deployed site in a real browser. `vercel.json` explicitly permits `https://zardonic.bandzoogle.com` in `frame-src`. The visitor can tab to the direct provider link if needed. Do not submit emails to the unrelated native Supabase newsletter as a fallback.
 
 ---
 
