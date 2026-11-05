@@ -21,14 +21,15 @@ describe('contact form regression guards', () => {
 
   it('uses a consistent user-facing success message in both contact forms', () => {
     const client = readSource('lib/contact-client.ts')
-    expect(client).toContain("export const CONTACT_SUBMISSION_SUCCESS_MESSAGE = 'Thank you! Your message has been submitted successfully.'")
+    expect(client).toContain("export const CONTACT_SUBMISSION_SUCCESS_MESSAGE = 'Message accepted for delivery.'")
     for (const path of [
       'app/_components/public/ContactSection.tsx',
       'components/overlays/ContactOverlayContent.tsx',
     ]) {
       const source = readSource(path)
       expect(source).toContain('CONTACT_SUBMISSION_SUCCESS_MESSAGE')
-      expect(source).not.toContain('Message accepted for delivery')
+      expect(source).not.toContain('Inbox delivery is not yet confirmed.')
+      expect(source).not.toContain('Please note that inbox delivery is not guaranteed.')
     }
     expect(readSource('app/_components/public/ContactSection.tsx')).toContain('role="status"')
   })
