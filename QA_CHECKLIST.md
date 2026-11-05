@@ -62,6 +62,14 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] /music-highlights and /soundpacks: search title/description as applicable, sort editorial/A–Z/Z–A, paginate without lost results, keep YouTube two-click consent, no autoplay.
 - [ ] New browse routes render with and without Supabase settings, and respect the shared legal/footer shell.
 
+## Supabase security and RLS
+
+- [ ] `public.rate_limits`: RLS enabled, no direct `anon` or `authenticated` SELECT/INSERT/UPDATE, service-role RPC still works.
+- [ ] `public.handle_new_user`: signup trigger creates `profiles.role='user'`; no public EXECUTE privilege; safe fixed search path.
+- [ ] Public pages can read active releases, gigs, music and soundpacks; admin can read inactive drafts and edit protected rows; anonymous write attempts are denied.
+- [ ] OAuth-client restrictive RLS policies still deny direct access for client tokens.
+- [ ] Supabase Advisors checked after deploying changes, including Auth leaked-password setting.
+
 ## Admin (smoke)
 
 - [ ] Login works; protected routes redirect when logged out
