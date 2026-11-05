@@ -12,7 +12,7 @@ const FALLBACK_DESCRIPTION = process.env.SITE_DESCRIPTION || ''
 const FALLBACK_IMAGE = '/og-image.png'
 
 export function getSiteOrigin(): string {
-  return process.env.SITE_URL?.replace(/\/$/, '') || 'https://zardonic.com'
+  return process.env.SITE_URL?.replace(/\/$/, '') || 'https://zardonic.net'
 }
 
 export function escHtml(str: string): string {
