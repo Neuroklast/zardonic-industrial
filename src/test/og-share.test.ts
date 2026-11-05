@@ -4,7 +4,7 @@ import { buildOgHtml, escHtml, resolveReleaseOg } from '@/lib/og-share'
 describe('og-share', () => {
   it('escapes HTML in OG output', () => {
     const html = buildOgHtml(
-      'https://zardonic.com',
+      'https://zardonic.net',
       {
         title: '<script>alert(1)</script>',
         description: 'Test & demo',
