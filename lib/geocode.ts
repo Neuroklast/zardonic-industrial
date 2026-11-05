@@ -21,7 +21,7 @@ export async function geocodeLocation(
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'zardonic-industrial/1.0 (https://zardonic.com)',
+        'User-Agent': 'zardonic-industrial/1.0 (https://zardonic.net)',
         'Accept-Language': 'en',
       },
     })
