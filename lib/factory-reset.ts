@@ -47,7 +47,7 @@ export interface FactorySiteConfigSeed {
 export const FACTORY_RESET_SITE_CONFIG: readonly FactorySiteConfigSeed[] = [
   { key: 'hero', value: { headline: 'ZARDONIC', tagline: 'Industrial Metal / Drum & Bass', ctaLabel: 'Listen Now', ctaUrl: '#music' } },
   { key: 'newsletter', value: { heading: 'Mailing List', body: 'Subscribe to get the latest news, releases and exclusive content.' } },
-  { key: 'merchandise', value: { footerText: 'Visit the official Zardonic Merchandise Store to get these and more!' } },
+  { key: 'merchandise', value: {} },
   { key: 'footer', value: { legalNoticeUrl: '/legal-notice', privacyPolicyUrl: '/privacy-policy' } },
   { key: 'legal', value: { operatorName: '', street: '', zipCity: '', country: 'Germany', email: '' } },
   { key: 'background', value: {} },
