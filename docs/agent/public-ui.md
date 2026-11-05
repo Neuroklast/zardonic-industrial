@@ -130,6 +130,8 @@ Social platforms are matched to bundled currentColor brand SVG paths (`lib/socia
 
 File: `app/_components/public/SiteFooter.tsx`. Regression: `src/test/site-footer.test.tsx`, `src/test/sanitize-href.test.ts`.
 
+The footer also embeds the existing Bandzoogle mailing list through `BandzoogleMailingListEmbed.tsx`. A fixed desktop-size cross-origin iframe is cropped by an `overflow-hidden` viewport to match the heading/email/button portion. The offset is a manual provider-layout dependency, not a DOM selector; don't claim it is pixel-accurate or functional until checked on the deployed site in a real browser. `vercel.json` explicitly permits `https://zardonic.bandzoogle.com` in `frame-src`. The visitor can tab to the direct provider link if needed. Do not submit emails to the unrelated native Supabase newsletter as a fallback.
+
 ---
 
 ## Hero wordmark
