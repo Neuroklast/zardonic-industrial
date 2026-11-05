@@ -1,5 +1,8 @@
 export interface ContactSubmitResult { success?: boolean; error?: string }
 
+/** Shared success message for both public contact forms. */
+export const CONTACT_SUBMISSION_SUCCESS_MESSAGE = 'Message accepted for delivery.'
+
 /** Stable client transport independent of build-specific Server Action IDs. */
 export async function sendContactForm(formData: FormData): Promise<ContactSubmitResult> {
   const response = await fetch('/api/contact', {

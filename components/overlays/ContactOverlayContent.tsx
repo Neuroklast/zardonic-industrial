@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label'
 import { PaperPlaneTilt } from '@phosphor-icons/react'
 import { toast } from 'sonner'
 import type { AdminSettings, DecorativeTexts } from '@/lib/types'
-import { sendContactForm } from '@/lib/contact-client'
+import { CONTACT_SUBMISSION_SUCCESS_MESSAGE, sendContactForm } from '@/lib/contact-client'
 import { contactFormSchema } from '@/lib/contact-form'
 
 interface ContactOverlayContentProps {
@@ -119,7 +119,7 @@ export function ContactOverlayContent({ adminSettings, decorativeTexts }: Contac
               try {
                 const result = await sendContactForm(formData)
                 if (result.success) {
-                  toast.success('Message accepted for delivery. Inbox delivery is not yet confirmed.', { id: 'contact-submit' })
+                  toast.success(CONTACT_SUBMISSION_SUCCESS_MESSAGE, { id: 'contact-submit' })
                   form.reset()
                 } else {
                   toast.error(result.error || 'Failed to send message', { id: 'contact-submit' })

@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react'
 import { useLocale } from '@/contexts/LocaleContext'
 import { resolveSectionHeading } from '@/lib/section-display'
 import { SectionWrapper, SectionHeading, SectionIntro } from './SectionWrapper'
-import { sendContactForm, type ContactSubmitResult } from '@/lib/contact-client'
+import { CONTACT_SUBMISSION_SUCCESS_MESSAGE, sendContactForm, type ContactSubmitResult } from '@/lib/contact-client'
 
 const fieldClass =
   'min-h-[44px] w-full border border-border bg-transparent px-3 py-2 font-mono text-sm text-foreground transition-colors hover:border-primary/40 focus:border-primary/60 focus:outline-none'
@@ -46,8 +46,8 @@ export function ContactSection({
       <SectionIntro sectionId="contact">{intro}</SectionIntro>
 
       {state?.success ? (
-        <p className="border border-border px-4 py-3 font-mono text-sm text-foreground">
-          Message accepted for delivery. Please note that inbox delivery is not guaranteed.
+        <p role="status" className="border border-border px-4 py-3 font-mono text-sm text-foreground">
+          {CONTACT_SUBMISSION_SUCCESS_MESSAGE}
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
