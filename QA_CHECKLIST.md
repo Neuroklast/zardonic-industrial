@@ -87,6 +87,13 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Advances: â€œPurge all releasesâ€ / â€œPurge all + re-syncâ€ confirm dialog warns that **manually edited** releases are deleted too; after re-sync the releases list matches the Spotify catalogue (no leftover manual rows)
 - [ ] Factory reset: button disabled until backup checkbox ticked + phrase typed; wrong phrase is rejected server-side (nothing deleted); correct phrase + cleanup restores default site config; R2 media left intact unless the â€œdelete mediaâ€ box is checked
 
+## Database schema maintenance
+
+- [ ] Exactly one Supabase SQL script exists: `supabase/schema.sql`. No `supabase/migrations/` or `supabase/tests/*.sql`.
+- [ ] `supabase/schema.sql` contains MCP OAuth clients, MFA grants, content-approval requests, OAuth restrictive RLS policies, approval RPC and grants. Re-running the complete schema on a disposable Supabase instance is safe.
+- [ ] Deploy or server boot does not run a Supabase SQL migration, a legacy data import, or the removed `migrate` / `migrate-legacy` commands.
+- [ ] No production database updates occurred as a result of merely merging this repository cleanup. Schema changes still require explicit operator action after backup.
+
 ## After deploy
 
 - [ ] Production deployment SHA matches expected merge commit
