@@ -77,6 +77,10 @@ UI sections/cards receive data via props — no direct context reads in leaf com
 
 New CMS fields → `FIELD_REGISTRY`. New section fields → `SECTION_REGISTRY`. Footer **styling** → `DESIGN_REGISTRY`.
 
+## Single Supabase schema
+
+`supabase/schema.sql` is the only database SQL script. It contains **all** tables, incremental idempotent `ALTER` clauses, RLS policies, functions, MCP OAuth restrictions, editorial approval RPCs and seed defaults. Never introduce `supabase/migrations/`, additional Supabase SQL scripts or deploy-time DDL runners. Operators explicitly apply the full schema in the correct project's SQL Editor after a backup; a GitHub merge does not update a live database. The `src/test/supabase-single-schema.test.ts` guard enforces this repository convention.
+
 ## Supabase site config (canonical for public site)
 
 Key-value rows in `site_config`. Public homepage and legal pages read from here.
