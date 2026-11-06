@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { analyticsPostSchema } from '@/api/_schemas'
 import { createPublicClient } from '@/lib/supabaseServer'
+import { createAdminClient } from '@/lib/supabaseAdmin'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 import { isAnalyticsTrackingAllowed, parseAnalyticsConfig } from '@/lib/analytics-config'
 
@@ -60,8 +61,9 @@ export async function POST(request: Request) {
       return new NextResponse(null, { status: 204 })
     }
 
-    // Anon client + RLS INSERT policy (consent-gated), NOT the service-role client.
-    const supabase = createPublicClient()
+    // All writes go through validation, consent checks and throttling here.
+    // Direct anonymous DB writes are forbidden by the canonical schema.
+    const supabase = createAdminClient()
     const { error } = await supabase.from('analytics_events').insert({
       type: parsed.data.type,
       target: parsed.data.target ?? null,
