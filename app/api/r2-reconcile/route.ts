@@ -22,6 +22,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin')
+  if (origin && origin !== new URL(request.url).origin) {
+    return NextResponse.json({ error: 'Invalid request origin' }, { status: 403 })
+  }
   const admin = await isAdminSession()
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
