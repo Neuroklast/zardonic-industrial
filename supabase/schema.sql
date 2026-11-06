@@ -1373,3 +1373,10 @@ CREATE INDEX IF NOT EXISTS mcp_content_requests_reviewed_by_idx ON public.mcp_co
 CREATE INDEX IF NOT EXISTS mcp_oauth_clients_created_by_idx ON public.mcp_oauth_clients(created_by);
 CREATE INDEX IF NOT EXISTS mcp_oauth_clients_updated_by_idx ON public.mcp_oauth_clients(updated_by);
 CREATE INDEX IF NOT EXISTS mcp_oauth_mfa_grants_client_id_idx ON public.mcp_oauth_mfa_grants(client_id);
+
+-- Website-only, server-validated writes. Prevent direct Data API bypass of
+-- newsletter double opt-in, analytics consent and rate limits.
+DROP POLICY IF EXISTS "Public subscribe" ON public.newsletter_subscribers;
+DROP POLICY IF EXISTS "anon insert analytics" ON public.analytics_events;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.newsletter_subscribers FROM anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.analytics_events FROM anon, authenticated;
