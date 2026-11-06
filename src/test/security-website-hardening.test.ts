@@ -3,6 +3,7 @@ import { clientIpFrom } from '@/lib/rate-limit'
 import { readResponseWithLimit } from '@/lib/limited-response-body'
 import { fetchUrlWithResolvedCheck } from '@/lib/ssrf-guard'
 import { safeAdminRedirect } from '@/lib/admin-login-redirect'
+import { isValidContentObjectKey } from '@/lib/r2-object-key'
 import { GET as reconcileGet } from '@/app/api/r2-reconcile/route'
 
 const previousVercel = process.env.VERCEL
@@ -42,6 +43,12 @@ describe('website security regression coverage', () => {
     const response = new Response('123456789')
     await expect(readResponseWithLimit(response, 4)).rejects.toThrow(/permitted size/)
     await expect(readResponseWithLimit(new Response('ok'), 4)).resolves.toEqual(Buffer.from('ok'))
+  })
+
+  it('accepts hashed upload keys but rejects arbitrary storage paths', () => {
+    expect(isValidContentObjectKey('partners/logos/' + 'a'.repeat(32) + '.webp')).toBe(true)
+    expect(isValidContentObjectKey('private/secrets.txt')).toBe(false)
+    expect(isValidContentObjectKey('uploads/../private/file.mp4')).toBe(false)
   })
 
   it('rejects a redirect from a public remote address to localhost', async () => {
