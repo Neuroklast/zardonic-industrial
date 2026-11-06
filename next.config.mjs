@@ -17,7 +17,7 @@ const DEFAULT_FAVICON = '/assets/images/meta_eyJzcmNCdWNrZXQiOiJiemdsZmlsZXMifQ=
 /** Shared CSP — keep in parity with vercel.json for local `next start` / preview. */
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://open.spotify.com https://embed-cdn.spotifycdn.com https://www.youtube.com https://www.youtube-nocookie.com",
+  `script-src 'self'${process.env.NODE_ENV !== 'production' ? " 'unsafe-eval'" : ''} 'unsafe-inline' https://open.spotify.com https://embed-cdn.spotifycdn.com https://www.youtube.com https://www.youtube-nocookie.com`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "frame-src 'self' https://open.spotify.com https://www.youtube.com https://youtube.com https://music.youtube.com https://www.youtube-nocookie.com https://embed-cdn.spotifycdn.com",
