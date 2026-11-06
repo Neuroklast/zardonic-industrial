@@ -16,8 +16,9 @@ export const maxDuration = 60
  * POST /api/r2-reconcile          apply
  * POST /api/r2-reconcile?dryRun=1 preview
  */
-export async function GET(request: Request) {
-  return POST(request)
+// A GET must never mutate editorial data (link prefetch and cross-site navigation).
+export async function GET() {
+  return new NextResponse(null, { status: 405, headers: { Allow: 'POST', 'Cache-Control': 'no-store' } })
 }
 
 export async function POST(request: Request) {
