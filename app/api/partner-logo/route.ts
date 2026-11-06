@@ -118,7 +118,7 @@ export async function GET(request: Request) {
       return new NextResponse('Unsupported logo type', { status: 415 })
     }
 
-    return new NextResponse(buf, {
+    return new NextResponse(Uint8Array.from(buf), {
       status: 200,
       headers: {
         'Content-Type': contentType === 'application/octet-stream' ? 'image/png' : contentType,
