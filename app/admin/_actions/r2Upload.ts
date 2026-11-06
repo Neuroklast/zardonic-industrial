@@ -4,6 +4,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { requireAdmin } from '@/app/admin/_actions/auth'
 import { MEDIA_BUCKET } from '@/lib/constants'
+import { isValidContentObjectKey } from '@/lib/r2-object-key'
 function buildR2Client(): S3Client {
   const accountId = process.env.R2_ACCOUNT_ID
   const accessKeyId = process.env.R2_ACCESS_KEY_ID
@@ -46,8 +47,8 @@ export async function createSignedUploadUrl(
   await requireAdmin()
   const client = buildR2Client()
   const objectPath = objectKey.trim().replace(/^\/+/, '')
-  if (!objectPath || objectPath.includes('..') || objectPath.includes('\\')) {
-    throw new Error('Invalid storage path')
+  if (!isValidContentObjectKey(objectPath)) {
+    throw new Error('Invalid content-addressed media upload path')
   }
   // The bucket is resolved server-side: the browser cannot be trusted to
   // dictate which R2 bucket a presigned PUT targets (it would fall back to
@@ -64,6 +65,9 @@ export async function uploadBufferToR2(
   contentType: string,
 ): Promise<{ publicUrl: string; objectPath: string }> {
   await requireAdmin()
+  if (bucket !== MEDIA_BUCKET || !isValidContentObjectKey(objectPath)) {
+    throw new Error('Invalid media upload target')
+  }
   const client = buildR2Client()
   await client.send(
     new PutObjectCommand({
@@ -87,8 +91,8 @@ export async function deleteR2MediaObject(
   await requireAdmin()
 
   const path = objectPath.trim().replace(/^\/+/, '')
-  if (!path || path.includes('..') || path.includes('\\')) {
-    return { ok: false, error: 'Invalid storage path' }
+  if (!path || path.includes('..') || path.includes('\\') || bucket !== MEDIA_BUCKET) {
+    return { ok: false, error: 'Invalid storage path or bucket' }
   }
 
   try {

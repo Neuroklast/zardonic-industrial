@@ -3,6 +3,7 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
+import { safeAdminRedirect } from '@/lib/admin-login-redirect'
 
 /**
  * Canonical admin login POST handler.
@@ -13,6 +14,8 @@ import { shouldForceInsecureCookies } from '@/lib/supabaseServer'
  * - setAll passes options UNCHANGED and forwards the headers arg (ssr>=0.12).
  */
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin')
+  if (origin && origin !== new URL(request.url).origin) return new Response(null, { status: 403 })
   const formData = await request.formData()
   const rawIdentifier = String(formData.get('email') || formData.get('phone') || '').trim()
   const password = String(formData.get('password') || '')
@@ -76,7 +79,9 @@ export async function POST(request: Request) {
     : { phone: rawIdentifier, password }
 
   // Prepare the final redirect response FIRST so setAll can attach cookies to it.
-  const finalRedirectUrl = redirectTo.startsWith('/') ? redirectTo : '/admin/releases'
+  const candidate = safeAdminRedirect(redirectTo, request.url)
+  const finalRedirectUrl = candidate.startsWith('/admin/') && !candidate.startsWith('/admin/login')
+    ? candidate : '/admin/releases'
   const response = NextResponse.redirect(new URL(finalRedirectUrl, request.url), 303)
 
   // Register the attempt with Supabase (writes cookies on success). We create the

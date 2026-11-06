@@ -77,3 +77,8 @@ export function contentHashFromKey(key: string): string | null {
 }
 
 
+
+/** Restrict new upload targets to content-addressed keys, never arbitrary objects. */
+export function isValidContentObjectKey(key: string): boolean {
+  return /^(?:[a-z0-9_-]+\/){1,8}[a-f0-9]{8,64}\.[a-z0-9]{1,8}$/i.test(key) && !key.includes('..')
+}

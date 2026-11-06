@@ -152,3 +152,13 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 - [ ] Expired or replayed token is rejected, not logged in
 - [ ] Invalid password, mismatch and expired session are rejected
 - [ ] After changing password, signing in with the new password works
+
+## Website security regression checks (November 2026)
+- [ ] Anonymous API requests cannot mutate newsletter or analytics tables directly after applying the canonical schema hardening block.
+- [ ] Contact form rejects oversized streamed bodies with 413 and still sends valid bounded forms.
+- [ ] GET /api/r2-reconcile returns 405 and POST requires same-origin admin session.
+- [ ] Login redirects never leave the original site, including //hostname and encoded backslash variants.
+- [ ] External media redirects cannot reach private or metadata addresses and oversized responses are cancelled.
+- [ ] Factory reset rejects sessions without MFA AAL2.
+- [ ] Production CSP excludes unsafe-eval, and public pages hydrate normally.
+- [ ] Resend failure is reported as failure, not as successfully delivered mail.

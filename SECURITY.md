@@ -72,10 +72,10 @@ All responses include defensive HTTP headers:
 - **Cross-Origin-Opener-Policy** / **Cross-Origin-Resource-Policy**.
 
 ### CSP note
-`style-src 'self' 'unsafe-inline'` is required for Tailwind and dynamic theme variables (accepted risk, tracked as TD-004). `script-src` includes `'self' 'unsafe-inline' 'unsafe-eval'` (Next.js dev/runtime); tighten this once no runtime feature requires it. Embeds use two-click consent — no auto-loading third-party scripts/frames.
+`style-src 'self' 'unsafe-inline'` remains for dynamic theme variables (tracked as TD-004). Production `script-src` excludes `unsafe-eval`; legacy inline hydration scripts still require `unsafe-inline` until a compatible nonce strategy is introduced. Embeds use two-click consent.
 
 ### SSRF Protection
-- `lib/ssrf-guard.ts` (`assertSafeRemoteUrl`) blocks private/internal networks (`127.x`, `10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, IPv6 loopback/mapped/link-local/unique-local, metadata endpoints), protocol allowlist (`http:`/`https:` only), and DNS pre-resolution/rebinding protection.
+- `lib/ssrf-guard.ts` (`assertSafeRemoteUrl`) blocks private/internal networks (`127.x`, `10.x`, `172.16-31.x`, `192.168.x`, `169.254.x`, IPv6 loopback/mapped/link-local/unique-local, metadata endpoints), protocol allowlist (`http:`/`https:` only), and DNS pre-resolution plus explicit validation of every HTTP redirect. This reduces SSRF risk; DNS-to-connection pinning is not yet implemented.
 - Used by `app/api/partner-logo/route.ts` (allowlisted to R2 / Supabase HTTPS assets) **and** the admin media-fetch actions (`cacheRemoteImage`, `fetchRemoteImageForEdit`, `cacheRemoteVideo`).
 - `lib/remote-image-url.ts` / `lib/remote-video-url.ts` share the hostname blocklist for client-side URL validation.
 
@@ -115,3 +115,12 @@ All responses include defensive HTTP headers:
 | Cloudflare R2 | Media uploads | Public CDN URLs for site assets |
 | Vercel | Hosting, logs, cron, edge bot shield | Configure env vars per environment |
 | Resend | Contact/newsletter email | API key server-side only |
+
+
+### November 2026 website audit follow-up
+
+- The canonical schema revokes direct anonymous and authenticated INSERT access for `newsletter_subscribers` and `analytics_events`. Apply the SQL to the connected production database only after the validated analytics server writer is deployed.
+- Mutating `/api/r2-reconcile` is POST-only; same-origin and admin-session checks are enforced.
+- High-risk reset operations require MFA AAL2; new media upload keys are content-addressed and bucket-scoped.
+- Remotely fetched media has a hard streamed byte limit and redirect destination validation.
+- The live security audit still requires TLS/cookie verification from an allowed browser, because crawler requests are intentionally blocked by the website.

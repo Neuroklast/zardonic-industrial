@@ -26,8 +26,8 @@ interface ResendEmailPayload {
 async function sendResendEmail(payload: ResendEmailPayload): Promise<boolean> {
   const resendKey = await getApiSecret('resend_api_key')
   if (!resendKey) {
-    console.info('[newsletter-email]', { to: payload.to, subject: payload.subject })
-    return true
+    console.error('[newsletter-email] Resend delivery is not configured')
+    return false
   }
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -117,8 +117,8 @@ export async function sendNewsletterBatch(
 ): Promise<{ sent: number; failed: number }> {
   const resendKey = await getApiSecret('resend_api_key')
   if (!resendKey) {
-    console.info('[newsletter-campaign]', { recipients: recipients.length, subject })
-    return { sent: recipients.length, failed: 0 }
+    console.error('[newsletter-campaign] Resend delivery is not configured')
+    return { sent: 0, failed: recipients.length }
   }
 
   let sent = 0

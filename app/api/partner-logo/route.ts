@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { parsePartnerLogoProxyUrl, rewriteSvgForHiResRaster } from '@/lib/partner-logo-white'
 import { renderPartnerLogoWhitePng } from '@/lib/partner-logo-white-server'
 import { canonicalizeR2MediaUrl } from '@/lib/r2-url-rewrite'
-import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
+import { fetchUrlWithResolvedCheck } from '@/lib/ssrf-guard'
+import { readResponseWithLimit } from '@/lib/limited-response-body'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
 
 const CACHE_HEADERS = {
@@ -13,8 +14,8 @@ const CACHE_HEADERS = {
 const MAX_LOGO_BYTES = 8 * 1024 * 1024
 const RASTER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
 
-function sniffRasterType(buf: ArrayBuffer): string | null {
-  const b = new Uint8Array(buf.slice(0, 12))
+function sniffRasterType(buf: Uint8Array): string | null {
+  const b = buf.subarray(0, 12)
   if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
     return 'image/png'
   }
@@ -59,8 +60,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    await assertSafeRemoteUrl(target)
-    const upstream = await fetch(target, {
+    const upstream = await fetchUrlWithResolvedCheck(target, {
       headers: { Accept: 'image/avif,image/webp,image/png,image/jpeg,image/gif,image/svg+xml,*/*' },
       cache: 'force-cache',
     })
@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       return new NextResponse('Upstream error', { status: 502 })
     }
 
-    const buf = await upstream.arrayBuffer()
+    const buf = await readResponseWithLimit(upstream, MAX_LOGO_BYTES)
     if (buf.byteLength === 0 || buf.byteLength > MAX_LOGO_BYTES) {
       return new NextResponse('Invalid logo', { status: 422 })
     }
@@ -118,7 +118,7 @@ export async function GET(request: Request) {
       return new NextResponse('Unsupported logo type', { status: 415 })
     }
 
-    return new NextResponse(buf, {
+    return new NextResponse(Uint8Array.from(buf), {
       status: 200,
       headers: {
         'Content-Type': contentType === 'application/octet-stream' ? 'image/png' : contentType,

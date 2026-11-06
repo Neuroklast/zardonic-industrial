@@ -23,7 +23,7 @@ Revalidate paths include `/`, `/legal-notice`, `/privacy-policy` after saves.
 
 Crop → `encodeCanvasForUpload` (WebP, size-capped) → Server Action `uploadOptimizedImage` → R2.
 
-**Object keys are content-addressed** (`lib/r2-object-key.ts`): the key is the sha256 of the exact stored bytes, `${prefix}/${HASH}.${ext}` — not `Date.now()`. Same content → same key, so after an R2 bucket move the DB reference stays valid and only the host changes (`canonicalizeR2MediaUrl` rewrites it at render time). Different content → different key, so the "replace deletes the previous R2 object" logic still works. Browser-signed PUT and multipart uploads hash client-side via Web Crypto; server actions hash the optimized buffer. `createSignedUploadUrl` no longer appends a timestamp — the caller supplies the full content key.
+**Object keys are content-addressed** (`lib/r2-object-key.ts`): the key is the sha256 of the exact stored bytes, `${prefix}/${HASH}.${ext}` — not `Date.now()`. Same content → same key, so after an R2 bucket move the DB reference stays valid and only the host changes (`canonicalizeR2MediaUrl` rewrites it at render time). Different content → different key, so the "replace deletes the previous R2 object" logic still works. Browser-signed PUT and multipart uploads hash client-side via Web Crypto; server actions hash the optimized buffer. `createSignedUploadUrl` no longer appends a timestamp — the caller supplies the full content key. Server actions validate that new upload keys match the content-addressed prefix/hash/extension format. Multipart uploads additionally validate part numbers, counts and ETags. Legacy keys may still be referenced and deleted within the configured media bucket.
 
 **The target bucket is resolved server-side, never by the client.** `createSignedUploadUrl(objectKey)` (`app/admin/_actions/r2Upload.ts`) ignores any client bucket and always signs against `MEDIA_BUCKET` (= runtime `process.env.R2_BUCKET_MEDIA`). Do not add a client-supplied `bucket` param back: client components read `MEDIA_BUCKET` from `lib/constants.ts`, where `process.env` is unavailable in the browser bundle, so it falls back to the hardcoded default (`zardonic-media`) — which typically has no CORS rule, silently breaking presigned PUT uploads while the env var points at a correctly-configured bucket.
 
@@ -80,7 +80,7 @@ Mutations register in `lib/admin-action-registry.ts` with Zod schemas + tests in
 | `enrich_all_release_tracks` | basic | Batch tracklist enrichment (limit param) |
 | `purge_releases` | expert | Delete **all** releases, including manually edited (hard reset) |
 | `purge_gigs` | expert | Delete all gigs |
-| `factory_reset` | expert | Hard wipe of all editorial tables + restore default `site_config`; requires echoing `zardonic-factory-reset` (client) and optional R2 media wipe (`lib/factory-reset.ts`) |
+| `factory_reset` | expert | Hard wipe of all editorial tables + restore default `site_config`; requires echoing `zardonic-factory-reset` (client), a currently MFA-verified AAL2 admin session, and optional R2 media wipe (`lib/factory-reset.ts`) |
 | `reset_release_tracklists` | expert | Clear tracks on auto-synced releases |
 | `purge_and_sync_releases` | expert | **Hard reset**: delete **all** releases (incl. manual), Spotify sync + enrichment |
 | `purge_and_sync_gigs` | expert | Purge + Bandsintown sync |

@@ -1,9 +1,13 @@
 # Lessons Learned Log — Zardonic Industrial
 
-> **Last Updated:** 2026-11-05  
+> **Last Updated:** 2026-11-06  
 > **Process:** Append a dated row at session end when a reusable anti-pattern appears — see [agent/workflow.md](./agent/workflow.md). Promote stable rules into [AGENTS.md](../AGENTS.md) / `docs/agent/*`.
 
 ---
+
+## November 2026 security lesson
+
+A website API can enforce double opt-in, analytics consent and rate limiting while public database RLS still permits direct inserts. Review effective **GRANT and POLICY** together, then switch server writes before revoking public grants. Outbound SSRF guards must recheck redirects, and streaming file-size limits must execute before buffering. Never trust an arbitrary forwarded IP header for throttling.
 
 ## Overview
 

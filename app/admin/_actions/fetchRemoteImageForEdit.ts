@@ -6,7 +6,8 @@ import {
   isAllowedImageContentType,
   resolveRemoteImageUrl,
 } from '@/lib/remote-image-url'
-import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
+import { fetchUrlWithResolvedCheck } from '@/lib/ssrf-guard'
+import { readResponseWithLimit } from '@/lib/limited-response-body'
 import { shouldOpenImageEditor } from '@/lib/image-crop-math'
 
 export interface FetchRemoteImageForEditResult {
@@ -31,9 +32,7 @@ export async function fetchRemoteImageForEdit(
 
     try {
       // DNS-resolve + private/loopback IP blocking before the outbound fetch.
-      await assertSafeRemoteUrl(resolved.url)
-
-      const response = await fetch(resolved.url, {
+      const response = await fetchUrlWithResolvedCheck(resolved.url, {
         method: 'GET',
         redirect: 'follow',
         signal: controller.signal,
@@ -56,7 +55,7 @@ export async function fetchRemoteImageForEdit(
       }
 
       const mimeType = contentType?.split(';')[0].trim().toLowerCase() ?? 'image/jpeg'
-      const buffer = Buffer.from(await response.arrayBuffer())
+      const buffer = await readResponseWithLimit(response, 10 * 1024 * 1024)
       assertRemoteImageSize(buffer.byteLength)
 
       const dataUrl = `data:${mimeType};base64,${buffer.toString('base64')}`

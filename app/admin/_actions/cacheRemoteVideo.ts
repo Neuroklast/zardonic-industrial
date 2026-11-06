@@ -10,7 +10,8 @@ import {
   isAllowedVideoContentType,
   resolveRemoteVideoUrl,
 } from '@/lib/remote-video-url'
-import { assertSafeRemoteUrl } from '@/lib/ssrf-guard'
+import { fetchUrlWithResolvedCheck } from '@/lib/ssrf-guard'
+import { readResponseWithLimit } from '@/lib/limited-response-body'
 
 export interface CacheRemoteVideoResult {
   ok: boolean
@@ -35,9 +36,7 @@ export async function cacheRemoteVideoToR2(
 
     try {
       // DNS-resolve + private/loopback IP blocking before the outbound fetch.
-      await assertSafeRemoteUrl(resolved.url)
-
-      const response = await fetch(resolved.url, {
+      const response = await fetchUrlWithResolvedCheck(resolved.url, {
         method: 'GET',
         redirect: 'follow',
         signal: controller.signal,
@@ -59,7 +58,7 @@ export async function cacheRemoteVideoToR2(
         }
       }
 
-      const buffer = Buffer.from(await response.arrayBuffer())
+      const buffer = await readResponseWithLimit(response, 200 * 1024 * 1024)
       assertRemoteVideoSize(buffer.byteLength)
 
       const ext = extensionFromVideoContentType(contentType)

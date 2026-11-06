@@ -1,3 +1,11 @@
+## Security hardening (2026-11-06)
+
+- Close public newsletter and analytics database write bypasses and route validated analytics writes through the server.
+- Block GET-based media reconciliation and external admin login redirects.
+- Check each remote media redirect and bound media response-body memory usage.
+- Limit rate-limit identity to trusted edge headers, restrict R2 media bucket access, and require MFA for factory reset.
+- Do not report successful newsletter sends without an active provider.
+
 # Changelog
 
 All notable changes to this project will be documented in this file.

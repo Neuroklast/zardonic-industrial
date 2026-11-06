@@ -10,6 +10,7 @@ import {
 } from '@/lib/factory-reset'
 import { dispatchAdminActionAsAdmin, createSupabaseActionContext } from '@/app/admin/_actions/context'
 import { revalidatePath } from 'next/cache'
+import { createActionClient } from '@/lib/supabaseServer'
 
 export interface FactoryResetActionResult extends FactoryResetResult {
   r2Deleted?: number
@@ -26,6 +27,13 @@ export async function factoryReset(options: {
 }): Promise<FactoryResetActionResult | { error: string }> {
   if (options.confirm !== FACTORY_RESET_CONFIRM) {
     return { error: 'Factory reset aborted: confirmation phrase did not match.' }
+  }
+
+  // Destructive maintenance requires an MFA-verified session, not AAL1 alone.
+  const session = await createActionClient()
+  const { data: assurance, error: assuranceError } = await session.auth.mfa.getAuthenticatorAssuranceLevel()
+  if (assuranceError || assurance?.currentLevel !== 'aal2') {
+    return { error: 'Verify your admin authenticator before resetting the site.' }
   }
 
   const dispatch = dispatchAdminActionAsAdmin(

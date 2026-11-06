@@ -90,6 +90,21 @@ export async function fetchUrlWithResolvedCheck(
   url: string,
   init?: RequestInit,
 ): Promise<Response> {
-  await assertSafeRemoteUrl(url)
-  return fetch(url, init)
+  let target = url
+  for (let redirects = 0; redirects <= 5; redirects++) {
+    await assertSafeRemoteUrl(target)
+    // Automatic redirects would bypass the URL and DNS checks.
+    const response = await fetch(target, { ...init, redirect: 'manual' })
+    if (![301, 302, 303, 307, 308].includes(response.status)) return response
+    const location = response.headers.get('location')
+    if (!location || redirects === 5) {
+      await response.body?.cancel()
+      throw new Error('Remote redirect limit exceeded')
+    }
+    await response.body?.cancel()
+    const next = new URL(location, target)
+    if (next.username || next.password) throw new Error('Credentials in remote URLs are forbidden')
+    target = next.toString()
+  }
+  throw new Error('Remote redirect limit exceeded')
 }

@@ -14,7 +14,7 @@ Spotify, YouTube, SoundCloud: **never** auto-load. Two-click consent before `<if
 Distributed, durable rate limiting runs on the **existing Supabase Postgres** (`lib/rate-limit.ts` → `public.rate_limits` + `consume_rate_limit()` in `supabase/schema.sql`).
 - Keys are SHA-256(`RATE_LIMIT_SALT` + IP) — never raw IPs (GDPR).
 - **RLS on** `public.rate_limits` with deny-all for `anon`/`authenticated`; table grants revoked from those roles. Only `service_role` + `consume_rate_limit()` (SECURITY DEFINER) may touch rows. Every new `public` table must enable RLS in the same change — advisor `rls_disabled_in_public` is critical.
-- **Fail-closed** on infra errors; a per-instance in-memory backstop keeps the limit enforced (no silent bypass).
+- **Fail-closed** for the strict MCP path; other endpoints fall back to per-instance limits on database errors. Only Vercel-edge-provided `x-vercel-forwarded-for` is trusted for production client IP attribution.
 - Set `RATE_LIMIT_SALT` in production — `lib/rate-limit.ts` throws if missing.
 - Throttled: admin login, analytics POST, newsletter, contact, `/api/media-fix`, `/api/partner-logo`, `/api/bandsintown`.
 
@@ -71,7 +71,7 @@ Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`,
 
 ## CSP (`unsafe-inline` styles)
 
-Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; `script-src` includes `'self' 'unsafe-inline' 'unsafe-eval'` (Next runtime) — tighten when possible.
+Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Inline styles/scripts remain for legacy hydration and appearance components, but production `script-src` no longer permits `unsafe-eval`. In development Next.js may require `unsafe-eval` for diagnostics. Transitioning to nonce-based inline scripts would disable static ISR caching and needs separate planning.
 
 ## SSRF
 
@@ -89,3 +89,12 @@ User/admin-supplied URLs are constrained by scheme:
 ## Config
 
 `env.mjs` validates server env vars and fails fast in production.
+
+## Website audit remediation, November 2026
+
+- A GET never performs media reconciliation; POST requires a verified admin session.
+- Public database INSERT policies and grants on newsletter subscriptions and analytics events are revoked. Anonymous traffic must pass through the validated, rate-limited server APIs.
+- Admin login return targets use `safeAdminRedirect`; arbitrary hosts and ambiguous paths are rejected.
+- Media imports and the public partner-logo proxy validate every redirect hop and cap streamed response bytes.
+- Factory reset requires an MFA-verified admin session. R2 service-role upload and deletion helpers reject non-media buckets.
+- Resend failures or missing credentials never count as successful newsletter sends.
