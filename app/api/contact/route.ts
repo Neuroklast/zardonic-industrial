@@ -3,6 +3,7 @@ import { contactFormSchema } from '@/lib/contact-form'
 import { deliverContactMessage } from '@/lib/contact-delivery'
 import { recordContactEvent } from '@/lib/contact-diagnostics'
 import { consumeRateLimitForRequest } from '@/lib/rate-limit'
+import { readResponseWithLimit } from '@/lib/limited-response-body'
 
 export const dynamic = 'force-dynamic'
 const HEADERS = { 'Cache-Control': 'no-store' }
@@ -22,9 +23,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Message is too large.' }, { status: 413, headers: HEADERS })
   }
 
+  let body: Buffer
+  try {
+    body = await readResponseWithLimit(new Response(request.body), 32768)
+  } catch (error) {
+    const oversized = error instanceof Error && /exceeds the permitted size/.test(error.message)
+    return NextResponse.json(
+      { error: oversized ? 'Message is too large.' : 'Invalid request body.' },
+      { status: oversized ? 413 : 400, headers: HEADERS },
+    )
+  }
   let data: FormData
   try {
-    data = await request.formData()
+    data = await new Request(request.url, {
+      method: 'POST',
+      headers: { 'content-type': contentType },
+      body: Uint8Array.from(body),
+    }).formData()
   } catch {
     return NextResponse.json({ error: 'Invalid form data.' }, { status: 400, headers: HEADERS })
   }
