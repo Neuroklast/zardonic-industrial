@@ -6,6 +6,7 @@ vi.mock('@/lib/ssrf-guard', async (importOriginal) => {
   return {
     ...actual,
     assertSafeRemoteUrl: vi.fn(async (url: string) => new URL(url)),
+    fetchUrlWithResolvedCheck: vi.fn(async (url: string, init?: RequestInit) => fetch(url, init)),
   }
 })
 
