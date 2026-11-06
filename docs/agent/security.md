@@ -71,7 +71,7 @@ Document and fail fast on missing security-critical env vars (`RATE_LIMIT_SALT`,
 
 ## CSP (`unsafe-inline` styles)
 
-Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Required for Tailwind runtime classes and inline theme CSS variables. **Accepted risk** (TD-004): no third-party style injection surface; `script-src` includes `'self' 'unsafe-inline' 'unsafe-eval'` (Next runtime) — tighten when possible.
+Production CSP in `vercel.json` includes `style-src 'self' 'unsafe-inline'`. Inline styles/scripts remain for legacy hydration and appearance components, but production `script-src` no longer permits `unsafe-eval`. In development Next.js may require `unsafe-eval` for diagnostics. Transitioning to nonce-based inline scripts would disable static ISR caching and needs separate planning.
 
 ## SSRF
 
