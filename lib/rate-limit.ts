@@ -1,4 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto'
+import { isIP } from 'node:net'
 import { headers as nextHeaders } from 'next/headers'
 import { createAdminClient } from '@/lib/supabaseAdmin'
 
@@ -65,10 +66,12 @@ function hashIp(ip: string): string {
   return createHmac('sha256', resolveSalt()).update('zardonic-rate-limit-ip:v1:').update(ip).digest('hex')
 }
 
-function clientIpFrom(headers: Headers): string {
-  const forwarded = headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0]?.trim() || '127.0.0.1'
-  return headers.get('x-real-ip') || '127.0.0.1'
+export function clientIpFrom(headers: Headers): string {
+  // Vercel overwrites this edge header. Never use client-controlled XFF.
+  const ip = process.env.VERCEL === '1'
+    ? headers.get('x-vercel-forwarded-for')?.split(',')[0]?.trim()
+    : null
+  return ip && isIP(ip) ? ip : 'unknown-client'
 }
 
 /**
