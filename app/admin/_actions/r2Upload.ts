@@ -64,6 +64,7 @@ export async function uploadBufferToR2(
   contentType: string,
 ): Promise<{ publicUrl: string; objectPath: string }> {
   await requireAdmin()
+  if (bucket !== MEDIA_BUCKET) throw new Error('Non-media bucket is forbidden')
   const client = buildR2Client()
   await client.send(
     new PutObjectCommand({
@@ -87,8 +88,8 @@ export async function deleteR2MediaObject(
   await requireAdmin()
 
   const path = objectPath.trim().replace(/^\/+/, '')
-  if (!path || path.includes('..') || path.includes('\\')) {
-    return { ok: false, error: 'Invalid storage path' }
+  if (!path || path.includes('..') || path.includes('\\') || bucket !== MEDIA_BUCKET) {
+    return { ok: false, error: 'Invalid storage path or bucket' }
   }
 
   try {
