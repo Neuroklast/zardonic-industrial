@@ -8,6 +8,8 @@ Update this file when user-visible flows change (`docs/agent/workflow.md`).
 ## Public homepage
 
 - [ ] Hero loads; primary CTAs visible and tappable (min 44px)
+- [ ] Hero primary CTA configured as external https:// URL opens the destination (e.g. preorder), and a /releases route navigates normally.
+- [ ] Hero primary CTA #releases smooth-scrolls only when the section exists; Ctrl/Cmd-click remains standard link behavior; unsafe javascript: URL never becomes a navigable href.
 - [ ] Hero wordmark boot (~1s scan + mini bar under logo) plays when hero is on-screen; not a full-page loader
 - [ ] Boot HUD text is plain **LOADING** / Loadingâ€¦ / Ready â€” no fake terminal or cosplay status lines
 - [ ] Boot load bar does **not** shift the logo upward (HUD absolute under logo)
