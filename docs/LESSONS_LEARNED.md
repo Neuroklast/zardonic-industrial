@@ -5,6 +5,10 @@
 
 ---
 
+## November 2026 hero CTA lesson
+
+A configurable CTA URL is not automatically a scroll target. Calling `preventDefault()` for every anchor click silently breaks external preorder links and internal routes. Intercept only real on-page fragments with existing targets and preserve native browser navigation otherwise. Validate the URL scheme at render time.
+
 ## November 2026 security lesson
 
 A website API can enforce double opt-in, analytics consent and rate limiting while public database RLS still permits direct inserts. Review effective **GRANT and POLICY** together, then switch server writes before revoking public grants. Outbound SSRF guards must recheck redirects, and streaming file-size limits must execute before buffering. Never trust an arbitrary forwarded IP header for throttling.

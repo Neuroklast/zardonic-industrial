@@ -158,6 +158,13 @@ Regression: `src/test/public-component-restoration.test.tsx` (desktop + mobile C
 
 ---
 
+## Hero CTA links
+
+The admin CTA URL accepts a same-page fragment (e.g. `#releases`), a same-origin route (`/releases`), or an absolute http(s) URL for an external shop/preorder.
+In `HeroSection`, only intercept unmodified primary clicks on `#section` when that element exists. Let the browser follow routes and external links normally. Sanitize configured hrefs with `sanitizeHref` to reject script/data schemes; never preventDefault on every CTA click.
+
+Regression: `src/test/public-component-restoration.test.tsx` checks external navigation, internal routes, on-page anchors and unsafe URL fallback.
+
 ## Lenis
 
 - Single provider: `contexts/LenisContext.tsx`.
