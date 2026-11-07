@@ -303,6 +303,9 @@ export function HeroConfigEditor({ currentValue }: HeroConfigEditorProps) {
               onChange={(e) => setCtaUrl(e.target.value)}
               className="w-full font-mono text-xs bg-zinc-950 border border-zinc-800 rounded px-3 py-2 text-zinc-300 focus:outline-none focus:border-zinc-600"
             />
+            <p className="mt-1 text-xs text-zinc-500">
+              Use #releases to scroll, /releases for an internal page, or a full https:// URL for an external destination.
+            </p>
           </div>
         </div>
 
