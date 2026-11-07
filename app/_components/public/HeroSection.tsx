@@ -6,6 +6,7 @@ import { useLenisContext } from '@/contexts/LenisContext'
 import { useLocale } from '@/contexts/LocaleContext'
 
 import { DEFAULT_HERO_LOGO_URL } from '@/lib/hero-defaults'
+import { sanitizeHref } from '@/lib/sanitize-href'
 
 const HERO_CTA_CLASS =
   'cyber-border relative inline-flex min-h-[44px] cursor-pointer items-center justify-center border-border bg-card/60 px-6 py-3 text-sm uppercase tracking-[0.3em] text-foreground backdrop-blur-sm transition-colors hover:bg-card/80'
@@ -68,6 +69,26 @@ export function HeroSection({
   const stageRef = useRef<HTMLDivElement>(null)
   const ctaText = ctaLabel?.trim() || t('hero.listenNow')
   const tourCtaText = t('hero.tourDates')
+  const configuredCtaHref = ctaUrl?.trim() || '#releases'
+  const safeCtaHref =
+    configuredCtaHref.startsWith('#') && configuredCtaHref.length > 1
+      ? configuredCtaHref
+      : sanitizeHref(configuredCtaHref) ?? '#releases'
+
+  const handleSectionLinkClick = (event: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (
+      !href.startsWith('#') ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) return
+    const target = document.getElementById(href.slice(1))
+    if (!target) return
+    event.preventDefault()
+    scrollTo(target, { offset: -60 })
+  }
 
   /**
    * Boot is client + visibility-gated (idle → play → done).
@@ -284,13 +305,9 @@ export function HeroSection({
           style={{ zIndex: 'var(--z-local-top)', fontFamily: 'var(--font-mono, monospace)' }}
         >
           <a
-            href={ctaUrl || '#releases'}
+            href={safeCtaHref}
             data-draft-target="hero-cta-link"
-            onClick={(event) => {
-              event.preventDefault()
-              const id = (ctaUrl || '#releases').replace('#', '')
-              scrollTo(id, { offset: -60 })
-            }}
+            onClick={(event) => handleSectionLinkClick(event, safeCtaHref)}
             className={HERO_CTA_CLASS}
           >
             <span data-draft-target="hero-cta">{ctaText}</span>
@@ -298,10 +315,7 @@ export function HeroSection({
           {showTourDatesCta ? (
             <a
               href="#gigs"
-              onClick={(event) => {
-                event.preventDefault()
-                scrollTo('gigs', { offset: -60 })
-              }}
+              onClick={(event) => handleSectionLinkClick(event, '#gigs')}
               className={HERO_CTA_CLASS}
             >
               <span>{tourCtaText}</span>
