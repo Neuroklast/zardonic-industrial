@@ -93,6 +93,52 @@ describe('restored public homepage components', () => {
     expect(screen.getByRole('link', { name: /listen now/i })).toHaveClass('text-foreground')
   })
 
+  it('keeps external and internal route hero CTAs as ordinary navigable links', () => {
+    const { unmount } = renderWithLocale(
+      <HeroSection headline="ZARDONIC" ctaLabel="DIGICIDE PREORDER" ctaUrl="https://example.com/preorder" bootSequenceEnabled={false} />,
+    )
+    const external = screen.getByRole('link', { name: 'DIGICIDE PREORDER' })
+    expect(external).toHaveAttribute('href', 'https://example.com/preorder')
+    const externalClick = new MouseEvent('click', { bubbles: true, cancelable: true })
+    external.dispatchEvent(externalClick)
+    expect(externalClick.defaultPrevented).toBe(false)
+    unmount()
+
+    renderWithLocale(
+      <HeroSection headline="ZARDONIC" ctaLabel="ABOUT" ctaUrl="/releases" bootSequenceEnabled={false} />,
+    )
+    const internalRoute = screen.getByRole('link', { name: 'ABOUT' })
+    expect(internalRoute).toHaveAttribute('href', '/releases')
+    const routeClick = new MouseEvent('click', { bubbles: true, cancelable: true })
+    internalRoute.dispatchEvent(routeClick)
+    expect(routeClick.defaultPrevented).toBe(false)
+  })
+
+  it('intercepts only existing on-page section anchors for smooth scrolling', () => {
+    const target = document.createElement('div')
+    target.id = 'releases'
+    document.body.appendChild(target)
+
+    try {
+      renderWithLocale(
+        <HeroSection headline="ZARDONIC" ctaLabel="LISTEN NOW" ctaUrl="#releases" bootSequenceEnabled={false} />,
+      )
+      const internal = screen.getByRole('link', { name: 'LISTEN NOW' })
+      const click = new MouseEvent('click', { bubbles: true, cancelable: true })
+      internal.dispatchEvent(click)
+      expect(click.defaultPrevented).toBe(true)
+    } finally {
+      target.remove()
+    }
+  })
+
+  it('rejects unsafe hero CTA schemes', () => {
+    renderWithLocale(
+      <HeroSection headline="ZARDONIC" ctaLabel="UNSAFE" ctaUrl="javascript:alert(1)" bootSequenceEnabled={false} />,
+    )
+    expect(screen.getByRole('link', { name: 'UNSAFE' })).toHaveAttribute('href', '#releases')
+  })
+
   it('starts hero wordmark boot only when the stage is in view', async () => {
     ioInstances.length = 0
     const { container } = renderWithLocale(
